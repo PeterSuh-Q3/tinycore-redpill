@@ -13,9 +13,9 @@
 	syno_cmos_reg_secure_flash = <0xe0>;
 	syno_cmos_reg_secure_boot = <0xe2>;
 
-	DX517 {
+	DS2422 {
 		compatible = "Synology";
-		model = "synology_dx517";
+		model = "synology_ds2422";
 
 		pmp_slot@1 {
 
