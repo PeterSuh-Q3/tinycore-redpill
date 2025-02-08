@@ -3524,10 +3524,10 @@ function inject_loader() {
   echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
 
   do_ex_first=""    
-  if [ $BASIC_EX -ge 2 ]; then
+  if [ $BASIC_EX -eq 2 ]; then
     echo "There is at least one BASIC type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ $SHR_EX -ge 1 ]; then
+  elif [ $SHR_EX -eq 1 ]; then
     echo "There is at least one SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
   elif [ $BASIC -ge 2 ]; then
@@ -3574,7 +3574,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     fi
 
     if [ "${do_ex_first}" = "N" ]; then
-        if [ $BASIC -eq 2 ] || [ $SHR -eq 1 ]; then
+        if [ $BASIC -ge 2 ] || [ $SHR -ge 1 ]; then
             echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
@@ -3719,7 +3719,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             done
         fi
     elif [ "${do_ex_first}" = "Y" ]; then
-        if [ $BASIC_EX -eq 2 ] || [ `expr $BASIC_EX + $SHR_EX` -eq 2 ]; then
+        if [ $BASIC_EX -eq 2 ] || [ $SHR_EX -eq 1 ]; then
             echo "Reinject bootloader (into existing partition)..."
             for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
          
