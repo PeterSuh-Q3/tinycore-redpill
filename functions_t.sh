@@ -3313,7 +3313,7 @@ function wr_part1() {
     sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}"
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
 
-    if [ "${W95_CNT}" -eq 1 ]; then
+    if [ $W95_CNT -eq 1 ]; then
         wr_bind_part2 "5" "${mdiskpart}"
         [ $? -ne 0 ] && return
     fi
@@ -3455,16 +3455,16 @@ function get_disk_type_cnt() {
     RAID_FIX_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1} | wc -l )"
     RAID_FIX_P5_SD_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1}5 | wc -l )"
     RAID_FIX_P5_SATA_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1}p5 | wc -l )"
-    RAID_FIX_P5_CNT=`expr ${RAID_FIX_P5_SD_CNT} + ${RAID_FIX_P5_SATA_CNT}`
-    if [ ${RAID_FIX_CNT} -eq 3 ] && [ ${RAID_FIX_P5_CNT} -eq 1 ]; then
+    RAID_FIX_P5_CNT=`expr $RAID_FIX_P5_SD_CNT + $RAID_FIX_P5_SATA_CNT`
+    if [ $RAID_FIX_CNT -eq 3 ] && [ $RAID_FIX_P5_CNT -eq 1 ]; then
         RAID_CNT="3"
         W95_CNT="1"
     fi
     if [ "${2}" = "Y" ]; then
-        echo "RAID_CNT=${RAID_CNT}"
-        echo "DOS_CNT=${DOS_CNT}"
-        echo "W95_CNT=${W95_CNT}"
-        echo "EXT_CNT=${EXT_CNT}"
+        echo "RAID_CNT=$RAID_CNT"
+        echo "DOS_CNT=$DOS_CNT"
+        echo "W95_CNT=$W95_CNT"
+        echo "EXT_CNT=$EXT_CNT"
     fi    
              
 }
@@ -3487,8 +3487,8 @@ function inject_loader() {
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
-      if [ "${RAID_CNT}" -eq 3 ]; then
-          case "${DOS_CNT} ${W95_CNT}" in
+      if [ "$RAID_CNT" -eq 3 ]; then
+          case "$DOS_CNT $W95_CNT" in
               "0 0")
                   echo "This is BASIC or JBOD Type Hard Disk. $edisk"
                   ((BASIC++))
@@ -3521,32 +3521,32 @@ function inject_loader() {
       fi
   done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://')
 
-  echo "BASIC = ${BASIC}, SHR = ${SHR}, BASIC_EX = ${BASIC_EX}, SHR_EX = ${SHR_EX}"
+  echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
 
   do_ex_first=""    
-  if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
+  if [ $BASIC_EX -eq 2 ] || [ `expr $BASIC_EX + $SHR_EX` -eq 2 ]; then
     echo "There is at least one BASIC or SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ ${BASIC} -eq 2 ]; then
+  elif [ $BASIC -eq 2 ]; then
     echo "There is at least one disk of type BASIC...OK"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
-  elif [ ${SHR} -eq 1 ]; then
+  elif [ $SHR -eq 1 ]; then
     echo "There is at least one disk of type SHR...OK"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
-  #elif [ ${BASIC_EX} -eq 0 ] && [ ${SHR_EX} -gt 1 ]; then 
+  #elif [ $BASIC_EX -eq 0 ] && [ $SHR_EX -gt 1 ]; then 
   else
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
 
   echo "do_ex_first = ${do_ex_first}"
   
-# [ ${BASIC} -gt 1 ] BASIC more than 2 
-# [ ${BASIC} -gt 0 && ${SHR} -gt 0 ] BASIC more than 1 && SHR more than 1
-# [ ${BASIC} -eq 0 && ${SHR} -gt 2 ] BASIC 0 && SHR more than 3
+# [ $BASIC -gt 1 ] BASIC more than 2 
+# [ $BASIC -gt 0 && $SHR -gt 0 ] BASIC more than 1 && SHR more than 1
+# [ $BASIC -eq 0 && $SHR -gt 2 ] BASIC 0 && SHR more than 3
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
@@ -3571,7 +3571,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     fi
 
     if [ "${do_ex_first}" = "N" ]; then
-        if [ ${BASIC} -eq 2 ] || [ ${SHR} -eq 1 ]; then
+        if [ $BASIC -eq 2 ] || [ $SHR -eq 1 ]; then
             echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
@@ -3581,15 +3581,15 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
                 
-                if [ "${DOS_CNT}" -eq 3 ]; then
+                if [ $DOS_CNT -eq 3 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ -z "${BOOTMAKE}" ] && [ "${RAID_CNT}" -eq 3 ] && [ "${DOS_CNT}" -eq 0 ]; then
+                elif [ -z "${BOOTMAKE}" ] && [ "$RAID_CNT" -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
 
                     prepare_grub
                     [ $? -ne 0 ] && return
 
-                    if [ "${W95_CNT}" -eq 1 ]; then
+                    if [ $W95_CNT -eq 1 ]; then
                         # SHR OR RAID can make primary partition
                         # make 1st partition
                         echo "Create primary and logical partitions on 1st disk. ${model}"
@@ -3637,7 +3637,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         SYNOP3MAKE="YES"
      
                     else
-                        if [ "${EXT_CNT}" -eq 0 ]; then
+                        if [ $EXT_CNT -eq 0 ]; then
                             # BASIC OR JBOD can make extend partition
                             echo "Create extended and logical partitions on 1st disk. ${model}"
                             last_sector="20979712"
@@ -3676,7 +3676,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     BOOTMAKE="YES"
                     continue
 
-                elif [ -z "${SYNOP3MAKE}" ] && [ "${RAID_CNT}" -gt 2 ] && [ "${DOS_CNT}" -eq 0 ]; then
+                elif [ -z "${SYNOP3MAKE}" ] && [ "$RAID_CNT" -gt 2 ] && [ $DOS_CNT -eq 0 ]; then
 
                      if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                           # + 128M
@@ -3716,7 +3716,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             done
         fi
     elif [ "${do_ex_first}" = "Y" ]; then
-        if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
+        if [ $BASIC_EX -eq 2 ] || [ `expr $BASIC_EX + $SHR_EX` -eq 2 ]; then
             echo "Reinject bootloader (into existing partition)..."
             for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
          
@@ -3724,14 +3724,14 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 get_disk_type_cnt "${edisk}" "Y"
                 
                 echo
-                if [ "${DOS_CNT}" -eq 3 ]; then
+                if [ $DOS_CNT -eq 3 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ "${RAID_CNT}" -eq 3 ] && [ "${DOS_CNT}" -eq 2 ]; then
+                elif [ "$RAID_CNT" -eq 3 ] && [ $DOS_CNT -eq 2 ]; then
 
                     prepare_grub
                     [ $? -ne 0 ] && return
-                    if [ "${W95_CNT}" -eq 1 ]; then
+                    if [ $W95_CNT -eq 1 ]; then
                         synop1=$(get_partition "${edisk}" 4)                    
                         wr_part1 "4"
                     else 
@@ -3744,7 +3744,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     [ $? -ne 0 ] && return
                     continue
               
-                elif [ "${RAID_CNT}" -gt 2 ] && [ "${DOS_CNT}" -eq 1 ]; then
+                elif [ "$RAID_CNT" -gt 2 ] && [ $DOS_CNT -eq 1 ]; then
                 
                       if [ $(/sbin/blkid | grep ${edisk} | grep "6234-C863" | wc -l ) -eq 1 ]; then
 
