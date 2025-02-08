@@ -51,6 +51,11 @@ function mmc_modprobe() {
   fi
 }
 
+if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -gt 1 ]; then
+    echo "There is two more bootloder exists, program Exit!!!"
+    exit 99
+fi
+
 mmc_modprobe
 
 getloaderdisk
