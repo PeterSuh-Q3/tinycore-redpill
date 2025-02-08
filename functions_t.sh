@@ -3600,7 +3600,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\n\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
       
