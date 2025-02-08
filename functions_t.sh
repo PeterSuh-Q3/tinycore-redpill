@@ -3629,6 +3629,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
 
+                        synop2=$(get_partition "${edisk}" 5)
+
                         #prepare_img
                         sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 6)"
                         synop3=$(get_partition "${edisk}" 6)                        
