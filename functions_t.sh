@@ -3607,10 +3607,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
-readanswer
+
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
-                            last_sector="$(sudo /sbin/fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                            last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                             # skip 2850 sectors
                             last_sector=$((${last_sector} + 2850))
                             echo "part 6's start sector is $last_sector"
