@@ -3525,7 +3525,7 @@ function inject_loader() {
   if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
     echo "There is at least one BASIC or SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ ${BASIC} -ge 1 ] || [ ${SHR} -ge 1 ]; then
+  elif [ ${BASIC} -eq 2 ] || [ ${SHR} -eq 1 ]; then
     echo "There is at least one disk of type BASIC or SHR...OK"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
@@ -3565,7 +3565,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     fi
 
     if [ "${do_ex_first}" = "N" ]; then
-        if [ ${BASIC} -ge 1 ] || [ ${SHR} -ge 1 ]; then
+        if [ ${BASIC} -eq 2 ] || [ ${SHR} -eq 1 ]; then
             echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
