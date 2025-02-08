@@ -3612,7 +3612,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
-
+readanswer
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
                             last_sector="$(sudo /sbin/fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
