@@ -3607,11 +3607,6 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
-
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
-                        synop1=$(get_partition "${edisk}" 4)
-                        wr_part1 "4"
-                        [ $? -ne 0 ] && return
 readanswer
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
@@ -3624,19 +3619,22 @@ readanswer
                             echo -e "n\n$last_sector\n+92M\nw\n" | sudo /sbin/fdisk "${edisk}"
                             [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
                             sleep 1
-        
-                            #prepare_img
-                            sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 6)"
-                            [ $? -ne 0 ] && return
-                                       
-                            wr_part3 "6"
-                            [ $? -ne 0 ] && return
-        
-                            synop3=$(get_partition "${edisk}" 6)
                         else
                             echo "The synoboot3 was already made!!!"
                             continue
                         fi
+
+                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
+                        synop1=$(get_partition "${edisk}" 4)
+                        wr_part1 "4"
+                        [ $? -ne 0 ] && return
+
+                        #prepare_img
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 6)"
+                        synop3=$(get_partition "${edisk}" 6)                        
+                        wr_part3 "6"
+                        [ $? -ne 0 ] && return
+                        
                         SYNOP3MAKE="YES"
      
                     else
@@ -3697,7 +3695,6 @@ readanswer
     
                         #prepare_img
                         sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)"
-                        [ $? -ne 0 ] && return
        
                         #sudo dd if="${loopdev}p3" of="$(get_partition "${edisk}" 4)"
     
