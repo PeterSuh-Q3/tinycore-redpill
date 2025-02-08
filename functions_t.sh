@@ -3525,8 +3525,13 @@ function inject_loader() {
   if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
     echo "There is at least one BASIC or SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ ${BASIC} -eq 2 ] || [ ${SHR} -eq 1 ]; then
-    echo "There is at least one disk of type BASIC or SHR...OK"
+  elif [ ${BASIC} -eq 2 ]; then
+    echo "There is at least one disk of type BASIC...OK"
+    if [ -z "${do_ex_first}" ]; then
+      do_ex_first="N"
+    fi
+  elif [ ${SHR} -eq 1 ]; then
+    echo "There is at least one disk of type SHR...OK"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
