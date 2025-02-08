@@ -3767,6 +3767,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     #[ -z "$(losetup | grep -i ${imgpath})" ] && echo "boot-image-to-hdd.img losetup OK !!!"
     sync
     echo "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3}"
+    synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
+    synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
+    synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
     sudo umount ${synop1} && sudo umount ${synop2} && sudo umount ${synop3}
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
