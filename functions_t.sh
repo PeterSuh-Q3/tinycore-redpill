@@ -3333,7 +3333,7 @@ function wr_bind_part2() {
         sleep 1
         echo "Bind Mounting ${2}/2nd ..."
         sudo mount --bind "${2}/2nd" "${mdiskpart}"
-        [ $( mount | grep "${2}/2nd" | wc -l ) -gt 0 ] && break
+        [ $( mount | grep "${mdiskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
 
