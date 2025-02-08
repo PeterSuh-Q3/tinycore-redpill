@@ -3312,6 +3312,36 @@ function wr_part1() {
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}"
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
+
+    if [ "${W95_CNT}" -eq 1 ]; then
+        wr_bind_part2 "5" "${mdiskpart}"
+        [ $? -ne 0 ] && return
+    fi
+    
+    true
+}
+
+function wr_bind_part2() {
+
+    fediskpart="$(get_partition "${edisk}" ${1})"
+    mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
+    
+    [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
+    [ ! -d "${2}/2nd" ] && sudo mkdir -p "${2}/2nd"
+    
+    while true; do
+        sleep 1
+        echo "Bind Mounting ${2}/2nd ..."
+        sudo mount -bind "${2}/2nd" "${mdiskpart}"
+        [ $( mount | grep "${2}/2nd" | wc -l ) -gt 0 ] && break
+    done
+    sudo rm -rf "${mdiskpart}"/*
+
+    #diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
+    #spacechk "${loaderdisk}2" "${diskid}"
+    #[ 0${SPACEUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
+  
+    cd /mnt/${loaderdisk}2 && sudo find . | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     true
 }
 
@@ -3495,7 +3525,7 @@ function inject_loader() {
   if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
     echo "There is at least one BASIC or SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ ${BASIC} -eq 2 ] || [ `expr ${BASIC} + ${SHR}` -gt 1 ]; then
+  elif [ ${BASIC} -gt 2 ] || [ ${SHR} -gt 1 ]; then
     echo "There is at least one disk of type BASIC or SHR...OK"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
@@ -3535,11 +3565,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     fi
 
     if [ "${do_ex_first}" = "N" ]; then
-        if [ ${BASIC} -eq 2 ] || [ `expr ${BASIC} + ${SHR}` -gt 1 ]; then
+        if [ ${BASIC} -gt 2 ] || [ ${SHR} -gt 1 ]; then
             echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
-              SYNOP3MAKE=""
+            SYNOP3MAKE=""
             for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
@@ -3555,11 +3585,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                     if [ "${W95_CNT}" -eq 1 ]; then
                         # SHR OR RAID can make primary partition
+                        # make 1st partition
                         echo "Create primary and logical partitions on 1st disk. ${model}"
                         last_sector="20979712"
                     
                         # +127M
-                        echo "Create partitions on 1st disks... $edisk"
+                        echo "Create primary partition on SHR disks... $edisk"
                         echo -e "n\n\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
@@ -3567,20 +3598,37 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
-                      
-                        last_sector="$(sudo /sbin/fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                        last_sector=$((${last_sector} + 1))
-                        echo "1st disk's part 6 last sector is $last_sector"
-                        
-                        # +26M
-                        echo -e "n\n$last_sector\n+26M\nw\n" | sudo /sbin/fdisk "${edisk}"
-                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
-                        sleep 1
- 
+
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
+
+                        if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
+                            # make 3rd partition
+                            last_sector="$(sudo /sbin/fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                            # skip 2850 sectors
+                            last_sector=$((${last_sector} + 2850))
+                            echo "part 6's start sector is $last_sector"
+                            
+                            # +92M
+                            echo -e "n\n$last_sector\n+92M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                            [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
+                            sleep 1
+        
+                            #prepare_img
+                            sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 6)"
+                            [ $? -ne 0 ] && return
+                                       
+                            wr_part3 "6"
+                            [ $? -ne 0 ] && return
+        
+                            synop3=$(get_partition "${edisk}" 6)
+                        else
+                            echo "The synoboot3 was already made!!!"
+                            continue
+                        fi
+                        SYNOP3MAKE="YES"
      
                     else
                         if [ "${EXT_CNT}" -eq 0 ]; then
@@ -3613,12 +3661,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         wr_part1 "5"
                         [ $? -ne 0 ] && return
 
-                    fi 
-                    sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
-                    synop2=$(get_partition "${edisk}" 6)    
-                    wr_part2 "6"
-                    [ $? -ne 0 ] && return
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        synop2=$(get_partition "${edisk}" 6)    
+                        wr_part2 "6"
+                        [ $? -ne 0 ] && return
 
+                    fi 
                     BOOTMAKE="YES"
                     continue
 
@@ -3628,8 +3676,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                           # + 128M
                         echo "Create partitions on 2nd disks... $edisk"
                         last_sector="20979712"
-                         echo "2nd disk's last sector is $last_sector"
-                           echo -e "n\np\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
+                        echo "2nd disk's last sector is $last_sector"
+                        echo -e "n\np\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && return
                         
                         # + 127M logical
@@ -3651,7 +3699,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     else
                         echo "The synoboot3 was already made!!!"
                         continue
-                       fi
+                    fi
                     SYNOP3MAKE="YES"
                     continue
            
@@ -3685,7 +3733,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         wr_part1 "5"
                     fi
 
-                       synop2=$(get_partition "${edisk}" 6)                 
+                    synop2=$(get_partition "${edisk}" 6)                 
                     wr_part2 "6"
                     [ $? -ne 0 ] && return
                     continue
