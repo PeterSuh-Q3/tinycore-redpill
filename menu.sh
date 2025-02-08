@@ -53,6 +53,7 @@ function mmc_modprobe() {
 
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -gt 1 ]; then
     echo "There is two more bootloder exists, program Exit!!!"
+    read answer
     exit 99
 fi
 
@@ -62,6 +63,7 @@ getloaderdisk
 
 if [ -z "${loaderdisk}" ]; then
     echo "Not Supported Loader BUS Type, program Exit!!!"
+    read answer
     exit 99
 fi
 
