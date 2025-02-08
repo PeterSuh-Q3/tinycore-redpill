@@ -3521,6 +3521,8 @@ function inject_loader() {
       fi
   done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://')
 
+  echo "BASIC = ${BASIC}, SHR = ${SHR}, BASIC_EX = ${BASIC_EX}, SHR_EX = ${SHR_EX}"
+
   do_ex_first=""    
   if [ ${BASIC_EX} -eq 2 ] || [ `expr ${BASIC_EX} + ${SHR_EX}` -eq 2 ]; then
     echo "There is at least one BASIC or SHR type disk each with an injected bootloader...OK"
@@ -3537,7 +3539,6 @@ function inject_loader() {
     fi
   #elif [ ${BASIC_EX} -eq 0 ] && [ ${SHR_EX} -gt 1 ]; then 
   else
-      echo "BASIC = ${BASIC}, SHR = ${SHR}, BASIC_EX = ${BASIC_EX}, SHR_EX=${SHR_EX}"
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
 
