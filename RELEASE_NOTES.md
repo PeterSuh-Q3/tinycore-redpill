@@ -1,1 +1,1 @@
-     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
+     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
