@@ -3591,11 +3591,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
-                            last_sector=$((${last_sector} + 1))
+                            # skip 2850 sectors
+                            last_sector=$((${last_sector} + 2850))
                             echo "part 7's start sector is $last_sector"
                             
-                            # +79.7M
-                            echo -e "n\n$last_sector\n+79.7M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                            # +79M
+                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}"
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                             sleep 2
                         else
