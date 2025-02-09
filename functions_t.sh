@@ -3579,7 +3579,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                        last_sector=$((${last_sector} + 1))
+                        # skip 2850 sectors
+                        last_sector=$((${last_sector} + 2850))
                         echo "part 6's start sector is $last_sector"
                         
                         # +13M
