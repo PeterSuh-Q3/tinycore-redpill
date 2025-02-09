@@ -3315,30 +3315,6 @@ function wr_part1() {
     true
 }
 
-function wr_bind_part2() {
-
-    fediskpart="$(get_partition "${edisk}" ${1})"
-    mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
-    
-    [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
-    [ ! -d "${2}/2nd" ] && sudo mkdir -p "${2}/2nd"
-    
-    while true; do
-        sleep 1
-        echo "Bind Mounting ${2}/2nd ..."
-        sudo mount --bind "${2}/2nd" "${mdiskpart}"
-        [ $( mount | grep "${mdiskpart}" | wc -l ) -gt 0 ] && break
-    done
-    sudo rm -rf "${mdiskpart}"/*
-
-    #diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
-    #spacechk "${loaderdisk}2" "${diskid}"
-    #[ 0${SPACEUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
-  
-    cd /mnt/${loaderdisk}2 && sudo find . | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    true
-}
-
 function wr_part2() {
 
     fediskpart="$(get_partition "${edisk}" ${1})"
@@ -3393,12 +3369,6 @@ function wr_part3() {
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "*user_config*" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
-
-    if [ $W95_CNT -eq 1 ]; then
-        wr_bind_part2 "5" "${mdiskpart}"
-        [ $? -ne 0 ] && return
-    fi
-    
     true
 }
 
@@ -3607,16 +3577,25 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
 
+                        # make 2rd partition
+                        last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                        last_sector=$((${last_sector} + 1))
+                        echo "part 6's start sector is $last_sector"
+                        
+                        # +13M
+                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
+                        sleep 1
+
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
-                            last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                            # skip 2850 sectors
-                            last_sector=$((${last_sector} + 2850))
-                            echo "part 6's start sector is $last_sector"
+                            last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
+                            last_sector=$((${last_sector} + 1))
+                            echo "part 7's start sector is $last_sector"
                             
-                            # +92M
-                            echo -e "n\n$last_sector\n+92M\nw\n" | sudo /sbin/fdisk "${edisk}"
-                            [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
+                            # +79M
+                            echo -e "n\n$last_sector\n+79M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                            [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                             sleep 1
                         else
                             echo "The synoboot3 was already made!!!"
@@ -3628,12 +3607,15 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
 
-                        synop2=$(get_partition "${edisk}" 5)
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        synop2=$(get_partition "${edisk}" 6)
+                        wr_part1 "6"
+                        [ $? -ne 0 ] && return
 
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 6)"
-                        synop3=$(get_partition "${edisk}" 6)                        
-                        wr_part3 "6"
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)"
+                        synop3=$(get_partition "${edisk}" 7)
+                        wr_part3 "7"
                         [ $? -ne 0 ] && return
                         
                         SYNOP3MAKE="YES"
