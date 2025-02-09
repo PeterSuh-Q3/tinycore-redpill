@@ -3312,12 +3312,6 @@ function wr_part1() {
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}"
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
-
-    if [ $W95_CNT -eq 1 ]; then
-        wr_bind_part2 "5" "${mdiskpart}"
-        [ $? -ne 0 ] && return
-    fi
-    
     true
 }
 
@@ -3398,7 +3392,12 @@ function wr_part3() {
     [ 0${TOTALUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "*user_config*" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+
+    if [ $W95_CNT -eq 1 ]; then
+        wr_bind_part2 "5" "${mdiskpart}"
+        [ $? -ne 0 ] && return
+    fi
     
     true
 }
