@@ -3571,11 +3571,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo "Create primary partition on SHR disks... $edisk"
                         echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
-                        sleep 1
+                        sleep 2
       
                         echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
-                        sleep 1
+                        sleep 2
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
@@ -3586,7 +3586,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +13M
                         echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
-                        sleep 1
+                        sleep 2
 
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                             # make 3rd partition
@@ -3594,10 +3594,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             last_sector=$((${last_sector} + 1))
                             echo "part 7's start sector is $last_sector"
                             
-                            # +79M
-                            echo -e "n\n$last_sector\n+79M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                            # +79.7M
+                            echo -e "n\n$last_sector\n+79.7M\nw\n" | sudo /sbin/fdisk "${edisk}"
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
-                            sleep 1
+                            sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
                             continue
