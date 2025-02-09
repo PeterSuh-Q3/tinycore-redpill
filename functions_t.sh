@@ -3610,7 +3610,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
                         synop2=$(get_partition "${edisk}" 6)
-                        wr_part1 "6"
+                        wr_part2 "6"
                         [ $? -ne 0 ] && return
 
                         #prepare_img
