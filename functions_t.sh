@@ -3450,8 +3450,8 @@ function inject_loader() {
     returnto "The loader has not been built yet. Start with the build.... Stop processing!!! " && return
   fi
 
-  #plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
-  #[ "${plat}" = "epyc7002" ] &&    returnto "Epyc7002 like SA6400 is not supported... Stop processing!!! " && return
+  plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
+  [ "${plat}" = "epyc7002" ] &&    returnto "Epyc7002 like SA6400 is not supported... Stop processing!!! " && return
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
