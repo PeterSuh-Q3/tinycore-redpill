@@ -3628,7 +3628,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && return
                         
                         SYNOP3MAKE="YES"
-     
+                        break
+                        
                     else
                         if [ $EXT_CNT -eq 0 ]; then
                             # BASIC OR JBOD can make extend partition
