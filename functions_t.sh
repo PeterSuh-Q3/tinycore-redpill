@@ -3296,7 +3296,12 @@ function wr_part1() {
         TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
         TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
         echo "FIXED TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
-        [ 0${TOTALUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
+
+        if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
+            mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+            returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+            false
+        fi   
     fi
 
     if [ -z ${ZIMAGESIZE} ]; then
@@ -3337,7 +3342,12 @@ function wr_part2() {
 
     diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
     spacechk "${loaderdisk}2" "${diskid}"
-    [ 0${SPACEUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
+
+    if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
+        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+        false
+    fi   
   
     cd /mnt/${loaderdisk}2 && sudo find . | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     true
@@ -3371,7 +3381,11 @@ function wr_part3() {
     TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
     echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
-    [ 0${TOTALUSED} -ge 0${SPACELEFT} ] && sudo umount "${mdiskpart}" && returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " && false
+    if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
+        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+        false
+    fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "*user_config*" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
