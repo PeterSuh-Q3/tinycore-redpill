@@ -3440,22 +3440,12 @@ function get_disk_type_cnt() {
     DOS_CNT="$(sudo /sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
     W95_CNT="$(sudo /sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
     EXT_CNT="$(sudo /sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
-    # for FIXED Linux RAID
-    RAID_FIX_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1} | wc -l )"
-    RAID_FIX_P5_SD_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1}5 | wc -l )"
-    RAID_FIX_P5_SATA_CNT="$(sudo /sbin/fdisk -l | grep "Linux RAID" | grep ${1}p5 | wc -l )"
-    RAID_FIX_P5_CNT=`expr $RAID_FIX_P5_SD_CNT + $RAID_FIX_P5_SATA_CNT`
-    if [ $RAID_FIX_CNT -eq 3 ] && [ $RAID_FIX_P5_CNT -eq 1 ]; then
-        RAID_CNT="3"
-        W95_CNT="1"
-    fi
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
         echo "DOS_CNT=$DOS_CNT"
         echo "W95_CNT=$W95_CNT"
         echo "EXT_CNT=$EXT_CNT"
     fi    
-             
 }
 
 function inject_loader() {
@@ -3477,7 +3467,7 @@ function inject_loader() {
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
-      if [ "$RAID_CNT" -eq 3 ]; then
+      if [ $RAID_CNT -eq 3 ]; then
           case "$DOS_CNT $W95_CNT" in
               "0 0")
                   echo "This is BASIC or JBOD Type Hard Disk. $edisk"
@@ -3500,15 +3490,9 @@ function inject_loader() {
                       ((BASIC_EX++))
                   fi
                   ;;
-              "2 1")
-                  echo "This is SHR Type Hard Disk and Has synoboot1 and synoboot2 Boot Partition $edisk"
+              "3 1")
+                  echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
-                  ;;
-              "1 1")
-                  if [ $(sudo /sbin/blkid | grep ${edisk} | grep -c "6234-C863") -eq 1 ]; then
-                      echo "This is SHR Type Hard Disk and Has synoboot3 Boot Partition $edisk"
-                      ((SHR_EX++))
-                  fi
                   ;;
           esac
       fi
@@ -3590,7 +3574,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 if [ $DOS_CNT -eq 3 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ -z "${BOOTMAKE}" ] && [ "$RAID_CNT" -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
+                elif [ -z "${BOOTMAKE}" ] && [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
 
                     prepare_grub
                     [ $? -ne 0 ] && return
@@ -3696,7 +3680,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     BOOTMAKE="YES"
                     continue
 
-                elif [ -z "${SYNOP3MAKE}" ] && [ "$RAID_CNT" -gt 2 ] && [ $DOS_CNT -eq 0 ]; then
+                elif [ -z "${SYNOP3MAKE}" ] && [ $RAID_CNT -gt 2 ] && [ $DOS_CNT -eq 0 ]; then
 
                      if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
                           # + 128M
@@ -3747,36 +3731,25 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 if [ $DOS_CNT -eq 3 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ "$RAID_CNT" -eq 3 ] && [ $DOS_CNT -eq 2 ]; then
-
+                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ]; then
+                    # single SHR 
                     prepare_grub
                     [ $? -ne 0 ] && return
-                    if [ $W95_CNT -eq 1 ]; then
-                        synop1=$(get_partition "${edisk}" 4)                    
-                        wr_part1 "4"
-                    else 
-                        synop1=$(get_partition "${edisk}" 5)
-                        wr_part1 "5"
-                    fi
+
+                    synop1=$(get_partition "${edisk}" 4)                    
+                    wr_part1 "4"
+                    [ $? -ne 0 ] && return                    
 
                     synop2=$(get_partition "${edisk}" 6)                 
                     wr_part2 "6"
                     [ $? -ne 0 ] && return
-                    continue
-              
-                elif [ "$RAID_CNT" -gt 2 ] && [ $DOS_CNT -eq 1 ]; then
-                
-                      if [ $(/sbin/blkid | grep ${edisk} | grep "6234-C863" | wc -l ) -eq 1 ]; then
 
-                        #prepare_img
-                        #[ $? -ne 0 ] && return
-                   
-                        wr_part3 "4"
-                        [ $? -ne 0 ] && return
-    
-                        synop3=$(get_partition "${edisk}" 4)
-                    fi
-                    continue
+                    synop3=$(get_partition "${edisk}" 7)
+                    wr_part3 "7"
+                    [ $? -ne 0 ] && return
+                    
+                    break
+              
                 fi
             done
         fi
