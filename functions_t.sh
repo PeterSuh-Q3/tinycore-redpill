@@ -3621,7 +3621,6 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
-                            continue
                         fi
 
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
