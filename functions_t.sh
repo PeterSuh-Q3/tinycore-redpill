@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.3"
+rploaderver="1.2.1.4"
 build="master"
 redpillmake="prod"
 
@@ -153,6 +153,7 @@ function history() {
     1.2.1.1 Renewal of SynoDisk bootloader injection function
     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
+    1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -468,8 +469,10 @@ EOF
 # Renewal of SynoDisk bootloader injection function
 # 2025.02.07 v1.2.1.2 
 # SynoDisk with Bootloader Injection Supports NVMe DISK
-# 2025.02.07 v1.2.1.3 
+# 2025.02.09 v1.2.1.3 
 # SynoDisk with Bootloader Injection Supports Single SHR DISK
+# 2025.02.10 v1.2.1.4 
+# SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
     
 function showlastupdate() {
     cat <<EOF
@@ -601,8 +604,11 @@ function showlastupdate() {
 # 2025.02.07 v1.2.1.2 
 # SynoDisk with Bootloader Injection Supports NVMe DISK
 
-# 2025.02.07 v1.2.1.3 
+# 2025.02.09 v1.2.1.3 
 # SynoDisk with Bootloader Injection Supports Single SHR DISK
+
+# 2025.02.10 v1.2.1.4 
+# SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
 
 EOF
 }
@@ -3505,17 +3511,19 @@ function inject_loader() {
   [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
 
   do_ex_first=""    
-  if [ $BASIC_EX -eq 2 ]; then
-    echo "There is at least one BASIC type disk each with an injected bootloader...OK"
-    do_ex_first="Y"
+  if [ $BASIC_EX -ge 1 ]; then
+    #echo "There is at least one BASIC type disk each with an injected bootloader...OK"
+    #do_ex_first="Y"
+    returnto "BASIC or JBOD Type Disk is no longer supported. It is possible by converting to SHR.. Function Exit now!!! Press any key to continue..." && return  
   elif [ $SHR_EX -eq 1 ]; then
     echo "There is at least one SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ $BASIC -ge 2 ]; then
-    echo "There is at least one disk of type BASIC...OK"
-    if [ -z "${do_ex_first}" ]; then
-      do_ex_first="N"
-    fi
+  elif [ $BASIC -ge 1 ]; then
+    #echo "There is at least one disk of type BASIC...OK"
+    #if [ -z "${do_ex_first}" ]; then
+    #  do_ex_first="N"
+    #fi
+    returnto "BASIC or JBOD Type Disk is no longer supported. It is possible by converting to SHR.. Function Exit now!!! Press any key to continue..." && return
   elif [ $SHR -ge 1 ]; then
     echo "There is at least one disk of type SHR...OK"
     if [ -z "${do_ex_first}" ]; then
@@ -3574,7 +3582,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
                 
-                if [ $DOS_CNT -eq 3 ]; then
+                if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
                 elif [ -z "${BOOTMAKE}" ] && [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
