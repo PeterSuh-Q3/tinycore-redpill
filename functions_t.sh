@@ -3298,7 +3298,7 @@ function wr_part1() {
         echo "FIXED TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
         if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
-            mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+            [ mountpoint -q "${mdiskpart}" ] && sudo umount "${mdiskpart}"
             returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
             false
         fi   
@@ -3344,7 +3344,7 @@ function wr_part2() {
     spacechk "${loaderdisk}2" "${diskid}"
 
     if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
-        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        [ mountpoint -q "${mdiskpart}" ] && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
         false
     fi   
@@ -3382,7 +3382,7 @@ function wr_part3() {
     echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
-        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        [ mountpoint -q "${mdiskpart}" ] && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
         false
     fi   
@@ -3788,7 +3788,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
-    sudo umount ${synop1} && sudo umount ${synop2} && sudo umount ${synop3}
+    [ mountpoint -q "${synop1}" ] && sudo umount ${synop1} 
+    [ mountpoint -q "${synop2}" ] && sudo umount ${synop2} 
+    [ mountpoint -q "${synop3}" ] && sudo umount ${synop3}
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
 
