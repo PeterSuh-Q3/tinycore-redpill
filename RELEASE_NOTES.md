@@ -1,1 +1,1 @@
-     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
+     1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
