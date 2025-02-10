@@ -3475,10 +3475,10 @@ function inject_loader() {
       
       if [ $RAID_CNT -eq 3 ]; then
           case "$DOS_CNT $W95_CNT" in
-              "0 0")
-                  echo "This is BASIC or JBOD Type Hard Disk. $edisk"
-                  ((BASIC++))
-                  ;;
+              #"0 0")
+              #    echo "This is BASIC or JBOD Type Hard Disk. $edisk"
+              #    ((BASIC++))
+              #    ;;
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
@@ -3507,10 +3507,10 @@ function inject_loader() {
       fi
   done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
-  echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
+  echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
   [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
 
-  do_ex_first=""    
+  do_ex_first=""
   if [ $BASIC_EX -ge 1 ]; then
     #echo "There is at least one BASIC type disk each with an injected bootloader...OK"
     #do_ex_first="Y"
@@ -3518,12 +3518,6 @@ function inject_loader() {
   elif [ $SHR_EX -eq 1 ]; then
     echo "There is at least one SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
-  elif [ $BASIC -ge 1 ]; then
-    #echo "There is at least one disk of type BASIC...OK"
-    #if [ -z "${do_ex_first}" ]; then
-    #  do_ex_first="N"
-    #fi
-    returnto "BASIC or JBOD Type Disk is no longer supported. It is possible by converting to SHR.. Function Exit now!!! Press any key to continue..." && return
   elif [ $SHR -ge 1 ]; then
     echo "There is at least one disk of type SHR...OK"
     if [ -z "${do_ex_first}" ]; then
@@ -3536,9 +3530,6 @@ function inject_loader() {
 
   echo "do_ex_first = ${do_ex_first}"
   
-# [ $BASIC -gt 1 ] BASIC more than 2 
-# [ $BASIC -gt 0 && $SHR -gt 0 ] BASIC more than 1 && SHR more than 1
-# [ $BASIC -eq 0 && $SHR -gt 2 ] BASIC 0 && SHR more than 3
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
@@ -3563,7 +3554,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     fi
 
     if [ "${do_ex_first}" = "N" ]; then
-        if [ $BASIC -ge 2 ] || [ $SHR -ge 1 ]; then
+        if [ $SHR -ge 1 ]; then
             echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
@@ -3730,7 +3721,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             done
         fi
     elif [ "${do_ex_first}" = "Y" ]; then
-        if [ $BASIC_EX -eq 2 ] || [ $SHR_EX -eq 1 ]; then
+        if [ $SHR_EX -eq 1 ]; then
             echo "Reinject bootloader (into existing partition)..."
 
             # If there is a SHR disk, only process that disk.
