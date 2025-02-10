@@ -3493,6 +3493,9 @@ function inject_loader() {
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
+                  if [ -z "$FIRST_SHR" ]; then
+                      FIRST_SHR="$edisk"
+                  fi                  
                   ;;
           esac
       fi
@@ -3562,10 +3565,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             if [ -n "$FIRST_SHR" ]; then
                 disk_list="$FIRST_SHR"
             else
+                # descending sort from /dev/sd            
                 disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
-            # descending sort from /dev/sd
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
@@ -3721,17 +3724,25 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     elif [ "${do_ex_first}" = "Y" ]; then
         if [ $BASIC_EX -eq 2 ] || [ $SHR_EX -eq 1 ]; then
             echo "Reinject bootloader (into existing partition)..."
-            # descending sort from /dev/sd            
-            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r ); do
+
+            # If there is a SHR disk, only process that disk.
+            if [ -n "$FIRST_SHR" ]; then
+                disk_list="$FIRST_SHR"
+            else
+                # descending sort from /dev/sd            
+                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+            fi
+            
+            for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
                 
                 echo
-                if [ $DOS_CNT -eq 3 ]; then
+                if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ]; then
+                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ] && [ $EXT_CNT -eq 0 ]; then
                     # single SHR 
                     prepare_grub
                     [ $? -ne 0 ] && return
