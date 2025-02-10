@@ -3591,7 +3591,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo "part 6's start sector is $last_sector"
                         
                         # +12.8M
-                        echo -e "n\n$last_sector\n+12.8M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 2
 
