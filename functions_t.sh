@@ -3458,7 +3458,8 @@ function inject_loader() {
   BASIC=0
   SHR=0  
   BASIC_EX=0  
-  SHR_EX=0  
+  SHR_EX=0
+  FIRST_SHR=""
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
@@ -3471,6 +3472,9 @@ function inject_loader() {
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
+                  if [ -z "$FIRST_SHR" ]; then
+                      FIRST_SHR="$edisk"
+                  fi                  
                   ;;
               "2 0")
                   echo "This is BASIC Type Hard Disk and Has synoboot1 and synoboot2 Boot Partition $edisk"
@@ -3497,6 +3501,7 @@ function inject_loader() {
   done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
   echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
+  [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
 
   do_ex_first=""    
   if [ $BASIC_EX -eq 2 ]; then
@@ -3554,8 +3559,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
             BOOTMAKE=""
             SYNOP3MAKE=""
+
+            # If there is a SHR disk, only process that disk.
+            if [ -n "$FIRST_SHR" ]; then
+                disk_list="$FIRST_SHR"
+            else
+                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+            fi
+            
             # descending sort from /dev/sd
-            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r ); do
+            for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
