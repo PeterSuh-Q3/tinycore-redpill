@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.2"
+rploaderver="1.2.1.3"
 build="master"
 redpillmake="prod"
 
@@ -152,6 +152,7 @@ function history() {
     1.2.1.0 Create tinycore-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
     1.2.1.1 Renewal of SynoDisk bootloader injection function
     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
+    1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -466,7 +467,9 @@ EOF
 # 2025.02.06 v1.2.1.1 
 # Renewal of SynoDisk bootloader injection function
 # 2025.02.07 v1.2.1.2 
-# RSynoDisk with Bootloader Injection Supports NVMe DISK
+# SynoDisk with Bootloader Injection Supports NVMe DISK
+# 2025.02.07 v1.2.1.3 
+# SynoDisk with Bootloader Injection Supports Single SHR DISK
     
 function showlastupdate() {
     cat <<EOF
@@ -596,7 +599,10 @@ function showlastupdate() {
 # Renewal of SynoDisk bootloader injection function
 
 # 2025.02.07 v1.2.1.2 
-# RSynoDisk with Bootloader Injection Supports NVMe DISK
+# SynoDisk with Bootloader Injection Supports NVMe DISK
+
+# 2025.02.07 v1.2.1.3 
+# SynoDisk with Bootloader Injection Supports Single SHR DISK
 
 EOF
 }
