@@ -3494,7 +3494,7 @@ function inject_loader() {
                   ;;
           esac
       fi
-  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://')
+  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
   echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
 
