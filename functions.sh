@@ -3494,7 +3494,7 @@ function inject_loader() {
                   ;;
           esac
       fi
-  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://')
+  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
   echo "BASIC = $BASIC, SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
 
@@ -3554,7 +3554,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
             BOOTMAKE=""
             SYNOP3MAKE=""
-            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
+            # descending sort from /dev/sd
+            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r ); do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
@@ -3627,7 +3628,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && return
                         
                         SYNOP3MAKE="YES"
-     
+                        break
+                        
                     else
                         if [ $EXT_CNT -eq 0 ]; then
                             # BASIC OR JBOD can make extend partition
@@ -3709,7 +3711,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     elif [ "${do_ex_first}" = "Y" ]; then
         if [ $BASIC_EX -eq 2 ] || [ $SHR_EX -eq 1 ]; then
             echo "Reinject bootloader (into existing partition)..."
-            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
+            # descending sort from /dev/sd            
+            for edisk in $(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r ); do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
