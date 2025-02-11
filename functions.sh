@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.4"
+rploaderver="1.2.1.5"
 build="master"
 redpillmake="prod"
 
@@ -154,6 +154,7 @@ function history() {
     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
     1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
+    1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -473,6 +474,8 @@ EOF
 # SynoDisk with Bootloader Injection Supports Single SHR DISK
 # 2025.02.10 v1.2.1.4 
 # SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
+# 2025.02.11 v1.2.1.5 
+# SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     
 function showlastupdate() {
     cat <<EOF
@@ -609,6 +612,9 @@ function showlastupdate() {
 
 # 2025.02.10 v1.2.1.4 
 # SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
+
+# 2025.02.11 v1.2.1.5 
+# SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
 
 EOF
 }
@@ -3263,6 +3269,36 @@ function get_partition() {
     fi
 }
 
+function tcrpfriendentry_hdd() {
+    
+    cat <<EOF
+menuentry 'Tiny Core Friend ${MODEL} ${BUILD} Update 0 ${DMPM}' {
+        savedefault
+        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8
+        echo Loading initramfs...
+        initrd /initrd-friend
+        echo Booting TinyCore Friend
+}
+EOF
+
+}
+
+function xtcrpconfigureentry_hdd() {
+    cat <<EOF
+menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
+        savedefault
+        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8 IWANTTOCONFIGURE
+        echo Loading initramfs to configure loader...
+        initrd /initrd-friend
+        echo Loding xTCRP RAMDISK to configure loader...
+}
+EOF
+}
+
 function wr_part1() {
 
     fediskpart="$(get_partition "${edisk}" ${1})"
@@ -3495,7 +3531,7 @@ function inject_loader() {
                   ((BASIC_EX++))
                   ;;
               "1 0")
-                  if [ $(sudo /sbin/blkid | grep ${edisk} | grep -c "6234-C863") -eq 1 ]; then
+                  if [ $(sudo /sbin/blkid | grep ${edisk} | grep -c "8765-4321") -eq 1 ]; then
                       echo "This is BASIC Type Hard Disk and Has synoboot3 Boot Partition $edisk"
                       ((BASIC_EX++))
                   fi
@@ -3612,7 +3648,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
+                        if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 96 sectors
@@ -3638,85 +3674,14 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && remove_loader && return
 
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
+                        sudo mkfs.vfat -i 87654321 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
                         synop3=$(get_partition "${edisk}" 7)
                         wr_part3 "7"
                         [ $? -ne 0 ] && remove_loader && return
                         
                         SYNOP3MAKE="YES"
                         break
-                        
-                    else
-                        if [ $EXT_CNT -eq 0 ]; then
-                            # BASIC OR JBOD can make extend partition
-                            echo "Create extended and logical partitions on 1st disk. ${model}"
-                            last_sector="20979712"
-                            echo "1st disk's last sector is $last_sector"
-                            echo -e "n\ne\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
-                            [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                            sleep 2
-                        fi
-     
-                        # +112M
-                        echo "Create partitions on 1st disks... $edisk"
-                        echo -e "n\n\n+112M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 1
-      
-                        echo -e "a\n5\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 1
-       
-                        # +14M
-                        echo -e "n\n\n+14M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 1
- 
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)" > /dev/null 2>&1
-                        synop1=$(get_partition "${edisk}" 5)
-                        wr_part1 "5"
-                        [ $? -ne 0 ] && remove_loader && return
-
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
-                        synop2=$(get_partition "${edisk}" 6)    
-                        wr_part2 "6"
-                        [ $? -ne 0 ] && remove_loader && return
-
-                    fi 
-                    BOOTMAKE="YES"
-                    continue
-
-                elif [ -z "${SYNOP3MAKE}" ] && [ $RAID_CNT -gt 2 ] && [ $DOS_CNT -eq 0 ]; then
-
-                     if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
-                          # + 128M
-                        echo "Create partitions on 2nd disks... $edisk"
-                        last_sector="20979712"
-                        echo "2nd disk's last sector is $last_sector"
-                        echo -e "n\np\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
-                        [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        
-                        # + 127M logical
-                        #echo -e "n\n\n\nw\n" | sudo /sbin/fdisk "${edisk}"
-                        #[ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
-    
-                        sleep 1
-    
-                        #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
-       
-                        #sudo dd if="${loopdev}p3" of="$(get_partition "${edisk}" 4)"
-    
-                        wr_part3 "4"
-                        [ $? -ne 0 ] && remove_loader && return
-    
-                        synop3=$(get_partition "${edisk}" 4)
-                    else
-                        echo "The synoboot3 was already made!!!"
-                        continue
-                    fi
-                    SYNOP3MAKE="YES"
-                    continue
+                    fi    
            
                 else
                     echo "The conditions for adding a fat partition are not met (3 rd, 0 83). $model"
