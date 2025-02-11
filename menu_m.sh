@@ -1350,7 +1350,7 @@ function additional() {
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"g \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"h \\\"Inject Bootloader to Syno DISK\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"h \\\"Inject Bootloader to Syno DISK${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"m \\\"Remove the injected bootloader partition\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"Packing loader file for remote update\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
@@ -1903,6 +1903,8 @@ if [ -n "${bfbay}" ]; then
   bay=${bfbay}
 fi
 writeConfigKey "general" "bay" "${bay}"
+
+[ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
