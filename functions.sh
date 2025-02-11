@@ -3246,11 +3246,11 @@ function spacechk() {
 
   SPACEUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
   SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-  SPACEUSED_MB=$((SPACEUSED / 1024 / 1024))
-  SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+  SPACEUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
+  SPACELEFT_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACELEFT} / 1024 / 1024}")      
 
-  echo "SPACEUSED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
-  echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+  msgwarning "SOURCE SPACE USED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
+  msgwarning "TARGET SPACE LEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
 }
 
 function get_partition() {
@@ -3289,8 +3289,8 @@ function wr_part1() {
     
     TOTALUSED=$(echo $t_num)
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
-    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     ZIMAGESIZE=""
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
@@ -3325,9 +3325,9 @@ function wr_part1() {
     sudo cp -vf /mnt/${loaderdisk}3/initrd-friend  "${mdiskpart}"
 
     sudo mkdir -p /usr/local/share/locale
-    sudo grub-install --target=x86_64-efi --boot-directory="${mdiskpart}"/boot --efi-directory="${mdiskpart}" --removable
+    sudo grub-install --target=x86_64-efi --boot-directory="${mdiskpart}"/boot --efi-directory="${mdiskpart}" --removable > /dev/null 2>&1
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
-    sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}"
+    sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}" > /dev/null 2>&1
     [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     true
 }
@@ -3348,6 +3348,10 @@ function wr_part2() {
 
     diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
     spacechk "${loaderdisk}2" "${diskid}"
+
+    TOTALUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
@@ -3380,12 +3384,12 @@ function wr_part3() {
     
     a_num=$(echo $FILESIZE1 | bc)
     b_num=$(echo $FILESIZE2 | bc)
-    t_num=$(($a_num + $b_num + 20000 ))
+    t_num=$(($a_num + $b_num + 2000 ))
     TOTALUSED=$(echo $t_num)
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
-    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
@@ -3393,7 +3397,7 @@ function wr_part3() {
         false
     fi   
 
-    cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "*user_config*" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+    cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
     true
 }
@@ -3589,11 +3593,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 2
       
-                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 2
 
@@ -3601,10 +3605,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # skip 96 sectors
                         last_sector=$((${last_sector} + 96))
-                        echo "part 6's start sector is $last_sector"
+                        #echo "part 6's start sector is $last_sector"
                         
                         # +12.8M
-                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 2
 
@@ -3613,28 +3617,28 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 96 sectors
                             last_sector=$((${last_sector} + 96))
-                            echo "part 7's start sector is $last_sector"
+                            #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}"
+                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
                             sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
 
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
+                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
 
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)
                         wr_part2 "6"
                         [ $? -ne 0 ] && return
 
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)"
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
                         synop3=$(get_partition "${edisk}" 7)
                         wr_part3 "7"
                         [ $? -ne 0 ] && return
@@ -3655,25 +3659,25 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
      
                         # +112M
                         echo "Create partitions on 1st disks... $edisk"
-                        echo -e "n\n\n+112M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\n\n+112M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
       
-                        echo -e "a\n5\nw" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "a\n5\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
        
                         # +14M
-                        echo -e "n\n\n+14M\nw\n" | sudo /sbin/fdisk "${edisk}"
+                        echo -e "n\n\n+14M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
  
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)"
+                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 5)
                         wr_part1 "5"
                         [ $? -ne 0 ] && return
 
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)    
                         wr_part2 "6"
                         [ $? -ne 0 ] && return
@@ -3699,7 +3703,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sleep 1
     
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)"
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
        
                         #sudo dd if="${loopdev}p3" of="$(get_partition "${edisk}" 4)"
     
