@@ -3594,11 +3594,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
                         echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
       
                         echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
                         # make 2rd partition
@@ -3609,7 +3609,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         
                         # +12.8M
                         echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
                         if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -eq 1 ]; then
@@ -3621,7 +3621,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             
                             # +79M
                             echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                            [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && return
+                            [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
@@ -3630,18 +3630,18 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
 
                         sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)
                         wr_part2 "6"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
 
                         #prepare_img
                         sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
                         synop3=$(get_partition "${edisk}" 7)
                         wr_part3 "7"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
                         
                         SYNOP3MAKE="YES"
                         break
@@ -3653,34 +3653,34 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             last_sector="20979712"
                             echo "1st disk's last sector is $last_sector"
                             echo -e "n\ne\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
-                            [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && return
+                            [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         fi
      
                         # +112M
                         echo "Create partitions on 1st disks... $edisk"
                         echo -e "n\n\n+112M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 1
       
                         echo -e "a\n5\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 1
        
                         # +14M
                         echo -e "n\n\n+14M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 1
  
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 5)
                         wr_part1 "5"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
 
                         sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)    
                         wr_part2 "6"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
 
                     fi 
                     BOOTMAKE="YES"
@@ -3694,7 +3694,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         last_sector="20979712"
                         echo "2nd disk's last sector is $last_sector"
                         echo -e "n\np\n$last_sector\n\n\nw" | sudo /sbin/fdisk "${edisk}"
-                        [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && return
+                        [ $? -ne 0 ] && returnto "make extend partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         
                         # + 127M logical
                         #echo -e "n\n\n\nw\n" | sudo /sbin/fdisk "${edisk}"
@@ -3708,7 +3708,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #sudo dd if="${loopdev}p3" of="$(get_partition "${edisk}" 4)"
     
                         wr_part3 "4"
-                        [ $? -ne 0 ] && return
+                        [ $? -ne 0 ] && remove_loader && return
     
                         synop3=$(get_partition "${edisk}" 4)
                     else
@@ -3748,19 +3748,19 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ] && [ $EXT_CNT -eq 0 ]; then
                     # single SHR 
                     prepare_grub
-                    [ $? -ne 0 ] && return
+                    [ $? -ne 0 ] && remove_loader && return
 
                     synop1=$(get_partition "${edisk}" 4)                    
                     wr_part1 "4"
-                    [ $? -ne 0 ] && return                    
+                    [ $? -ne 0 ] && remove_loader && return                    
 
                     synop2=$(get_partition "${edisk}" 6)                 
                     wr_part2 "6"
-                    [ $? -ne 0 ] && return
+                    [ $? -ne 0 ] && remove_loader && return
 
                     synop3=$(get_partition "${edisk}" 7)
                     wr_part3 "7"
-                    [ $? -ne 0 ] && return
+                    [ $? -ne 0 ] && remove_loader && return
                     
                     break
               
