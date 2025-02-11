@@ -1234,36 +1234,6 @@ function cloneloader() {
   return 0
 }
 
-function tcrpfriendentry_hdd() {
-    
-    cat <<EOF
-menuentry 'Tiny Core Friend ${MODEL} ${BUILD} Update 0 ${DMPM}' {
-        savedefault
-        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
-        echo Loading Linux...
-        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8
-        echo Loading initramfs...
-        initrd /initrd-friend
-        echo Booting TinyCore Friend
-}
-EOF
-
-}
-
-function xtcrpconfigureentry_hdd() {
-    cat <<EOF
-menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
-        savedefault
-        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
-        echo Loading Linux...
-        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8 IWANTTOCONFIGURE
-        echo Loading initramfs to configure loader...
-        initrd /initrd-friend
-        echo Loding xTCRP RAMDISK to configure loader...
-}
-EOF
-}
-
 function add-addon() {
 
   [ "${1}" = "mac-spoof" ] && echo -n "(Warning) Enabling mac-spoof may compromise San Manager and VMM. Do you still want to add it? [yY/nN] : "
