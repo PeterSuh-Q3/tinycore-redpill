@@ -52,9 +52,13 @@ function mmc_modprobe() {
 }
 
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
-    echo "There is two more bootloder exists, program Exit!!!"
-    read answer
-    exit 99
+    if [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ]; then
+        echo "There is Synodisk Injected Bootloader..."
+    else
+        echo "There is two more bootloder exists, program Exit!!!"
+        read answer
+        exit 99
+    fi    
 fi
 
 mmc_modprobe
