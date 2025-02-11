@@ -3246,8 +3246,8 @@ function spacechk() {
 
   SPACEUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
   SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-  SPACEUSED_MB=$((SPACEUSED / 1024 / 1024))
-  SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+  SPACEUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
+  SPACELEFT_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACELEFT} / 1024 / 1024}")      
 
   msgwarning "SOURCE SPACE USED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
   msgwarning "TARGET SPACE LEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
@@ -3289,7 +3289,7 @@ function wr_part1() {
     
     TOTALUSED=$(echo $t_num)
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
-    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
     msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     ZIMAGESIZE=""
@@ -3350,7 +3350,7 @@ function wr_part2() {
     spacechk "${loaderdisk}2" "${diskid}"
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
-    TOTALUSED_MB=$((SPACEUSED / 1024 / 1024))
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
     msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
@@ -3388,7 +3388,7 @@ function wr_part3() {
     TOTALUSED=$(echo $t_num)
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
-    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
     msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
