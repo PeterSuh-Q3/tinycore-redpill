@@ -3249,8 +3249,8 @@ function spacechk() {
   SPACEUSED_MB=$((SPACEUSED / 1024 / 1024))
   SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
 
-  msgwarning "SPACEUSED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
-  msgwarning "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+  msgwarning "SOURCE SPACE USED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
+  msgwarning "TARGET SPACE LEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
 }
 
 function get_partition() {
@@ -3290,7 +3290,7 @@ function wr_part1() {
     TOTALUSED=$(echo $t_num)
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    msgwarning "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     ZIMAGESIZE=""
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
@@ -3349,6 +3349,10 @@ function wr_part2() {
     diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
     spacechk "${loaderdisk}2" "${diskid}"
 
+    TOTALUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
+    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+
     if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
@@ -3380,12 +3384,12 @@ function wr_part3() {
     
     a_num=$(echo $FILESIZE1 | bc)
     b_num=$(echo $FILESIZE2 | bc)
-    t_num=$(($a_num + $b_num + 20000 ))
+    t_num=$(($a_num + $b_num + 2000 ))
     TOTALUSED=$(echo $t_num)
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    msgwarning "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
@@ -3393,7 +3397,7 @@ function wr_part3() {
         false
     fi   
 
-    cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "*user_config*" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+    cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
     true
 }
