@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.4"
+rploaderver="1.2.1.5"
 build="master"
 redpillmake="prod"
 
@@ -154,6 +154,7 @@ function history() {
     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
     1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
+    1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -473,6 +474,8 @@ EOF
 # SynoDisk with Bootloader Injection Supports Single SHR DISK
 # 2025.02.10 v1.2.1.4 
 # SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
+# 2025.02.11 v1.2.1.5 
+# SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     
 function showlastupdate() {
     cat <<EOF
@@ -609,6 +612,9 @@ function showlastupdate() {
 
 # 2025.02.10 v1.2.1.4 
 # SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
+
+# 2025.02.11 v1.2.1.5 
+# SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
 
 EOF
 }
