@@ -1386,8 +1386,8 @@ function additional() {
     e) burnloader;;
     f) cloneloader;;
     g) erasedisk;;
-    h) inject_loader;;
-    m) remove_loader;;
+    h) inject_loader && chk_shr_ex;;
+    m) remove_loader && chk_shr_ex;;
     i) packing_loader;;
     k) keymapMenu ;;
     *) return;;
@@ -1495,6 +1495,11 @@ function chk_diskcnt() {
   echo "Disk count: $DISKCNT"
 
 
+}
+
+function chk_shr_ex()
+{
+  [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 }
 
 # Main loop
@@ -1904,7 +1909,7 @@ if [ -n "${bfbay}" ]; then
 fi
 writeConfigKey "general" "bay" "${bay}"
 
-[ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
+chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
