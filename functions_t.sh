@@ -3249,8 +3249,8 @@ function spacechk() {
   SPACEUSED_MB=$((SPACEUSED / 1024 / 1024))
   SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
 
-  echo "SPACEUSED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
-  echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+  msgwarning "SPACEUSED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
+  msgwarning "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
 }
 
 function get_partition() {
@@ -3290,7 +3290,7 @@ function wr_part1() {
     TOTALUSED=$(echo $t_num)
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    msgwarning "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     ZIMAGESIZE=""
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
@@ -3385,7 +3385,7 @@ function wr_part3() {
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
-    echo "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    msgwarning "TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
     
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
@@ -3623,18 +3623,18 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             echo "The synoboot3 was already made!!!"
                         fi
 
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)"
+                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && return
 
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)
                         wr_part2 "6"
                         [ $? -ne 0 ] && return
 
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)"
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
                         synop3=$(get_partition "${edisk}" 7)
                         wr_part3 "7"
                         [ $? -ne 0 ] && return
@@ -3668,12 +3668,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "make logical partition on ${edisk} failed. Stop processing!!! " && return
                         sleep 1
  
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)"
+                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 5)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 5)
                         wr_part1 "5"
                         [ $? -ne 0 ] && return
 
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)"
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
                         synop2=$(get_partition "${edisk}" 6)    
                         wr_part2 "6"
                         [ $? -ne 0 ] && return
@@ -3699,7 +3699,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sleep 1
     
                         #prepare_img
-                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)"
+                        sudo mkfs.vfat -i 6234C863 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
        
                         #sudo dd if="${loopdev}p3" of="$(get_partition "${edisk}" 4)"
     
