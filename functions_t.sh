@@ -3350,7 +3350,7 @@ function wr_part2() {
     spacechk "${loaderdisk}2" "${diskid}"
 
     TOTALUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
-    TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
+    TOTALUSED_MB=$((SPACEUSED / 1024 / 1024))
     msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
 
     if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
@@ -3605,7 +3605,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # skip 96 sectors
                         last_sector=$((${last_sector} + 96))
-                        echo "part 6's start sector is $last_sector"
+                        #echo "part 6's start sector is $last_sector"
                         
                         # +12.8M
                         echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3617,7 +3617,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 96 sectors
                             last_sector=$((${last_sector} + 96))
-                            echo "part 7's start sector is $last_sector"
+                            #echo "part 7's start sector is $last_sector"
                             
                             # +79M
                             echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
