@@ -2885,9 +2885,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg
     else
         echo
-        msgnormal "Setting default boot entry to JOT ${BUS}"    
+        msgnormal "Setting default boot entry to JOT ${BUS}"
         #if [ "${BUS}" = "usb" ]; then
-            sudo sed -i "/set default=\"*\"/cset default=\"2\"" /tmp/grub.cfg
+            sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
         #else
         #    sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
         #fi
