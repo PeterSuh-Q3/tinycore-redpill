@@ -753,7 +753,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake"
+    platforms="epyc7002 broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake"
 
     # Initialize MODELS array
     MODELS=()
