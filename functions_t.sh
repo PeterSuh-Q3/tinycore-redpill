@@ -925,6 +925,11 @@ function getvarsmshell()
         serialstart="2140 2180"
         suffix="alpha"
         ;;
+    DS3615xs)
+        permanent="LWN"    
+        serialstart="1130 1230 1330 1430"
+        suffix="numeric"
+      ;;        
     DS3617xs)
         permanent="ODN"
         serialstart="1130 1230 1330 1430"
