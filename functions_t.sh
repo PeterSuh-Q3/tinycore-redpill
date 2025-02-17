@@ -2578,8 +2578,6 @@ function checkUserConfig() {
 
 function buildloader() {
 
-    [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && readanswer && return
-
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
 
@@ -4035,6 +4033,8 @@ function my() {
   cecho y "SUVP is $SUVP"
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
+
+  [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && readanswer && exit 0
   
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
   
