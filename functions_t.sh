@@ -3162,7 +3162,11 @@ function getredpillko() {
     fi
 
     #REDPILL_MOD_NAME="redpill-linux-v$(modinfo /home/tc/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
-    REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
+    if [ "${ORIGIN_PLATFORM}" = "bromolow" ]; then
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
+    else
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
+    fi    
     sudo cp -vf /home/tc/custom-module/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
     sudo strip --strip-debug /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
 
