@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.5"
+rploaderver="1.2.1.6"
 build="master"
 redpillmake="prod"
 
@@ -155,6 +155,7 @@ function history() {
     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
     1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
     1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
+    1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -476,6 +477,8 @@ EOF
 # SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
 # 2025.02.11 v1.2.1.5 
 # SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
+# 2025.02.17 v1.2.1.6 
+# DS3615xs(bromolow) support again, LEGACY boot mode must be used!
     
 function showlastupdate() {
     cat <<EOF
@@ -616,6 +619,9 @@ function showlastupdate() {
 # 2025.02.11 v1.2.1.5 
 # SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
 
+# 2025.02.17 v1.2.1.6 
+# DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+
 EOF
 }
 
@@ -753,7 +759,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake"
+    platforms="epyc7002 broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake"
 
     # Initialize MODELS array
     MODELS=()
@@ -919,6 +925,11 @@ function getvarsmshell()
         serialstart="2140 2180"
         suffix="alpha"
         ;;
+    DS3615xs)
+        permanent="LWN"    
+        serialstart="1130 1230 1330 1430"
+        suffix="numeric"
+      ;;        
     DS3617xs)
         permanent="ODN"
         serialstart="1130 1230 1330 1430"
@@ -3144,6 +3155,11 @@ function getredpillko() {
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
         sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
+    elif [ "${ORIGIN_PLATFORM}" = "bromolow" ]; then
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-bromolow-3.10.108-prod.ko.gz" -o "/mnt/${tcrppart}/rp-bromolow-3.10.108-prod.ko.gz"`
+        sudo cp -vf /mnt/${tcrppart}/rp-bromolow-3.10.108-prod.ko.gz /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
     else    
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
@@ -3157,7 +3173,11 @@ function getredpillko() {
     fi
 
     #REDPILL_MOD_NAME="redpill-linux-v$(modinfo /home/tc/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
-    REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
+    if [ "${ORIGIN_PLATFORM}" = "bromolow" ]; then
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
+    else
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
+    fi    
     sudo cp -vf /home/tc/custom-module/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
     sudo strip --strip-debug /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
 
@@ -4024,6 +4044,8 @@ function my() {
   cecho y "SUVP is $SUVP"
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
+
+  [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
   
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
   
