@@ -4045,7 +4045,7 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
+  # [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
   
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
   
