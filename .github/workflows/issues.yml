@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Init Env
         run: |
@@ -65,7 +65,7 @@ jobs:
 
       - name: Update Comment Labels
         if: env.iscustom == 'true'
-        uses: actions-cool/issues-helper@v3
+        uses: actions-cool/issues-helper@v4
         with:
           actions: 'add-labels'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -198,14 +198,14 @@ jobs:
           
       - name: Upload to Artifact
         if: env.iscustom == 'true' && success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MshellImage-${{ steps.build-loader.outputs.TAG }}-${{ env.model }}-${{ env.version }}
           path: /opt/output
 
       - name: Update Comment Success
         if: env.iscustom == 'true' && success()
-        uses: actions-cool/issues-helper@v3
+        uses: actions-cool/issues-helper@v4
         with:
           actions: 'update-comment'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Close Issues
         if: env.iscustom == 'true' && success()
-        uses: actions-cool/issues-helper@v3
+        uses: actions-cool/issues-helper@v4
         with:
           actions: 'close-issue'
           token: ${{ secrets.GITHUB_TOKEN }}
