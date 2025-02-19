@@ -476,12 +476,12 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [ "${MODEL}" = "SA6400" ]; then
+  if [ "${platform}" = "epyc7002(DT)" ]; then
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
-  if [ "${MODEL}" = "DS3615xs" ]; then
+  if [ "${platform}" = "bromolow" ]; then
       BUILD="7.1.1-42962"
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
