@@ -370,7 +370,7 @@ function selectversion () {
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  if [ "${MODEL}" != "DS3615xs" ]; then
+  if [ "${platform}" != "bromolow" ]; then
     options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
   else  
     options=("d" "7.1.1-42962")
