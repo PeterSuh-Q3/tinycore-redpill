@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.6"
+rploaderver="1.2.1.7"
 build="master"
 redpillmake="prod"
 
@@ -156,6 +156,7 @@ function history() {
     1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
     1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+    1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -479,6 +480,8 @@ EOF
 # SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
 # 2025.02.17 v1.2.1.6 
 # DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+# 2025.02.25 v1.2.1.7 
+# SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     
 function showlastupdate() {
     cat <<EOF
@@ -621,6 +624,9 @@ function showlastupdate() {
 
 # 2025.02.17 v1.2.1.6 
 # DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+
+# 2025.02.25 v1.2.1.7 
+# SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
 
 EOF
 }
@@ -3645,7 +3651,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # SHR OR RAID can make primary partition
                         # make 1st partition
                         echo "Create primary and logical partitions on 1st disk. ${model}"
-                        last_sector="20979712"
+                        # get 1st partition's end sector
+                        end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
+
+                        if [ $end_sector = "4982527" ]; then
+                        # Before DSM 7.1.1    
+                            last_sector="9176832"
+                        else
+                        # After DSM 7.2.0
+                            last_sector="20979712"
+                        fi
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
