@@ -1,1 +1,1 @@
-     1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
