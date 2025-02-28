@@ -85,14 +85,24 @@ if [ -d /mnt/${tcrppart}/redpill-load/ ] && [ -d /mnt/${tcrppart}/tcrp-addons/ ]
     echo "Go directly to the menu. Press any key to continue..."
     read answer
 else
+    # Record the start time.
+    start_time=$(date +%s)
     while true; do
       if check_internet; then
         getlatestmshell "noask"
         break
       fi
-      sleep 5
-      echo "Waiting for internet connection in menu.sh..."
+      # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
+      current_time=$(date +%s)
+      elapsed=$(( current_time - start_time ))
+      if [ $elapsed -ge 15 ]; then
+        echo "Internet connection wait time exceeded 15 seconds"
+        break
+      fi
+      sleep 2
+      echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)..."
     done
+    check_github
     gitdownload
 fi
 
