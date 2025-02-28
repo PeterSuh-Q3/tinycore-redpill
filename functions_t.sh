@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.7"
+rploaderver="1.2.1.8"
 build="master"
 redpillmake="prod"
 
@@ -157,6 +157,7 @@ function history() {
     1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
     1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+    1.2.1.8 Modify the method of checking Internet connection in menu.sh
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -482,6 +483,8 @@ EOF
 # DS3615xs(bromolow) support again, LEGACY boot mode must be used!
 # 2025.02.25 v1.2.1.7 
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+# 2026.03.01 v1.2.1.8 
+# Modify the method of checking Internet connection in menu.sh
     
 function showlastupdate() {
     cat <<EOF
@@ -627,6 +630,9 @@ function showlastupdate() {
 
 # 2025.02.25 v1.2.1.7 
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+
+# 2026.03.01 v1.2.1.8 
+# Modify the method of checking Internet connection in menu.sh
 
 EOF
 }
@@ -1240,26 +1246,17 @@ function checkmachine() {
     
 }
 
-function checkinternet() {
+function check_github() {
 
-    echo -n "Checking Internet Access -> "
+    echo -n "Checking GitHub Access -> "
 #    nslookup $gitdomain 2>&1 >/dev/null
     curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
 
     if [ $? -eq 0 ]; then
         echo "OK"
     else
-        cecho g "Error: No internet found, or $gitdomain is not accessible"
-        
-        gitdomain="giteas.duckdns.org"
-        cecho p "Try to connect to $gitdomain......"
-        nslookup $gitdomain 2>&1 >/dev/null
-        if [ $? -eq 0 ]; then
-            echo "OK"
-        else
-            cecho g "Error: No internet found, or $gitdomain is not accessible"
-            exit 99
-        fi
+        cecho g "Error: GitHub is unavailable. Please try again later."
+        exit 99
     fi
 
 }
@@ -3836,7 +3833,7 @@ function rploader() {
             offline="YES"
         else
             offline="NO"
-            checkinternet
+            check_github
         fi    
 #        getlatestrploader
 #        gitdownload     # When called from the parent my.sh, -d flag authority check is not possible, pre-downloaded in advance 
@@ -3892,7 +3889,7 @@ echo "$3"
 
     postupdate)
         getvars $ORIGIN_PLATFORM
-        checkinternet
+        check_github
         gitdownload
         postupdate
         [ $? -eq 0 ] && savesession
@@ -3947,7 +3944,7 @@ function my() {
       offline="YES"
   else
       offline="NO"
-      checkinternet
+      check_github
       if [ "$gitdomain" = "raw.githubusercontent.com" ]; then
           if [ $# -lt 1 ]; then
               getlatestmshell "ask"
