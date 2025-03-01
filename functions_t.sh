@@ -2729,9 +2729,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
-        echo "add mpt3sas.max_queue_depth=10000, modprobe --force-vermagic mpt3sas for Device-tree based platforms"
-        USB_LINE="${USB_LINE} mpt3sas.max_queue_depth=10000 modprobe --force-vermagic mpt3sas"
-        SATA_LINE="${SATA_LINE} mpt3sas.max_queue_depth=10000 modprobe --force-vermagic mpt3sas"
+        echo "add mpt3sas.max_queue_depth=10000 for Device-tree based platforms"
+        USB_LINE="${USB_LINE} mpt3sas.max_queue_depth=10000"
+        SATA_LINE="${SATA_LINE} mpt3sas.max_queue_depth=10000"
     fi
 
     if [ -v CPU ]; then
