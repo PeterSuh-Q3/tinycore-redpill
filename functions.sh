@@ -1256,6 +1256,7 @@ function check_github() {
         echo "OK"
     else
         cecho g "Error: GitHub is unavailable. Please try again later."
+        read answer
         exit 99
     fi
 
