@@ -102,7 +102,14 @@ else
       sleep 2
       echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)..."
     done
-    check_github
+    echo -n "Checking GitHub Access -> "
+    curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
+    if [ $? -eq 0 ]; then
+        echo "OK"
+    else
+        echo "Error: GitHub is unavailable. Please try again later."
+        exit 99
+    fi
     gitdownload
 fi
 
