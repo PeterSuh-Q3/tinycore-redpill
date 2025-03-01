@@ -95,8 +95,8 @@ else
       # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
       current_time=$(date +%s)
       elapsed=$(( current_time - start_time ))
-      if [ $elapsed -ge 15 ]; then
-        echo "Internet connection wait time exceeded 15 seconds"
+      if [ $elapsed -ge 30 ]; then
+        echo "Internet connection wait time exceeded 30 seconds"
         break
       fi
       sleep 2
