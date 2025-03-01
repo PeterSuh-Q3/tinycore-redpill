@@ -108,6 +108,7 @@ else
         echo "OK"
     else
         echo "Error: GitHub is unavailable. Please try again later."
+        read answer
         exit 99
     fi
     gitdownload
