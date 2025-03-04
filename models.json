@@ -28,7 +28,8 @@
         "models": [
             "DS3615xs",
             "RS3614rpxs",
-            "RS3614xs"
+            "RS3614xs",
+            "RS18016xs+"
         ],
         "add_extensions": [
             {
