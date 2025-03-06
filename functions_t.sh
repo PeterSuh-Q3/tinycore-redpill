@@ -2426,7 +2426,7 @@ function savedefault {
     echo "CPU:     $(cat /sys/class/dmi/id/product_name)"
     echo "MEM:     $(cat /proc/meminfo | grep MemTotal | awk '{printf("%.2f"), $2/1000}') MB"
     echo "Cmdline:"
-    echo "${USB_LINE}"
+    echo "$(cat /tmp/tempentry.txt | grep earlyprintk | head -1 | sed 's/linux \/zImage/cmdline :/' )"
     echo ""
     echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
