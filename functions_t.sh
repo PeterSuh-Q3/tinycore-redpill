@@ -1719,12 +1719,8 @@ function testarchive() {
 
     archive="$1"
     if [ "${BUS}" != "block" ]; then
-        if [ "$FRKRNL" = "NO" ]; then
-            archiveheader="$(od -bc ${archive} | awk 'NR==1 {print $3; exit}')"
-        else
-            header=$(head -c1 "${archive}" | xxd -p)
-            archiveheader=$((16#$header))
-        fi
+        trap '' SIGPIPE
+        archiveheader=$(sudo od -bc -N 1 "${archive}" | awk 'NR==1 {print $3; exit}')
     
         case ${archiveheader} in
         105)
