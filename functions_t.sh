@@ -2416,17 +2416,18 @@ function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
     gfxmode
-    echo -e "----------={ M Shell for TinyCore RedPill JOT }=----------"
-    echo "TCRP JOT Version : ${rploaderver}"
+    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
+    echo "BUS Type:   ${BUS}"
     echo -n "Boot Time: "; date
     echo ""
-    echo "Model:   ${MODEL}"
-    echo "version: ${TARGET_VERSION}"
+    echo "Model:   ${MODEL}(${ORIGIN_PLATFORM})"
+    echo "version: ${TARGET_VERSION}-${TARGET_REVISION}"
     echo "kernel:  ${KVER}"
-    echo "CPU:     $(cat /sys/class/dmi/id/product_name)"
-    echo "MEM:     $(cat /proc/meminfo | grep MemTotal | awk '{printf("%.2f"), $2/1000}') MB"
+    echo "DMI:     $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
+    echo "CPU:     $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
+    echo "MEM:     $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
     echo "Cmdline:"
-    echo "$(cat /tmp/tempentry.txt | grep earlyprintk | head -1 | sed 's/linux \/zImage/cmdline :/' )"
+    echo "${USB_LINE}"
     echo ""
     echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
@@ -2711,7 +2712,6 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         fi
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
         sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
-        tinyjotfunc | sudo tee --append /tmp/grub.cfg
     fi
 
     msgnormal "Replacing set root with filesystem UUID instead"
@@ -2774,6 +2774,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
     else
+        tinyjotfunc | sudo tee --append /tmp/grub.cfg    
         echo "Creating tinycore Jot postupdate entry"
         postupdateentry | sudo tee --append /tmp/grub.cfg
     fi
