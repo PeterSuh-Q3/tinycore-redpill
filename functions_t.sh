@@ -2415,6 +2415,7 @@ function tinyjotfunc() {
 function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
+    set gfxpayload=keep
     echo "TCRP-MSHELL JOT Version : ${rploaderver}"
     echo "BUS Type:   ${BUS}"
     echo -n "Boot Time: "; date
