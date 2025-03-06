@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.8"
+rploaderver="1.2.1.9"
 build="master"
 redpillmake="prod"
 
@@ -158,6 +158,7 @@ function history() {
     1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     1.2.1.8 Modify the method of checking Internet connection in menu.sh
+    1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -485,6 +486,8 @@ EOF
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
 # 2026.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
+# 2026.03.06 v1.2.1.9 
+# Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     
 function showlastupdate() {
     cat <<EOF
@@ -633,6 +636,9 @@ function showlastupdate() {
 
 # 2026.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
+
+# 2026.03.06 v1.2.1.9 
+# Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
 
 EOF
 }
@@ -1256,7 +1262,6 @@ function check_github() {
         echo "OK"
     else
         cecho g "Error: GitHub is unavailable. Please try again later."
-        read answer
         exit 99
     fi
 
@@ -1564,7 +1569,7 @@ function monitor() {
         echo -e "-------------------------------Loader boot entries---------------------------"
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------CPU / Memory----------------------------------"
-        msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f%"), $2/1000}')
+        msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
         echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), $3/$2*100}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
         echo -e "-------------------------------Disk Usage >80%-------------------------------"
@@ -2416,10 +2421,21 @@ function tinyjotfunc() {
 function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
-    echo -e "----------={ M Shell for TinyCore RedPill JOT }=----------"
-    echo "TCRP JOT Version : ${rploaderver}"
-    echo -e "Running on $(cat /proc/cpuinfo | grep "model name" | awk -F: '{print $2}' | wc -l) Processor $(cat /proc/cpuinfo | grep "model name" | awk -F: '{print $2}' | uniq)"
-    echo -e "$(cat /tmp/tempentry.txt | grep earlyprintk | head -1 | sed 's/linux \/zImage/cmdline :/' )"
+    set gfxpayload=keep
+    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
+    echo "BUS Type:   ${BUS}"
+    echo -n "Boot Time: "; date
+    echo ""
+    echo "Model:   ${MODEL}(${ORIGIN_PLATFORM})"
+    echo "version: ${TARGET_VERSION}-${TARGET_REVISION}"
+    echo "kernel:  ${KVER}"
+    echo "DMI:     $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
+    echo "CPU:     $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
+    echo "MEM:     $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
+    echo "Cmdline:"
+    echo "${USB_LINE}"
+    echo ""
+    echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
 EOF
 }
@@ -2694,6 +2710,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     if [ "$WITHFRIEND" = "YES" ]; then
         echo
     else
+        sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
         if [ "${BUS}" = "sata" ]; then
@@ -2702,7 +2719,6 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         fi
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
         sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
-        tinyjotfunc | sudo tee --append /tmp/grub.cfg
     fi
 
     msgnormal "Replacing set root with filesystem UUID instead"
@@ -2730,9 +2746,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
-        echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
-        USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
-        SATA_LINE="${SATA_LINE} modprobe.blacklist=mpt3sas"
+        echo "add mpt3sas.max_queue_depth=10000 for Device-tree based platforms"
+        USB_LINE="${USB_LINE} mpt3sas.max_queue_depth=10000"
+        SATA_LINE="${SATA_LINE} mpt3sas.max_queue_depth=10000"
     fi
 
     if [ -v CPU ]; then
@@ -2765,6 +2781,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
     else
+        tinyjotfunc | sudo tee --append /tmp/grub.cfg    
         echo "Creating tinycore Jot postupdate entry"
         postupdateentry | sudo tee --append /tmp/grub.cfg
     fi
