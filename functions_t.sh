@@ -2704,6 +2704,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     if [ "$WITHFRIEND" = "YES" ]; then
         echo
     else
+        sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
         if [ "${BUS}" = "sata" ]; then
