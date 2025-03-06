@@ -1719,7 +1719,12 @@ function testarchive() {
 
     archive="$1"
     if [ "${BUS}" != "block" ]; then
-        archiveheader="$(sudo od -bc ${archive} | awk 'NR==1 {print $3; exit}')"
+        if [ "$FRKRNL" = "NO" ]; then
+            archiveheader="$(od -bc ${archive} | awk 'NR==1 {print $3; exit}')"
+        else
+            header=$(head -c1 "${archive}" | xxd -p)
+            archiveheader=$((16#$header))
+        fi
     
         case ${archiveheader} in
         105)
