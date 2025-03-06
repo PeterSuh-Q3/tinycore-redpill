@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.8"
+rploaderver="1.2.1.9"
 build="master"
 redpillmake="prod"
 
@@ -158,6 +158,7 @@ function history() {
     1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     1.2.1.8 Modify the method of checking Internet connection in menu.sh
+    1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -485,6 +486,8 @@ EOF
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
 # 2026.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
+# 2026.03.06 v1.2.1.9 
+# Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     
 function showlastupdate() {
     cat <<EOF
@@ -633,6 +636,9 @@ function showlastupdate() {
 
 # 2026.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
+
+# 2026.03.06 v1.2.1.9 
+# Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
 
 EOF
 }
