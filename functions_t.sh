@@ -1563,7 +1563,7 @@ function monitor() {
         echo -e "-------------------------------Loader boot entries---------------------------"
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------CPU / Memory----------------------------------"
-        msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f%"), $2/1000}')
+        msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
         echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), $3/$2*100}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
         echo -e "-------------------------------Disk Usage >80%-------------------------------"
@@ -2415,10 +2415,20 @@ function tinyjotfunc() {
 function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
+    gfxmode
     echo -e "----------={ M Shell for TinyCore RedPill JOT }=----------"
     echo "TCRP JOT Version : ${rploaderver}"
-    echo -e "Running on $(cat /proc/cpuinfo | grep "model name" | awk -F: '{print $2}' | wc -l) Processor $(cat /proc/cpuinfo | grep "model name" | awk -F: '{print $2}' | uniq)"
-    echo -e "$(cat /tmp/tempentry.txt | grep earlyprintk | head -1 | sed 's/linux \/zImage/cmdline :/' )"
+    echo -n "Boot Time: "; date
+    echo ""
+    echo "Model:   ${MODEL}"
+    echo "version: ${TARGET_VERSION}"
+    echo "kernel:  ${KVER}"
+    echo "CPU:     $(cat /sys/class/dmi/id/product_name)"
+    echo "MEM:     $(cat /proc/meminfo | grep MemTotal | awk '{printf("%.2f"), $2/1000}') MB"
+    echo "Cmdline:"
+    echo "${USB_LINE}"
+    echo ""
+    echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
 EOF
 }
