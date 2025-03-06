@@ -1719,8 +1719,8 @@ function testarchive() {
 
     archive="$1"
     if [ "${BUS}" != "block" ]; then
-        trap '' SIGPIPE
-        archiveheader=$(sudo od -bc -N 1 "${archive}" | awk 'NR==1 {print $3; exit}')
+        #trap '' SIGPIPE
+        archiveheader="$(sudo stdbuf -oL od -bc ${archive} | awk 'NR==1 {print $3; exit}')"
     
         case ${archiveheader} in
         105)
