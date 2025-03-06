@@ -1719,7 +1719,7 @@ function testarchive() {
 
     archive="$1"
     if [ "${BUS}" != "block" ]; then
-        archiveheader="$(od -bc ${archive} | awk 'NR==1 {print $3; exit}')"
+        archiveheader="$(od -bcN2 ${archive} | awk 'NR==1 {print $3; exit}')"
     
         case ${archiveheader} in
         105)
