@@ -2436,8 +2436,6 @@ function savedefault {
     echo "Cmdline:"
     echo "${USB_LINE}"
     echo ""    
-    echo "IP Addr : $(IP} (Last Detected)"    
-    echo ""
     echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
 EOF
