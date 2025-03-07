@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.1.9"
+rploaderver="1.2.2.0"
 build="master"
 redpillmake="prod"
 
@@ -159,6 +159,7 @@ function history() {
     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     1.2.1.8 Modify the method of checking Internet connection in menu.sh
     1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+    1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -484,10 +485,12 @@ EOF
 # DS3615xs(bromolow) support again, LEGACY boot mode must be used!
 # 2025.02.25 v1.2.1.7 
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
-# 2026.03.01 v1.2.1.8 
+# 2025.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
-# 2026.03.06 v1.2.1.9 
+# 2025.03.06 v1.2.1.9 
 # Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+# 2025.03.07 v1.2.2.0 
+# Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
     
 function showlastupdate() {
     cat <<EOF
@@ -634,11 +637,14 @@ function showlastupdate() {
 # 2025.02.25 v1.2.1.7 
 # SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
 
-# 2026.03.01 v1.2.1.8 
+# 2025.03.01 v1.2.1.8 
 # Modify the method of checking Internet connection in menu.sh
 
-# 2026.03.06 v1.2.1.9 
+# 2025.03.06 v1.2.1.9 
 # Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+
+# 2025.03.07 v1.2.2.0 
+# Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
 
 EOF
 }
@@ -1096,11 +1102,28 @@ function getlatestmshell() {
             rm -f /home/tc/latest.mshell.gz
             tar -zxvf $mshellgz
             echo "Updating m shell with latest updates"
+            
+            [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
+            [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
+            sed -i "/ttyd/d" .xsession
+            echo "./ttyd login &" >> .xsession
+            
+   	        [ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh
+            [ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh
+            [ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh
+            
+            sudo sed -i "/menu.sh/d" /etc/motd
+            sudo sed -i "/monitor.sh/d" /etc/motd
+            sudo sed -i "/ntp.sh/d" /etc/motd
+            echo "Configure the loader using the menu.sh command." | sudo tee -a /etc/motd
+	        echo "To check system information and boot entries using the monitor.sh command." | sudo tee -a /etc/motd
+            echo "To check the settings and installed addons using the ntp.sh command." | sudo tee -a /etc/motd
+            
             . /home/tc/functions.sh
             showlastupdate
             echo "y"|rploader backup
             echo "press any key to continue..."                                                                                                   
-            read answer            
+            read answer
         else
             rm -f /home/tc/latest.mshell.gz
         fi
