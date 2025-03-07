@@ -2422,12 +2422,12 @@ function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
-    echo "\033[1;33mTCRP-MSHELL JOT Version : ${rploaderver}\033[0m"
-    echo "\033[1;33mBUS Type:   ${BUS}\033[0m"
+    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
+    echo "BUS Type: ${BUS}"
     echo -n "Boot Time: "; date
     echo ""
-    echo "Model   : \033[1;33m${MODEL}(${ORIGIN_PLATFORM})\033[0m"
-    echo "Version : \033[1;33m${TARGET_VERSION}-${TARGET_REVISION}\033[0m"
+    echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
+    echo "Version : ${TARGET_VERSION}-${TARGET_REVISION}"
     echo "Kernel  : ${KVER}"
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
