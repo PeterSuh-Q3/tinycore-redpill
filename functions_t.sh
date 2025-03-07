@@ -2439,7 +2439,6 @@ function savedefault {
     echo "IP Addr : $(IP} (Last Detected)"
     echo ""
     echo "Access http://find.synology.com/ or http://$(IP}:5000 to connect the DSM via web."
-    echo ""
 }    
 EOF
 }
