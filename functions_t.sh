@@ -2423,15 +2423,15 @@ function savedefault {
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
     echo "TCRP-MSHELL JOT Version : ${rploaderver}"
-    echo "BUS Type:   ${BUS}"
+    echo "BUS Type: ${BUS}"
     echo -n "Boot Time: "; date
     echo ""
-    echo "Model:   ${MODEL}(${ORIGIN_PLATFORM})"
-    echo "version: ${TARGET_VERSION}-${TARGET_REVISION}"
-    echo "kernel:  ${KVER}"
-    echo "DMI:     $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
-    echo "CPU:     $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
-    echo "MEM:     $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
+    echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
+    echo "Version : ${TARGET_VERSION}-${TARGET_REVISION}"
+    echo "Kernel  : ${KVER}"
+    echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
+    echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
+    echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
     echo "Cmdline:"
     echo "${USB_LINE}"
     echo ""
