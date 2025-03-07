@@ -2432,8 +2432,11 @@ function savedefault {
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
+    echo ""    
     echo "Cmdline:"
     echo "${USB_LINE}"
+    echo ""    
+    echo "IP Addr : $(IP} (Last Detected)"    
     echo ""
     echo "Access http://find.synology.com/ to connect the DSM via web."
 }    
