@@ -984,7 +984,7 @@ function writexsession() {
   [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
   [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
   sed -i "/ttyd/d" .xsession
-  echo "./ttyd login -f tc &" >> .xsession
+  echo "./ttyd login &" >> .xsession
   
   [ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh
   [ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh
