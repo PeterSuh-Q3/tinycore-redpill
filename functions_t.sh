@@ -2422,12 +2422,12 @@ function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
-    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
-    echo "BUS Type: ${BUS}"
+    echo "\033[1;33mTCRP-MSHELL JOT Version : ${rploaderver}\033[0m"
+    echo "\033[1;33mBUS Type:   ${BUS}\033[0m"
     echo -n "Boot Time: "; date
     echo ""
-    echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
-    echo "Version : ${TARGET_VERSION}-${TARGET_REVISION}"
+    echo "Model   : \033[1;33m${MODEL}(${ORIGIN_PLATFORM})\033[0m"
+    echo "Version : \033[1;33m${TARGET_VERSION}-${TARGET_REVISION}\033[0m"
     echo "Kernel  : ${KVER}"
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
@@ -2439,6 +2439,7 @@ function savedefault {
     echo "IP Addr : ${IP} (Last Detected)"
     echo ""
     echo "Access http://find.synology.com/ or http://${IP}:5000 to connect the DSM via web."
+    echo ""
 }    
 EOF
 }
