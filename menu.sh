@@ -6,6 +6,15 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/functions.sh
 #####################################################################################################
 
+# lock
+exec 304>"/tmp/menu.lock"
+flock -n 304 || {
+  MSG="$(TEXT "The menu.sh instance is already running in another terminal. To avoid conflicts, please operate in one instance only.")"
+  dialog --colors --aspect 50 --title "$(TEXT "Error")" --msgbox "${MSG}" 0 0
+  exit 1
+}
+trap 'flock -u 304; rm -f "/tmp/menu.lock"' EXIT INT TERM HUP
+
 function check_internet() {
   ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1
   return $?
