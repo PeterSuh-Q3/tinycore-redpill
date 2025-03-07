@@ -1,1 +1,1 @@
-     1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+     1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
