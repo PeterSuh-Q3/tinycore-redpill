@@ -1998,10 +1998,11 @@ while true; do
          make "jot" "${prevent_init}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
-         NEXT="y" ;;
+         NEXT="y"
        else
-         NEXT="r" ;;
+         NEXT="r"
        fi  
+       ;;
     y) sudo /root/boot.sh normal ;;   
     n) additional;      NEXT="p" ;;
     u) editUserConfig;    NEXT="p" ;;
