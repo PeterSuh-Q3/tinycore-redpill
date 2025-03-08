@@ -1007,7 +1007,7 @@ function writexsession() {
     # Add the required lines to .xsession
     [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
     [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
-    echo "./ttyd login &" >> .xsession
+    echo "sudo ./ttyd login -f tc &" >> .xsession
 
     # Notify the user about the changes and prompt for reboot
     echo "The 'ttyd' configuration has been added to .xsession."
