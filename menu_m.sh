@@ -1943,15 +1943,12 @@ while true; do
     eval "echo \"w \\\"${nvmeaction} nvmesystem Addon(NVMe single volume use)\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
+  [ "$FRKRNL" = "YES" ] && echo "y \"Boot the loader\""  >> "${TMP_PATH}/menu"        
   echo "n \"Additional Functions\""  >> "${TMP_PATH}/menu"      
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"  
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
-  #if [ "$FRKRNL" = "NO" ]; then
-    eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
-  #else
-  #  echo "r \"DSM Booting (with FRIEND KERNEL)\""  >> "${TMP_PATH}/menu"      
-  #fi
+  eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
     --menu "${result}" 0 0 0 --file "${TMP_PATH}/menu" \
@@ -2000,7 +1997,12 @@ while true; do
        else  
          make "jot" "${prevent_init}"
        fi  
-       NEXT="r" ;;
+       if [ "$FRKRNL" = "YES" ]; then
+         NEXT="y" ;;
+       else
+         NEXT="r" ;;
+       fi  
+    y) sudo /root/boot.sh normal ;;   
     n) additional;      NEXT="p" ;;
     u) editUserConfig;    NEXT="p" ;;
     l) langMenu ;;
