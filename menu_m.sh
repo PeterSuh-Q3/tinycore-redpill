@@ -25,7 +25,7 @@ function readanswer() {
  
 function restart() {
     echo "A reboot is required. Press any key to reboot..."
-    read answer
+    read -n 1 -s  # Wait for a key press
     clear
     sudo reboot
 }
@@ -1012,11 +1012,9 @@ function writexsession() {
     # Notify the user about the changes and prompt for reboot
     echo "The 'ttyd' configuration has been added to .xsession."
     echo "The system needs to reboot. Press any key to continue..."
-    read -n 1 -s  # Wait for a key press
 
-    # Reboot the system
-    echo "Rebooting now..."
-    sudo reboot
+    echo 'Y'|rploader backup
+    restart
   else
     echo "'ttyd' pattern already exists in .xsession. No changes made."
   fi
