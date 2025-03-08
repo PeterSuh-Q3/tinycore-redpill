@@ -147,8 +147,8 @@ jobs:
           gzip -c tinycore-redpill.${VERSION}.xtcrp.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vmdk
           gzip -c tinycore-redpill.${VERSION}.xtcrp.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vmdk.gz
-          qemu-img convert -f raw -O vhdx -o subformat=dynamic -p tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vhdx
-          gzip -c tinycore-redpill.${VERSION}.xtcrp.vhdx > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vhdx.gz
+          #qemu-img convert -f raw -O vhdx -o subformat=dynamic -p tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vhdx
+          #gzip -c tinycore-redpill.${VERSION}.xtcrp.vhdx > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vhdx.gz
           ls -ltr /opt/output
           
       - name: Upload MshellImage-${{ steps.get-version.outputs.VERSION }}
