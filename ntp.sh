@@ -14,7 +14,7 @@ while [ -z "$GATEWAY_INTERFACE" ]; do
       echo -e "\e[33m----------------------user_config.json synoinfo----------------------------\e[0m"
       jq '.synoinfo' /home/tc/user_config.json
       echo -e "\e[33m----------------------added addons-----------------------------------------\e[0m"
-      ls /home/tc/redpill-load/custom/extensions
+      [ -d /home/tc/redpill-load/custom/extensions ] && ls /home/tc/redpill-load/custom/extensions || echo "No Addons added. (Loader build required)"
     fi
     echo "Press ctrl-c to exit"
     sleep 1
