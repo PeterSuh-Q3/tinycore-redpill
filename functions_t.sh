@@ -2451,7 +2451,7 @@ EOF
 }
 
 function tcrpjotentry() {
-#    cat <<EOF
+    cat <<EOF
 menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
@@ -2461,7 +2461,7 @@ menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbos
         initrd /initrd-dsm
         echo Starting DSM kernel with USB/SATA boot
 }    
-#EOF
+EOF
 }
 
 function showsyntax() {
