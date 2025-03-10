@@ -2440,13 +2440,27 @@ function savedefault {
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
     echo ""    
     echo "Cmdline:"
-    echo "${USB_LINE}"
+    echo "${CMD_LINE}"
     echo ""
     echo "IP Addr : ${IP} (Last Detected)"
     echo ""
     echo "Access http://find.synology.com/ or http://${IP}:5000 to connect the DSM via web."
     echo ""
 }    
+EOF
+}
+
+function tcrpjotentry() {
+    cat <<EOF
+menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading DSM Linux... ${DMPM}
+        linux /zImage-dsm ${CMD_LINE}
+        echo Loading DSM initramfs...
+        initrd /initrd-dsm
+        echo Starting kernel with USB/SATA boot
+}
 EOF
 }
 
@@ -2723,7 +2737,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
-        if [ "${BUS}" = "sata" ]; then
+        if [ "${BUS}" != "usb" ]; then
             DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
             sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
         fi
@@ -2787,6 +2801,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         SATA_LINE="${SATA_LINE} syno_hw_version=${MODEL} "
     fi    
 
+    if [ "${BUS}" = "usb" ]; then
+        CMD_LINE=${USB_LINE}
+    else
+        CMD_LINE=${SATA_LINE}
+    fi
+
     if [ "$WITHFRIEND" = "YES" ]; then
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
@@ -2805,10 +2825,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
 
     if [ "$WITHFRIEND" = "YES" ]; then
+        echo "Creating tinycore Junior Boot entry"    
         tcrpentry_junior | sudo tee --append /tmp/grub.cfg 
     else
         echo "Creating tinycore Jot entry"
-        echo "$(head -n 10 /tmp/tempentry.txt | sed 's/USB/USB\/SATA/g')" | sudo tee --append /tmp/grub.cfg
+        tcrpjotentry | sudo tee --append /tmp/grub.cfg
     fi
 
     cd /home/tc/redpill-load
