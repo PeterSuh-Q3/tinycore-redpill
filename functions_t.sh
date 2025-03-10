@@ -2452,15 +2452,16 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' 
+{
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
-        echo Loading Linux... ${DMPM}
+        echo Loading DSM Linux... ${DMPM}
         linux /zImage-dsm ${CMD_LINE}
         echo Loading DSM initramfs...
         initrd /initrd-dsm
-        echo Starting DSM kernel with USB/SATA boot
-}    
+        echo Starting kernel with USB/SATA boot
+}
 EOF
 }
 
