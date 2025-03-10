@@ -2452,8 +2452,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' 
-{
+menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
