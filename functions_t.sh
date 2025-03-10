@@ -2440,7 +2440,7 @@ function savedefault {
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
     echo ""    
     echo "Cmdline:"
-    echo "${USB_LINE}"
+    echo "${CMD_LINE}"
     echo ""
     echo "IP Addr : ${IP} (Last Detected)"
     echo ""
@@ -2801,6 +2801,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         SATA_LINE="${SATA_LINE} syno_hw_version=${MODEL} "
     fi    
 
+    if [ "${BUS}" = "usb" ]; then
+        CMD_LINE=${USB_LINE}
+    else
+        CMD_LINE=${SATA_LINE}
+    fi
+
     if [ "$WITHFRIEND" = "YES" ]; then
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
@@ -2819,14 +2825,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
 
     if [ "$WITHFRIEND" = "YES" ]; then
+        echo "Creating tinycore Junior Boot entry"    
         tcrpentry_junior | sudo tee --append /tmp/grub.cfg 
     else
         echo "Creating tinycore Jot entry"
-        if [ "${BUS}" = "usb" ]; then
-            CMD_LINE=${USB_LINE}
-        else
-            CMD_LINE=${SATA_LINE}
-        fi
         tcrpjotentry | sudo tee --append /tmp/grub.cfg
     fi
 
