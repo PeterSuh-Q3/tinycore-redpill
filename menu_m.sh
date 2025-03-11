@@ -1008,15 +1008,15 @@ function writexsession() {
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
   fi
 
-  if ! grep -q "menu.sh" /opt/bootlocal.sh; then
+  if ! grep -q "/home/tc/menu.sh" /opt/bootlocal.sh; then
     echo "[ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh" >> /opt/bootlocal.sh
   fi
   
-  if ! grep -q "monitor.sh" /opt/bootlocal.sh; then
+  if ! grep -q "/home/tc/monitor.sh" /opt/bootlocal.sh; then
     echo "[ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh" >> /opt/bootlocal.sh
   fi
   
-  if ! grep -q "ntp.sh" /opt/bootlocal.sh; then
+  if ! grep -q "/home/tc/ntp.sh" /opt/bootlocal.sh; then
     echo "[ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh" >> /opt/bootlocal.sh
   fi
 
