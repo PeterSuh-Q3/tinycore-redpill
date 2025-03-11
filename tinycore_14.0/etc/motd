@@ -1,0 +1,7 @@
+   ( '>')
+  /) TC (\   Core is distributed with ABSOLUTELY NO WARRANTY.
+ (/-_--_-\)           www.tinycorelinux.net
+
+Configure the loader using the menu.sh command.
+To check system information and boot entries using the monitor.sh command.
+To check the settings and installed addons using the ntp.sh command.
