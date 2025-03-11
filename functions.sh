@@ -2322,12 +2322,20 @@ function backuploader() {
     readanswer
     if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
         echo -n "Backing up home files to $loaderdisk : "
-        echo "etc/motd" >> /opt/.filetool.lst
-        echo "usr/bin/menu.sh" >> /opt/.filetool.lst
-        echo "usr/bin/monitor.sh" >> /opt/.filetool.lst
-        echo "usr/bin/ntp.sh" >> /opt/.filetool.lst
-        echo "usr/sbin/sz" >> /opt/.filetool.lst
-        echo "usr/sbin/rz" >> /opt/.filetool.lst
+
+        # Define the path to the file
+        FILE_PATH="/opt/.filetool.lst"
+        
+        # Define the patterns to be added
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz")
+        
+        # Add each pattern to the file if it does not already exist
+        for pattern in "${PATTERNS[@]}"; do
+            if ! grep -qF "$pattern" "$FILE_PATH"; then
+                echo "$pattern" >> "$FILE_PATH"
+            fi
+        done
+        
         if filetool.sh -b ${loaderdisk}3; then
             echo ""
         else
