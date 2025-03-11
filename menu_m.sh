@@ -1008,26 +1008,6 @@ function writexsession() {
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
   fi
 
-  if ! grep -q "/home/tc/menu.sh" /opt/bootlocal.sh; then
-    echo "[ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh" >> /opt/bootlocal.sh
-  fi
-  
-  if ! grep -q "/home/tc/monitor.sh" /opt/bootlocal.sh; then
-    echo "[ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh" >> /opt/bootlocal.sh
-  fi
-  
-  if ! grep -q "/home/tc/ntp.sh" /opt/bootlocal.sh; then
-    echo "[ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh" >> /opt/bootlocal.sh
-  fi
-
-  if ! grep -q "motd" /opt/bootlocal.sh; then
-    echo "sudo sed -i '/menu.sh/d' /etc/motd" >> /opt/bootlocal.sh
-    echo "sudo sed -i '/monitor.sh/d' /etc/motd" >> /opt/bootlocal.sh
-    echo "sudo sed -i '/ntp.sh/d' /etc/motd" >> /opt/bootlocal.sh
-    echo "echo 'Configure the loader using the menu.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
-    echo "echo 'To check system information and boot entries using the monitor.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
-    echo "echo 'To check the settings and installed addons using the ntp.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
-  fi  
 }
 
 ###############################################################################
