@@ -975,27 +975,6 @@ function writexsession() {
   sed -i "/aterm/d" .xsession
   sed -i "/urxvt/d" .xsession
 
-  # Check if 'ttyd' pattern exists in .xsession
-  if ! grep -q "ttyd" .xsession; then
-    echo "'ttyd' pattern not found. Adding necessary lines to .xsession."
-
-    # Add the required lines to .xsession
-    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
-    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
-    echo "sudo ./ttyd login -f tc &" >> .xsession
-
-    # Notify the user about the changes and prompt for reboot
-    echo "The 'ttyd' configuration has been added to .xsession."
-    echo "The system needs to reboot. Press any key to continue..."
-
-    echo 'Y'|rploader backup
-    restart
-  else
-    echo "'ttyd' pattern already exists in .xsession. Rewriting its definition."
-    sed -i "/ttyd/d" .xsession
-    echo "sudo ./ttyd login -f tc &" >> .xsession    
-  fi
-
   echo "export LANG=${ucode}.UTF-8" >> .xsession
   echo "export LC_ALL=${ucode}.UTF-8" >> .xsession
   echo "[ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale &" >> .xsession
@@ -1008,19 +987,39 @@ function writexsession() {
   echo "aterm -geometry 78x25+10+430 -title \"TCRP Build Status\" -e /home/tc/ntp.sh &" >> .xsession
   echo "aterm -geometry 78x25+525+430 -fg green -title \"TCRP Extra Terminal\" &" >> .xsession
 
-  [ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh
-  [ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh
-  [ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh
+  echo "Checking if 'ttyd' pattern exists in /opt/bootlocal.sh ..."
+  sed -i "/ttyd/d" .xsession
+  # Check if 'ttyd' pattern exists in /opt/bootlocal.sh
+  if ! grep -q "ttyd" /opt/bootlocal.sh; then
+    echo "'ttyd' pattern not found. Adding necessary lines to /opt/bootlocal.sh"
 
-  sudo sed -i "/menu.sh/d" /etc/motd
-  sudo sed -i "/monitor.sh/d" /etc/motd
-  sudo sed -i "/ntp.sh/d" /etc/motd
-  echo "Configure the loader using the menu.sh command." | sudo tee -a /etc/motd
-  echo "To check system information and boot entries using the monitor.sh command." | sudo tee -a /etc/motd
-  echo "To check the settings and installed addons using the ntp.sh command." | sudo tee -a /etc/motd
+    # Add the required lines to .xsession
+    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
+    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
+    echo "sudo /home/tc/ttyd login -f tc" >> /opt/bootlocal.sh
 
-  echo "Checking if 'ttyd' pattern exists in .xsession..."
-  
+    # Notify the user about the changes and prompt for reboot
+    echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
+    echo "The system needs to reboot. Press any key to continue..."
+
+    echo 'Y'|rploader backup
+    restart
+  else
+    echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
+  fi
+
+  [ ! grep -q "menu.sh" /opt/bootlocal.sh ] && echo "[ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh" >> /opt/bootlocal.sh
+  [ ! grep -q "monitor.sh" /opt/bootlocal.sh ] &&echo "[ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh" >> /opt/bootlocal.sh
+  [ ! grep -q "ntp.sh" /opt/bootlocal.sh ] &&echo "[ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh" >> /opt/bootlocal.sh
+
+  if ! grep -q "motd" /opt/bootlocal.sh; then
+    echo "sudo sed -i '/menu.sh/d' /etc/motd" >> /opt/bootlocal.sh
+    echo "sudo sed -i '/monitor.sh/d' /etc/motd" >> /opt/bootlocal.sh
+    echo "sudo sed -i '/ntp.sh/d' /etc/motd" >> /opt/bootlocal.sh
+    echo "echo 'Configure the loader using the menu.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
+    echo "echo 'To check system information and boot entries using the monitor.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
+    echo "echo 'To check the settings and installed addons using the ntp.sh command.' | sudo tee -a /etc/motd" >> /opt/bootlocal.sh
+  fi  
 }
 
 ###############################################################################
