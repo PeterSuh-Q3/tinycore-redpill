@@ -35,7 +35,13 @@ jobs:
           rm -f ./mydata/usr/bin/ntp.sh
           ln -sf /home/tc/menu.sh ./mydata/usr/bin/menu.sh
           ln -sf /home/tc/monitor.sh ./mydata/usr/bin/monitor.sh
-          ln -sf /home/tc/ntp.sh ./mydata/usr/bin/ntp.sh          
+          ln -sf /home/tc/ntp.sh ./mydata/usr/bin/ntp.sh                    
+          if ! grep -q "ttyd" ./mydata/opt/bootlocal.sh; then
+            echo "sudo /home/tc/ttyd login -f tc" >> ./mydata/opt/bootlocal.sh
+            mkdir -p ./mydata/usr/sbin
+            cp -f lsz ./mydata/usr/sbin/sz
+            cp -f lrz ./mydata/usr/sbin/rz
+          fi
           tar -zcvf mydata.tgz -C ./mydata/ .
           
           rm ./mydata/home/tc/custom-module
