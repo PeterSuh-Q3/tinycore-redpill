@@ -1008,9 +1008,17 @@ function writexsession() {
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
   fi
 
-  [ ! grep "menu.sh" /opt/bootlocal.sh ] && echo "[ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh" >> /opt/bootlocal.sh
-  [ ! grep "monitor.sh" /opt/bootlocal.sh ] &&echo "[ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh" >> /opt/bootlocal.sh
-  [ ! grep "ntp.sh" /opt/bootlocal.sh ] &&echo "[ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh" >> /opt/bootlocal.sh
+  if ! grep -q "menu.sh" /opt/bootlocal.sh; then
+    echo "[ ! -f /usr/bin/menu.sh ] && sudo ln -s /home/tc/menu.sh /usr/bin/menu.sh" >> /opt/bootlocal.sh
+  fi
+  
+  if ! grep -q "monitor.sh" /opt/bootlocal.sh; then
+    echo "[ ! -f /usr/bin/monitor.sh ] && sudo ln -s /home/tc/monitor.sh /usr/bin/monitor.sh" >> /opt/bootlocal.sh
+  fi
+  
+  if ! grep -q "ntp.sh" /opt/bootlocal.sh; then
+    echo "[ ! -f /usr/bin/ntp.sh ] && sudo ln -s /home/tc/ntp.sh /usr/bin/ntp.sh" >> /opt/bootlocal.sh
+  fi
 
   if ! grep -q "motd" /opt/bootlocal.sh; then
     echo "sudo sed -i '/menu.sh/d' /etc/motd" >> /opt/bootlocal.sh
