@@ -975,6 +975,27 @@ function writexsession() {
   sed -i "/aterm/d" .xsession
   sed -i "/urxvt/d" .xsession
 
+  # Check if 'ttyd' pattern exists in .xsession
+  if ! grep -q "ttyd" .xsession; then
+    echo "'ttyd' pattern not found. Adding necessary lines to .xsession."
+
+    # Add the required lines to .xsession
+    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
+    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
+    echo "sudo ./ttyd login -f tc &" >> .xsession
+
+    # Notify the user about the changes and prompt for reboot
+    echo "The 'ttyd' configuration has been added to .xsession."
+    echo "The system needs to reboot. Press any key to continue..."
+
+    echo 'Y'|rploader backup
+    restart
+  else
+    echo "'ttyd' pattern already exists in .xsession. Rewriting its definition."
+    sed -i "/ttyd/d" .xsession
+    echo "sudo ./ttyd login -f tc &" >> .xsession    
+  fi
+
   echo "export LANG=${ucode}.UTF-8" >> .xsession
   echo "export LC_ALL=${ucode}.UTF-8" >> .xsession
   echo "[ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale &" >> .xsession
@@ -999,25 +1020,6 @@ function writexsession() {
   echo "To check the settings and installed addons using the ntp.sh command." | sudo tee -a /etc/motd
 
   echo "Checking if 'ttyd' pattern exists in .xsession..."
-
-  # Check if 'ttyd' pattern exists in .xsession
-  if ! grep -q "ttyd" .xsession; then
-    echo "'ttyd' pattern not found. Adding necessary lines to .xsession."
-
-    # Add the required lines to .xsession
-    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
-    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
-    echo "sudo ./ttyd login -f tc &" >> .xsession
-
-    # Notify the user about the changes and prompt for reboot
-    echo "The 'ttyd' configuration has been added to .xsession."
-    echo "The system needs to reboot. Press any key to continue..."
-
-    echo 'Y'|rploader backup
-    restart
-  else
-    echo "'ttyd' pattern already exists in .xsession. No changes made."
-  fi
   
 }
 
