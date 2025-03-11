@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.0"
+rploaderver="1.2.2.1"
 build="master"
 redpillmake="prod"
 
@@ -160,6 +160,7 @@ function history() {
     1.2.1.8 Modify the method of checking Internet connection in menu.sh
     1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+    1.2.2.1 TTYD web console baremetal headless support fix
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -491,6 +492,8 @@ EOF
 # Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
 # 2025.03.07 v1.2.2.0 
 # Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+# 2025.03.11 v1.2.2.1 
+# TTYD web console baremetal headless support fix
     
 function showlastupdate() {
     cat <<EOF
@@ -645,6 +648,9 @@ function showlastupdate() {
 
 # 2025.03.07 v1.2.2.0 
 # Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+
+# 2025.03.11 v1.2.2.1 
+# TTYD web console baremetal headless support fix
 
 EOF
 }
