@@ -2322,6 +2322,12 @@ function backuploader() {
     readanswer
     if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
         echo -n "Backing up home files to $loaderdisk : "
+        echo "etc/motd" >> /opt/.filetool.lst
+        echo "usr/bin/menu.sh" >> /opt/.filetool.lst
+        echo "usr/bin/monitor.sh" >> /opt/.filetool.lst
+        echo "usr/bin/ntp.sh" >> /opt/.filetool.lst
+        echo "usr/sbin/sz" >> /opt/.filetool.lst
+        echo "usr/sbin/rz" >> /opt/.filetool.lst
         if filetool.sh -b ${loaderdisk}3; then
             echo ""
         else
