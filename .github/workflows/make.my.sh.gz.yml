@@ -30,6 +30,9 @@ jobs:
           cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz user_config.json ./mydata/home/tc/
           cp -vf ./tinycore_14.0/etc/motd ./mydata/etc/motd
           mkdir -p ./mydata/usr/bin
+          [ -f ./mydata/usr/bin/menu.sh ] && rm ./mydata/usr/bin/menu.sh
+          [ -f ./mydata/usr/bin/monitor.sh ] && rm ./mydata/usr/bin/monitor.sh
+          [ -f ./mydata/usr/bin/ntp.sh ] && rm ./mydata/usr/bin/ntp.sh
           ln -s /home/tc/menu.sh ./mydata/usr/bin/menu.sh
           ln -s /home/tc/monitor.sh ./mydata/usr/bin/monitor.sh
           ln -s /home/tc/ntp.sh ./mydata/usr/bin/ntp.sh
