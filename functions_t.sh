@@ -2190,7 +2190,9 @@ function getvars() {
     sudo chown -R tc:staff /home/tc
 
     getgrubbkg
-    getbspatch
+    [ -f ./bspatch ] && chmod 777 ./bspatch && sudo cp -vf ./bspatch /usr/bin/bspatch
+    [ -f ./pigz ] && chmod 777 ./pigz && sudo cp -vf ./pigz /usr/bin/pigz
+    #getbspatch
 
     if [ "${offline}" = "NO" ]; then
         echo "Redownload the latest module.alias.4.json file ..."    
@@ -2322,6 +2324,20 @@ function backuploader() {
     readanswer
     if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
         echo -n "Backing up home files to $loaderdisk : "
+
+        # Define the path to the file
+        FILE_PATH="/opt/.filetool.lst"
+        
+        # Define the patterns to be added
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/bin/bspatch" "usr/bin/pigz")
+        
+        # Add each pattern to the file if it does not already exist
+        for pattern in "${PATTERNS[@]}"; do
+            if ! grep -qF "$pattern" "$FILE_PATH"; then
+                echo "$pattern" >> "$FILE_PATH"
+            fi
+        done
+        
         if filetool.sh -b ${loaderdisk}3; then
             echo ""
         else
