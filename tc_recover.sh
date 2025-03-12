@@ -6,4 +6,7 @@ tcrppart="${loaderdisk}3"
 
 sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/mydata.tgz -o /mnt/${tcrppart}/mydata.tgz
 
+echo "A reboot is required. Press any key to reboot..."
+read -n 1 -s  # Wait for a key press
+    
 sudo reboot
