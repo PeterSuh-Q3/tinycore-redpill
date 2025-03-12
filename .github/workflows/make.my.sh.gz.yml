@@ -23,11 +23,11 @@ jobs:
           echo "note: ${note}"
           echo "::set-output name=note::${note}"
           
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz
           
           mkdir -p ./mydata/home/tc/
           tar -zxvf mydata.tgz -C ./mydata/
-          cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz user_config.json ./mydata/home/tc/
+          cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz user_config.json ./mydata/home/tc/
           cp -vf ./tinycore_14.0/etc/motd ./mydata/etc/motd
           mkdir -p ./mydata/usr/bin
           rm -f ./mydata/usr/bin/menu.sh
