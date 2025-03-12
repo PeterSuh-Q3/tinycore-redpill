@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 loaderdisk=$(/sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
 echo "LOADER DISK: $loaderdisk"
