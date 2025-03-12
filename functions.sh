@@ -2095,13 +2095,23 @@ function getbspatch() {
     if [ "$FRKRNL" = "YES" ]; then
         if [ ! -f /usr/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
-            sudo cp -vf ~/tools/bspatch /usr/bin/
+            sudo cp -vf /home/tc/tools/bspatch /usr/bin/
         fi
     else
-        if [ ! -f /usr/local/bspatch ]; then
+        if [ ! -f /usr/local/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
-            sudo cp -vf ~/tools/bspatch /usr/local/bin/
+            sudo cp -vf /home/tc/tools/bspatch /usr/local/bin/
         fi
+    fi
+
+}
+
+function getpigz() {
+
+    chmod 777 /home/tc/tools/pigz
+    if [ ! -f /usr/bin/pigz ]; then
+        echo "pigz does not exist, copy from tools"
+        sudo cp -vf /home/tc/tools/pigz /usr/bin/
     fi
 
 }
@@ -2191,7 +2201,7 @@ function getvars() {
 
     getgrubbkg
     getbspatch
-    [ -f ./pigz ] && chmod 777 ./pigz && sudo cp -vf ./pigz /usr/bin/pigz
+    getpigz
 
     if [ "${offline}" = "NO" ]; then
         echo "Redownload the latest module.alias.4.json file ..."    
