@@ -4,6 +4,8 @@ loaderdisk=$(/sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' |
 echo "LOADER DISK: $loaderdisk"
 tcrppart="${loaderdisk}3"
 
+echo "Recover Tinycore redpill mshell with mydata.tgz"
+
 sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/mydata.tgz -o /mnt/${tcrppart}/mydata.tgz
 
 echo "A reboot is required. Press any key to reboot..."
