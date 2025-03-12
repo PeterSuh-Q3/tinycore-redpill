@@ -2108,10 +2108,10 @@ function getbspatch() {
 
 function getpigz() {
 
-    curl -skLO "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz"
-    chmod 777 /home/tc/pigz
-    if [ ! -f /usr/bin/pigz ]; then
-        echo "pigz does not exist, copy from tools"
+    if [ ! -n "$(which pigz)" ]; then
+        echo "pigz does not exist, bringing over from repo"
+        curl -skLO "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz"
+        chmod 777 /home/tc/pigz
         sudo cp -vf /home/tc/pigz /usr/bin/
     fi
 
@@ -2285,12 +2285,7 @@ function backuploader() {
   thread=$(nproc)
   if [ "${BUS}" != "block"  ]; then
 #Apply pigz for fast backup  
-    if [ ! -n "$(which pigz)" ]; then
-        echo "pigz does not exist, bringing over from repo"
-        curl -s -k -L "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz" -O
-        chmod 777 pigz
-        sudo mv pigz /usr/bin/
-    fi
+    getpigz
 
     # backup xtcrp together
     sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
