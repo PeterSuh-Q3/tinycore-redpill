@@ -2108,10 +2108,11 @@ function getbspatch() {
 
 function getpigz() {
 
-    chmod 777 /home/tc/tools/pigz
+    curl -skLO "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz"
+    chmod 777 /home/tc/pigz
     if [ ! -f /usr/bin/pigz ]; then
         echo "pigz does not exist, copy from tools"
-        sudo cp -vf /home/tc/tools/pigz /usr/bin/
+        sudo cp -vf /home/tc/pigz /usr/bin/
     fi
 
 }
