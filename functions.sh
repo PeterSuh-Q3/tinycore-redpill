@@ -2190,9 +2190,8 @@ function getvars() {
     sudo chown -R tc:staff /home/tc
 
     getgrubbkg
-    [ -f ./bspatch ] && chmod 777 ./bspatch && sudo cp -vf ./bspatch /usr/bin/bspatch
+    getbspatch
     [ -f ./pigz ] && chmod 777 ./pigz && sudo cp -vf ./pigz /usr/bin/pigz
-    #getbspatch
 
     if [ "${offline}" = "NO" ]; then
         echo "Redownload the latest module.alias.4.json file ..."    
@@ -2329,7 +2328,7 @@ function backuploader() {
         FILE_PATH="/opt/.filetool.lst"
         
         # Define the patterns to be added
-        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/bin/bspatch" "usr/bin/pigz")
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
         
         # Add each pattern to the file if it does not already exist
         for pattern in "${PATTERNS[@]}"; do
