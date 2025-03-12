@@ -2329,7 +2329,7 @@ function backuploader() {
         FILE_PATH="/opt/.filetool.lst"
         
         # Define the patterns to be added
-        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz")
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/bin/bspatch" "usr/bin/pigz")
         
         # Add each pattern to the file if it does not already exist
         for pattern in "${PATTERNS[@]}"; do
