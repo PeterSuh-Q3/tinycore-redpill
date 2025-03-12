@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bring last uploaded mydata.tgz files from tinycore-redpill & lastest img
+      - name: Bring last uploaded files from tinycore-redpill & lastest img
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev
@@ -116,13 +116,12 @@ jobs:
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
           cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
-          cd $GITHUB_WORKSPACE
-          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3
           ls -ltr /mnt/tarp3
           
           ## add tinycore packages
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubbkg.png /mnt/tarp3/grubbkg.png
           sudo cp -vf ${GITHUB_WORKSPACE}/xtcrp.tgz /mnt/tarp3/xtcrp.tgz
+          sudo cp -vf ${GITHUB_WORKSPACE}/xtcrp.tgz /mnt/tarp3/xtcrpb.tgz
           sudo rm -rf /mnt/tarp3/cde          
           sudo rm -f /mnt/tarp3/corepure64.gz
           sudo rm -f /mnt/tarp3/vmlinuz64
