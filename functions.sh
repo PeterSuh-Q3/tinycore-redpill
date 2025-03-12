@@ -2190,7 +2190,9 @@ function getvars() {
     sudo chown -R tc:staff /home/tc
 
     getgrubbkg
-    getbspatch
+    [ -f ./bspatch ] && chmod 777 ./bspatch && sudo cp -vf ./bspatch /usr/bin/bspatch
+    [ -f ./pigz ] && chmod 777 ./pigz && sudo cp -vf ./pigz /usr/bin/pigz
+    #getbspatch
 
     if [ "${offline}" = "NO" ]; then
         echo "Redownload the latest module.alias.4.json file ..."    
