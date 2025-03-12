@@ -118,6 +118,7 @@ jobs:
           cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
           cd $GITHUB_WORKSPACE
           sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3
+          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3/mydatab.tgz
           ls -ltr /mnt/tarp3
           
           ## add tinycore packages
