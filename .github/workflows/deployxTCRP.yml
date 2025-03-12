@@ -25,6 +25,7 @@ jobs:
         run: |
           #wget https://ftp.gnu.org/gnu/grub/grub-2.12.tar.gz
           tar xzf grub-2.12.tar.gz
+          cd grub-2.12
   
       - name: Configure GRUB
         working-directory: grub-2.12
