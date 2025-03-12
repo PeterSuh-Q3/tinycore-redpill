@@ -23,8 +23,8 @@ jobs:
           echo "note: ${note}"
           echo "::set-output name=note::${note}"
 
-          cp -vf ./tools/bspatch ..
-          cp -vf ./tools/pigz ..
+          cp -vf ./tools/bspatch .
+          cp -vf ./tools/pigz .
           tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz bspatch pigz
           
           mkdir -p ./mydata/home/tc/
