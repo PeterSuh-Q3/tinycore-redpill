@@ -1324,27 +1324,52 @@ function i915_edit() {
 
 function defaultchage() {
 
-    # Get the list of boot entries
-    menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
-    
-    # Display the menu and get the selection
-    selected_entry=$(echo "$menu_entries" | zenity --list --column="Boot Entry" --title="Select Boot Entry")
-    
-    # If an entry is selected, modify the GRUB configuration file
-    if [ -n "$selected_entry" ]; then
-        # Find the index of the selected entry
-        index=$(echo "$menu_entries" | grep -n "$selected_entry" | cut -d: -f1)
-        
-        # Since GRUB menu indices start at 0, subtract 1 from the selected index
-        adjusted_index=$((index-1))
-        
-        # Modify the GRUB configuration file using the adjusted index
-        sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
-        
-        echo "GRUB configuration file modified successfully."
-    else
-        echo "No entry selected."
-    fi
+  # Get the default entry index from grub.cfg
+  default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]')
+  
+  # Get the list of boot entries
+  menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
+  
+  # Create an array of menu options with (*) for the default entry
+  menu_options=()
+  index=0
+  for entry in $menu_entries; do
+      if [ $index -eq $default_index ]; then
+          menu_options+=("(*) $entry" "")
+      else
+          menu_options+=("$entry" "")
+      fi
+      ((index++))
+  done
+  
+  # Display the menu and get the selection
+  dialog --clear --backtitle "$backtitle" \
+        --menu "Choose a boot entry" 0 0 0 \
+        "${menu_options[@]}" \
+      2>${TMP_PATH}/resp
+  
+  # Check if the user cancelled or selected an option
+  [ $? -ne 0 ] && echo "No entry selected." && exit
+  
+  # Read the selected response
+  resp=$(<${TMP_PATH}/resp)
+  
+  # Check if a response was selected
+  [ -z "${resp}" ] && echo "No entry selected." && exit
+  
+  # Remove the (*) marker if present
+  resp=${resp#(*) }
+  
+  # Find the index of the selected entry
+  index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
+  
+  # Since GRUB menu indices start at 0, subtract 1 from the selected index
+  adjusted_index=$((index-1))
+  
+  # Modify the GRUB configuration file using the adjusted index
+  sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
+  
+  echo "GRUB configuration file modified successfully."
 
 }
 
