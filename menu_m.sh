@@ -1327,27 +1327,30 @@ function defaultchange() {
   # Get the default entry index from grub.cfg
   default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]' | tr -d '"')
   
-  # Get the list of boot entries
-  menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
+  # Get the list of boot entries and write to /tmp/menub
+  grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
   
   # Create an array of menu options with (*) for the default entry and index
   menu_options=()
   index=1
-  echo "" > "${TMP_PATH}/menub"
-  for entry in $menu_entries; do
-      full_entry=$(echo "$entry")
+  while IFS= read -r line; do
       if [ $((index-1)) -eq $default_index ]; then
-          echo "\"$index. (*) $full_entry\"" >> "${TMP_PATH}/menub"
+          menu_options+=("\"$index. (*) ${line:1:-1}\"")
       else
-          echo "\"$index. $full_entry\"" >> "${TMP_PATH}/menub"
+          menu_options+=("\"$index. ${line:1:-1}\"")
       fi
       ((index++))
+  done < /tmp/menub
+  
+  echo "" > /tmp/menub
+  for option in "${menu_options[@]}"; do
+      echo "$option" >> /tmp/menub
   done
 
   while true; do
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
-          --menu "Choose a boot entry" 0 0 0 --file "${TMP_PATH}/menub" \
+          --menu "Choose a boot entry" 0 0 0 --file /tmp/menub \
         2>${TMP_PATH}/resp
     
     # Check if the user cancelled or selected an option
