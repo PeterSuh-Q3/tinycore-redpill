@@ -1337,6 +1337,10 @@ function defaultchange() {
     
     # Update menu options with (*) for the default entry and index
     echo "" > /tmp/menub2
+
+    # Initialize default item
+    default_item=1
+    
     while IFS= read -r line; do
         if [ $((index-97)) -eq $default_index ]; then
             echo "$(printf \\$(printf '%03o' $index)) \"(*) ${line:1:-1}\"" >> /tmp/menub2
@@ -1349,18 +1353,19 @@ function defaultchange() {
     
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
+          --default-item "$default_item" \    
           --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
         2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     
     case `<"${TMP_PATH}/resp"` in
-      a) sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      b) sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      c) sudo sed -i "/set default=/cset default=\"2\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      d) sudo sed -i "/set default=/cset default=\"3\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      e) sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      f) sudo sed -i "/set default=/cset default=\"5\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
-      g) sudo sed -i "/set default=/cset default=\"6\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
+      a) sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=1 ;;
+      b) sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=2 ;;
+      c) sudo sed -i "/set default=/cset default=\"2\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=3 ;;
+      d) sudo sed -i "/set default=/cset default=\"3\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=4 ;;
+      e) sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=5 ;;
+      f) sudo sed -i "/set default=/cset default=\"5\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=6 ;;
+      g) sudo sed -i "/set default=/cset default=\"6\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item=7 ;;
       *) return;;
     esac
     
