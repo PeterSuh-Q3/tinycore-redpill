@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.1"
+rploaderver="1.2.2.2"
 build="master"
 redpillmake="prod"
 
@@ -161,6 +161,7 @@ function history() {
     1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
     1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
     1.2.2.1 TTYD web console baremetal headless support fix
+    1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -494,6 +495,8 @@ EOF
 # Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
 # 2025.03.11 v1.2.2.1 
 # TTYD web console baremetal headless support fix
+# 2025.03.13 v1.2.2.2 
+# Added to change the default value of the Grub boot entry (in the submenu)
     
 function showlastupdate() {
     cat <<EOF
@@ -651,6 +654,9 @@ function showlastupdate() {
 
 # 2025.03.11 v1.2.2.1 
 # TTYD web console baremetal headless support fix
+
+# 2025.03.13 v1.2.2.2 
+# Added to change the default value of the Grub boot entry (in the submenu)
 
 EOF
 }
