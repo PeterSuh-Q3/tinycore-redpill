@@ -2095,13 +2095,24 @@ function getbspatch() {
     if [ "$FRKRNL" = "YES" ]; then
         if [ ! -f /usr/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
-            sudo cp -vf ~/tools/bspatch /usr/bin/
+            sudo cp -vf /home/tc/tools/bspatch /usr/bin/
         fi
     else
-        if [ ! -f /usr/local/bspatch ]; then
+        if [ ! -f /usr/local/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
-            sudo cp -vf ~/tools/bspatch /usr/local/bin/
+            sudo cp -vf /home/tc/tools/bspatch /usr/local/bin/
         fi
+    fi
+
+}
+
+function getpigz() {
+
+    if [ ! -n "$(which pigz)" ]; then
+        echo "pigz does not exist, bringing over from repo"
+        curl -skLO "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz"
+        chmod 777 /home/tc/pigz
+        sudo cp -vf /home/tc/pigz /usr/bin/
     fi
 
 }
@@ -2190,9 +2201,8 @@ function getvars() {
     sudo chown -R tc:staff /home/tc
 
     getgrubbkg
-    [ -f ./bspatch ] && chmod 777 ./bspatch && sudo cp -vf ./bspatch /usr/bin/bspatch
-    [ -f ./pigz ] && chmod 777 ./pigz && sudo cp -vf ./pigz /usr/bin/pigz
-    #getbspatch
+    getbspatch
+    getpigz
 
     if [ "${offline}" = "NO" ]; then
         echo "Redownload the latest module.alias.4.json file ..."    
@@ -2275,12 +2285,7 @@ function backuploader() {
   thread=$(nproc)
   if [ "${BUS}" != "block"  ]; then
 #Apply pigz for fast backup  
-    if [ ! -n "$(which pigz)" ]; then
-        echo "pigz does not exist, bringing over from repo"
-        curl -s -k -L "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz" -O
-        chmod 777 pigz
-        sudo mv pigz /usr/bin/
-    fi
+    getpigz
 
     # backup xtcrp together
     sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
@@ -2329,7 +2334,7 @@ function backuploader() {
         FILE_PATH="/opt/.filetool.lst"
         
         # Define the patterns to be added
-        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/bin/bspatch" "usr/bin/pigz")
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
         
         # Add each pattern to the file if it does not already exist
         for pattern in "${PATTERNS[@]}"; do
