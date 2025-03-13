@@ -1352,8 +1352,8 @@ function defaultchange() {
     index=97 # Reset index for next iteration
     
     # Display the menu and get the selection
+#          --default-item "$default_item" \        
     dialog --clear --backtitle "`backtitle`" --colors \
-          --default-item "$default_item" \    
           --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
         2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
