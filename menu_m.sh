@@ -1335,7 +1335,7 @@ function defaultchange() {
   index=1
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
-      full_entry=$(echo "$entry" | sed 's/ /\\ /g')
+      full_entry=$(echo "$entry")
       if [ $((index-1)) -eq $default_index ]; then
           echo "\"$index. (*) $full_entry\"" >> "${TMP_PATH}/menub"
       else
@@ -1367,9 +1367,6 @@ function defaultchange() {
     
     # Remove the quotes if present
     resp=${resp//\"/}
-    
-    # Remove escaped spaces if present
-    resp=${resp//\\ / }
     
     # Find the index of the selected entry
     index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
