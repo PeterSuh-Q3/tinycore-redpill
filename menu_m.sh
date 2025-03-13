@@ -1335,7 +1335,8 @@ function defaultchange() {
   index=0
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
-      full_entry=$(echo "$entry" | sed 's/ /\\ /g')
+      # 각 부트 엔트리를 하나의 문자열로 처리
+      full_entry=$(echo "$menu_entries" | head -n $((index+1)) | tail -n 1)
       if [ $index -eq $default_index ]; then
           echo "\"(*) $full_entry\"" >> "${TMP_PATH}/menub"
       else
@@ -1364,9 +1365,6 @@ function defaultchange() {
     
     # Remove the quotes if present
     resp=${resp//\"/}
-    
-    # Remove escaped spaces if present
-    resp=${resp//\\ / }
     
     # Find the index of the selected entry
     index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
