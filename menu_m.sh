@@ -1331,13 +1331,13 @@ function defaultchange() {
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
   
   # Create an array of menu options with (*) for the default entry and index
-  index=1
+  index=97 # ASCII code for 'a'
   echo "" > /tmp/menub2
   while IFS= read -r line; do
-      if [ $((index-1)) -eq $default_index ]; then
-          echo "$index \"(*) ${line:1:-1}\"" >> /tmp/menub2
+      if [ $((index-97)) -eq $default_index ]; then
+          echo "$(printf \\$(printf '%03o' $index)) \"(*) ${line:1:-1}\"" >> /tmp/menub2
       else
-          echo "$index \"${line:1:-1}\"" >> /tmp/menub2
+          echo "$(printf \\$(printf '%03o' $index)) \"${line:1:-1}\"" >> /tmp/menub2
       fi
       ((index++))
   done < /tmp/menub
@@ -1354,8 +1354,8 @@ function defaultchange() {
       # Remove the (*) marker if present
       resp=${resp#(*) }
       
-      # Remove the index and dot if present
-      resp=${resp#*. }
+      # Remove the index if present
+      resp=${resp#? }
       
       # Remove the quotes if present
       resp=${resp//\"/}
