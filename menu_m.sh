@@ -1335,7 +1335,7 @@ function defaultchange() {
   index=0
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
-      full_entry=$(echo "$menu_entries" | head -n $((index+1)) | tail -n 1)
+      full_entry=$(echo "$entry" | sed 's/ /\\ /g')
       if [ $index -eq $default_index ]; then
           echo "\"(*) $full_entry\"" >> "${TMP_PATH}/menub"
       else
@@ -1343,7 +1343,7 @@ function defaultchange() {
       fi
       ((index++))
   done
-  
+
   while true; do
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
@@ -1364,6 +1364,9 @@ function defaultchange() {
     
     # Remove the quotes if present
     resp=${resp//\"/}
+    
+    # Remove escaped spaces if present
+    resp=${resp//\\ / }
     
     # Find the index of the selected entry
     index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
