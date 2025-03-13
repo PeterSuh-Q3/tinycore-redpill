@@ -1322,7 +1322,7 @@ function i915_edit() {
   echo 'Y'|rploader backup
 }
 
-function defaultchage() {
+function defaultchange() {
 
   # Get the default entry index from grub.cfg
   default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]' | tr -d '"')
@@ -1336,14 +1336,12 @@ function defaultchage() {
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
       if [ $index -eq $default_index ]; then
-          menu_options+=("(*) $entry" "")
+          echo "\"(*) $entry\"" >> "${TMP_PATH}/menub"
       else
-          menu_options+=("$entry" "")
+          echo "\"$entry\"" >> "${TMP_PATH}/menub"
       fi
       ((index++))
   done
-
-  echo "${menu_options[@]}"  >> "${TMP_PATH}/menub"  
 
   while true; do
     # Display the menu and get the selection
@@ -1362,6 +1360,9 @@ function defaultchage() {
     
     # Remove the (*) marker if present
     resp=${resp#(*) }
+    
+    # Remove the quotes if present
+    resp=${resp//\"/}
     
     # Find the index of the selected entry
     index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
