@@ -1331,26 +1331,21 @@ function defaultchange() {
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
   
   # Create an array of menu options with (*) for the default entry and index
-  menu_options=()
   index=1
+  echo "" > /tmp/menub2
   while IFS= read -r line; do
       if [ $((index-1)) -eq $default_index ]; then
-          menu_options+=("\"$index. (*) ${line:1:-1}\"")
+          echo "$index \"(*) ${line:1:-1}\"" >> /tmp/menub2
       else
-          menu_options+=("\"$index. ${line:1:-1}\"")
+          echo "$index \"$line:1:-1\"" >> /tmp/menub2
       fi
       ((index++))
   done < /tmp/menub
   
-  echo "" > /tmp/menub
-  for option in "${menu_options[@]}"; do
-      echo "$option" >> /tmp/menub
-  done
-
   while true; do
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
-          --menu "Choose a boot entry" 0 0 0 --file /tmp/menub \
+          --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
         2>${TMP_PATH}/resp
     
     # Check if the user cancelled or selected an option
@@ -1364,9 +1359,6 @@ function defaultchange() {
     
     # Remove the (*) marker if present
     resp=${resp#(*) }
-    
-    # Remove the index and dot if present
-    resp=${resp#*. }
     
     # Remove the quotes if present
     resp=${resp//\"/}
