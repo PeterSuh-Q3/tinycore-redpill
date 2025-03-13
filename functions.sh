@@ -730,20 +730,22 @@ EOF
 }
 
 function getloaderdisk() {
-    loaderdisk=""
-    while read -r edisk; do
-        if [ $(sudo /sbin/fdisk -l "$edisk" | grep -c "83 Linux") -eq 3 ]; then
-            loaderdisk=$(/sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
-            if [ -n "$loaderdisk" ]; then
-                break
-            else
-                # check for the other type
-                loaderdisk="$(echo ${edisk} | cut -c 1-12 | awk -F\/ '{print $3}')"
-                [ -n "$loaderdisk" ] && break
-            fi
-        fi
-    done < <(lsblk -ndo NAME | grep -v '^loop' | grep -v '^zram' | sed 's/^/\/dev\//')
 
+    loaderdisk=""
+    # Get the loader disk using the UUID "6234-C863"
+    loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+
+    # If the UUID "6234-C863" is not found, extract the disk name
+    if [ -z "$loaderdisk" ]; then
+        # Iterate through available disks to find a valid disk name
+        while read -r edisk; do
+            loaderdisk=$(echo ${edisk} | cut -c 1-12 | awk -F\/ '{print $3}')
+            # Break the loop if a valid disk name is found
+            [ -n "$loaderdisk" ] && break
+        done < <(lsblk -ndo NAME | grep -v '^loop' | grep -v '^zram' | sed 's/^/\/dev\//')
+    fi
+
+    # Output the loader disk
     echo "LOADER DISK: $loaderdisk"
 }
 
@@ -2341,7 +2343,7 @@ function backuploader() {
             if ! grep -qF "$pattern" "$FILE_PATH"; then
                 echo "$pattern" >> "$FILE_PATH"
             fi
-        done
+        done > /dev/null 2>&1
         
         if filetool.sh -b ${loaderdisk}3; then
             echo ""
