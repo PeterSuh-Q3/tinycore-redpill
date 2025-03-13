@@ -1339,7 +1339,7 @@ function defaultchange() {
     echo "" > /tmp/menub2
 
     # Initialize default item
-    default_item=1
+    default_item="a"
     
     while IFS= read -r line; do
         if [ $((index-97)) -eq $default_index ]; then
@@ -1350,11 +1350,11 @@ function defaultchange() {
         ((index++))
     done < /tmp/menub
     index=97 # Reset index for next iteration
-    
+
     # Display the menu and get the selection
     dialog --clear --default-item ${default_item} --backtitle "`backtitle`" --colors \
-          --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
-        2>${TMP_PATH}/resp
+    --menu "Choose a boot entry" 0 0 0 --file /${TMP_PATH}/menub2 \
+    2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     
     case `<"${TMP_PATH}/resp"` in
