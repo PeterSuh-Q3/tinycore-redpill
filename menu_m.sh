@@ -1342,45 +1342,31 @@ function defaultchange() {
       ((index++))
   done < /tmp/menub
   
-while true; do
+  while true; do
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
           --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
         2>${TMP_PATH}/resp
-    
-    # Check if the user cancelled or selected an option
-    if [ -s "${TMP_PATH}/resp" ]; then
-        resp=$(<${TMP_PATH}/resp)
-    else
-        resp=""
-    fi
-    
-    # Check if a response was selected
-    if [ -z "${resp}" ]; then
-        echo "No entry selected."
-        continue
-    fi
-    
-    # Remove the (*) marker if present
-    resp=${resp#(*) }
-    
-    # Remove the index if present
-    resp=${resp#? }
-    
-    # Remove the quotes if present
-    resp=${resp//\"/}
-    
+        [ $? -ne 0 ] && return
+    case `<"${TMP_PATH}/resp"` in
+      a) sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
+      b) sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
+      c) sudo sed -i "/set default=/cset default=\"2\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
+      d) sudo sed -i "/set default=/cset default=\"3\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
+      *) return;;
+    esac
+
     # Find the index of the selected entry
-    index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
+#    index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
     
     # Since GRUB menu indices start at 0, subtract 1 from the selected index
-    adjusted_index=$((index-1))
+#    adjusted_index=$((index-1))
     
     # Modify the GRUB configuration file using the adjusted index
-    sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
+#    sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
     
-done
-echo "GRUB configuration file modified successfully."
+  done
+  echo "GRUB configuration file modified successfully."
 
 }
 
