@@ -1322,6 +1322,32 @@ function i915_edit() {
   echo 'Y'|rploader backup
 }
 
+function defaultchage() {
+
+    # Get the list of boot entries
+    menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
+    
+    # Display the menu and get the selection
+    selected_entry=$(echo "$menu_entries" | zenity --list --column="Boot Entry" --title="Select Boot Entry")
+    
+    # If an entry is selected, modify the GRUB configuration file
+    if [ -n "$selected_entry" ]; then
+        # Find the index of the selected entry
+        index=$(echo "$menu_entries" | grep -n "$selected_entry" | cut -d: -f1)
+        
+        # Since GRUB menu indices start at 0, subtract 1 from the selected index
+        adjusted_index=$((index-1))
+        
+        # Modify the GRUB configuration file using the adjusted index
+        sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
+        
+        echo "GRUB configuration file modified successfully."
+    else
+        echo "No entry selected."
+    fi
+
+}
+
 function additional() {
 
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
@@ -1339,6 +1365,7 @@ function additional() {
   eval "MSG11=\"\${MSG${tz}11}\""  
 
   while true; do
+    echo "l \"Change GRUB boot entry default value\""  >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     [ "${BUS}" != "usb" ] && eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
@@ -1358,6 +1385,7 @@ function additional() {
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     case `<"${TMP_PATH}/resp"` in
+    l) defaultchage;;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
