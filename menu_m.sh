@@ -1365,8 +1365,8 @@ function additional() {
   eval "MSG11=\"\${MSG${tz}11}\""  
 
   while true; do
-    echo "l \"Change GRUB boot entry default value\""  >> "${TMP_PATH}/menua"
-    eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" > "${TMP_PATH}/menua"
+    echo "l \"Change GRUB boot entry default value\""  > "${TMP_PATH}/menua"
+    eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     [ "${BUS}" != "usb" ] && eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
     [ ${platform} = "geminilake(DT)" ] || [ ${platform} = "epyc7002(DT)" ] || [ ${platform} = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
