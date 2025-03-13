@@ -1415,7 +1415,7 @@ function additional() {
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     case `<"${TMP_PATH}/resp"` in
-    l) defaultchage;;
+    l) defaultchange;;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
