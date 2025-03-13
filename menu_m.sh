@@ -1337,7 +1337,7 @@ function defaultchange() {
       if [ $((index-1)) -eq $default_index ]; then
           echo "$index \"(*) ${line:1:-1}\"" >> /tmp/menub2
       else
-          echo "$index \"$line:1:-1\"" >> /tmp/menub2
+          echo "$index \"${line:1:-1}\"" >> /tmp/menub2
       fi
       ((index++))
   done < /tmp/menub
