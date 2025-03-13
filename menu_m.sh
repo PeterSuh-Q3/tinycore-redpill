@@ -1335,14 +1335,15 @@ function defaultchange() {
   index=0
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
+      full_entry=$(echo "$menu_entries" | head -n $((index+1)) | tail -n 1)
       if [ $index -eq $default_index ]; then
-          echo "\"(*) $entry\"" >> "${TMP_PATH}/menub"
+          echo "\"(*) $full_entry\"" >> "${TMP_PATH}/menub"
       else
-          echo "\"$entry\"" >> "${TMP_PATH}/menub"
+          echo "\"$full_entry\"" >> "${TMP_PATH}/menub"
       fi
       ((index++))
   done
-
+  
   while true; do
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
