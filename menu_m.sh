@@ -1343,7 +1343,7 @@ function defaultchage() {
   done
   
   # Display the menu and get the selection
-  dialog --clear --backtitle "$backtitle" \
+  dialog --clear --backtitle "`backtitle`" --colors \
         --menu "Choose a boot entry" 0 0 0 \
         "${menu_options[@]}" \
       2>${TMP_PATH}/resp
