@@ -1,1 +1,1 @@
-     1.2.2.1 TTYD web console baremetal headless support fix
+     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
