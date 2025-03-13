@@ -1324,30 +1324,35 @@ function i915_edit() {
 
 function defaultchange() {
 
-  # Get the default entry index from grub.cfg
-  default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]' | tr -d '"')
-  
   # Get the list of boot entries and write to /tmp/menub
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
   
   # Create an array of menu options with (*) for the default entry and index
   index=97 # ASCII code for 'a'
   echo "" > /tmp/menub2
-  while IFS= read -r line; do
-      if [ $((index-97)) -eq $default_index ]; then
-          echo "$(printf \\$(printf '%03o' $index)) \"(*) ${line:1:-1}\"" >> /tmp/menub2
-      else
-          echo "$(printf \\$(printf '%03o' $index)) \"${line:1:-1}\"" >> /tmp/menub2
-      fi
-      ((index++))
-  done < /tmp/menub
   
   while true; do
+    # Get the default entry index from grub.cfg
+    default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]' | tr -d '"')
+    
+    # Update menu options with (*) for the default entry and index
+    echo "" > /tmp/menub2
+    while IFS= read -r line; do
+        if [ $((index-97)) -eq $default_index ]; then
+            echo "$(printf \\$(printf '%03o' $index)) \"(*) ${line:1:-1}\"" >> /tmp/menub2
+        else
+            echo "$(printf \\$(printf '%03o' $index)) \"${line:1:-1}\"" >> /tmp/menub2
+        fi
+        ((index++))
+    done < /tmp/menub
+    index=97 # Reset index for next iteration
+    
     # Display the menu and get the selection
     dialog --clear --backtitle "`backtitle`" --colors \
           --menu "Choose a boot entry" 0 0 0 --file /tmp/menub2 \
         2>${TMP_PATH}/resp
-        [ $? -ne 0 ] && return
+    [ $? -ne 0 ] && return
+    
     case `<"${TMP_PATH}/resp"` in
       a) sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
       b) sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
@@ -1355,19 +1360,9 @@ function defaultchange() {
       d) sudo sed -i "/set default=/cset default=\"3\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg ;;
       *) return;;
     esac
-
-    # Find the index of the selected entry
-#    index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
-    
-    # Since GRUB menu indices start at 0, subtract 1 from the selected index
-#    adjusted_index=$((index-1))
-    
-    # Modify the GRUB configuration file using the adjusted index
-#    sudo sed -i "/set default=/cset default=\"$adjusted_index\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
     
   done
   echo "GRUB configuration file modified successfully."
-
 }
 
 function additional() {
