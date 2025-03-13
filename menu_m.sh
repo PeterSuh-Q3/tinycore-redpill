@@ -1325,7 +1325,7 @@ function i915_edit() {
 function defaultchage() {
 
   # Get the default entry index from grub.cfg
-  default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]')
+  default_index=$(( $(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]') ))
   
   # Get the list of boot entries
   menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
