@@ -1330,17 +1330,16 @@ function defaultchange() {
   # Get the list of boot entries
   menu_entries=$(grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}')
   
-  # Create an array of menu options with (*) for the default entry
+  # Create an array of menu options with (*) for the default entry and index
   menu_options=()
-  index=0
+  index=1
   echo "" > "${TMP_PATH}/menub"
   for entry in $menu_entries; do
-      # 각 부트 엔트리를 하나의 문자열로 처리
-      full_entry=$(echo "$menu_entries" | head -n $((index+1)) | tail -n 1)
-      if [ $index -eq $default_index ]; then
-          echo "\"(*) $full_entry\"" >> "${TMP_PATH}/menub"
+      full_entry=$(echo "$entry" | sed 's/ /\\ /g')
+      if [ $((index-1)) -eq $default_index ]; then
+          echo "\"$index. (*) $full_entry\"" >> "${TMP_PATH}/menub"
       else
-          echo "\"$full_entry\"" >> "${TMP_PATH}/menub"
+          echo "\"$index. $full_entry\"" >> "${TMP_PATH}/menub"
       fi
       ((index++))
   done
@@ -1363,8 +1362,14 @@ function defaultchange() {
     # Remove the (*) marker if present
     resp=${resp#(*) }
     
+    # Remove the index and dot if present
+    resp=${resp#*. }
+    
     # Remove the quotes if present
     resp=${resp//\"/}
+    
+    # Remove escaped spaces if present
+    resp=${resp//\\ / }
     
     # Find the index of the selected entry
     index=$(echo "$menu_entries" | grep -n "$resp" | cut -d: -f1)
