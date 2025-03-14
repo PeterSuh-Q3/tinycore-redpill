@@ -1330,6 +1330,8 @@ function defaultchange() {
   # Create an array of menu options with (*) for the default entry and index
   index=97 # ASCII code for 'a'
   echo "" > /tmp/menub2
+  # Initialize default item
+  default_item="a"
   
   while true; do
     # Get the default entry index from grub.cfg
@@ -1337,9 +1339,6 @@ function defaultchange() {
     
     # Update menu options with (*) for the default entry and index
     echo "" > /tmp/menub2
-
-    # Initialize default item
-    default_item="a"
     
     while IFS= read -r line; do
         if [ $((index-97)) -eq $default_index ]; then
@@ -1388,6 +1387,8 @@ function additional() {
   eval "MSG12=\"\${MSG${tz}12}\""
   eval "MSG11=\"\${MSG${tz}11}\""  
 
+  default_resp="l"
+
   while true; do
     echo "l \"Change GRUB boot entry default value\""  > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1404,10 +1405,11 @@ function additional() {
     eval "echo \"m \\\"Remove the injected bootloader partition\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"Packing loader file for remote update\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
-    dialog --clear --backtitle "`backtitle`" --colors \
+    dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
+    default_resp=$(echo ${TMP_PATH}/resp)
     case `<"${TMP_PATH}/resp"` in
     l) defaultchange;;
     a) 
