@@ -2347,7 +2347,7 @@ function backuploader() {
         # Add each pattern to the file if it does not already exist
         for pattern in "${PATTERNS[@]}"; do
             if ! grep -qF "$pattern" "$FILE_PATH"; then
-                echo "$pattern" >> "$FILE_PATH"
+                [ -f "/$pattern" ] && echo "$pattern" >> "$FILE_PATH"
             fi
         done > /dev/null 2>&1
         
