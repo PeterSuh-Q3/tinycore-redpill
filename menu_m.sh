@@ -94,6 +94,14 @@ function update_tinycore() {
   fi
 }
 
+function update_motd() {
+  echo "check update for /etc/motd"
+  md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
+  if [ ${md5_motd} = "b8003b17c74bbd999a975c555d6da5af" ]; then
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+  fi
+}
+
 if [ -f /home/tc/my.sh ]; then
   rm /home/tc/my.sh
 fi
@@ -129,23 +137,7 @@ fi
 # update tinycore 14.0 2023.12.18
 if [ "$FRKRNL" = "NO" ]; then
     update_tinycore
-#else
-#    if [ ! -f /mnt/${tcrppart}/corepure64.gz ] && [ ! -f /mnt/${tcrppart}/vmlinuz64 ]; then
-#        get_tinycore
-#    fi
-#    if [ ! -f /mnt/${tcrppart}/mydata.tgz ]; then
-#        cd /mnt/${tcrppart}
-#        sudo curl -kL#O https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mydata.tgz
-#        cd ~
-#    fi
-#    if [ ! -d /mnt/${tcrppart}/cde ]; then
-#        cd /mnt/${tcrppart}    
-#        sudo curl -kL#O https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.0.0/cde.tgz
-#        sudo mkdir cde
-#        sudo tar -xzvf cde.tgz -C cde
-#        sudo rm cde.tgz
-#        cd ~
-#    fi
+    update_motd
 fi
 
 # restore user_config.json file from /mnt/sd#/lastsession directory 2023.10.21
