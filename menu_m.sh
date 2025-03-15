@@ -1404,16 +1404,18 @@ function additional() {
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
-    default_resp=$(echo ${TMP_PATH}/resp)
+
     case `<"${TMP_PATH}/resp"` in
-    l) defaultchange;;
+    l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
+      default_resp="a"
       ;;
     y) 
       [ "${dbgutils}" = "Add" ] && add-addon "dbgutils" || del-addon "dbgutils"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
+      default_resp="y"
       ;;
     j)
       if [ "${DOMKIND}" == "Native" ]; then
@@ -1422,22 +1424,24 @@ function additional() {
       else
         satadom_edit 2
         DOMKIND="Native"
-      fi   
+      fi
+      default_resp="j"
       ;;
     z)
       #[ "$MACHINE" = "VIRTUAL" ] && echo "VIRTUAL Machine is not supported..." && read answer && continue
       i915_edit
+      default_resp="z"
       ;;
-    b) prevent;;
-    c) showsata;;
-    d) viewerrorlog;;
-    e) burnloader;;
-    f) cloneloader;;
-    g) erasedisk;;
-    h) inject_loader && chk_shr_ex;;
-    m) remove_loader && chk_shr_ex;;
-    i) packing_loader;;
-    k) keymapMenu ;;
+    b) prevent; default_resp="b";;
+    c) showsata; default_resp="c";;
+    d) viewerrorlog; default_resp="d";;
+    e) burnloader; default_resp="e";;
+    f) cloneloader; default_resp="f";;
+    g) erasedisk; default_resp="g";;
+    h) inject_loader && chk_shr_ex; default_resp="h";;
+    m) remove_loader && chk_shr_ex; default_resp="m";;
+    i) packing_loader; default_resp="i";;
+    k) keymapMenu; default_resp="k";;
     *) return;;
     esac
     
