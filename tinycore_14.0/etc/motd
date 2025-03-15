@@ -2,6 +2,3 @@
   /) TC (\   Core is distributed with ABSOLUTELY NO WARRANTY.
  (/-_--_-\)           www.tinycorelinux.net
 
-Configure the loader using the ^[[1;32mmenu.sh^[[0m command.
-To check system information and boot entries using the ^[[1;33mmonitor.sh^[[0m command.
-To check the settings and installed addons using the ^[[1;35mntp.sh^[[0m command.
