@@ -97,7 +97,7 @@ function update_tinycore() {
 function update_motd() {
   echo "check update for /etc/motd"
   md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
-  if [ ${md5_motd} = "b8003b17c74bbd999a975c555d6da5af" ]; then
+  if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
     sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
   fi
 }
