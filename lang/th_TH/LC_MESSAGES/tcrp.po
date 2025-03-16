@@ -55,8 +55,8 @@ msgid "Choose a keymap"
 msgstr "เลือกคีย์แมป"
 
 #: MSGTH12 
-msgid "Format Disk(s # Excluding Loader Disk"
-msgstr "ฟอร์แมตดิสก์(s # ไม่รวม Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
+msgstr "ฟอร์แมตดิสก์(s) # ไม่รวม Loader Disk"
 
 #: MSGTH13 
 msgid "Backup TCRP"
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGTH26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (อุปกรณ์พื้นที่ผู้ใช้ที่ได้รับการปรับปรุง"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (อุปกรณ์พื้นที่ผู้ใช้ที่ได้รับการปรับปรุง)"
 
 #: MSGTH27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (ตรวจพบการโหลดโมดูลคงที่ของอุปกรณ์"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (ตรวจพบการโหลดโมดูลคงที่ของอุปกรณ์)"
 
 #: MSGTH28 
-msgid "FRIEND (most recently stabilized"
-msgstr "เพื่อน (ล่าสุดมีเสถียรภาพ"
+msgid "FRIEND (most recently stabilized)"
+msgstr "เพื่อน (ล่าสุดมีเสถียรภาพ)"
 
 #: MSGTH29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (ทางเก่าก่อนเพื่อน"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (ทางเก่าก่อนเพื่อน)"
 
 #: MSGTH30 
 msgid "Generate a random serial number"
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "ป้องกัน SataPortMap,DiskIdxMap การเริ่มต้น"
 
 #: MSGTH52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "แสดงพอร์ตและไดรฟ์ SATA สำหรับ SataPortMap"
 
 #: MSGTH53 

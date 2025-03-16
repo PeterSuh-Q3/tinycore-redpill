@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "Escolha um mapa de teclado"
 
 #: MSGBR12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "Formatar disco(s) # Sem disco carregador"
 
 #: MSGBR13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGBR26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV (dispositivo de usuário aprimorado)"
 
 #: MSGBR27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML (Carregamento de Módulo Estático de Dispositivo Detectado)"
 
 #: MSGBR28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND (mais recentemente estabilizado)"
 
 #: MSGBR29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT (O antigo método antes de friend)"
 
 #: MSGBR30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "Impedir inicialização de SataPortMap,DiskIdxMap"
 
 #: MSGBR52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "Mostrar portas e unidades SATA(s) para SataPortMap"
 
 #: MSGBR53 

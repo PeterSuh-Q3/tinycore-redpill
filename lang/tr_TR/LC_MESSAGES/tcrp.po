@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "Bir tuş haritası seçin"
 
 #: MSGTR12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "Yükleyici Diski Hariç Disk(ler)i Formatla"
 
 #: MSGTR13 
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGTR26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (geliştirilmiş kullanıcı alanı cihazı"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (geliştirilmiş kullanıcı alanı cihazı)"
 
 #: MSGTR27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (Algılanan Cihaz Statik Modül Yüklemesi"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (Algılanan Cihaz Statik Modül Yüklemesi)"
 
 #: MSGTR28 
-msgid "FRIEND (most recently stabilized"
-msgstr "ARKADAŞ (en son stabil hale getirildi"
+msgid "FRIEND (most recently stabilized)"
+msgstr "ARKADAŞ (en son stabil hale getirildi)"
 
 #: MSGTR29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (Arkadaştan önceki eski yol"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (Arkadaştan önceki eski yol)"
 
 #: MSGTR30 
 msgid "Generate a random serial number"
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "SataPortMap,DiskIdxMap başlatılmasını önle"
 
 #: MSGTR52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SataPortMap için SATA bağlantı noktalarını ve sürücülerini göster"
 
 #: MSGTR53 

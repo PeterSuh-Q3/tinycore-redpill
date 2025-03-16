@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti H/W 가속지원"
 
 #: MSGKR26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV (향상된 사용자 공간 장치)"
 
 #: MSGKR27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML (감지된 장치 정적 모듈 로드)"
 
 #: MSGKR28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND (가장 최근에 안정화된 로더모드)"
 
 #: MSGKR29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT (FRIEND 보다 옛날 로더모드)"
 
 #: MSGKR30 

@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "एक कीमैप चुनें"
 
 #: MSGIN12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "प्रारूपित डिस्क # लोडर डिस्क को छोड़कर"
 
 #: MSGIN13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "एनवीडिया GTX1050Ti"
 
 #: MSGIN26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV (उन्नत उपयोगकर्ता-स्थान उपकरण)"
 
 #: MSGIN27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML (पता लगाया गया डिवाइस स्टेटिक मॉड्यूल लोड हो रहा है)"
 
 #: MSGIN28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "मित्र (हाल ही में स्थिर)"
 
 #: MSGIN29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT (दोस्त से पहले का पुराना तरीका)"
 
 #: MSGIN30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "SataPortMap,DiskIdxMap आरंभीकरण को रोकें"
 
 #: MSGIN52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SataPortMap के लिए SATA(s पोर्ट और ड्राइव दिखाएं)"
 
 #: MSGIN53 

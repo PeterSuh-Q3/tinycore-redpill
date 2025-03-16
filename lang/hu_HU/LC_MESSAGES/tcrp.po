@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "Válassz ki egy billentyűkiosztást"
 
 #: MSGHU12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "Lemez(ek # formázása, a betöltő lemez kivételével)"
 
 #: MSGHU13 
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGHU26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (bővített felhasználói tér eszköz"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (bővített felhasználói tér eszköz)"
 
 #: MSGHU27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (észlelt eszköz statikus modul betöltése"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (észlelt eszköz statikus modul betöltése)"
 
 #: MSGHU28 
-msgid "FRIEND (most recently stabilized"
-msgstr "BARÁT (legutóbb stabilizált"
+msgid "FRIEND (most recently stabilized)"
+msgstr "BARÁT (legutóbb stabilizált)"
 
 #: MSGHU29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (a régi út barát előtt"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (a régi út barát előtt)"
 
 #: MSGHU30 
 msgid "Generate a random serial number"
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "A SataPortMap,DiskIdxMap inicializálás megakadályozása"
 
 #: MSGHU52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SATA portok és meghajtók megjelenítése a SataPortMap számára"
 
 #: MSGHU53 

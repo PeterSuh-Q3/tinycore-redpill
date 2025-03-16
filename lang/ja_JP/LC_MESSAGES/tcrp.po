@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "キーマップを選択してください"
 
 #: MSGJP12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "ディスクフォーマット#ローダーディスクを除く"
 
 #: MSGJP13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGJP26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV（拡張ユーザースペースデバイス）"
 
 #: MSGJP27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML（検出されたデバイス静的モジュールローディング）"
 
 #: MSGJP28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND（最近安定化されました）"
 
 #: MSGJP29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT（フレンドよりも古い方法）"
 
 #: MSGJP30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "SataPortMap、DiskIdxMap の初期化を防止します"
 
 #: MSGJP52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SataPortMap の SATA ポートとドライブを表示"
 
 #: MSGJP53 

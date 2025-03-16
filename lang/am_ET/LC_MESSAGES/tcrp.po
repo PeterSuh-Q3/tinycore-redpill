@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "የቁልፍ ካርታ ምረጥ"
 
 #: MSGET12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "ቅርጸት ዲስክ(ዎች # ጫኚ ዲስክን ሳይጨምር)"
 
 #: MSGET13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGET26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (የተሻሻለ የተጠቃሚ ቦታ መሣሪያ"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (የተሻሻለ የተጠቃሚ ቦታ መሣሪያ)"
 
 #: MSGET27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (የተገኘ መሳሪያ የማይለዋወጥ ሞዱል ጭነት"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (የተገኘ መሳሪያ የማይለዋወጥ ሞዱል ጭነት)"
 
 #: MSGET28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "ጓደኛ (በጣም በቅርብ ጊዜ የተረጋጋ)"
 
 #: MSGET29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT (የቀድሞው መንገድ ከጓደኛ በፊት)"
 
 #: MSGET30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "SataPortMap፣DiskIdxMap ማስጀመርን አግድ"
 
 #: MSGET52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SATA(sports and drives for SataPortMap) አሳይ"
 
 #: MSGET53 

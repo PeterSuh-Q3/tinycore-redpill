@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "Pilih peta kunci"
 
 #: MSGID12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "Format Disk # Tidak Termasuk Disk Pemuat"
 
 #: MSGID13 
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGID26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (perangkat ruang pengguna yang ditingkatkan"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (perangkat ruang pengguna yang ditingkatkan)"
 
 #: MSGID27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (Pemuatan Modul Statis Perangkat Terdeteksi"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (Pemuatan Modul Statis Perangkat Terdeteksi)"
 
 #: MSGID28 
-msgid "FRIEND (most recently stabilized"
-msgstr "FRIEND (baru-baru ini stabil"
+msgid "FRIEND (most recently stabilized)"
+msgstr "FRIEND (baru-baru ini stabil)"
 
 #: MSGID29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (Cara lama sebelum teman"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (Cara lama sebelum teman)"
 
 #: MSGID30 
 msgid "Generate a random serial number"
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "Mencegah inisialisasi SataPortMap,DiskIdxMap"
 
 #: MSGID52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "Tampilkan port dan drive SATA untuk SataPortMap"
 
 #: MSGID53 

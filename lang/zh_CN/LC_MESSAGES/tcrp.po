@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "选择一个键盘映射"
 
 #: MSGCN12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "磁盘格式 # 不包括加载器磁盘"
 
 #: MSGCN13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGCN26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV（增强的用户空间设备）"
 
 #: MSGCN27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML（检测到的设备静态模块加载）"
 
 #: MSGCN28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND（最近稳定）"
 
 #: MSGCN29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT（在friend之前的旧方式）"
 
 #: MSGCN30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "防止 SataPortMap、DiskIdxMap 初始化"
 
 #: MSGCN52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "显示 SATAPortMap 的 SATA 端口和驱动器"
 
 #: MSGCN53 

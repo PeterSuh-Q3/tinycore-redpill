@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "Выберите раскладку клавиатуры"
 
 #: MSGRU12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "Форматировать диск(и) # Без загрузочного диска"
 
 #: MSGRU13 
@@ -107,19 +107,19 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGRU26 
-msgid "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
 msgstr "EUDEV (усовершенствованное устройство пользовательского пространства)"
 
 #: MSGRU27 
-msgid "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
 msgstr "DDSML (Загрузка статического модуля обнаруженного устройства)"
 
 #: MSGRU28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND (недавно стабилизированный)"
 
 #: MSGRU29 
-msgid "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
 msgstr "JOT (Старый способ до friend)"
 
 #: MSGRU30 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "Запретить инициализацию SataPortMap,DiskIdxMap"
 
 #: MSGRU52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "Показать порты и диски SATA для SataPortMap"
 
 #: MSGRU53 

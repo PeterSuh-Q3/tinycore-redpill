@@ -55,8 +55,8 @@ msgid "Choose a keymap"
 msgstr "Choose a keymap"
 
 #: MSGUS12 
-msgid "Format Disk(s # Excluding Loader Disk"
-msgstr "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
+msgstr "Format Disk(s) # Excluding Loader Disk"
 
 #: MSGUS13 
 msgid "Backup TCRP"
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "Nvidia GTX1050Ti"
 
 #: MSGUS26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (enhanced user-space device"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (enhanced user-space device)"
 
 #: MSGUS27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (Detected Device Static Module Loading"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (Detected Device Static Module Loading)"
 
 #: MSGUS28 
-msgid "FRIEND (most recently stabilized"
-msgstr "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
+msgstr "FRIEND (most recently stabilized)"
 
 #: MSGUS29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (The old way before friend"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (The old way before friend)"
 
 #: MSGUS30 
 msgid "Generate a random serial number"
@@ -179,8 +179,8 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "Prevent SataPortMap,DiskIdxMap initialization"
 
 #: MSGUS52 
-msgid "Show SATA(s ports and drives for SataPortMap"
-msgstr "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
+msgstr "Show SATA(s) ports and drives for SataPortMap"
 
 #: MSGUS53 
 msgid "Show error log of running loader"
@@ -197,7 +197,6 @@ msgstr "Clone Current TCRP Bootloader to USB or SSD"
 #: MSGUS56 
 msgid "sata_remap processing for SataPort reordering"
 msgstr "sata_remap processing for SataPort reordering"
-
 
 #: MSGUS57
 msgid "nvmesystem Addon(NVMe single volume use)"

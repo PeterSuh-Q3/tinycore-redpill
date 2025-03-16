@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "اختر خريطة مفاتيح"
 
 #: MSGEG12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "تنسيق القرص (الأقراص # باستثناء قرص التحميل"
 
 #: MSGEG13 
@@ -107,20 +107,20 @@ msgid "Nvidia GTX1050Ti"
 msgstr "إنفيديا جي تي إكس 1050 تي آي"
 
 #: MSGEG26 
-msgid "EUDEV (enhanced user-space device"
-msgstr "EUDEV (جهاز مساحة المستخدم المحسّن"
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV (جهاز مساحة المستخدم المحسّن)"
 
 #: MSGEG27 
-msgid "DDSML (Detected Device Static Module Loading"
-msgstr "DDSML (تحميل الوحدة الثابتة للجهاز الذي تم اكتشافه"
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML (تحميل الوحدة الثابتة للجهاز الذي تم اكتشافه)"
 
 #: MSGEG28 
-msgid "FRIEND (most recently stabilized"
+msgid "FRIEND (most recently stabilized)"
 msgstr "الصديق (الصديق (المستقر مؤخرًا)"
 
 #: MSGEG29 
-msgid "JOT (The old way before friend"
-msgstr "JOT (الطريقة القديمة قبل الصديق"
+msgid "JOT (The old way before friend)"
+msgstr "JOT (الطريقة القديمة قبل الصديق)"
 
 #: MSGEG30 
 msgid "Generate a random serial number"
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "منع تهيئة SataPortMap وDiskIdxMap"
 
 #: MSGEG52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "إظهار منافذ ومحركات أقراص SATA لـSataPortMap"
 
 #: MSGEG53 
