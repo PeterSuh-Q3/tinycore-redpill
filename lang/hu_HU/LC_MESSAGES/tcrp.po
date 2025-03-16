@@ -198,3 +198,30 @@ msgstr "A jelenlegi TCRP rendszerbetöltő klónozása USB-re vagy SSD-re"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "sata_remap feldolgozás a SataPort újrarendezéshez"
 
+#: MSGHU57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "nvmesystem bővítmény (egyetlen NVMe kötet használata)"
+
+#: MSGHU58 
+msgid "Boot the loader"
+msgstr "Indítsa el a betöltőt"
+
+#: MSGHU59 
+msgid "Additional Functions"
+msgstr "További funkciók"
+
+#: MSGHU60 
+msgid "Change GRUB boot entry default value"
+msgstr "Módosítsa a GRUB indítási bejegyzés alapértelmezett értékét"
+
+#: MSGHU61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "Bootloader befecskendezése a Syno lemezre"
+
+#: MSGHU62 
+msgid "Remove the injected bootloader partition"
+msgstr "A befecskendezett bootloader partíció eltávolítása"
+
+#: MSGHU63 
+msgid "Packing loader file for remote update"
+msgstr "Betöltő fájl csomagolása távoli frissítéshez"

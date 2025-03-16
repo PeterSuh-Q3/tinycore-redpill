@@ -198,3 +198,30 @@ msgstr "โคลน TCRP Bootloader ปัจจุบันเป็น USB �
 msgid "sata_remap processing for SataPort reordering"
 msgstr "การประมวลผล sata_remap สำหรับการเรียงลำดับ SataPort ใหม่"
 
+#: MSGTH57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "โมดูล nvmesystem (ใช้โวลุ่ม NVMe เดียว)"
+
+#: MSGTH58 
+msgid "Boot the loader"
+msgstr "เริ่มต้นโหลดเดอร์"
+
+#: MSGTH59 
+msgid "Additional Functions"
+msgstr "ฟังก์ชันเพิ่มเติม"
+
+#: MSGTH60 
+msgid "Change GRUB boot entry default value"
+msgstr "เปลี่ยนค่าเริ่มต้นของรายการบูต GRUB"
+
+#: MSGTH61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "ฉีดบูตโหลดเดอร์เข้าดิสก์ Syno"
+
+#: MSGTH62 
+msgid "Remove the injected bootloader partition"
+msgstr "ลบพาร์ติชันบูตโหลดเดอร์ที่ฉีดเข้าไป"
+
+#: MSGTH63 
+msgid "Packing loader file for remote update"
+msgstr "แพ็กไฟล์โหลดเดอร์สำหรับการอัปเดตระยะไกล"

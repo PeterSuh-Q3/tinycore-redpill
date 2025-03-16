@@ -198,3 +198,30 @@ msgstr "Clonar el cargador de arranque TCRP a USB o SSD"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "Procesamiento sata_remap para reordenamiento de SataPort"
 
+#: MSGES57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "Complemento nvmesystem (uso de un solo volumen NVMe)"
+
+#: MSGES58 
+msgid "Boot the loader"
+msgstr "Iniciar el cargador"
+
+#: MSGES59 
+msgid "Additional Functions"
+msgstr "Funciones adicionales"
+
+#: MSGES60 
+msgid "Change GRUB boot entry default value"
+msgstr "Cambiar el valor predeterminado de la entrada de arranque GRUB"
+
+#: MSGES61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "Inyectar el cargador de arranque en el disco Syno"
+
+#: MSGES62 
+msgid "Remove the injected bootloader partition"
+msgstr "Eliminar la partición del cargador de arranque inyectada"
+
+#: MSGES63 
+msgid "Packing loader file for remote update"
+msgstr "Empaquetar el archivo del cargador para actualización remota"

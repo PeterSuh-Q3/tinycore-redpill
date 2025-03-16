@@ -198,3 +198,30 @@ msgstr "استنساخ أداة تحميل التشغيل TCRP الحالية إ
 msgid "sata_remap processing for SataPort reordering"
 msgstr "معالجة sata_remap لإعادة ترتيب SATAPort"
 
+#: MSGEG57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "إضافة nvmesystem (استخدام مجلد NVMe واحد)"
+
+#: MSGEG58 
+msgid "Boot the loader"
+msgstr "تشغيل المُحمل"
+
+#: MSGEG59 
+msgid "Additional Functions"
+msgstr "وظائف إضافية"
+
+#: MSGEG60 
+msgid "Change GRUB boot entry default value"
+msgstr "تغيير قيمة الإدخال الافتراضي لتشغيل GRUB"
+
+#: MSGEG61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "حقن برنامج الإقلاع في قرص Syno"
+
+#: MSGEG62 
+msgid "Remove the injected bootloader partition"
+msgstr "إزالة قسم برنامج الإقلاع المحقون"
+
+#: MSGEG63 
+msgid "Packing loader file for remote update"
+msgstr "تحزيم ملف المُحمل لتحديث عن بعد"

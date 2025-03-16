@@ -198,3 +198,30 @@ msgstr "वर्तमान TCRP बूटलोडर को USB या SSD �
 msgid "sata_remap processing for SataPort reordering"
 msgstr "SataPort पुनर्व्यवस्था के लिए sata_remap प्रसंस्करण"
 
+#: MSGHI57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "nvmesystem ऐड-ऑन (NVMe एकल वॉल्यूम उपयोग)"
+
+#: MSGHI58 
+msgid "Boot the loader"
+msgstr "लोडर को बूट करें"
+
+#: MSGHI59 
+msgid "Additional Functions"
+msgstr "अतिरिक्त कार्य"
+
+#: MSGHI60 
+msgid "Change GRUB boot entry default value"
+msgstr "GRUB बूट एंट्री का डिफ़ॉल्ट मान बदलें"
+
+#: MSGHI61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "Syno डिस्क में बूटलोडर इंजेक्ट करें"
+
+#: MSGHI62 
+msgid "Remove the injected bootloader partition"
+msgstr "इंजेक्ट किए गए बूटलोडर पार्टीशन को हटाएं"
+
+#: MSGHI63 
+msgid "Packing loader file for remote update"
+msgstr "दूरस्थ अद्यतन के लिए लोडर फ़ाइल पैक करना"
