@@ -55,7 +55,7 @@ msgid "Choose a keymap"
 msgstr "다국어 자판 지원용 키맵 선택"
 
 #: MSGKR12 
-msgid "Format Disk(s # Excluding Loader Disk"
+msgid "Format Disk(s) # Excluding Loader Disk"
 msgstr "디스크(들) 포맷 # 로더 디스크 제외"
 
 #: MSGKR13 
@@ -179,7 +179,7 @@ msgid "Prevent SataPortMap,DiskIdxMap initialization"
 msgstr "SataPortMap,DiskIdxMap 초기화 방지"
 
 #: MSGKR52 
-msgid "Show SATA(s ports and drives for SataPortMap"
+msgid "Show SATA(s) ports and drives for SataPortMap"
 msgstr "SataPortMap용 SATA 포트 및 드라이브 표시"
 
 #: MSGKR53 
