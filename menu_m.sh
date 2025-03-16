@@ -1385,7 +1385,7 @@ function additional() {
   default_resp="l"
 
   while true; do
-    echo "l \"Change GRUB boot entry default value\""  > "${TMP_PATH}/menua"
+    echo "l \"\${MSG${tz}60}\""  > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     [ "${BUS}" != "usb" ] && eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
@@ -1396,9 +1396,9 @@ function additional() {
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"g \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"h \\\"Inject Bootloader to Syno DISK${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"m \\\"Remove the injected bootloader partition\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"i \\\"Packing loader file for remote update\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"h \\\"\${MSG${tz}61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"m \\\"\${MSG${tz}62}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"i \\\"\${MSG${tz}63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
@@ -1982,11 +1982,11 @@ while true; do
     [ "${CPU}" != "HP" ] && eval "echo \"z \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}56}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"q \\\"\${MSG${tz}41} (${bay})\\\"\""      >> "${TMP_PATH}/menu"
-    eval "echo \"w \\\"${nvmeaction} nvmesystem Addon(NVMe single volume use)\\\"\"" >> "${TMP_PATH}/menu"
+    eval "echo \"w \\\"${nvmeaction} \${MSG${tz}57}\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
-  [ "$FRKRNL" = "YES" ] && echo "y \"Boot the loader\""  >> "${TMP_PATH}/menu"        
-  echo "n \"Additional Functions\""  >> "${TMP_PATH}/menu"      
+  [ "$FRKRNL" = "YES" ] && echo "y \"\${MSG${tz}58}\""  >> "${TMP_PATH}/menu"        
+  echo "n \"\${MSG${tz}59}\""  >> "${TMP_PATH}/menu"      
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"  
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
