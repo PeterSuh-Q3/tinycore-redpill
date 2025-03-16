@@ -1381,6 +1381,7 @@ function additional() {
   eval "MSG55=\"\${MSG${tz}55}\""
   eval "MSG12=\"\${MSG${tz}12}\""
   eval "MSG11=\"\${MSG${tz}11}\""  
+  eval "MSG60=\"\${MSG${tz}60}\""
   eval "MSG61=\"\${MSG${tz}61}\""
   eval "MSG62=\"\${MSG${tz}62}\""
   eval "MSG63=\"\${MSG${tz}63}\""
@@ -1388,7 +1389,7 @@ function additional() {
   default_resp="l"
 
   while true; do
-    echo "l \"\${MSG${tz}60}\""  > "${TMP_PATH}/menua"
+    eval "echo \"l \\\"${MSG60}\\\"\""  > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     [ "${BUS}" != "usb" ] && eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
