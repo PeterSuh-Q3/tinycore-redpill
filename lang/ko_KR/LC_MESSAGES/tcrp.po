@@ -198,3 +198,30 @@ msgstr "현재의 TCRP 부트로더를 USB 또는 SSD에 복제"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "SataPort 순서재정렬을 위한 sata_remap 처리"
 
+#: MSGKR57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "nvmesystem 애드온(NVMe 단일 볼륨 사용)"
+
+#: MSGKR58 
+msgid "Boot the loader"
+msgstr "로더 부팅"
+
+#: MSGKR59 
+msgid "Additional Functions"
+msgstr "추가 기능"
+
+#: MSGKR60 
+msgid "Change GRUB boot entry default value"
+msgstr "GRUB 부팅 항목 기본값 변경"
+
+#: MSGKR61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "Syno 디스크에 부트로더 주입"
+
+#: MSGKR62 
+msgid "Remove the injected bootloader partition"
+msgstr "주입된 부트로더 파티션 제거"
+
+#: MSGKR63 
+msgid "Packing loader file for remote update"
+msgstr "원격 업데이트용 로더 파일 패키징"

@@ -198,3 +198,30 @@ msgstr "TCRP ブートローダーのクローンを USB または SSD に作成
 msgid "sata_remap processing for SataPort reordering"
 msgstr "SataPort の並べ替えのための sata_remap 処理"
 
+#: MSGJP57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "nvmesystem アドオン(NVMe 単一ボリューム使用)"
+
+#: MSGJP58 
+msgid "Boot the loader"
+msgstr "ローダーを起動"
+
+#: MSGJP59 
+msgid "Additional Functions"
+msgstr "追加機能"
+
+#: MSGJP60 
+msgid "Change GRUB boot entry default value"
+msgstr "GRUBのブートエントリのデフォルト値を変更"
+
+#: MSGJP61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "Synoディスクにブートローダーを注入"
+
+#: MSGJP62 
+msgid "Remove the injected bootloader partition"
+msgstr "注入されたブートローダーパーティションを削除"
+
+#: MSGJP63 
+msgid "Packing loader file for remote update"
+msgstr "リモートアップデート用のローダーファイルをパッキング"
