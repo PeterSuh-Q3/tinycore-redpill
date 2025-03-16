@@ -198,30 +198,3 @@ msgstr "Клонировать загрузчик TCRP на USB или SSD"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "Обработка sata_remap для изменения порядка SataPort"
 
-#: MSGRU57 
-msgid "nvmesystem Addon(NVMe single volume use)"
-msgstr "дополнение nvmesystem (использование одного тома NVMe)"
-
-#: MSGRU58 
-msgid "Boot the loader"
-msgstr "Загрузить загрузчик"
-
-#: MSGRU59 
-msgid "Additional Functions"
-msgstr "Дополнительные функции"
-
-#: MSGRU60 
-msgid "Change GRUB boot entry default value"
-msgstr "Изменить значение по умолчанию записи загрузки GRUB"
-
-#: MSGRU61 
-msgid "Inject Bootloader to Syno DISK"
-msgstr "Внедрить загрузчик в диск Syno"
-
-#: MSGRU62 
-msgid "Remove the injected bootloader partition"
-msgstr "Удалить внедренную загрузочную секцию"
-
-#: MSGRU63 
-msgid "Packing loader file for remote update"
-msgstr "Упаковка файла загрузчика для удаленного обновления"

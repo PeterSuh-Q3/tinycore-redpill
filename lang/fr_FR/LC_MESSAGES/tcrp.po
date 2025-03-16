@@ -198,30 +198,3 @@ msgstr "Cloner le chargeur de démarrage TCRP sur USB ou SSD"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "Traitement sata_remap pour la réorganisation de SataPort"
 
-#: MSGFR57 
-msgid "nvmesystem Addon(NVMe single volume use)"
-msgstr "Module nvmesystem (utilisation d'un seul volume NVMe)"
-
-#: MSGFR58 
-msgid "Boot the loader"
-msgstr "Démarrer le chargeur"
-
-#: MSGFR59 
-msgid "Additional Functions"
-msgstr "Fonctions supplémentaires"
-
-#: MSGFR60 
-msgid "Change GRUB boot entry default value"
-msgstr "Modifier la valeur par défaut de l'entrée de démarrage GRUB"
-
-#: MSGFR61 
-msgid "Inject Bootloader to Syno DISK"
-msgstr "Injecter le chargeur d'amorçage dans le disque Syno"
-
-#: MSGFR62 
-msgid "Remove the injected bootloader partition"
-msgstr "Supprimer la partition de chargeur d'amorçage injectée"
-
-#: MSGFR63 
-msgid "Packing loader file for remote update"
-msgstr "Packager le fichier de chargeur pour une mise à jour à distance"

@@ -198,30 +198,3 @@ msgstr "Geçerli TCRP Önyükleyicisini USB veya SSD'ye Klonla"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "sata_remap processing for SataPort reordering"
 
-#: MSGTR57 
-msgid "nvmesystem Addon(NVMe single volume use)"
-msgstr "nvmesystem eklentisi (tek bir NVMe birimi kullanımı)"
-
-#: MSGTR58 
-msgid "Boot the loader"
-msgstr "Yükleyiciyi başlat"
-
-#: MSGTR59 
-msgid "Additional Functions"
-msgstr "Ek işlevler"
-
-#: MSGTR60 
-msgid "Change GRUB boot entry default value"
-msgstr "GRUB önyükleme girişinin varsayılan değerini değiştir"
-
-#: MSGTR61 
-msgid "Inject Bootloader to Syno DISK"
-msgstr "Bootloader'ı Syno diske enjekte et"
-
-#: MSGTR62 
-msgid "Remove the injected bootloader partition"
-msgstr "Enjekte edilen bootloader bölümünü kaldır"
-
-#: MSGTR63 
-msgid "Packing loader file for remote update"
-msgstr "Uzaktan güncelleme için yükleyici dosyasını paketle"

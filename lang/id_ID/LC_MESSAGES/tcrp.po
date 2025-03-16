@@ -198,30 +198,3 @@ msgstr "Kloning Bootloader TCRP Saat Ini ke USB atau SSD"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "pemrosesan sata_remap untuk penataan ulang SataPort"
 
-#: MSGID57 
-msgid "nvmesystem Addon(NVMe single volume use)"
-msgstr "Ekstensi nvmesystem (menggunakan satu volume NVMe)"
-
-#: MSGID58 
-msgid "Boot the loader"
-msgstr "Mulai loader"
-
-#: MSGID59 
-msgid "Additional Functions"
-msgstr "Fungsi tambahan"
-
-#: MSGID60 
-msgid "Change GRUB boot entry default value"
-msgstr "Ubah nilai default entri boot GRUB"
-
-#: MSGID61 
-msgid "Inject Bootloader to Syno DISK"
-msgstr "Suntikkan bootloader ke disk Syno"
-
-#: MSGID62 
-msgid "Remove the injected bootloader partition"
-msgstr "Hapus partisi bootloader yang disuntikkan"
-
-#: MSGID63 
-msgid "Packing loader file for remote update"
-msgstr "Mengemas file loader untuk pembaruan jarak jauh"

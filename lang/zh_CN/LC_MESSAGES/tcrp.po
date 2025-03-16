@@ -198,30 +198,3 @@ msgstr "将 TCRP 引导加载程序克隆到 USB 或 SSD"
 msgid "sata_remap processing for SataPort reordering"
 msgstr "sata_remap 处理 SataPort 重新排序"
 
-#: MSGCN57 
-msgid "nvmesystem Addon(NVMe single volume use)"
-msgstr "nvmesystem 插件(NVMe 单卷使用)"
-
-#: MSGCN58 
-msgid "Boot the loader"
-msgstr "启动加载器"
-
-#: MSGCN59 
-msgid "Additional Functions"
-msgstr "附加功能"
-
-#: MSGCN60 
-msgid "Change GRUB boot entry default value"
-msgstr "更改GRUB启动项默认值"
-
-#: MSGCN61 
-msgid "Inject Bootloader to Syno DISK"
-msgstr "向Syno磁盘注入引导程序"
-
-#: MSGCN62 
-msgid "Remove the injected bootloader partition"
-msgstr "删除注入的引导程序分区"
-
-#: MSGCN63 
-msgid "Packing loader file for remote update"
-msgstr "打包远程更新的加载器文件"
