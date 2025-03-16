@@ -1381,6 +1381,9 @@ function additional() {
   eval "MSG55=\"\${MSG${tz}55}\""
   eval "MSG12=\"\${MSG${tz}12}\""
   eval "MSG11=\"\${MSG${tz}11}\""  
+  eval "MSG61=\"\${MSG${tz}61}\""
+  eval "MSG62=\"\${MSG${tz}62}\""
+  eval "MSG63=\"\${MSG${tz}63}\""
 
   default_resp="l"
 
@@ -1396,9 +1399,9 @@ function additional() {
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"g \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"h \\\"\${MSG${tz}61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"m \\\"\${MSG${tz}62}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"i \\\"\${MSG${tz}63}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
@@ -1982,7 +1985,7 @@ while true; do
     [ "${CPU}" != "HP" ] && eval "echo \"z \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}56}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"q \\\"\${MSG${tz}41} (${bay})\\\"\""      >> "${TMP_PATH}/menu"
-    eval "echo \"w \\\"${nvmeaction}\${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
+    eval "echo \"w \\\"${nvmeaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   [ "$FRKRNL" = "YES" ] && 
