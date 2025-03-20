@@ -16,6 +16,9 @@ os-detect() {
         elif [ "$distro" == "gentoo" ]; then
             echo "gentoo detected"
             emerge smartmontools
+	elif [ "$distro" == "tinycore" ]; then
+            echo "tinycore detected"
+	    tce-load -wi smartmontools
         else
             echo "Unknown Linux distribution detected"
         fi
