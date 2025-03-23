@@ -1400,8 +1400,8 @@ function additional() {
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"g \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
+    [ "$FRKRNL" = "NO" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
+    [ "$FRKRNL" = "NO" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
