@@ -12,7 +12,6 @@ modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build
 timezone="UTC"
 ntpserver="pool.ntp.org"
 userconfigfile="/home/tc/user_config.json"
-tcrpconfigfile="/mnt/${tcrppart}/user_config.json"
 configfile="/home/tc/redpill-load/config/pats.json" 
 
 gitdomain="raw.githubusercontent.com"
@@ -1239,7 +1238,7 @@ function writeConfigKey() {
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
         # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
-        sudo cp $userconfigfile $tcrpconfigfile
+        sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     else
         echo "No values to update"
     fi
