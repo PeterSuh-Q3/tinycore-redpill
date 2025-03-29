@@ -1,1 +1,1 @@
-     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
+     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
