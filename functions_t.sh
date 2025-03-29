@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.2"
+rploaderver="1.2.2.3"
 build="master"
 redpillmake="prod"
 
@@ -12,6 +12,7 @@ modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build
 timezone="UTC"
 ntpserver="pool.ntp.org"
 userconfigfile="/home/tc/user_config.json"
+tcrpconfigfile="/mnt/${tcrppart}/user_config.json"
 configfile="/home/tc/redpill-load/config/pats.json" 
 
 gitdomain="raw.githubusercontent.com"
@@ -162,6 +163,7 @@ function history() {
     1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
+    1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -497,6 +499,8 @@ EOF
 # TTYD web console baremetal headless support fix
 # 2025.03.13 v1.2.2.2 
 # Added to change the default value of the Grub boot entry (in the submenu)
+# 2025.03.29 v1.2.2.3
+# Added a feature to immediately reflect changes to user_config.json (no need for loader build)
     
 function showlastupdate() {
     cat <<EOF
@@ -657,6 +661,9 @@ function showlastupdate() {
 
 # 2025.03.13 v1.2.2.2 
 # Added to change the default value of the Grub boot entry (in the submenu)
+
+# 2025.03.29 v1.2.2.3 
+# Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 
 EOF
 }
@@ -1231,6 +1238,8 @@ function writeConfigKey() {
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
+        # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
+        sudo cp $userconfigfile $tcrpconfigfile
     else
         echo "No values to update"
     fi
