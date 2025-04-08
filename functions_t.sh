@@ -4374,6 +4374,8 @@ if [ $# -gt 1 ]; then
     case $1 in
     
     my) 
+        getloaderdisk
+        getBus "${loaderdisk}"
         my "$2" "$3" "$4"
         ;;
     update)
