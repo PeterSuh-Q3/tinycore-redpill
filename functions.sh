@@ -4016,9 +4016,8 @@ function my() {
   echo "$2"
   echo "$3"
 
-  #echo "LOADER DISK = ${loaderdisk}"
-  #[ -z "${loaderdisk}" ] && getloaderdisk
-  getloaderdisk
+  echo "LOADER DISK = ${loaderdisk}"
+  [ -z "${loaderdisk}" ] && getloaderdisk
   if [ -z "${loaderdisk}" ]; then
       echo "Not Supported Loader BUS Type, program Exit!!!"
       exit 99
@@ -4375,6 +4374,8 @@ if [ $# -gt 1 ]; then
     case $1 in
     
     my) 
+        getloaderdisk
+        getBus "${loaderdisk}"
         my "$2" "$3" "$4"
         ;;
     update)
