@@ -3748,7 +3748,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
     if [ "${do_ex_first}" = "N" ]; then
         if [ $SHR -ge 1 ]; then
-            echo "New bootloader injection (including /usr/local/sbin/fdisk partition creation)..."
+            echo "New bootloader injection (including /sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
             SYNOP3MAKE=""
@@ -3791,11 +3791,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
       
-                        echo -e "a\n4\nw" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3806,7 +3806,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #echo "part 6's start sector is $last_sector"
                         
                         # +12.8M
-                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3818,7 +3818,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
