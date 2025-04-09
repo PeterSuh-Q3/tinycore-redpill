@@ -3724,6 +3724,7 @@ function inject_loader() {
   
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
+tempW95_CNT=0
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
         curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.0.0/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
