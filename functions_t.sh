@@ -3796,7 +3796,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
                         if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3817,7 +3817,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         
                         # +13M
                         if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n6\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n6\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi    
@@ -3833,7 +3833,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             
                             # +79M
                             if [ $TB2T_CNT -eq 1 ]; then
-                                echo -e "n\n7\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                                echo -e "n\n7\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi    
