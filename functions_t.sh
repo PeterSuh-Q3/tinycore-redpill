@@ -3635,6 +3635,7 @@ function inject_loader() {
   BASIC_EX=0  
   SHR_EX=0
   FIRST_SHR=""
+  TB2T_CNT=0
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
@@ -3689,6 +3690,7 @@ function inject_loader() {
                        echo "This is SHR Type Hard Disk. $edisk"
                       ((SHR++))
                       ((W95_CNT++))
+                      ((TB2T_CNT++))
                       if [ -z "$FIRST_SHR" ]; then
                           FIRST_SHR="$edisk"
                       fi                  
@@ -3724,7 +3726,6 @@ function inject_loader() {
   
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
-tempW95_CNT=0
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
         curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.0.0/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
@@ -3764,12 +3765,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
-                if [ $W95_CNT -eq 1 ]; then
-                    tempW95_CNT=$W95_CNT
-                fi
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $tempW95_CNT -eq 1 ]; then
-                    W95_CNT=$tempW95_CNT
+                if [ $TB2T_CNT -eq 1 ]; then
+                    W95_CNT=$TB2T_CNT
                 fi
                 
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
@@ -3797,11 +3795,19 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
-      
-                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "a\n4\nw" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3872,12 +3878,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
-                if [ $W95_CNT -eq 1 ]; then
-                    tempW95_CNT=$W95_CNT
-                fi
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $tempW95_CNT -eq 1 ]; then
-                    W95_CNT=$tempW95_CNT
+                if [ $TB2T_CNT -eq 1 ]; then
+                    W95_CNT=$TB2T_CNT
                 fi
                 
                 echo
