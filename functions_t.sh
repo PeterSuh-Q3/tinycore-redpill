@@ -2784,7 +2784,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
         if [ "${BUS}" != "usb" ]; then
-            DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+            DOM_PARA="dom_szmax=$(sudo /usr/local/sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
             sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
         fi
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
@@ -3600,10 +3600,10 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo /sbin/fdisk -l | grep "fd Linux raid autodetect" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo /sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
-    W95_CNT="$(sudo /sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo /sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
+    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "fd Linux raid autodetect" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
         echo "DOS_CNT=$DOS_CNT"
@@ -3663,7 +3663,7 @@ function inject_loader() {
                   ;;
           esac
       fi
-  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
+  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
   echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
   [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
@@ -3713,7 +3713,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
     if [ "${do_ex_first}" = "N" ]; then
         if [ $SHR -ge 1 ]; then
-            echo "New bootloader injection (including /sbin/fdisk partition creation)..."
+            echo "New bootloader injection (including /usr/local/sbin/fdisk partition creation)..."
 
             BOOTMAKE=""
             SYNOP3MAKE=""
@@ -3723,7 +3723,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -3756,11 +3756,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
       
-                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "a\n4\nw" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3771,7 +3771,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #echo "part 6's start sector is $last_sector"
                         
                         # +12.8M
-                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3783,7 +3783,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
@@ -3825,7 +3825,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
