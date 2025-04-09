@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.3"
+rploaderver="1.2.2.4"
 build="master"
 redpillmake="prod"
 
@@ -163,6 +163,7 @@ function history() {
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+    1.2.2.4 Support for inserting SHR disk bootloader of 2TB or more
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -500,6 +501,8 @@ EOF
 # Added to change the default value of the Grub boot entry (in the submenu)
 # 2025.03.29 v1.2.2.3
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+# 2025.04.09 v1.2.2.4 
+# Support for inserting SHR disk bootloader of 2TB or more
     
 function showlastupdate() {
     cat <<EOF
@@ -663,6 +666,9 @@ function showlastupdate() {
 
 # 2025.03.29 v1.2.2.3 
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+
+# 2025.04.09 v1.2.2.4 
+# Support for inserting SHR disk bootloader of 2TB or more
 
 EOF
 }
@@ -3604,6 +3610,7 @@ function get_disk_type_cnt() {
     DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
     W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
     EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
+    
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
         echo "DOS_CNT=$DOS_CNT"
@@ -3661,6 +3668,32 @@ function inject_loader() {
                       FIRST_SHR="$edisk"
                   fi                  
                   ;;
+              "0 0")
+                  echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  EXPECTED_START_1=8192
+                  EXPECTED_START_2=16785408
+                  EXPECTED_START_5=21257952
+
+                    # Extract partition information using fdisk and filter relevant lines
+                    partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
+            
+                    # Extract start values for partitions 1, 2, and 5
+                    start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
+                    start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
+                    start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
+            
+                    # Check if the start values match the expected SHR type conditions
+                    if [ "$start_1" == "$EXPECTED_START_1" ] && \
+                       [ "$start_2" == "$EXPECTED_START_2" ] && \
+                       [ "$start_5" == "$EXPECTED_START_5" ]; then
+                       echo "This is SHR Type Hard Disk. $edisk"
+                      ((SHR++))
+                      if [ -z "$FIRST_SHR" ]; then
+                          FIRST_SHR="$edisk"
+                      fi                  
+                    fi
+                  ;;
+                  
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
