@@ -3688,6 +3688,7 @@ function inject_loader() {
                        [ "$start_5" == "$EXPECTED_START_5" ]; then
                        echo "This is SHR Type Hard Disk. $edisk"
                       ((SHR++))
+                      ((W95_CNT++))
                       if [ -z "$FIRST_SHR" ]; then
                           FIRST_SHR="$edisk"
                       fi                  
