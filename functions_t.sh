@@ -3803,13 +3803,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "a\n4\nw" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        else
+                        if [ $TB2T_CNT -eq 0 ]; then
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                            sleep 2
                         fi
-                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
@@ -3817,8 +3815,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         last_sector=$((${last_sector} + 96))
                         #echo "part 6's start sector is $last_sector"
                         
-                        # +12.8M
-                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        # +13M
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "n\n6\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi    
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3830,7 +3832,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            if [ $TB2T_CNT -eq 1 ]; then
+                                echo -e "n\n7\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            fi    
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
