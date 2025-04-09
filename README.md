@@ -7,6 +7,87 @@
 
 https://paypal.me/PeterSuhQ3
 
+
+ - GitHub ACTIONS-COOL Loader Auto Build Feature Distribution (Using Issues)
+
+1. You must have a GitHub account.
+
+https://github.com/
+
+Create an account with Sign Up and then log in with Sign In.
+
+2. If you write an issue in this issue, the loader will be automatically built based on the model in the content you wrote.
+
+https://github.com/PeterSuh-Q3/tinycore-redpill/issues
+
+This is using the GitHub ACTIONS-COOL build bot.
+
+![21e6b8bb01a0f49b976a6f175173a8b1](https://github.com/user-attachments/assets/f0385210-792f-4a82-b118-254926dbe0b3)
+
+3. The title of the issue (the word custom must be included in the title.)
+
+custom DS920+
+
+The content of the main text is
+
+{"model":"DS920+","version":"7.2.2-72806"}
+
+Or
+
+If you have a full-size serial and Mac address, please enter it in the following format. (Mac addresses are supported up to 4, mac4 only.)
+
+{"model":"DS920+","version":"7.2.2-72806","mac1":"112233445566","mac2":"77889900aabb","sn":"1111222233333"}
+
+If the Mac address and serial are omitted, they will be randomly generated.
+
+You must write it in the form of a JSON body like this.
+
+You can change the model and version, but if you make even the slightest mistake in spelling, the build will not be done properly.
+
+![a09f1c3d82f63c2cf7dfd917c0b694b4](https://github.com/user-attachments/assets/64f09a2f-2c57-4e3a-bd19-5e3dbfae3fe9)
+
+![dc286e5ddbfb72f5fb42345de1c99ea3](https://github.com/user-attachments/assets/c53d2c1c-1329-42d1-bcd4-1d4f787a2d1f)
+
+![40931b574eb514bb95cc73b8b573a282](https://github.com/user-attachments/assets/c9a1fd02-16b6-47ff-8efb-82e9a61f5db0)
+
+
+4. Save the issue
+
+If you go to the Actions side, you will see an orange icon and the loader build will proceed.
+
+https://github.com/PeterSuh-Q3/tinycore-redpill/actions
+
+Workflow runs · PeterSuh-Q3/tinycore-redpill
+github.com
+Contribute to PeterSuh-Q3/tinycore-redpill development by creating an
+
+If you want to see the details, you can click on the workflow in progress.
+
+If the loader build is successful, the workflow will turn green.
+
+If you select Summary,
+
+The artifact result, which is the loader file generated at the very bottom, is saved in the form of a zip file.
+
+![913c47b901d2e77763781e122247ccf3](https://github.com/user-attachments/assets/476896a6-7216-4972-9166-94eedb8b4b1b)
+
+In this MshellImage-*.zip, the img file and vmdk file are each recompressed in tgz format.
+
+The core content of this function is
+
+Originally, you burn the official img of the TCRP-mshell loader to USB,
+
+Enter ./menu.sh, select the model, version, serial, MAC address, etc., and go through manual build to complete the loader,
+
+but this function is a function that allows you to receive an already completed loader from GitHub, bake it, and use it.
+
+Since the Grub boot menu is created in the same way as when you manually build,
+
+you can also build the loader created in this way by entering the manual build menu again.
+
+--------------------------------------------------------------------
+
+
 ![스크린샷 2023-10-28 오전 9 13 45](https://github.com/PeterSuh-Q3/tinycore-redpill/assets/85427533/f0a293de-0765-43d1-b75c-89271b417124)
 
 
