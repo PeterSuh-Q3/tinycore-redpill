@@ -2784,7 +2784,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
         if [ "${BUS}" != "usb" ]; then
-            DOM_PARA="dom_szmax=$(sudo /usr/local/sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+            DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
             sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
         fi
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
