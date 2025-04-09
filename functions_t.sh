@@ -3606,7 +3606,7 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "fd Linux raid autodetect" | grep ${1} | wc -l )"
+    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Linux RAID" | grep ${1} | wc -l )"
     DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
     W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
     EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
