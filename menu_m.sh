@@ -1540,8 +1540,12 @@ function chk_diskcnt() {
 
   DISKCNT=0
 
-  for edisk in $(sudo /sbin/fdisk -l | grep "Disk /dev/sd" | awk '{print $2}' | sed 's/://'); do
-    if [ $(sudo /sbin/fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l) -gt 0 ]; then
+  fdisk_path="/sbin/fdisk"
+
+  [ "$FRKRNL" = "NO" ] && fdisk_path="/usr/sbin${fdisk_path}"
+
+  for edisk in $(sudo ${fdisk_path} -l | grep "Disk /dev/sd" | awk '{print $2}' | sed 's/://'); do
+    if [ $(sudo ${fdisk_path} -l | grep "83 Linux" | grep ${edisk} | wc -l) -gt 0 ]; then
         continue
     else
         DISKCNT=$((DISKCNT+1))
