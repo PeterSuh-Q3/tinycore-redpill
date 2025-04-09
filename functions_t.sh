@@ -3865,7 +3865,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
-                get_disk_type_cnt "${edisk}" "Y"
+                #get_disk_type_cnt "${edisk}" "Y"
                 
                 echo
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
