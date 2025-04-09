@@ -10,7 +10,7 @@ https://paypal.me/PeterSuhQ3
 ![스크린샷 2023-10-28 오전 9 13 45](https://github.com/PeterSuh-Q3/tinycore-redpill/assets/85427533/f0a293de-0765-43d1-b75c-89271b417124)
 
 
-### Please note that minimum recommended memory size for configuring the loader is 2GB
+### Please note that minimum recommended memory size for configuring the loader is 4GB
 
 
 # Instructions 
