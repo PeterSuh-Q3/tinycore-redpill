@@ -3636,7 +3636,7 @@ function inject_loader() {
   SHR_EX=0
   FIRST_SHR=""
   while read -r edisk; do
-      get_disk_type_cnt "${edisk}" "Y"
+      get_disk_type_cnt "${edisk}" "N"
       
       if [ $RAID_CNT -eq 3 ]; then
           case "$DOS_CNT $W95_CNT" in
@@ -3763,7 +3763,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
-                #get_disk_type_cnt "${edisk}" "Y"
+                if [ $W95_CNT -eq 1 ]; then
+                    tempW95_CNT=$W95_CNT
+                fi
+                get_disk_type_cnt "${edisk}" "Y"
+                if [ $tempW95_CNT -eq 1 ]; then
+                    W95_CNT=$tempW95_CNT
+                fi
                 
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
@@ -3865,7 +3871,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
-                #get_disk_type_cnt "${edisk}" "Y"
+                if [ $W95_CNT -eq 1 ]; then
+                    tempW95_CNT=$W95_CNT
+                fi
+                get_disk_type_cnt "${edisk}" "Y"
+                if [ $tempW95_CNT -eq 1 ]; then
+                    W95_CNT=$tempW95_CNT
+                fi
                 
                 echo
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
