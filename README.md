@@ -66,5 +66,28 @@ A typical build process starts with:
     ...
     1.0.5.0 Improved internet check function in menu.sh
     ...
+    1.0.6.2 Changed to use only the first one when multiple bootloaders exist
+    1.0.6.3 Added ability to force loading mmc and sd modules when loading Tinycore Linux
+    1.0.6.4 Expanded MAC address support from 4 to 8.
+    1.0.6.5 Includes tinycore linux scsi module for scsi type bootloader support.
     1.0.6.6 Discontinuing support for DS3615xs.
+    1.0.6.7 Applying REDPILL background image to grub boot
+    1.0.6.8 i915.modeset=0 menu processing improvement (FRIEND guidance console is activated when i915 transcoding is disabled)
+    1.1.0.0 Added features for distribution of xTCRP (Tinycore Linux stripped down version)
+    1.1.0.1 When using a single m.2 NVMe volume, the DDSML error issue has occurred, so menu usage has been excluded and related support has been strengthened.
+    1.2.0.0 Added new platforms purley, broadwellnkv2, broadwellntbap and started supporting all models for each platform
+    1.2.1.0 Create tinycore-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
+    1.2.1.1 Renewal of SynoDisk bootloader injection function
+    1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
+    1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
+    1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
+    1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
+    1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+    1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+    1.2.1.8 Modify the method of checking Internet connection in menu.sh
+    1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+    1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+    1.2.2.1 TTYD web console baremetal headless support fix
+    1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
+    1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 
