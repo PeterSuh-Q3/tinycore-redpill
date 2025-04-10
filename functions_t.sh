@@ -3812,20 +3812,6 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
-                        if [ $TB2T_CNT -eq 1 ]; then
-                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
-                                echo "EF02 Partition is already exists!!!"
-                            else
-                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
-                            fi
-                        else
-                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        fi
-                        sudo blockdev --rereadpt "${edisk}"                        
-                        [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2                        
-
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # skip 97 sectors / 8 times
@@ -3861,6 +3847,20 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
+
+                        # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                echo "EF02 Partition is already exists!!!"
+                            else
+                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
+                            fi
+                        else
+                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+                        sudo blockdev --rereadpt "${edisk}"                        
+                        [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sleep 2                        
 
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
