@@ -3808,9 +3808,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+                        sleep 5
                         sudo blockdev --rereadpt "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        sleep 5
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
@@ -3823,10 +3824,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             echo -e "n\n6\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        fi    
+                        fi
+                        sleep 5
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        sleep 5
 
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
@@ -3840,10 +3842,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 echo -e "n\n7\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                            fi    
+                            fi
+                            sleep 5
                             sudo blockdev --rereadpt "${edisk}"                            
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                            sleep 2
+                            sleep 5
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
@@ -3858,9 +3861,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+                        sleep 5
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2                        
+                        sleep 5
 
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
