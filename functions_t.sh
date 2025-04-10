@@ -3811,9 +3811,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        # Make BIOS Boot Parttion (GPT) or Activate (MBR)
+                        # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
                         if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
+                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                echo "EF02 Partition is already exists!!!"
+                            else
+                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
+                            fi
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
