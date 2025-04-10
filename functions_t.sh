@@ -3956,19 +3956,28 @@ function remove_loader() {
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-      LC_ALL=C sudo fdisk -l | awk '$NF=="Linux" && $(NF-1)==83 {print $1}' | while read -r dev; do
-          part_num="${dev##*[!0-9]}"
-          if [[ $part_num -ge 4 ]]; then
-              base_dev=$(lsblk -no pkname "$dev" | xargs -I{} echo "/dev/{}")
-              echo "$base_dev $part_num"
-          fi
-      done | sort -u | awk '{arr[$1]=arr[$1]" "$2} END{for (i in arr) print i, arr[i]}' | while read -r dev parts; do
-          cmd=""
-          for p in $(echo "$parts" | tr ' ' '\n' | sort -nr); do
-              cmd+="d\n$p\n"
-          done
-          echo -e "${cmd}w\n" | sudo fdisk "$dev"
-      done
+    # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
+    
+    # 1. Scan all disks
+    LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
+        echo "Processing $disk..."
+        
+        # 2. Extract target partition numbers (8300/EF02)
+        partitions=$(sudo sgdisk -p "$disk" | awk '
+            $1 ~ /^[0-9]+/ {
+                if ($5 == "8300" || $5 == "EF02") print $1
+            }' | sort -nr)
+        
+        # 3. Delete partitions if found
+        if [[ -n "$partitions" ]]; then
+            echo "Deleting partitions: $partitions"
+            del_cmd=$(echo "$partitions" | xargs -n1 printf -- "-d %s ")
+            sudo sgdisk $del_cmd "$disk"
+            sudo partprobe "$disk"  # Update kernel partition table
+        else
+            echo "No target partitions found"
+        fi
+    done
   
   fi
   returnto "The entire process of removing the partition is completed! Press any key to continue..." && return
