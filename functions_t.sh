@@ -3961,22 +3961,7 @@ function remove_loader() {
     # 1. Scan all disks
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
         echo "Processing $disk..."
-        
-        # 2. Extract target partition numbers (8300/EF02)
-        partitions=$(sudo sgdisk -p "$disk" | awk '
-            $1 ~ /^[0-9]+/ {
-                if ($5 == "8300" || $5 == "EF02") print $1
-            }' | sort -nr)
-        
-        # 3. Delete partitions if found
-        if [[ -n "$partitions" ]]; then
-            echo "Deleting partitions: $partitions"
-            del_cmd=$(echo "$partitions" | xargs -n1 printf -- "-d %s ")
-            sudo sgdisk $del_cmd "$disk"
-            sudo partprobe "$disk"  # Update kernel partition table
-        else
-            echo "No target partitions found"
-        fi
+        sudo sgdisk -d $(sudo sgdisk -p "$disk" | awk '$5 == "8300" || $5 == "EF02" {print $1}' | sort -nr | tr '\n' ' ') "$disk"
     done
   
   fi
