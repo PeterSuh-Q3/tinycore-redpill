@@ -4419,7 +4419,7 @@ function my() {
   echo "DN_MODEL is $DN_MODEL"
   
   cecho p "DSM PAT file pre-downloading in progress..."
-  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
+  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"
   patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"                                         
   
@@ -4458,7 +4458,7 @@ function my() {
       os_md5=$(md5sum ${patfile} | awk '{print $1}')                                
       cecho y "Pat file md5sum is : $os_md5"                                       
        
-      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.sum) | .[0]" "${configfile}")
+      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.sum) | .[0]" "${configfile}")
       cecho p "verifyid md5sum is : $verifyid"                                        
   
       if [ "$os_md5" = "$verifyid" ]; then                                            
