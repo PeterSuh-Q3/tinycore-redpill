@@ -3615,15 +3615,17 @@ function prepare_img() {
 function get_disk_type_cnt() {
 
     RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
     W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
     
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
         echo "DOS_CNT=$DOS_CNT"
         echo "W95_CNT=$W95_CNT"
         echo "EXT_CNT=$EXT_CNT"
+        echo "BIOS_CNT=$BIOS_CNT"
     fi    
 }
 
@@ -3677,7 +3679,7 @@ function inject_loader() {
                       FIRST_SHR="$edisk"
                   fi                  
                   ;;
-              "0 0")
+              "0 0" | "3 0")
                   echo "Detect if SHR disk is larger than 2TB. $edisk"
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
@@ -3696,7 +3698,11 @@ function inject_loader() {
                        [ "$start_2" == "$EXPECTED_START_2" ] && \
                        [ "$start_5" == "$EXPECTED_START_5" ]; then
                        echo "This is SHR Type Hard Disk. $edisk"
-                      ((SHR++))
+                      if [ $BIOS_CNT -eq 1 ]; then 
+                          ((SHR_EX++))
+                      else
+                          ((SHR++))
+                      fi
                       ((W95_CNT++))
                       ((TB2T_CNT++))
                       if [ -z "$FIRST_SHR" ]; then
@@ -3704,7 +3710,9 @@ function inject_loader() {
                       fi                  
                     fi
                   ;;
-                  
+                *)
+                    echo "Unknown disk type for $edisk"
+                    ;;                  
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
