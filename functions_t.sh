@@ -3808,6 +3808,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+                        sudo blockdev --rereadpt "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3821,6 +3822,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+                        sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2                        
 
@@ -3836,6 +3838,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi    
+                        sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -3852,6 +3855,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi    
+                            sudo blockdev --rereadpt "${edisk}"                            
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
