@@ -3995,7 +3995,7 @@ function remove_loader() {
                 IFS=' ' read -ra partitions <<< "$target_partitions"
                 for part in "${partitions[@]}"; do
                     echo "Processing Delete: Partition $part on GPT disk"
-                    sudo sgdisk -d "$part" "$disk"
+                    sudo sgdisk -d "$part" "$disk" > /dev/null 2>&1
                 done
             fi
     
@@ -4013,7 +4013,7 @@ function remove_loader() {
                 IFS=' ' read -ra partitions <<< "$target_partitions"
                 for part in "${partitions[@]}"; do
                     echo "Processing Delete: Partition $part on MBR disk"
-                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk"
+                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk" > /dev/null 2>&1
                 done
             fi
     
