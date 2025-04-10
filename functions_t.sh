@@ -3973,22 +3973,52 @@ function remove_loader() {
     fi
     # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
     
-    # 1. Scan all disks
+    # 모든 디스크 스캔
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
         echo "Processing $disk..."
-        target_partitions=$(
-          sudo sgdisk -p "$disk" | awk '
-            ($6 == "EF02" && $1 == 3) || 
-            ($6 == "8300" && $1 >=4) {print $1}
-          ' | sort -nr | tr '\n' ' '
-        )
         
-        if [[ -n "$target_partitions" ]]; then
-          IFS=' ' read -ra partitions <<< "$target_partitions"
-          for part in "${partitions[@]}"; do
-            echo "Processing Delete: Partition $part"
-            sudo sgdisk -d "$part" "$disk"
-          done
+        # 파티션 테이블 유형 확인 (GPT 또는 MBR)
+        partition_table=$(sudo fdisk -l "$disk" | grep -E 'dos|gpt' | awk '{print $NF}')
+        
+        if [[ "$partition_table" == "gpt" ]]; then
+            echo "Detected GPT partition table on $disk"
+            
+            # GPT 디스크의 대상 파티션 찾기 및 삭제
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "EF02" && $1 == 3) || 
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on GPT disk"
+                    sudo sgdisk -d "$part" "$disk"
+                done
+            fi
+    
+        elif [[ "$partition_table" == "dos" ]]; then
+            echo "Detected MBR (DOS) partition table on $disk"
+            
+            # MBR 디스크의 대상 파티션 찾기 (4번 파티션 이후로 Linux 타입만)
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on MBR disk"
+                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk"
+                done
+            fi
+    
+        else
+            echo "Unknown partition table type for $disk. Skipping..."
         fi
         
     done
