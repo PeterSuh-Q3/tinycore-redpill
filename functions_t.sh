@@ -3808,10 +3808,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
-                        sleep 5
+                        sleep 2
                         sudo blockdev --rereadpt "${edisk}"
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 5
+                        sleep 2
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
@@ -3825,10 +3825,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
-                        sleep 5
+                        sleep 2
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 5
+                        sleep 2
 
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
@@ -3843,10 +3843,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
-                            sleep 5
+                            sleep 2
                             sudo blockdev --rereadpt "${edisk}"                            
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                            sleep 5
+                            sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
@@ -3861,10 +3861,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
-                        sleep 5
+                        sleep 2
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 5
+                        sleep 2
 
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
@@ -3964,6 +3964,13 @@ function remove_loader() {
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
     # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
     
     # 1. Scan all disks
