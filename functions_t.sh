@@ -3967,7 +3967,15 @@ function remove_loader() {
             ($6 == "8300" && $1 >=4) {print $1}
           ' | sort -nr | tr '\n' ' '
         )
-        [[ -n "$target_partitions" ]] && sudo sgdisk -d $target_partitions "$disk"
+        
+        if [[ -n "$target_partitions" ]]; then
+          IFS=' ' read -ra partitions <<< "$target_partitions"
+          for part in "${partitions[@]}"; do
+            echo "Processing Delete: Partition $part"
+            sudo sgdisk -d "$part" "$disk"
+          done
+        fi
+        
     done
   
   fi
