@@ -1,1 +1,1 @@
-     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+     1.2.2.4 Support for inserting SHR disk bootloader of 2TB or more
