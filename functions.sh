@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.3"
+rploaderver="1.2.2.4"
 build="master"
 redpillmake="prod"
 
@@ -163,6 +163,7 @@ function history() {
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+    1.2.2.4 Support for inserting SHR disk bootloader of 2TB or more
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -500,6 +501,8 @@ EOF
 # Added to change the default value of the Grub boot entry (in the submenu)
 # 2025.03.29 v1.2.2.3
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+# 2025.04.09 v1.2.2.4 
+# Support for inserting SHR disk bootloader of 2TB or more
     
 function showlastupdate() {
     cat <<EOF
@@ -663,6 +666,9 @@ function showlastupdate() {
 
 # 2025.03.29 v1.2.2.3 
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+
+# 2025.04.09 v1.2.2.4 
+# Support for inserting SHR disk bootloader of 2TB or more
 
 EOF
 }
@@ -3480,9 +3486,9 @@ function wr_part1() {
 
     sudo mkdir -p /usr/local/share/locale
     sudo grub-install --target=x86_64-efi --boot-directory="${mdiskpart}"/boot --efi-directory="${mdiskpart}" --removable > /dev/null 2>&1
-    [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
+    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}" > /dev/null 2>&1
-    [ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
+    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     true
 }
 
@@ -3565,6 +3571,14 @@ function prepare_grub() {
         tce-load -iw grub2-multi
         [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && false
     fi
+
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
     #sudo echo "grub2-multi.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 
     true
@@ -3600,15 +3614,18 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo /sbin/fdisk -l | grep "fd Linux raid autodetect" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo /sbin/fdisk -l | grep "83 Linux" | grep ${1} | wc -l )"
-    W95_CNT="$(sudo /sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo /sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )" 
+    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
+    
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
         echo "DOS_CNT=$DOS_CNT"
         echo "W95_CNT=$W95_CNT"
         echo "EXT_CNT=$EXT_CNT"
+        echo "BIOS_CNT=$BIOS_CNT"
     fi    
 }
 
@@ -3628,6 +3645,7 @@ function inject_loader() {
   BASIC_EX=0  
   SHR_EX=0
   FIRST_SHR=""
+  TB2T_CNT=0
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
@@ -3661,9 +3679,43 @@ function inject_loader() {
                       FIRST_SHR="$edisk"
                   fi                  
                   ;;
+              "0 0" | "3 0")
+                  echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  EXPECTED_START_1=8192
+                  EXPECTED_START_2=16785408
+                  EXPECTED_START_5=21257952
+
+                    # Extract partition information using fdisk and filter relevant lines
+                    partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
+            
+                    # Extract start values for partitions 1, 2, and 5
+                    start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
+                    start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
+                    start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
+            
+                    # Check if the start values match the expected SHR type conditions
+                    if [ "$start_1" == "$EXPECTED_START_1" ] && \
+                       [ "$start_2" == "$EXPECTED_START_2" ] && \
+                       [ "$start_5" == "$EXPECTED_START_5" ]; then
+                       echo "This is SHR Type Hard Disk. $edisk"
+                      if [ $BIOS_CNT -eq 1 ]; then 
+                          ((SHR_EX++))
+                      else
+                          ((SHR++))
+                      fi
+                      ((W95_CNT++))
+                      ((TB2T_CNT++))
+                      if [ -z "$FIRST_SHR" ]; then
+                          FIRST_SHR="$edisk"
+                      fi                  
+                    fi
+                  ;;
+                *)
+                    echo "Unknown disk type for $edisk"
+                    ;;                  
           esac
       fi
-  done < <(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
+  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
 
   echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
   [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
@@ -3723,13 +3775,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
+                if [ $TB2T_CNT -eq 1 ]; then
+                    W95_CNT=$TB2T_CNT
+                fi
                 
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
@@ -3756,39 +3811,68 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
                         sleep 2
-      
-                        echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                        [ $? -ne 0 ] && returnto "activate partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sudo blockdev --rereadpt "${edisk}"
+                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                        # skip 96 sectors
-                        last_sector=$((${last_sector} + 96))
+                        # skip 97 sectors / 8 times
+                        last_sector=$((${last_sector} + 97))
                         #echo "part 6's start sector is $last_sector"
                         
-                        # +12.8M
-                        echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        # +13M
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+                        sleep 2
+                        sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
-                            # skip 96 sectors
-                            last_sector=$((${last_sector} + 96))
+                            # skip 97 sectors / 8 times
+                            last_sector=$((${last_sector} + 97))
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            if [ $TB2T_CNT -eq 1 ]; then
+                                echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            fi
+                            sleep 2
+                            sudo blockdev --rereadpt "${edisk}"                            
                             [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
                             sleep 2
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
+
+                        # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
+                        if [ $TB2T_CNT -eq 1 ]; then
+                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                echo "EF02 Partition is already exists!!!"
+                            else
+                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            fi
+                        else
+                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+                        sleep 2
+                        sudo blockdev --rereadpt "${edisk}"                        
+                        [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sleep 2
 
                         sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         synop1=$(get_partition "${edisk}" 4)
@@ -3825,13 +3909,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
+                if [ $TB2T_CNT -eq 1 ]; then
+                    W95_CNT=$TB2T_CNT
+                fi
                 
                 echo
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
@@ -3885,19 +3972,64 @@ function remove_loader() {
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-      LC_ALL=C sudo fdisk -l | awk '$NF=="Linux" && $(NF-1)==83 {print $1}' | while read -r dev; do
-          part_num="${dev##*[!0-9]}"
-          if [[ $part_num -ge 4 ]]; then
-              base_dev=$(lsblk -no pkname "$dev" | xargs -I{} echo "/dev/{}")
-              echo "$base_dev $part_num"
-          fi
-      done | sort -u | awk '{arr[$1]=arr[$1]" "$2} END{for (i in arr) print i, arr[i]}' | while read -r dev parts; do
-          cmd=""
-          for p in $(echo "$parts" | tr ' ' '\n' | sort -nr); do
-              cmd+="d\n$p\n"
-          done
-          echo -e "${cmd}w\n" | sudo fdisk "$dev"
-      done
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
+    # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
+    
+    # 모든 디스크 스캔
+    LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
+        echo "Processing $disk..."
+        
+        # 파티션 테이블 유형 확인 (GPT 또는 MBR)
+        partition_table=$(sudo fdisk -l "$disk" | grep -E 'dos|gpt' | awk '{print $NF}')
+        
+        if [[ "$partition_table" == "gpt" ]]; then
+            echo "Detected GPT partition table on $disk"
+            
+            # GPT 디스크의 대상 파티션 찾기 및 삭제
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "EF02" && $1 == 3) || 
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on GPT disk"
+                    sudo sgdisk -d "$part" "$disk" > /dev/null 2>&1
+                done
+            fi
+    
+        elif [[ "$partition_table" == "dos" ]]; then
+            echo "Detected MBR (DOS) partition table on $disk"
+            
+            # MBR 디스크의 대상 파티션 찾기 (4번 파티션 이후로 Linux 타입만)
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on MBR disk"
+                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk" > /dev/null 2>&1
+                done
+            fi
+    
+        else
+            echo "Unknown partition table type for $disk. Skipping..."
+        fi
+        
+    done
   
   fi
   returnto "The entire process of removing the partition is completed! Press any key to continue..." && return
@@ -4287,7 +4419,7 @@ function my() {
   echo "DN_MODEL is $DN_MODEL"
   
   cecho p "DSM PAT file pre-downloading in progress..."
-  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.url) | .[0]" "${configfile}")
+  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"
   patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"                                         
   
@@ -4326,7 +4458,7 @@ function my() {
       os_md5=$(md5sum ${patfile} | awk '{print $1}')                                
       cecho y "Pat file md5sum is : $os_md5"                                       
        
-      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.sum) | .[0]" "${configfile}")
+      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.sum) | .[0]" "${configfile}")
       cecho p "verifyid md5sum is : $verifyid"                                        
   
       if [ "$os_md5" = "$verifyid" ]; then                                            
