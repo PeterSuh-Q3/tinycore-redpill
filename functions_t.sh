@@ -3961,7 +3961,13 @@ function remove_loader() {
     # 1. Scan all disks
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
         echo "Processing $disk..."
-        sudo sgdisk -d $(sudo sgdisk -p "$disk" | awk '$5 == "8300" || $5 == "EF02" {print $1}' | sort -nr | tr '\n' ' ') "$disk"
+        target_partitions=$(
+          sudo sgdisk -p "$disk" | awk '
+            ($6 == "EF02" && $1 == 3) || 
+            ($6 == "8300" && $1 >=4) {print $1}
+          ' | sort -nr | tr '\n' ' '
+        )
+        [[ -n "$target_partitions" ]] && sudo sgdisk -d $target_partitions "$disk"
     done
   
   fi
