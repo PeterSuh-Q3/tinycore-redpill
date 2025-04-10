@@ -3571,6 +3571,14 @@ function prepare_grub() {
         tce-load -iw grub2-multi
         [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && false
     fi
+
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
     #sudo echo "grub2-multi.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 
     true
@@ -3796,6 +3804,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
                         if [ $TB2T_CNT -eq 1 ]; then
+                            echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
                             echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
