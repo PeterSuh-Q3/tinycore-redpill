@@ -3804,7 +3804,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
                         if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                            #echo -e "n\n4\n$last_sector\n+127M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3821,7 +3822,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         
                         # +13M
                         if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n6\n$last_sector\n+13M\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3839,7 +3840,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             
                             # +79M
                             if [ $TB2T_CNT -eq 1 ]; then
-                                echo -e "n\n7\n$last_sector\n\n\nw\n" | sudo /usr/local/sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
@@ -3856,7 +3857,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
                                 echo "EF02 Partition is already exists!!!"
                             else
-                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo gdisk "${edisk}"
+                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}"
                             fi
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
