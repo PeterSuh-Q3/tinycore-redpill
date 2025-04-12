@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.5"
+rploaderver="1.2.2.6"
 build="master"
 redpillmake="prod"
 
@@ -165,6 +165,7 @@ function history() {
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
     1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+    1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -506,6 +507,8 @@ EOF
 # SynoDisk with bootloader injection Support SHR 2TB or more
 # 2025.04.12 v1.2.2.5 
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+# 2025.04.12 v1.2.2.6 
+# SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     
 function showlastupdate() {
     cat <<EOF
@@ -675,6 +678,9 @@ function showlastupdate() {
 
 # 2025.04.12 v1.2.2.5 
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+
+# 2025.04.12 v1.2.2.6 
+# SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
 
 EOF
 }
@@ -3577,14 +3583,6 @@ function prepare_grub() {
         tce-load -iw grub2-multi
         [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && false
     fi
-
-    tce-load -i gdisk
-    if [ $? -eq 0 ]; then
-        echo "Install gdisk OK !!!"
-    else
-        tce-load -iw gdisk
-        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
-    fi
     #sudo echo "grub2-multi.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 
     true
@@ -3831,7 +3829,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo "Create 4th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             fi    
@@ -3851,7 +3849,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
-                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3869,7 +3867,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
-                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
@@ -4004,15 +4002,12 @@ function remove_loader() {
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-    tce-load -i gdisk
-    if [ $? -eq 0 ]; then
-        echo "Install gdisk OK !!!"
-    else
-        tce-load -iw gdisk
-        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
-    fi
+    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
+        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.0.0/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
+        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
+    fi    
+
     # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
-    
     # 모든 디스크 스캔
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
         echo "Processing $disk..."
