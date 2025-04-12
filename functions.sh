@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.5"
+rploaderver="1.2.2.6"
 build="master"
 redpillmake="prod"
 
@@ -165,6 +165,7 @@ function history() {
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
     1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+    1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -506,6 +507,8 @@ EOF
 # SynoDisk with bootloader injection Support SHR 2TB or more
 # 2025.04.12 v1.2.2.5 
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+# 2025.04.12 v1.2.2.6 
+# SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     
 function showlastupdate() {
     cat <<EOF
@@ -675,6 +678,9 @@ function showlastupdate() {
 
 # 2025.04.12 v1.2.2.5 
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+
+# 2025.04.12 v1.2.2.6 
+# SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
 
 EOF
 }
@@ -3577,14 +3583,6 @@ function prepare_grub() {
         tce-load -iw grub2-multi
         [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && false
     fi
-
-    tce-load -i gdisk
-    if [ $? -eq 0 ]; then
-        echo "Install gdisk OK !!!"
-    else
-        tce-load -iw gdisk
-        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
-    fi
     #sudo echo "grub2-multi.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 
     true
@@ -3687,16 +3685,23 @@ function inject_loader() {
                   fi                  
                   ;;
               "0 0" | "3 0")
-                  echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  echo "Detect if GPT disk is larger than 2TB. $edisk"
                   # After DSM 7.1.1
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
-                  EXPECTED_START_5=21257952
 
                   # Before DSM 7.0.1    
                   EXPECTED_START_11=2048
                   EXPECTED_START_22=4982528
-                  EXPECTED_START_55=9453280
+
+                    # 파티션 테이블 유형 확인 (GPT 또는 MBR)
+                    partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
+
+                    GPT="OFF"
+                    if [[ "$partition_table" == "gpt" ]]; then
+                        echo "Detected GPT partition table on $edisk"
+                        GPT="ON"
+                    fi
 
                     # Extract partition information using fdisk and filter relevant lines
                     partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3704,12 +3709,11 @@ function inject_loader() {
                     # Extract start values for partitions 1, 2, and 5
                     start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
                     start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
-                    start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
             
                     # Check if the start values match either of the expected SHR type conditions
-                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$start_5" == "$EXPECTED_START_5" ]; } || \
-                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       
-                      echo "This is SHR Type Hard Disk. $edisk"
+                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
+                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
+                      echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                       else
@@ -3756,7 +3760,7 @@ echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
-        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.0.0/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
+        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
         tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
     fi    
 
@@ -3822,7 +3826,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                     
                         # +127M
-                        echo "Create primary partition on SHR disks... $edisk"
+                        echo "Create 4th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
                                 echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
@@ -3840,10 +3844,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # skip 97 sectors / 8 times
-                        last_sector=$((${last_sector} + 97))
-                        #echo "part 6's start sector is $last_sector"
-                        
+                        #last_sector=$((${last_sector} + 97))
+                                                
                         # +13M
+                        echo "Create 6th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
@@ -3852,18 +3856,18 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sleep 2
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        sleep 4
 
+                        echo "Create 7th partition on disks... $edisk"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 97 sectors / 8 times
-                            last_sector=$((${last_sector} + 97))
-                            #echo "part 7's start sector is $last_sector"
+                            #last_sector=$((${last_sector} + 97))
                             
-                            # +79M
+                            # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
-                                echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
@@ -3998,15 +4002,12 @@ function remove_loader() {
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-    tce-load -i gdisk
-    if [ $? -eq 0 ]; then
-        echo "Install gdisk OK !!!"
-    else
-        tce-load -iw gdisk
-        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
-    fi
+    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
+        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
+        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
+    fi    
+
     # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
-    
     # 모든 디스크 스캔
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
         echo "Processing $disk..."
@@ -4021,6 +4022,8 @@ function remove_loader() {
             target_partitions=$(
               sudo sgdisk -p "$disk" | awk '
                 ($6 == "EF02" && $1 == 3) || 
+                ($6 == "EF00" && $1 == 4) || 
+                ($6 == "EF02" && $1 == 5) || 
                 ($6 == "8300" && $1 >=4) {print $1}
               ' | sort -nr | tr '\n' ' '
             )
