@@ -3681,9 +3681,15 @@ function inject_loader() {
                   ;;
               "0 0" | "3 0")
                   echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  # After DSM 7.1.1
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
                   EXPECTED_START_5=21257952
+
+                  # Before DSM 7.0.1    
+                  EXPECTED_START_11=2048
+                  EXPECTED_START_22=4982528
+                  EXPECTED_START_55=9453280
 
                     # Extract partition information using fdisk and filter relevant lines
                     partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3693,11 +3699,9 @@ function inject_loader() {
                     start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
                     start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
             
-                    # Check if the start values match the expected SHR type conditions
-                    if [ "$start_1" == "$EXPECTED_START_1" ] && \
-                       [ "$start_2" == "$EXPECTED_START_2" ] && \
-                       [ "$start_5" == "$EXPECTED_START_5" ]; then
-                       echo "This is SHR Type Hard Disk. $edisk"
+                    # Check if the start values match either of the expected SHR type conditions
+                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$start_5" == "$EXPECTED_START_5" ]; } || \
+                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       echo "This is SHR Type Hard Disk. $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                       else
@@ -3802,10 +3806,10 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
                         if [ $end_sector = "4982527" ]; then
-                        # Before DSM 7.1.1    
+                        # Before DSM 7.0.1    
                             last_sector="9176832"
                         else
-                        # After DSM 7.2.0
+                        # After DSM 7.1.1
                             last_sector="20979712"
                         fi
                     
