@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.4"
+rploaderver="1.2.2.5"
 build="master"
 redpillmake="prod"
 
@@ -163,7 +163,8 @@ function history() {
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
-    1.2.2.4 Support for inserting SHR disk bootloader of 2TB or more
+    1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
+    1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -502,7 +503,9 @@ EOF
 # 2025.03.29 v1.2.2.3
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 # 2025.04.09 v1.2.2.4 
-# Support for inserting SHR disk bootloader of 2TB or more
+# SynoDisk with bootloader injection Support SHR 2TB or more
+# 2025.04.12 v1.2.2.5 
+# SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     
 function showlastupdate() {
     cat <<EOF
@@ -668,7 +671,10 @@ function showlastupdate() {
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 
 # 2025.04.09 v1.2.2.4 
-# Support for inserting SHR disk bootloader of 2TB or more
+# SynoDisk with bootloader injection Support SHR 2TB or more
+
+# 2025.04.12 v1.2.2.5 
+# SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
 
 EOF
 }
@@ -3626,6 +3632,7 @@ function get_disk_type_cnt() {
         echo "W95_CNT=$W95_CNT"
         echo "EXT_CNT=$EXT_CNT"
         echo "BIOS_CNT=$BIOS_CNT"
+        echo "TB2T_CNT=$TB2T_CNT"
     fi    
 }
 
@@ -3681,9 +3688,15 @@ function inject_loader() {
                   ;;
               "0 0" | "3 0")
                   echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  # After DSM 7.1.1
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
                   EXPECTED_START_5=21257952
+
+                  # Before DSM 7.0.1    
+                  EXPECTED_START_11=2048
+                  EXPECTED_START_22=4982528
+                  EXPECTED_START_55=9453280
 
                     # Extract partition information using fdisk and filter relevant lines
                     partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3693,11 +3706,10 @@ function inject_loader() {
                     start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
                     start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
             
-                    # Check if the start values match the expected SHR type conditions
-                    if [ "$start_1" == "$EXPECTED_START_1" ] && \
-                       [ "$start_2" == "$EXPECTED_START_2" ] && \
-                       [ "$start_5" == "$EXPECTED_START_5" ]; then
-                       echo "This is SHR Type Hard Disk. $edisk"
+                    # Check if the start values match either of the expected SHR type conditions
+                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$start_5" == "$EXPECTED_START_5" ]; } || \
+                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       
+                      echo "This is SHR Type Hard Disk. $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                       else
@@ -3782,7 +3794,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $TB2T_CNT -eq 1 ]; then
+                if [ $TB2T_CNT -ge 1 ]; then
                     W95_CNT=$TB2T_CNT
                 fi
                 
@@ -3794,7 +3806,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     prepare_grub
                     [ $? -ne 0 ] && return
 
-                    if [ $W95_CNT -eq 1 ]; then
+                    if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
                         # make 1st partition
                         echo "Create primary and logical partitions on 1st disk. ${model}"
@@ -3802,17 +3814,21 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
                         if [ $end_sector = "4982527" ]; then
-                        # Before DSM 7.1.1    
+                        # Before DSM 7.0.1    
                             last_sector="9176832"
                         else
-                        # After DSM 7.2.0
+                        # After DSM 7.1.1
                             last_sector="20979712"
                         fi
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        if [ $TB2T_CNT -eq 1 ]; then
-                            echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            if [ -d /sys/firmware/efi ]; then
+                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            fi    
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3828,7 +3844,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #echo "part 6's start sector is $last_sector"
                         
                         # +13M
-                        if [ $TB2T_CNT -eq 1 ]; then
+                        if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3846,7 +3862,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            if [ $TB2T_CNT -eq 1 ]; then
+                            if [ $TB2T_CNT -ge 1 ]; then
                                 echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3860,12 +3876,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
 
                         # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
-                        if [ $TB2T_CNT -eq 1 ]; then
-                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
-                                echo "EF02 Partition is already exists!!!"
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            if [ -d /sys/firmware/efi ]; then
+                                echo "UEFI does not require a Bios Boot Partition..."
                             else
-                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
-                            fi
+                                if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                    echo "EF02 Partition is already exists!!!"
+                                else
+                                    echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                fi
+                            fi    
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3874,7 +3894,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        if [[ $TB2T_CNT -ge 1 ]] && [ -d /sys/firmware/efi ]; then
+                            echo "Creating FAT32 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F32 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        else
+                            echo "Creating FAT16 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        fi
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && remove_loader && return
@@ -3916,7 +3942,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $TB2T_CNT -eq 1 ]; then
+                if [ $TB2T_CNT -ge 1 ]; then
                     W95_CNT=$TB2T_CNT
                 fi
                 
@@ -3924,7 +3950,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ] && [ $EXT_CNT -eq 0 ]; then
+                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -ge 1 ] && [ $EXT_CNT -eq 0 ]; then
                     # single SHR 
                     prepare_grub
                     [ $? -ne 0 ] && remove_loader && return
