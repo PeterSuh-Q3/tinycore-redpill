@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.4"
+rploaderver="1.2.2.5"
 build="master"
 redpillmake="prod"
 
@@ -163,7 +163,8 @@ function history() {
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
-    1.2.2.4 Support for inserting SHR disk bootloader of 2TB or more
+    1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
+    1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -502,7 +503,9 @@ EOF
 # 2025.03.29 v1.2.2.3
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 # 2025.04.09 v1.2.2.4 
-# Support for inserting SHR disk bootloader of 2TB or more
+# SynoDisk with bootloader injection Support SHR 2TB or more
+# 2025.04.12 v1.2.2.5 
+# SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     
 function showlastupdate() {
     cat <<EOF
@@ -668,7 +671,10 @@ function showlastupdate() {
 # Added a feature to immediately reflect changes to user_config.json (no need for loader build)
 
 # 2025.04.09 v1.2.2.4 
-# Support for inserting SHR disk bootloader of 2TB or more
+# SynoDisk with bootloader injection Support SHR 2TB or more
+
+# 2025.04.12 v1.2.2.5 
+# SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
 
 EOF
 }
