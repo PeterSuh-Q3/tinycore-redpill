@@ -4028,6 +4028,7 @@ function remove_loader() {
               sudo sgdisk -p "$disk" | awk '
                 ($6 == "EF02" && $1 == 3) || 
                 ($6 == "EF00" && $1 == 4) || 
+                ($6 == "EF02" && $1 == 5) || 
                 ($6 == "8300" && $1 >=4) {print $1}
               ' | sort -nr | tr '\n' ' '
             )
