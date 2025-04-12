@@ -3626,6 +3626,7 @@ function get_disk_type_cnt() {
         echo "W95_CNT=$W95_CNT"
         echo "EXT_CNT=$EXT_CNT"
         echo "BIOS_CNT=$BIOS_CNT"
+        echo "TB2T_CNT=$TB2T_CNT"
     fi    
 }
 
@@ -3701,7 +3702,8 @@ function inject_loader() {
             
                     # Check if the start values match either of the expected SHR type conditions
                     if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$start_5" == "$EXPECTED_START_5" ]; } || \
-                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       echo "This is SHR Type Hard Disk. $edisk"
+                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       
+                      echo "This is SHR Type Hard Disk. $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                       else
