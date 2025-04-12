@@ -3846,9 +3846,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # skip 97 sectors / 8 times
-                        last_sector=$((${last_sector} + 97))
-                        #echo "part 6's start sector is $last_sector"
-                        
+                        #last_sector=$((${last_sector} + 97))
+                                                
                         # +13M
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
@@ -3864,8 +3863,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 97 sectors / 8 times
-                            last_sector=$((${last_sector} + 97))
-                            #echo "part 7's start sector is $last_sector"
+                            #last_sector=$((${last_sector} + 97))
                             
                             # +79M
                             if [ $TB2T_CNT -ge 1 ]; then
