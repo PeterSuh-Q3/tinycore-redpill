@@ -3687,16 +3687,23 @@ function inject_loader() {
                   fi                  
                   ;;
               "0 0" | "3 0")
-                  echo "Detect if SHR disk is larger than 2TB. $edisk"
+                  echo "Detect if GPT disk is larger than 2TB. $edisk"
                   # After DSM 7.1.1
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
-                  EXPECTED_START_5=21257952
 
                   # Before DSM 7.0.1    
                   EXPECTED_START_11=2048
                   EXPECTED_START_22=4982528
-                  EXPECTED_START_55=9453280
+
+                    # 파티션 테이블 유형 확인 (GPT 또는 MBR)
+                    partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
+
+                    GPT="OFF"
+                    if [[ "$partition_table" == "gpt" ]]; then
+                        echo "Detected GPT partition table on $edisk"
+                        GPT="ON"
+                    fi
 
                     # Extract partition information using fdisk and filter relevant lines
                     partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3704,12 +3711,11 @@ function inject_loader() {
                     # Extract start values for partitions 1, 2, and 5
                     start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
                     start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
-                    start_5=$(echo "$partitions" | grep "${edisk}5" | awk '{print $2}')
             
                     # Check if the start values match either of the expected SHR type conditions
-                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$start_5" == "$EXPECTED_START_5" ]; } || \
-                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$start_5" == "$EXPECTED_START_55" ]; }; then                       
-                      echo "This is SHR Type Hard Disk. $edisk"
+                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
+                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
+                      echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                       else
