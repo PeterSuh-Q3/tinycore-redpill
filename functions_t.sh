@@ -3818,7 +3818,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
-                            echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            if [ -d /sys/firmware/efi ]; then
+                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            fi    
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3867,11 +3871,15 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
                         if [ $TB2T_CNT -ge 1 ]; then
-                            if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
-                                echo "EF02 Partition is already exists!!!"
+                            if [ -d /sys/firmware/efi ]; then
+                                echo "UEFI does not require a Bios Boot Partition..."
                             else
-                                echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
-                            fi
+                                if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                    echo "EF02 Partition is already exists!!!"
+                                else
+                                    echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                fi
+                            fi    
                         else
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3880,7 +3888,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
-                        sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        if [[ $TB2T_CNT -ge 1 ]] && [ -d /sys/firmware/efi ]; then
+                            echo "Creating FAT32 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F32 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        else
+                            echo "Creating FAT16 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        fi
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && remove_loader && return
