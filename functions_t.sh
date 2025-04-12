@@ -3828,7 +3828,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                     
                         # +127M
-                        echo "Create primary partition on SHR disks... $edisk"
+                        echo "Create 4th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
                                 echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
@@ -3849,6 +3849,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #last_sector=$((${last_sector} + 97))
                                                 
                         # +13M
+                        echo "Create 6th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
                         else
@@ -3857,17 +3858,18 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sleep 2
                         sudo blockdev --rereadpt "${edisk}"                        
                         [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        sleep 4
 
+                        echo "Create 7th partition on disks... $edisk"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # skip 97 sectors / 8 times
                             #last_sector=$((${last_sector} + 97))
                             
-                            # +79M
+                            # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
-                                echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
