@@ -3788,7 +3788,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $TB2T_CNT -eq 1 ]; then
+                if [ $TB2T_CNT -qe 1 ]; then
                     W95_CNT=$TB2T_CNT
                 fi
                 
@@ -3817,7 +3817,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     
                         # +127M
                         echo "Create primary partition on SHR disks... $edisk"
-                        if [ $TB2T_CNT -eq 1 ]; then
+                        if [ $TB2T_CNT -qe 1 ]; then
                             echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3834,7 +3834,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         #echo "part 6's start sector is $last_sector"
                         
                         # +13M
-                        if [ $TB2T_CNT -eq 1 ]; then
+                        if [ $TB2T_CNT -qe 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3852,7 +3852,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             #echo "part 7's start sector is $last_sector"
                             
                             # +79M
-                            if [ $TB2T_CNT -eq 1 ]; then
+                            if [ $TB2T_CNT -qe 1 ]; then
                                 echo -e "n\n7\n$last_sector\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
@@ -3866,7 +3866,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
 
                         # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
-                        if [ $TB2T_CNT -eq 1 ]; then
+                        if [ $TB2T_CNT -qe 1 ]; then
                             if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
                                 echo "EF02 Partition is already exists!!!"
                             else
@@ -3922,7 +3922,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
          
                 model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
                 get_disk_type_cnt "${edisk}" "Y"
-                if [ $TB2T_CNT -eq 1 ]; then
+                if [ $TB2T_CNT -qe 1 ]; then
                     W95_CNT=$TB2T_CNT
                 fi
                 
