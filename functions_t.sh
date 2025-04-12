@@ -3800,7 +3800,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                     prepare_grub
                     [ $? -ne 0 ] && return
 
-                    if [ $W95_CNT -eq 1 ]; then
+                    if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
                         # make 1st partition
                         echo "Create primary and logical partitions on 1st disk. ${model}"
@@ -3930,7 +3930,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 1 ] && [ $EXT_CNT -eq 0 ]; then
+                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -ge 1 ] && [ $EXT_CNT -eq 0 ]; then
                     # single SHR 
                     prepare_grub
                     [ $? -ne 0 ] && remove_loader && return
