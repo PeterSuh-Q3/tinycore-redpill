@@ -4042,6 +4042,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     mountpoint -q "${synop1}" && sudo umount ${synop1} 
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
     mountpoint -q "${synop3}" && sudo umount ${synop3}
+
+    sudo /usr/local/sbin/fdisk -l "${edisk}"
+    
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
 
