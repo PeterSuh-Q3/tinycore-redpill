@@ -1458,27 +1458,32 @@ function _pat_process() {
 
   # Discover remote file size
   echo "BUS type = ${BUS} (Discover remote file size)"
-  if [ "${BUS}" != "block"  ]; then
-      SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left
-      FILESIZE=$(curl -k -sLI "${PATURL}" | grep -i Content-Length | awk '{print$2}')
 
-      FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
-      SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
-
-      FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
-      SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-      FILESIZE_MB=$((FILESIZE / 1024 / 1024))
-      SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+  if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+      msgnormal "Skip Checking Pat files on xTCRP with Synoboot Injected."
+  else
+      if [ "${BUS}" != "block"  ]; then
+          SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left
+          FILESIZE=$(curl -k -sLI "${PATURL}" | grep -i Content-Length | awk '{print$2}')
     
-      echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
-      echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+          FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
+          SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
     
-      if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
-          # No disk space to download, change it to RAMDISK
-          echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
-          sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+          FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+          SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+          FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+          SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        
+          echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+          echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+        
+          if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+              # No disk space to download, change it to RAMDISK
+              echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
+              sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+          fi
       fi
-  fi
+  fi    
   
   echo "PATURL = " "${PATURL}"
   STATUS=$(sudo curl -k -w "%{http_code}" -L "${PATURL}" -o "${PAT_PATH}" --progress-bar)
@@ -2946,23 +2951,29 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     [ -d /home/tc/rd.temp ] && cd /home/tc/rd.temp
     RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${TARGET_VERSION}-${TARGET_REVISION}/config.json | jq -r -e ' .extra .compress_rd')
 
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        gzs_path="/dev/shm"  
+    else
+        gzs_path="/mnt/${loaderdisk}3"
+    fi
+
     if [ "$RD_COMPRESSED" = "false" ]; then
-        echo "Ramdisk in not compressed "    
-        cat /mnt/${loaderdisk}3/rd.gz | sudo cpio -idm
+        echo "Ramdisk in not compressed "
+        cat ${gzs_path}/rd.gz | sudo cpio -idm
     else    
         echo "Ramdisk in compressed " 
-        unlzma -dc /mnt/${loaderdisk}3/rd.gz | sudo cpio -idm
+        unlzma -dc ${gzs_path}/rd.gz | sudo cpio -idm
     fi
 
     # 1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
-    if [ -f /mnt/${loaderdisk}3/custom.gz ]; then
+    if [ -f ${gzs_path}/custom.gz ]; then
         echo "Found custom.gz, so extract from custom.gz " 
-        cat /mnt/${loaderdisk}3/custom.gz | sudo cpio -idm  >/dev/null 2>&1
+        cat ${gzs_path}/custom.gz | sudo cpio -idm  >/dev/null 2>&1
     else
         echo "Not found custom.gz, extract /exts from initrd-dsm" 
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
     fi
 
     # Network card configuration file
