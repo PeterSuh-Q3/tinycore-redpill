@@ -3677,6 +3677,7 @@ function inject_loader() {
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
                   DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                  FIRST_SHR="$edisk"
                   ;;
               "0 0" | "3 0")
                   echo "Detect if GPT disk is larger than 2TB. $edisk"
@@ -3705,6 +3706,7 @@ function inject_loader() {
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
                           DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                          FIRST_SHR="$edisk"
                       else
                           ((SHR++))
                           DETECTED_SHRS+=("$edisk")  # 배열에 추가
@@ -3722,27 +3724,29 @@ function inject_loader() {
   echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
   
   # 사용자 메뉴 제공 및 선택 처리
-  if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
-      echo "Detected SHR disks:"
-      for i in "${!DETECTED_SHRS[@]}"; do
-          echo "$((i + 1)). ${DETECTED_SHRS[$i]}"
-      done
-  
-      while true; do
-          read -p "Select a disk (enter the number): " selection
-          
-          if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_SHRS[@]}" ]; then
-              FIRST_SHR="${DETECTED_SHRS[$((selection - 1))]}"
-              break
-          else
-              echo "Invalid selection. Please try again."
-          fi
-      done
-  
-      echo "You selected: $FIRST_SHR"
-  else
-      echo "No SHR disks detected."
-  fi
+  if [ -z "$FIRST_SHR" ]; then
+      if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
+          echo "Detected SHR disks:"
+          for i in "${!DETECTED_SHRS[@]}"; do
+              echo "$((i + 1)). ${DETECTED_SHRS[$i]}"
+          done
+      
+          while true; do
+              read -p "Select a disk (enter the number): " selection
+              
+              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_SHRS[@]}" ]; then
+                  FIRST_SHR="${DETECTED_SHRS[$((selection - 1))]}"
+                  break
+              else
+                  echo "Invalid selection. Please try again."
+              fi
+          done
+      
+          echo "You selected: $FIRST_SHR"
+      else
+          echo "No SHR disks detected."
+      fi
+  fi    
   
   [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
 
