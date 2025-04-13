@@ -3872,8 +3872,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                        # skip 97 sectors / 8 times
-                        #last_sector=$((${last_sector} + 97))
+                        # +1 sectors 
+                        [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                                                 
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
@@ -3903,8 +3903,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 3rd partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
-                            # skip 97 sectors / 8 times
-                            #last_sector=$((${last_sector} + 97))
+                            # +1 sectors 
+                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
