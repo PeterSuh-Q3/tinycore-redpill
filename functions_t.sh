@@ -2345,19 +2345,51 @@ function backuploader() {
 
     # backup xtcrp together
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+
         TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
         TAR_UNZIPPED="/mnt/${tcrppart}/xtcrp.tar"
         SOURCE_FILE="/home/tc/user_config.json"
+        
         if [ -f "$TGZ_FILE" ]; then
+            if [ ! -f "$SOURCE_FILE" ]; then
+                echo "Error: Source file ${SOURCE_FILE} does not exist!"
+                exit 1
+            fi
+        
             echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+        
+            # 백업 생성
+            sudo cp "$TGZ_FILE" "${TGZ_FILE}.bak"
+        
             # Decompress the existing archive
-            sudo gunzip "$TGZ_FILE"
-            # Add the file to the archive
-            sudo tar --append -C / --file="$TAR_UNZIPPED" "home/tc/user_config.json"
-            # Compress the archive again and save with the original name
-            sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"
-            # Remove the decompressed temporary file
-            sudo rm "$TAR_UNZIPPED"
+            if ! sudo gunzip "$TGZ_FILE"; then
+                echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
+                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                exit 1
+            fi
+        
+            # Add the file to the archive with relative path
+            if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
+                echo "Error: Failed to add ${SOURCE_FILE} to archive."
+                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                exit 1
+            fi
+        
+            # Compress the archive again and save with the original name (use temporary file)
+            TEMP_TGZ="${TGZ_FILE}.tmp"
+            if ! sudo gzip -c "$TAR_UNZIPPED" > "$TEMP_TGZ"; then
+                echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
+                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                exit 1
+            fi
+        
+            # Replace original file with compressed archive and clean up temporary files
+            sudo mv "$TEMP_TGZ" "$TGZ_FILE"
+            sudo rm -f "$TAR_UNZIPPED" "${TGZ_FILE}.bak"
+        
+            echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
+        else
+            echo "Error: Target archive ${TGZ_FILE} does not exist!"
         fi
         return
     else
@@ -2379,7 +2411,7 @@ function backuploader() {
             # Decompress the existing archive
             sudo gunzip "$TGZ_FILE"
             # Add the file to the archive
-            sudo tar --append -C / --file="$TAR_UNZIPPED" "home/tc/user_config.json"
+            sudo tar --append -C / --file="$TAR_UNZIPPED" "$SOURCE_FILE"
             # Compress the archive again and save with the original name
             sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"
             # Remove the decompressed temporary file
