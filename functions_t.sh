@@ -3663,7 +3663,7 @@ function inject_loader() {
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
-                  if [ -z "$FIRST_SHR" ]; then
+                  if [ -z "${FIRST_SHR+x}" ]; then
                       FIRST_SHR="$edisk"
                   fi                  
                   ;;
@@ -3680,7 +3680,7 @@ function inject_loader() {
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
-                  if [ -z "$FIRST_SHR" ]; then
+                  if [ -z "${FIRST_SHR+x}" ]; then
                       FIRST_SHR="$edisk"
                   fi                  
                   ;;
@@ -3721,7 +3721,7 @@ function inject_loader() {
                       fi
                       ((W95_CNT++))
                       ((TB2T_CNT++))
-                      if [ -z "$FIRST_SHR" ]; then
+                      if [ -z "${FIRST_SHR+x}" ]; then
                           FIRST_SHR="$edisk"
                       fi                  
                     fi
