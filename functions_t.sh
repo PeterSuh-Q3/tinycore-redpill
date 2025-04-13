@@ -2347,6 +2347,7 @@ function backuploader() {
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
 
         TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
+        BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
         TAR_UNZIPPED="/dev/shm/xtcrp.tar"
         SOURCE_FILE="/home/tc/user_config.json"
         
@@ -2359,31 +2360,31 @@ function backuploader() {
             echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
         
             # 백업 생성
-            sudo cp "$TGZ_FILE" "/dev/shm/${TGZ_FILE}.bak"
+            sudo cp "$TGZ_FILE" "$BACKUP_FILE"
         
             # Decompress the existing archive
             if ! sudo gunzip "$TGZ_FILE"; then
                 echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
-                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
                 exit 1
             fi
         
             # Add the file to the archive with relative path
             if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
                 echo "Error: Failed to add ${SOURCE_FILE} to archive."
-                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
                 exit 1
             fi
         
             # Compress the archive again and save with the original name
             if ! sudo gzip -c "$TAR_UNZIPPED" > "$TGZ_FILE"; then
                 echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
-                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
                 exit 1
             fi
         
             # Replace original file with compressed archive and clean up temporary files
-            sudo rm -f "$TAR_UNZIPPED" "${TGZ_FILE}.bak"
+            sudo rm -f "$TAR_UNZIPPED" "$BACKUP_FILE"
         
             echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
         else
