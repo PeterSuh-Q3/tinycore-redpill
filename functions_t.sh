@@ -2348,7 +2348,7 @@ function backuploader() {
 
         TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
         BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
-        TAR_UNZIPPED="/dev/shm/xtcrp.tar"
+        TAR_UNZIPPED="/mnt/${tcrppart}/xtcrp.tar"
         SOURCE_FILE="/home/tc/user_config.json"
         
         if [ -f "$TGZ_FILE" ]; then
@@ -2377,7 +2377,7 @@ function backuploader() {
             fi
         
             # Compress the archive again and save with the original name
-            if ! sudo gzip -c "$TAR_UNZIPPED" > "$TGZ_FILE"; then
+            if ! sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"; then
                 echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
                 sudo mv "$BACKUP_FILE" "$TGZ_FILE"
                 exit 1
