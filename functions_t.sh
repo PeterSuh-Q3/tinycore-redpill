@@ -774,7 +774,9 @@ function getloaderdisk() {
     loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
 
     # Get the loader disk using the UUID "6234-C863" ( injected bootloader )
-    [ -z "$loaderdisk" ] && loaderdisk=$(sudo /sbin/blkid | grep "8765-4321" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        [ -z "$loaderdisk" ] && loaderdisk=$(sudo /sbin/blkid | grep "8765-4321" | cut -d ':' -f1 | sed 's/p\?7//g' | awk -F/ '{print $NF}' | head -n 1)
+    fi
     
     # If the UUID "6234-C863" is not found, extract the disk name
     if [ -z "$loaderdisk" ]; then
