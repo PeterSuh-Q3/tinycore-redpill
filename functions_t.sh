@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+u#!/usr/bin/env bash
 
 set -u # Unbound variable errors are not allowed
 
