@@ -1,1 +1,1 @@
-     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+     1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
