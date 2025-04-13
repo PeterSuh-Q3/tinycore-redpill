@@ -1821,7 +1821,11 @@ function processpat() {
 
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        local_cache="/dev/shm"
+    else
+        local_cache="/mnt/${tcrppart}/auxfiles"
+    fi    
     temp_pat_folder="/tmp/pat"
     temp_dsmpat_folder="/tmp/dsmpat"
 
