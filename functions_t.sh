@@ -3871,9 +3871,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # make 6th partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                        # for RAID 1, RAID 5, RAID 6, BASIC ETC...
+                        [ -z $last_sector ] && last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
+
                         # +1 sectors 
                         [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
-                                                
+                        
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
