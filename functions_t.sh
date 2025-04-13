@@ -3829,8 +3829,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                     if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
-                        # make 1st partition
-                        echo "Create primary and logical partitions on 1st disk. ${model}"
+                        echo "Create primary partitions on disk. ${model}"
                         # get 1st partition's end sector
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
@@ -3846,7 +3845,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo "Create 4th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             fi    
@@ -3870,7 +3869,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                         sleep 4         
 
-                        # make 2rd partition
+                        # make 6th partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # +1 sectors 
                         [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
@@ -3878,7 +3877,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
                         if [ $TB2T_CNT -ge 1 ]; then
-                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -3901,19 +3900,19 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         echo "Create 7th partition on disks... $edisk"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
-                            # make 3rd partition
+                            # make 7th partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
-                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
 
-                            # gdisk 명령의 성공 여부 확인 (6th partition)
+                            # gdisk 명령의 성공 여부 확인 (7th partition)
                             if [ $? -ne 0 ]; then
                                 echo "Failed to create the 7th partition on ${edisk}. Stop processing!!!"
                                 remove_loader
