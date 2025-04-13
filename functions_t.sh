@@ -2347,7 +2347,7 @@ function backuploader() {
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
 
         TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
-        TAR_UNZIPPED="/mnt/${tcrppart}/xtcrp.tar"
+        TAR_UNZIPPED="/dev/shm/xtcrp.tar"
         SOURCE_FILE="/home/tc/user_config.json"
         
         if [ -f "$TGZ_FILE" ]; then
@@ -2359,32 +2359,30 @@ function backuploader() {
             echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
         
             # 백업 생성
-            sudo cp "$TGZ_FILE" "${TGZ_FILE}.bak"
+            sudo cp "$TGZ_FILE" "/dev/shm/${TGZ_FILE}.bak"
         
             # Decompress the existing archive
             if ! sudo gunzip "$TGZ_FILE"; then
                 echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
-                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
                 exit 1
             fi
         
             # Add the file to the archive with relative path
             if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
                 echo "Error: Failed to add ${SOURCE_FILE} to archive."
-                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
                 exit 1
             fi
         
-            # Compress the archive again and save with the original name (use temporary file)
-            TEMP_TGZ="${TGZ_FILE}.tmp"
-            if ! sudo gzip -c "$TAR_UNZIPPED" > "$TEMP_TGZ"; then
+            # Compress the archive again and save with the original name
+            if ! sudo gzip -c "$TAR_UNZIPPED" > "$TGZ_FILE"; then
                 echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
-                sudo mv "${TGZ_FILE}.bak" "$TGZ_FILE"
+                sudo mv "/dev/shm/${TGZ_FILE}.bak" "$TGZ_FILE"
                 exit 1
             fi
         
             # Replace original file with compressed archive and clean up temporary files
-            sudo mv "$TEMP_TGZ" "$TGZ_FILE"
             sudo rm -f "$TAR_UNZIPPED" "${TGZ_FILE}.bak"
         
             echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
