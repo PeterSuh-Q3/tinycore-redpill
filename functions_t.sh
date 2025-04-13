@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.6"
+rploaderver="1.2.2.7"
 build="master"
 redpillmake="prod"
 
@@ -27,6 +27,8 @@ if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
 else
     FRKRNL="NO"
 fi
+
+BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | wc -l )"
  
 function history() {
     cat <<EOF
@@ -166,6 +168,7 @@ function history() {
     1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+    1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -509,6 +512,8 @@ EOF
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
 # 2025.04.12 v1.2.2.6 
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+# 2025.04.13 v1.2.2.7 
+# SynoDisk with bootloader injection Support xTCRP loader rebuild
     
 function showlastupdate() {
     cat <<EOF
@@ -681,6 +686,9 @@ function showlastupdate() {
 
 # 2025.04.12 v1.2.2.6 
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+
+# 2025.04.13 v1.2.2.7 
+# SynoDisk with bootloader injection Support xTCRP loader rebuild
 
 EOF
 }
