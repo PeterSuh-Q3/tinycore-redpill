@@ -28,7 +28,7 @@ else
     FRKRNL="NO"
 fi
 
-BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | wc -l )"
+BIOS_CNT="$(sudo fdisk -l | grep "BIOS" | wc -l )"
  
 function history() {
     cat <<EOF
@@ -4528,7 +4528,11 @@ function my() {
   cecho p "DSM PAT file pre-downloading in progress..."
   URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"
-  patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"                                         
+  if [[ $BIOS_CNT -eq 1 ]] && [ [ "$FRKRNL" = "YES" ] ]; then 
+      patfile="/dev/shm/${SYNOMODEL}.pat"
+  else
+      patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"
+  fi    
   
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
