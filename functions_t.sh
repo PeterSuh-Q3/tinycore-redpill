@@ -2348,7 +2348,7 @@ function backuploader() {
 
         TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
         BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
-        TAR_UNZIPPED="/mnt/${tcrppart}/xtcrp.tar"
+        TAR_UNZIPPED="/dev/shm/xtcrp.tar"
         SOURCE_FILE="/home/tc/user_config.json"
         
         if [ -f "$TGZ_FILE" ]; then
@@ -2361,9 +2361,11 @@ function backuploader() {
         
             # 백업 생성
             sudo cp "$TGZ_FILE" "$BACKUP_FILE"
+
+            sudo cp "$TGZ_FILE" /dev/shm/xtcrp.tgz
         
             # Decompress the existing archive
-            if ! sudo gunzip "$TGZ_FILE"; then
+            if ! sudo gunzip /dev/shm/xtcrp.tgz; then
                 echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
                 sudo mv "$BACKUP_FILE" "$TGZ_FILE"
                 exit 1
