@@ -3719,6 +3719,7 @@ function inject_loader() {
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+  echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
   
   # 사용자 메뉴 제공 및 선택 처리
   if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
@@ -3743,8 +3744,7 @@ function inject_loader() {
       echo "No SHR disks detected."
   fi
   
-  echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
-  [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
+  [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
 
   do_ex_first=""
   if [ $BASIC_EX -ge 1 ]; then
@@ -3853,10 +3853,22 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+
+                        # gdisk 명령의 성공 여부 확인
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to create the 4th partition on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 2
                         sudo blockdev --rereadpt "${edisk}"
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
+                        sleep 4         
 
                         # make 2rd partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
@@ -3870,9 +3882,21 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+
+                        # gdisk 명령의 성공 여부 확인 (6th partition)
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to create the 6th partition on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 2
-                        sudo blockdev --rereadpt "${edisk}"                        
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sudo blockdev --rereadpt "${edisk}"
+                        
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 4
 
                         echo "Create 7th partition on disks... $edisk"
@@ -3888,10 +3912,22 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
+
+                            # gdisk 명령의 성공 여부 확인 (6th partition)
+                            if [ $? -ne 0 ]; then
+                                echo "Failed to create the 7th partition on ${edisk}. Stop processing!!!"
+                                remove_loader
+                                return
+                            fi
                             sleep 2
-                            sudo blockdev --rereadpt "${edisk}"                            
-                            [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                            sleep 2
+                            sudo blockdev --rereadpt "${edisk}"
+                            
+                            if [ $? -ne 0 ]; then
+                                echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                                remove_loader
+                                return
+                            fi
+                            sleep 4
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
