@@ -2344,12 +2344,30 @@ function backuploader() {
     getpigz
 
     # backup xtcrp together
-    sudo sh -c "tar -cf - --exclude='/home/tc/redpill-load' ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
-    if [ $? -ne 0 ]; then
-        cecho r "An error occurred while backing up the loader!!!"
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
+        TAR_UNZIPPED="/mnt/${tcrppart}/xtcrp.tar"
+        SOURCE_FILE="/home/tc/user_config.json"
+        if [ -f "$TGZ_FILE" ]; then
+            echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+            # Decompress the existing archive
+            sudo gunzip "$TGZ_FILE"
+            # Add the file to the archive
+            sudo tar --append -C / --file="$TAR_UNZIPPED" "home/tc/user_config.json"
+            # Compress the archive again and save with the original name
+            sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"
+            # Remove the decompressed temporary file
+            sudo rm "$TAR_UNZIPPED"
+        fi
+        return
     else
-        cecho y "Successfully backed up the loader!!!"
-    fi
+        sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${tcrppart}/xtcrp.tgz"
+        if [ $? -ne 0 ]; then
+            cecho r "An error occurred while backing up the loader!!!"
+        else
+            cecho y "Successfully backed up the loader!!!"
+        fi
+    fi    
 
     if [ "$FRKRNL" = "YES" ]; then
         TGZ_FILE="/mnt/${tcrppart}/mydata.tgz"
