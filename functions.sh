@@ -3649,23 +3649,19 @@ function inject_loader() {
   SHR=0  
   BASIC_EX=0  
   SHR_EX=0
-  FIRST_SHR=""
   TB2T_CNT=0
+  DETECTED_SHRS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
+  FIRST_SHR=""      # 사용자가 선택한 첫 번째 SHR 디스크
+  
   while read -r edisk; do
       get_disk_type_cnt "${edisk}" "N"
       
       if [ $RAID_CNT -eq 3 ]; then
           case "$DOS_CNT $W95_CNT" in
-              #"0 0")
-              #    echo "This is BASIC or JBOD Type Hard Disk. $edisk"
-              #    ((BASIC++))
-              #    ;;
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
-                  if [ -z "$FIRST_SHR" ]; then
-                      FIRST_SHR="$edisk"
-                  fi                  
+                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
                   ;;
               "2 0")
                   echo "This is BASIC Type Hard Disk and Has synoboot1 and synoboot2 Boot Partition $edisk"
@@ -3680,61 +3676,75 @@ function inject_loader() {
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
-                  if [ -z "$FIRST_SHR" ]; then
-                      FIRST_SHR="$edisk"
-                  fi                  
+                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
                   ;;
               "0 0" | "3 0")
                   echo "Detect if GPT disk is larger than 2TB. $edisk"
-                  # After DSM 7.1.1
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
-
-                  # Before DSM 7.0.1    
+  
                   EXPECTED_START_11=2048
                   EXPECTED_START_22=4982528
-
-                    # 파티션 테이블 유형 확인 (GPT 또는 MBR)
-                    partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
-
-                    GPT="OFF"
-                    if [[ "$partition_table" == "gpt" ]]; then
-                        echo "Detected GPT partition table on $edisk"
-                        GPT="ON"
-                    fi
-
-                    # Extract partition information using fdisk and filter relevant lines
-                    partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
-            
-                    # Extract start values for partitions 1, 2, and 5
-                    start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
-                    start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
-            
-                    # Check if the start values match either of the expected SHR type conditions
-                    if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
-                       { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
+  
+                  partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
+                  
+                  GPT="OFF"
+                  if [[ "$partition_table" == "gpt" ]]; then
+                      echo "Detected GPT partition table on $edisk"
+                      GPT="ON"
+                  fi
+  
+                  partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
+          
+                  start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
+                  start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
+          
+                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
+                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
                       echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((SHR_EX++))
+                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
                       else
                           ((SHR++))
+                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
                       fi
                       ((W95_CNT++))
                       ((TB2T_CNT++))
-                      if [ -z "$FIRST_SHR" ]; then
-                          FIRST_SHR="$edisk"
-                      fi                  
-                    fi
+                  fi
                   ;;
-                *)
-                    echo "Unknown disk type for $edisk"
-                    ;;                  
+              *)
+                  echo "Unknown disk type for $edisk"
+                  ;;                  
           esac
       fi
-  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r )
-
+  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
   echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
-  [ -n "$FIRST_SHR" ] && echo "First SHR disk: $FIRST_SHR"
+  
+  # 사용자 메뉴 제공 및 선택 처리
+  if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
+      echo "Detected SHR disks:"
+      for i in "${!DETECTED_SHRS[@]}"; do
+          echo "$((i + 1)). ${DETECTED_SHRS[$i]}"
+      done
+  
+      while true; do
+          read -p "Select a disk (enter the number): " selection
+          
+          if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_SHRS[@]}" ]; then
+              FIRST_SHR="${DETECTED_SHRS[$((selection - 1))]}"
+              break
+          else
+              echo "Invalid selection. Please try again."
+          fi
+      done
+  
+      echo "You selected: $FIRST_SHR"
+  else
+      echo "No SHR disks detected."
+  fi
+  
+  [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
 
   do_ex_first=""
   if [ $BASIC_EX -ge 1 ]; then
@@ -3819,8 +3829,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                     if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
-                        # make 1st partition
-                        echo "Create primary and logical partitions on 1st disk. ${model}"
+                        echo "Create primary partitions on disk. ${model}"
                         # get 1st partition's end sector
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
@@ -3843,15 +3852,27 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+
+                        # gdisk 명령의 성공 여부 확인
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to create the 4th partition on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 2
                         sudo blockdev --rereadpt "${edisk}"
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                        sleep 2
+                        
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
+                        sleep 4         
 
-                        # make 2rd partition
+                        # make 6th partition
                         last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
-                        # skip 97 sectors / 8 times
-                        #last_sector=$((${last_sector} + 97))
+                        # +1 sectors 
+                        [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                                                 
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
@@ -3860,17 +3881,29 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         else
                             echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
+
+                        # gdisk 명령의 성공 여부 확인 (6th partition)
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to create the 6th partition on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 2
-                        sudo blockdev --rereadpt "${edisk}"                        
-                        [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sudo blockdev --rereadpt "${edisk}"
+                        
+                        if [ $? -ne 0 ]; then
+                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            remove_loader
+                            return
+                        fi
                         sleep 4
 
                         echo "Create 7th partition on disks... $edisk"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
-                            # make 3rd partition
+                            # make 7th partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
-                            # skip 97 sectors / 8 times
-                            #last_sector=$((${last_sector} + 97))
+                            # +1 sectors 
+                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
@@ -3878,10 +3911,22 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
+
+                            # gdisk 명령의 성공 여부 확인 (7th partition)
+                            if [ $? -ne 0 ]; then
+                                echo "Failed to create the 7th partition on ${edisk}. Stop processing!!!"
+                                remove_loader
+                                return
+                            fi
                             sleep 2
-                            sudo blockdev --rereadpt "${edisk}"                            
-                            [ $? -ne 0 ] && returnto "make primary partition on ${edisk} failed. Stop processing!!! " && remove_loader && return
-                            sleep 2
+                            sudo blockdev --rereadpt "${edisk}"
+                            
+                            if [ $? -ne 0 ]; then
+                                echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                                remove_loader
+                                return
+                            fi
+                            sleep 4
                         else
                             echo "The synoboot3 was already made!!!"
                         fi
