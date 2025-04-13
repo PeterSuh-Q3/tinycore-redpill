@@ -3764,6 +3764,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
         tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
     fi    
 
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
     tce-load -i bc
     if [ $? -eq 0 ]; then
         echo "Install bc OK !!!"
@@ -4007,6 +4014,14 @@ function remove_loader() {
         tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
     fi    
 
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
+    
     # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
     # 모든 디스크 스캔
     LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
