@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.6"
+rploaderver="1.2.2.7"
 build="master"
 redpillmake="prod"
 
@@ -27,6 +27,8 @@ if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
 else
     FRKRNL="NO"
 fi
+
+BIOS_CNT="$(sudo fdisk -l | grep "BIOS" | wc -l )"
  
 function history() {
     cat <<EOF
@@ -166,6 +168,7 @@ function history() {
     1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+    1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -509,6 +512,8 @@ EOF
 # SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
 # 2025.04.12 v1.2.2.6 
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+# 2025.04.13 v1.2.2.7 
+# SynoDisk with bootloader injection Support xTCRP loader rebuild
     
 function showlastupdate() {
     cat <<EOF
@@ -682,6 +687,9 @@ function showlastupdate() {
 # 2025.04.12 v1.2.2.6 
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
 
+# 2025.04.13 v1.2.2.7 
+# SynoDisk with bootloader injection Support xTCRP loader rebuild
+
 EOF
 }
 
@@ -765,6 +773,11 @@ function getloaderdisk() {
     # Get the loader disk using the UUID "6234-C863"
     loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
 
+    # Get the loader disk using the UUID "6234-C863" ( injected bootloader )
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        [ -z "$loaderdisk" ] && loaderdisk=$(sudo /sbin/blkid | grep "8765-4321" | cut -d ':' -f1 | sed 's/p\?7//g' | awk -F/ '{print $NF}' | head -n 1)
+    fi
+    
     # If the UUID "6234-C863" is not found, extract the disk name
     if [ -z "$loaderdisk" ]; then
         # Iterate through available disks to find a valid disk name
@@ -1450,27 +1463,32 @@ function _pat_process() {
 
   # Discover remote file size
   echo "BUS type = ${BUS} (Discover remote file size)"
-  if [ "${BUS}" != "block"  ]; then
-      SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left
-      FILESIZE=$(curl -k -sLI "${PATURL}" | grep -i Content-Length | awk '{print$2}')
 
-      FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
-      SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
-
-      FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
-      SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-      FILESIZE_MB=$((FILESIZE / 1024 / 1024))
-      SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+  if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+      msgnormal "Skip Checking Pat files on xTCRP with Synoboot Injected."
+  else
+      if [ "${BUS}" != "block"  ]; then
+          SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left
+          FILESIZE=$(curl -k -sLI "${PATURL}" | grep -i Content-Length | awk '{print$2}')
     
-      echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
-      echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+          FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
+          SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
     
-      if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
-          # No disk space to download, change it to RAMDISK
-          echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
-          sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+          FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+          SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+          FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+          SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        
+          echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+          echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+        
+          if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+              # No disk space to download, change it to RAMDISK
+              echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
+              sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+          fi
       fi
-  fi
+  fi    
   
   echo "PATURL = " "${PATURL}"
   STATUS=$(sudo curl -k -w "%{http_code}" -L "${PATURL}" -o "${PAT_PATH}" --progress-bar)
@@ -1813,7 +1831,11 @@ function processpat() {
 
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        local_cache="/dev/shm"
+    else
+        local_cache="/mnt/${tcrppart}/auxfiles"
+    fi    
     temp_pat_folder="/tmp/pat"
     temp_dsmpat_folder="/tmp/dsmpat"
 
@@ -2314,6 +2336,57 @@ function cleanloader() {
 
 }
 
+function backupxtcrp() {
+
+    TGZ_FILE="${1}/xtcrp.tgz"
+    BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
+    TAR_UNZIPPED="/dev/shm/xtcrp.tar"
+    SOURCE_FILE="/home/tc/user_config.json"
+    
+    if [ -f "$TGZ_FILE" ]; then
+        if [ ! -f "$SOURCE_FILE" ]; then
+            echo "Error: Source file ${SOURCE_FILE} does not exist!"
+            exit 1
+        fi
+    
+        echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+    
+        # 백업 생성
+        sudo cp "$TGZ_FILE" "$BACKUP_FILE"
+
+        sudo cp "$TGZ_FILE" /dev/shm/xtcrp.tgz
+    
+        # Decompress the existing archive
+        if ! sudo gunzip /dev/shm/xtcrp.tgz; then
+            echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Add the file to the archive with relative path
+        if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
+            echo "Error: Failed to add ${SOURCE_FILE} to archive."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Compress the archive again and save with the original name
+        if ! sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"; then
+            echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Replace original file with compressed archive and clean up temporary files
+        sudo rm -f "$TAR_UNZIPPED" "$BACKUP_FILE"
+    
+        echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
+    else
+        echo "Error: Target archive ${TGZ_FILE} does not exist!"
+    fi
+
+}
+
 function backuploader() {
 
   thread=$(nproc)
@@ -2322,12 +2395,17 @@ function backuploader() {
     getpigz
 
     # backup xtcrp together
-    sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
-    if [ $? -ne 0 ]; then
-        cecho r "An error occurred while backing up the loader!!!"
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        backupxtcrp "/mnt/${tcrppart}"
+        return
     else
-        cecho y "Successfully backed up the loader!!!"
-    fi
+        sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${tcrppart}/xtcrp.tgz"
+        if [ $? -ne 0 ]; then
+            cecho r "An error occurred while backing up the loader!!!"
+        else
+            cecho y "Successfully backed up the loader!!!"
+        fi
+    fi    
 
     if [ "$FRKRNL" = "YES" ]; then
         TGZ_FILE="/mnt/${tcrppart}/mydata.tgz"
@@ -2339,7 +2417,7 @@ function backuploader() {
             # Decompress the existing archive
             sudo gunzip "$TGZ_FILE"
             # Add the file to the archive
-            sudo tar --append -C / --file="$TAR_UNZIPPED" "home/tc/user_config.json"
+            sudo tar --append -C / --file="$TAR_UNZIPPED" "$SOURCE_FILE"
             # Compress the archive again and save with the original name
             sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"
             # Remove the decompressed temporary file
@@ -2821,8 +2899,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
+      if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+        sudo cp /home/tc/friend/initrd-friend /mnt/${loaderdisk}1/
+        sudo cp /home/tc/friend/bzImage-friend /mnt/${loaderdisk}1/
+      else
         sudo cp /home/tc/friend/initrd-friend /mnt/${loaderdisk}3/
         sudo cp /home/tc/friend/bzImage-friend /mnt/${loaderdisk}3/
+      fi  
     fi
 
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
@@ -2929,23 +3012,29 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     [ -d /home/tc/rd.temp ] && cd /home/tc/rd.temp
     RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${TARGET_VERSION}-${TARGET_REVISION}/config.json | jq -r -e ' .extra .compress_rd')
 
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        gzs_path="/dev/shm"  
+    else
+        gzs_path="/mnt/${loaderdisk}3"
+    fi
+
     if [ "$RD_COMPRESSED" = "false" ]; then
-        echo "Ramdisk in not compressed "    
-        cat /mnt/${loaderdisk}3/rd.gz | sudo cpio -idm
+        echo "Ramdisk in not compressed "
+        cat ${gzs_path}/rd.gz | sudo cpio -idm
     else    
         echo "Ramdisk in compressed " 
-        unlzma -dc /mnt/${loaderdisk}3/rd.gz | sudo cpio -idm
+        unlzma -dc ${gzs_path}/rd.gz | sudo cpio -idm
     fi
 
     # 1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
-    if [ -f /mnt/${loaderdisk}3/custom.gz ]; then
+    if [ -f ${gzs_path}/custom.gz ]; then
         echo "Found custom.gz, so extract from custom.gz " 
-        cat /mnt/${loaderdisk}3/custom.gz | sudo cpio -idm  >/dev/null 2>&1
+        cat ${gzs_path}/custom.gz | sudo cpio -idm  >/dev/null 2>&1
     else
         echo "Not found custom.gz, extract /exts from initrd-dsm" 
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
-        cat /mnt/${loaderdisk}3/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
     fi
 
     # Network card configuration file
@@ -3019,6 +3108,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         #    sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
         #fi
     fi
+
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
+    fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
 
@@ -3028,38 +3121,42 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
 
     sudo rm -rf /home/tc/rd.temp /home/tc/friend /home/tc/cache/*.pat
 
-    if [ "${BUS}" != "block" ]; then
-        msgnormal "Caching files for future use"
-        [ ! -d ${local_cache} ] && mkdir ${local_cache}
-    
-        # Discover remote file size
-        patfile=$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)    
-        FILESIZE=$(stat -c%s "${patfile}")
-        SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
-    
-        FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
-        SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-        FILESIZE_MB=$((FILESIZE / 1024 / 1024))
-        SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
-    
-        echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
-        echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
-    
-        if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
-            # No disk space to download, change it to RAMDISK
-            echo "No adequate space on ${local_cache} to backup cache pat file, clean up PAT file now ....."
-            sudo sh -c "rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
-        fi
-    
-        if [ -f ${patfile} ]; then
-            echo "Found ${patfile}, moving to cache directory : ${local_cache} "
-            if [ "$FRKRNL" = "NO" ]; then
-                cp -vf ${patfile} ${local_cache} && rm -vf /home/tc/redpill-load/cache/*.pat
-            else
-                sudo cp -vf ${patfile} ${local_cache} && sudo rm -vf /home/tc/redpill-load/cache/*.pat 
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+        msgnormal "Skip Caching files on xTCRP with Synoboot Injected."
+    else
+        if [ "${BUS}" != "block" ]; then
+            msgnormal "Caching files for future use"
+            [ ! -d ${local_cache} ] && mkdir ${local_cache}
+        
+            # Discover remote file size
+            patfile=$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)    
+            FILESIZE=$(stat -c%s "${patfile}")
+            SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
+        
+            FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+            SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+            FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+            SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        
+            echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+            echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+        
+            if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+                # No disk space to download, change it to RAMDISK
+                echo "No adequate space on ${local_cache} to backup cache pat file, clean up PAT file now ....."
+                sudo sh -c "rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
             fi
-        fi
+        
+            if [ -f ${patfile} ]; then
+                echo "Found ${patfile}, moving to cache directory : ${local_cache} "
+                if [ "$FRKRNL" = "NO" ]; then
+                    cp -vf ${patfile} ${local_cache} && rm -vf /home/tc/redpill-load/cache/*.pat
+                else
+                    sudo cp -vf ${patfile} ${local_cache} && sudo rm -vf /home/tc/redpill-load/cache/*.pat 
+                fi
+            fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
+        fi    
     fi    
 }
 
@@ -3570,7 +3667,8 @@ function wr_part3() {
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    backupxtcrp ${mdiskpart}
     true
 }
 
@@ -4520,7 +4618,11 @@ function my() {
   cecho p "DSM PAT file pre-downloading in progress..."
   URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"
-  patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"                                         
+  if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+      patfile="/dev/shm/${SYNOMODEL}.pat"
+  else
+      patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"
+  fi    
   
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
