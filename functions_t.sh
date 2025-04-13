@@ -2336,6 +2336,57 @@ function cleanloader() {
 
 }
 
+function backupxtcrp() {
+
+    TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
+    BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
+    TAR_UNZIPPED="/dev/shm/xtcrp.tar"
+    SOURCE_FILE="/home/tc/user_config.json"
+    
+    if [ -f "$TGZ_FILE" ]; then
+        if [ ! -f "$SOURCE_FILE" ]; then
+            echo "Error: Source file ${SOURCE_FILE} does not exist!"
+            exit 1
+        fi
+    
+        echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+    
+        # 백업 생성
+        sudo cp "$TGZ_FILE" "$BACKUP_FILE"
+
+        sudo cp "$TGZ_FILE" /dev/shm/xtcrp.tgz
+    
+        # Decompress the existing archive
+        if ! sudo gunzip /dev/shm/xtcrp.tgz; then
+            echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Add the file to the archive with relative path
+        if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
+            echo "Error: Failed to add ${SOURCE_FILE} to archive."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Compress the archive again and save with the original name
+        if ! sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"; then
+            echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Replace original file with compressed archive and clean up temporary files
+        sudo rm -f "$TAR_UNZIPPED" "$BACKUP_FILE"
+    
+        echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
+    else
+        echo "Error: Target archive ${TGZ_FILE} does not exist!"
+    fi
+
+}
+
 function backuploader() {
 
   thread=$(nproc)
@@ -2345,53 +2396,7 @@ function backuploader() {
 
     # backup xtcrp together
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
-
-        TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
-        BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
-        TAR_UNZIPPED="/dev/shm/xtcrp.tar"
-        SOURCE_FILE="/home/tc/user_config.json"
-        
-        if [ -f "$TGZ_FILE" ]; then
-            if [ ! -f "$SOURCE_FILE" ]; then
-                echo "Error: Source file ${SOURCE_FILE} does not exist!"
-                exit 1
-            fi
-        
-            echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
-        
-            # 백업 생성
-            sudo cp "$TGZ_FILE" "$BACKUP_FILE"
-
-            sudo cp "$TGZ_FILE" /dev/shm/xtcrp.tgz
-        
-            # Decompress the existing archive
-            if ! sudo gunzip /dev/shm/xtcrp.tgz; then
-                echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
-                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
-                exit 1
-            fi
-        
-            # Add the file to the archive with relative path
-            if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
-                echo "Error: Failed to add ${SOURCE_FILE} to archive."
-                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
-                exit 1
-            fi
-        
-            # Compress the archive again and save with the original name
-            if ! sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"; then
-                echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
-                sudo mv "$BACKUP_FILE" "$TGZ_FILE"
-                exit 1
-            fi
-        
-            # Replace original file with compressed archive and clean up temporary files
-            sudo rm -f "$TAR_UNZIPPED" "$BACKUP_FILE"
-        
-            echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
-        else
-            echo "Error: Target archive ${TGZ_FILE} does not exist!"
-        fi
+        backupxtcrp
         return
     else
         sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${tcrppart}/xtcrp.tgz"
@@ -3663,6 +3668,7 @@ function wr_part3() {
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    backupxtcrp
     true
 }
 
