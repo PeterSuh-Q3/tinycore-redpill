@@ -2338,7 +2338,7 @@ function cleanloader() {
 
 function backupxtcrp() {
 
-    TGZ_FILE="/mnt/${tcrppart}/xtcrp.tgz"
+    TGZ_FILE="${1}/xtcrp.tgz"
     BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
     TAR_UNZIPPED="/dev/shm/xtcrp.tar"
     SOURCE_FILE="/home/tc/user_config.json"
@@ -2396,7 +2396,7 @@ function backuploader() {
 
     # backup xtcrp together
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
-        backupxtcrp
+        backupxtcrp "/mnt/${tcrppart}"
         return
     else
         sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${tcrppart}/xtcrp.tgz"
@@ -3668,7 +3668,7 @@ function wr_part3() {
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
-    backupxtcrp
+    backupxtcrp ${mdiskpart}
     true
 }
 
