@@ -2344,7 +2344,7 @@ function backuploader() {
     getpigz
 
     # backup xtcrp together
-    sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
+    sudo sh -c "tar -cf - --exclude='/home/tc/redpill-load' ./ | pigz -p ${thread} > /mnt/${loaderdisk}3/xtcrp.tgz"
     if [ $? -ne 0 ]; then
         cecho r "An error occurred while backing up the loader!!!"
     else
