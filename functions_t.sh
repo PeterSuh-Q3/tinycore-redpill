@@ -3070,6 +3070,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         #    sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
         #fi
     fi
+
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
+    fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
 
