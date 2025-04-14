@@ -35,6 +35,8 @@ jobs:
           mac3 = ''
           mac4 = ''
           sn = ''
+          format = ''
+          language = ''
           try:
               if issuetitle.lower().startswith('custom'):
                   jsonbody = json.loads(issuebody)
@@ -46,6 +48,8 @@ jobs:
                   mac3 = jsonbody.get('mac3', '')
                   mac4 = jsonbody.get('mac4', '')
                   sn = jsonbody.get('sn', '')
+                  format = jsonbody.get('format', '')
+                  language = jsonbody.get('language', '')
           except ValueError as e:
               pass
           if iscustom == 'false':
@@ -62,6 +66,8 @@ jobs:
           set_output("mac3", mac3)
           set_output("mac4", mac4)
           set_output("sn", sn)
+          set_output("format", format)
+          set_output("language", language)
 
       - name: Update Comment Labels
         if: env.iscustom == 'true'
@@ -140,6 +146,10 @@ jobs:
             echo "set sn: ${{ env.sn }}"
             sudo ./writekey.sh "extra_cmdline" "sn" "${{ env.sn }}" $userconfigfile
           fi
+          if [ -n "${{ env.language }}" ]; then
+            echo "set language: ${{ env.language }}"
+            sudo ./writekey.sh "general" "ucode" "${{ env.language }}" $userconfigfile
+          fi
 
           echo "Build loader for ${{ env.model }}-${{ env.version }}"
           ls -ltr ./functions.sh
@@ -189,11 +199,28 @@ jobs:
 
           cd ${path}/
           ls -ltr ${path}/
-          gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
-
-          qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
-          gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
           
+          # env.format 값이 지정되지 않은 경우 img와 vmdk 둘 다 생성
+          if [ -z "${{ env.format }}" ]; then
+            # img 형식 생성
+            gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
+          
+            # vmdk 형식 생성
+            qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
+            gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
+          else
+            # format 값이 img인 경우
+            if [ "${{ env.format }}" = "img" ]; then
+              gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
+            fi
+          
+            # format 값이 vmdk인 경우
+            if [ "${{ env.format }}" = "vmdk" ]; then
+              qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
+              gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
+            fi
+          fi
+
           ls -ltr /opt/output
           
       - name: Upload to Artifact
