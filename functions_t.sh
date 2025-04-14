@@ -3976,8 +3976,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # for RAID 1, RAID 5, RAID 6, BASIC ETC...
                         [ -z $last_sector ] && last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
 
-                        # +1 sectors 
-                        [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            # +1 sectors 
+                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                        else
+                            # +1025 sectors 
+                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                        fi
                         
                         # +13M
                         echo "Create 6th partition on disks... $edisk"
@@ -4007,8 +4012,14 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 7th partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
-                            # +1 sectors 
-                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+
+                            if [ $TB2T_CNT -ge 1 ]; then
+                                # +1 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                            else
+                                # +1025 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                            fi
                             
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
