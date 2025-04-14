@@ -29,6 +29,7 @@ else
 fi
 
 BIOS_CNT="$(sudo fdisk -l | grep "BIOS" | wc -l )"
+[ $BIOS_CNT -eq 0 ] && BIOS_CNT="$(sudo fdisk -l | grep "*" | grep "83" | grep "127M" | wc -l )"
  
 function history() {
     cat <<EOF
