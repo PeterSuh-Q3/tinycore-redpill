@@ -3952,7 +3952,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             fi    
                         else
-                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인
@@ -3989,7 +3989,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
@@ -4025,7 +4025,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             if [ $TB2T_CNT -ge 1 ]; then
                                 echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
-                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" #> /dev/null 2>&1
+                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                             fi
 
                             # gdisk 명령의 성공 여부 확인 (7th partition)
