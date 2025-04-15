@@ -3676,8 +3676,8 @@ function wr_part3() {
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
-    backupxtcrp ${mdiskpart}
+    [ ${ORIGIN_PLATFORM} != "geminilake" ] && sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    [ ${ORIGIN_PLATFORM} != "geminilake" ] && backupxtcrp ${mdiskpart}
     true
 }
 
