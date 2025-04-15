@@ -3992,8 +3992,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            # +1025 sectors 
-                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                # +65 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
+                            else
+                                # +513 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                            fi   
                         fi
                         
                         # +13M
@@ -4030,9 +4035,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
                                 if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
-                                    # +1 sectors 
-                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
-                                    echo "last_sector = $last_sector"
+                                    # +65 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                                 else
                                     # +513 sectors 
                                     [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
