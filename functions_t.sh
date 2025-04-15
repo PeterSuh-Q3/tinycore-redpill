@@ -4030,8 +4030,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
                                 if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
-                                    # +33 sectors 
-                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 33))
+                                    # +17 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 17))
                                 else
                                     # +513 sectors 
                                     [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
