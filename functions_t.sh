@@ -3676,8 +3676,32 @@ function wr_part3() {
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    [ ${ORIGIN_PLATFORM} != "geminilake" ] && sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
-    [ ${ORIGIN_PLATFORM} != "geminilake" ] && backupxtcrp ${mdiskpart}
+
+    
+    TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz"
+
+    SPACELEFT=$(df --block-size=1 | grep ${mdiskpart} | awk '/'${mdiskpart}'/{print $4}') # Check disk space left
+    FILESIZE=$(curl -k -sLI "${TGZURL}" | grep -i Content-Length | awk '{print$2}')
+    
+    FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
+    SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
+    
+    FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+    SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+    FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+    SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+    
+    echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+    echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+    
+    if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+      # No disk space to download, change it to RAMDISK
+      echo "No adequate space on ${mdiskpart} to download file, skip download xtcrp.tgz... "
+      true
+    fi
+    
+    sudo curl -kL# "${TGZURL}" -o "${mdiskpart}"/xtcrp.tgz
+    backupxtcrp ${mdiskpart}
     true
 }
 
