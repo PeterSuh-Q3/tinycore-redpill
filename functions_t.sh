@@ -4006,7 +4006,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                echo -e "n\n$last_sector\n+12M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            fi
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
