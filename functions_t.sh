@@ -3880,7 +3880,9 @@ function inject_loader() {
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-    getvarsmshell "DS920+"
+    synomodel="$(jq -r -e '.general.model' $userconfigfile)"
+    synoversion="$(jq -r -e '.general.version' $userconfigfile)"
+    getvarsmshell "${synomodel}-${synoversion}"
     if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
         curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
         tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
