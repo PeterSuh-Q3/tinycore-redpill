@@ -4020,8 +4020,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                # +513 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                    # +33 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 33))
+                                else
+                                    # +513 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                                fi
                             fi
                             
                             # about +79M ~ +83M (last all space)
