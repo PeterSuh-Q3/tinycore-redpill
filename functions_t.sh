@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.7"
+rploaderver="1.2.2.8"
 build="master"
 redpillmake="prod"
 
@@ -172,6 +172,7 @@ function history() {
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
+    1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -517,6 +518,8 @@ EOF
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
 # 2025.04.13 v1.2.2.7 
 # SynoDisk with bootloader injection Support xTCRP loader rebuild
+# 2025.04.15 v1.2.2.8 
+# Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
     
 function showlastupdate() {
     cat <<EOF
@@ -692,6 +695,9 @@ function showlastupdate() {
 
 # 2025.04.13 v1.2.2.7 
 # SynoDisk with bootloader injection Support xTCRP loader rebuild
+
+# 2025.04.15 v1.2.2.8 
+# Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
 
 EOF
 }
