@@ -1,1 +1,1 @@
-     1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
+     1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
