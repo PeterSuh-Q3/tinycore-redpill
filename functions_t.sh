@@ -4020,8 +4020,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                # +1025 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                                # +513 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
                             fi
                             
                             # about +79M ~ +83M (last all space)
