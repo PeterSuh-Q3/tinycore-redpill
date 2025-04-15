@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.7"
+rploaderver="1.2.2.8"
 build="master"
 redpillmake="prod"
 
@@ -172,6 +172,7 @@ function history() {
     1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
+    1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -517,6 +518,8 @@ EOF
 # SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
 # 2025.04.13 v1.2.2.7 
 # SynoDisk with bootloader injection Support xTCRP loader rebuild
+# 2025.04.15 v1.2.2.8 
+# Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
     
 function showlastupdate() {
     cat <<EOF
@@ -692,6 +695,9 @@ function showlastupdate() {
 
 # 2025.04.13 v1.2.2.7 
 # SynoDisk with bootloader injection Support xTCRP loader rebuild
+
+# 2025.04.15 v1.2.2.8 
+# Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
 
 EOF
 }
@@ -3670,8 +3676,8 @@ function wr_part3() {
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
-    backupxtcrp ${mdiskpart}
+    [ ${ORIGIN_PLATFORM} != "geminilake" ] && sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz -o "${mdiskpart}"/xtcrp.tgz
+    [ ${ORIGIN_PLATFORM} != "geminilake" ] && backupxtcrp ${mdiskpart}
     true
 }
 
@@ -3874,6 +3880,9 @@ function inject_loader() {
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+    synomodel="$(jq -r -e '.general.model' $userconfigfile)"
+    synoversion="$(jq -r -e '.general.version' $userconfigfile)"
+    getvarsmshell "${synomodel}-${synoversion}"
     if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
         curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
         tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
@@ -3983,8 +3992,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            # +1025 sectors 
-                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                # +65 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
+                            else
+                                # +513 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                            fi   
                         fi
                         
                         # +13M
@@ -3992,7 +4006,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                echo -e "n\n$last_sector\n+12M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            fi
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
@@ -4020,8 +4038,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                # +1025 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1025))
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ]; then
+                                    # +65 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
+                                else
+                                    # +513 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                                fi
                             fi
                             
                             # about +79M ~ +83M (last all space)
