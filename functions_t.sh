@@ -3697,7 +3697,7 @@ function wr_part3() {
     if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
       # No disk space to download, change it to RAMDISK
       echo "No adequate space on ${mdiskpart} to download file, skip download xtcrp.tgz... "
-      true
+      return true
     fi
     
     sudo curl -kL# "${TGZURL}" -o "${mdiskpart}"/xtcrp.tgz
