@@ -3680,7 +3680,7 @@ function wr_part3() {
     
     TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz"
 
-    SPACELEFT=$(df --block-size=1 | grep ${mdiskpart} | awk '/'${mdiskpart}'/{print $4}') # Check disk space left
+    SPACELEFT=$(df --block-size=1 | grep "${mdiskpart}" | awk '{print $4}') # Check disk space left
     FILESIZE=$(curl -k -sLI "${TGZURL}" | grep -i Content-Length | awk '{print$2}')
     
     FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
