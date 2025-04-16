@@ -3811,10 +3811,10 @@ function inject_loader() {
   
                   partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
                   
-                  GPT="OFF"
+                  IS_GPT="OFF"
                   if [[ "$partition_table" == "gpt" ]]; then
                       echo "Detected GPT partition table on $edisk"
-                      GPT="ON"
+                      IS_GPT="ON"
                   fi
   
                   partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3822,8 +3822,8 @@ function inject_loader() {
                   start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
                   start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
           
-                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
-                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
+                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$IS_GPT" == "ON" ]; } || \
+                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$IS_GPT" == "ON" ]; }; then
                       echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((GPT_EX++))
