@@ -3822,8 +3822,7 @@ function inject_loader() {
           
                   if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$IS_GPT" == "ON" ]; } || \
                      { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$IS_GPT" == "ON" ]; }; then
-                      echo "Detected GPT Type Hard Disk (larger than 2TB). $edisk"                     
-                      echo
+                      echo -e "Detected GPT Type Hard Disk (larger than 2TB). $edisk \n"
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((GPT_EX++))
                           DETECTED_DISKS+=("$edisk")  # 배열에 추가
@@ -3842,14 +3841,14 @@ function inject_loader() {
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
-  echo "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX"
+  echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
 
   SHR=$((SHR + GPT))
   SHR_EX=$((SHR_EX + GPT_EX))
   # 사용자 메뉴 제공 및 선택 처리
   if [ -z "$FIRST_SHR" ]; then
       if [ ${#DETECTED_DISKS[@]} -gt 0 ]; then
-          echo "Detected SHR disks:"
+          echo "Detected SHR(MBR) or GPT disks:"
           for i in "${!DETECTED_DISKS[@]}"; do
               echo "$((i + 1)). ${DETECTED_DISKS[$i]}"
           done
@@ -3871,16 +3870,16 @@ function inject_loader() {
       fi
   fi    
   
-  [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
+  [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
   sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
 
   do_ex_first=""
   if [ $SHR_EX -eq 1 ]; then
-    echo "There is at least one SHR type disk each with an injected bootloader...OK"
+    echo -e "There is at least one SHR type disk each with an injected bootloader...OK \n"
     do_ex_first="Y"
   elif [ $SHR -ge 1 ]; then
-    echo "There is at least one disk of type SHR...OK"
+    echo -e "There is at least one disk of type SHR...OK \n"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
@@ -3888,7 +3887,7 @@ function inject_loader() {
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
 
-  echo "do_ex_first = ${do_ex_first}"
+  echo -e "do_ex_first = ${do_ex_first} \n"
   
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
