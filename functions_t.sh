@@ -3547,10 +3547,15 @@ function wr_part1() {
     mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
     
     [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
-      while true; do
+    while true; do
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 4th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3620,6 +3625,11 @@ function wr_part2() {
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 6th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3651,6 +3661,11 @@ function wr_part3() {
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 7th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3833,7 +3848,7 @@ function inject_loader() {
                           DETECTED_DISKS+=("$edisk")  # 배열에 추가
                       fi
                       ((W95_CNT++))
-                      ((TB2T_CNT++))
+                      TB2T_CNT=$((GPT + GPT_EX))
                   fi
                   ;;
               *)
