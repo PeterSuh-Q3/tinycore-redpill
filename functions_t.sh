@@ -3802,7 +3802,6 @@ function inject_loader() {
                   FIRST_SHR="$edisk"
                   ;;
               "0 0" | "3 0")
-                  echo "Detect if GPT disk is larger than 2TB. $edisk"
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
   
@@ -3813,7 +3812,6 @@ function inject_loader() {
                   
                   IS_GPT="OFF"
                   if [[ "$partition_table" == "gpt" ]]; then
-                      echo "Detected GPT partition table on $edisk"
                       IS_GPT="ON"
                   fi
   
@@ -3824,7 +3822,8 @@ function inject_loader() {
           
                   if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$IS_GPT" == "ON" ]; } || \
                      { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$IS_GPT" == "ON" ]; }; then
-                      echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
+                      echo "Detected GPT Type Hard Disk (larger than 2TB). $edisk"                     
+                      echo
                       if [ $BIOS_CNT -eq 1 ]; then 
                           ((GPT_EX++))
                           DETECTED_DISKS+=("$edisk")  # 배열에 추가
