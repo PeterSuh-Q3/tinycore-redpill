@@ -3777,9 +3777,7 @@ function inject_loader() {
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
-  BASIC=0
   SHR=0  
-  BASIC_EX=0  
   SHR_EX=0
   TB2T_CNT=0
   DETECTED_SHRS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
@@ -3794,16 +3792,6 @@ function inject_loader() {
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
                   DETECTED_SHRS+=("$edisk")  # 배열에 추가
-                  ;;
-              "2 0")
-                  echo "This is BASIC Type Hard Disk and Has synoboot1 and synoboot2 Boot Partition $edisk"
-                  ((BASIC_EX++))
-                  ;;
-              "1 0")
-                  if [ $(sudo /sbin/blkid | grep ${edisk} | grep -c "8765-4321") -eq 1 ]; then
-                      echo "This is BASIC Type Hard Disk and Has synoboot3 Boot Partition $edisk"
-                      ((BASIC_EX++))
-                  fi
                   ;;
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
@@ -3853,7 +3841,7 @@ function inject_loader() {
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
-  echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
+  echo "SHR = $SHR, SHR_EX = $SHR_EX, RAID_CNT = $RAID_CNT, W95_CNT=$W95_CNT, DOS_CNT=$DOS_CNT"
   
   # 사용자 메뉴 제공 및 선택 처리
   if [ -z "$FIRST_SHR" ]; then
@@ -3882,12 +3870,10 @@ function inject_loader() {
   
   [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
 
+  sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
+
   do_ex_first=""
-  if [ $BASIC_EX -ge 1 ]; then
-    #echo "There is at least one BASIC type disk each with an injected bootloader...OK"
-    #do_ex_first="Y"
-    returnto "BASIC or JBOD Type Disk is no longer supported. It is possible by converting to SHR.. Function Exit now!!! Press any key to continue..." && return  
-  elif [ $SHR_EX -eq 1 ]; then
+  if [ $SHR_EX -eq 1 ]; then
     echo "There is at least one SHR type disk each with an injected bootloader...OK"
     do_ex_first="Y"
   elif [ $SHR -ge 1 ]; then
@@ -3895,7 +3881,6 @@ function inject_loader() {
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
-  #elif [ $BASIC_EX -eq 0 ] && [ $SHR_EX -gt 1 ]; then 
   else
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
