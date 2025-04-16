@@ -3547,10 +3547,15 @@ function wr_part1() {
     mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
     
     [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
-      while true; do
+    while true; do
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 4th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3620,6 +3625,11 @@ function wr_part2() {
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 6th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3651,6 +3661,11 @@ function wr_part3() {
         sleep 1
         echo "Mounting ${fediskpart} ..."
         sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 7th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
         [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
     done
     sudo rm -rf "${mdiskpart}"/*
@@ -3672,7 +3687,8 @@ function wr_part3() {
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
-        false
+        remove_loader
+        return 1
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
@@ -3777,12 +3793,12 @@ function inject_loader() {
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
-  BASIC=0
-  SHR=0  
-  BASIC_EX=0  
+  SHR=0
   SHR_EX=0
+  GPT=0 
+  GPT_EX=0 
   TB2T_CNT=0
-  DETECTED_SHRS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
+  DETECTED_DISKS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
   FIRST_SHR=""      # 사용자가 선택한 첫 번째 SHR 디스크
   
   while read -r edisk; do
@@ -3793,26 +3809,15 @@ function inject_loader() {
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
-                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
-                  ;;
-              "2 0")
-                  echo "This is BASIC Type Hard Disk and Has synoboot1 and synoboot2 Boot Partition $edisk"
-                  ((BASIC_EX++))
-                  ;;
-              "1 0")
-                  if [ $(sudo /sbin/blkid | grep ${edisk} | grep -c "8765-4321") -eq 1 ]; then
-                      echo "This is BASIC Type Hard Disk and Has synoboot3 Boot Partition $edisk"
-                      ((BASIC_EX++))
-                  fi
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
                   ;;
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
-                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
                   FIRST_SHR="$edisk"
                   ;;
               "0 0" | "3 0")
-                  echo "Detect if GPT disk is larger than 2TB. $edisk"
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
   
@@ -3821,10 +3826,9 @@ function inject_loader() {
   
                   partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
                   
-                  GPT="OFF"
+                  IS_GPT="OFF"
                   if [[ "$partition_table" == "gpt" ]]; then
-                      echo "Detected GPT partition table on $edisk"
-                      GPT="ON"
+                      IS_GPT="ON"
                   fi
   
                   partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
@@ -3832,19 +3836,19 @@ function inject_loader() {
                   start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
                   start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
           
-                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$GPT" == "ON" ]; } || \
-                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
-                      echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
+                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$IS_GPT" == "ON" ]; } || \
+                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$IS_GPT" == "ON" ]; }; then
+                      echo -e "Detected GPT Type Hard Disk (larger than 2TB). $edisk \n"
                       if [ $BIOS_CNT -eq 1 ]; then 
-                          ((SHR_EX++))
-                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                          ((GPT_EX++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
                           FIRST_SHR="$edisk"
                       else
-                          ((SHR++))
-                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                          ((GPT++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
                       fi
                       ((W95_CNT++))
-                      ((TB2T_CNT++))
+                      TB2T_CNT=$((GPT + GPT_EX))
                   fi
                   ;;
               *)
@@ -3853,21 +3857,23 @@ function inject_loader() {
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
-  echo "SHR = $SHR, BASIC_EX = $BASIC_EX, SHR_EX = $SHR_EX"
-  
+  echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
+
+  SHR=$((SHR + GPT))
+  SHR_EX=$((SHR_EX + GPT_EX))
   # 사용자 메뉴 제공 및 선택 처리
   if [ -z "$FIRST_SHR" ]; then
-      if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
-          echo "Detected SHR disks:"
-          for i in "${!DETECTED_SHRS[@]}"; do
-              echo "$((i + 1)). ${DETECTED_SHRS[$i]}"
+      if [ ${#DETECTED_DISKS[@]} -gt 0 ]; then
+          echo "Detected SHR(MBR) or GPT disks:"
+          for i in "${!DETECTED_DISKS[@]}"; do
+              echo "$((i + 1)). ${DETECTED_DISKS[$i]}"
           done
       
           while true; do
               read -p "Select a disk (enter the number): " selection
               
-              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_SHRS[@]}" ]; then
-                  FIRST_SHR="${DETECTED_SHRS[$((selection - 1))]}"
+              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_DISKS[@]}" ]; then
+                  FIRST_SHR="${DETECTED_DISKS[$((selection - 1))]}"
                   break
               else
                   echo "Invalid selection. Please try again."
@@ -3880,27 +3886,24 @@ function inject_loader() {
       fi
   fi    
   
-  [ -n "$FIRST_SHR" ] && echo "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR"
+  [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
+
+  sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
 
   do_ex_first=""
-  if [ $BASIC_EX -ge 1 ]; then
-    #echo "There is at least one BASIC type disk each with an injected bootloader...OK"
-    #do_ex_first="Y"
-    returnto "BASIC or JBOD Type Disk is no longer supported. It is possible by converting to SHR.. Function Exit now!!! Press any key to continue..." && return  
-  elif [ $SHR_EX -eq 1 ]; then
-    echo "There is at least one SHR type disk each with an injected bootloader...OK"
+  if [ $SHR_EX -eq 1 ]; then
+    echo -e "There is at least one SHR type disk each with an injected bootloader...OK \n"
     do_ex_first="Y"
   elif [ $SHR -ge 1 ]; then
-    echo "There is at least one disk of type SHR...OK"
+    echo -e "There is at least one disk of type SHR...OK \n"
     if [ -z "${do_ex_first}" ]; then
       do_ex_first="N"
     fi
-  #elif [ $BASIC_EX -eq 0 ] && [ $SHR_EX -gt 1 ]; then 
   else
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
 
-  echo "do_ex_first = ${do_ex_first}"
+  echo -e "do_ex_first = ${do_ex_first} \n"
   
 echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
 readanswer
@@ -3937,7 +3940,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
     if [ "${do_ex_first}" = "N" ]; then
         if [ $SHR -ge 1 ]; then
-            echo "New bootloader injection (including /sbin/fdisk partition creation)..."
+            echo -e "New bootloader injection (including /sbin/fdisk partition creation)...\n"
 
             BOOTMAKE=""
             SYNOP3MAKE=""
@@ -3968,7 +3971,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                     if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
-                        echo "Create primary partitions on disk. ${model}"
+                        echo -e "Create primary partitions on disk. ${model} \n"
                         # get 1st partition's end sector
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
@@ -3981,7 +3984,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                     
                         # +127M
-                        echo "Create 4th partition on disks... $edisk"
+                        echo -e "Create 4th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
                                 echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
@@ -3994,7 +3997,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # gdisk 명령의 성공 여부 확인
                         if [ $? -ne 0 ]; then
-                            echo "Failed to create the 4th partition on ${edisk}. Stop processing!!!"
+                            echo  -e "Failed to create the 4th partition on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -4002,7 +4005,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sudo blockdev --rereadpt "${edisk}"
                         
                         if [ $? -ne 0 ]; then
-                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -4027,7 +4030,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                         
                         # +13M
-                        echo "Create 6th partition on disks... $edisk"
+                        echo -e "Create 6th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
@@ -4040,7 +4043,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
                         if [ $? -ne 0 ]; then
-                            echo "Failed to create the 6th partition on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to create the 6th partition on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -4048,13 +4051,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sudo blockdev --rereadpt "${edisk}"
                         
                         if [ $? -ne 0 ]; then
-                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
                         sleep 4
 
-                        echo "Create 7th partition on disks... $edisk"
+                        echo -e "Create 7th partition on disks... $edisk\n"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 7th partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
@@ -4081,7 +4084,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                             # gdisk 명령의 성공 여부 확인 (7th partition)
                             if [ $? -ne 0 ]; then
-                                echo "Failed to create the 7th partition on ${edisk}. Stop processing!!!"
+                                echo -e "Failed to create the 7th partition on ${edisk}. Stop processing!!!\n"
                                 remove_loader
                                 return
                             fi
@@ -4089,22 +4092,22 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             sudo blockdev --rereadpt "${edisk}"
                             
                             if [ $? -ne 0 ]; then
-                                echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                                echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                                 remove_loader
                                 return
                             fi
                             sleep 4
                         else
-                            echo "The synoboot3 was already made!!!"
+                            echo -e "The synoboot3 was already made!!!\n"
                         fi
 
                         # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo "UEFI does not require a Bios Boot Partition..."
+                                echo -e "UEFI does not require a Bios Boot Partition...\n"
                             else
                                 if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
-                                    echo "EF02 Partition is already exists!!!"
+                                    echo -e "EF02 Partition is already exists!!!\n"
                                 else
                                     echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                                 fi
@@ -4151,7 +4154,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
         fi
     elif [ "${do_ex_first}" = "Y" ]; then
         if [ $SHR_EX -eq 1 ]; then
-            echo "Reinject bootloader (into existing partition)..."
+            echo -e "Reinject bootloader (into existing partition)... \n"
 
             # If there is a SHR disk, only process that disk.
             if [ -n "$FIRST_SHR" ]; then
@@ -4199,7 +4202,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     #sudo losetup -d ${loopdev}
     #[ -z "$(losetup | grep -i ${imgpath})" ] && echo "boot-image-to-hdd.img losetup OK !!!"
     sync
-    echo "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3}"
+    echo -e "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3} \n"
     synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
