@@ -3777,10 +3777,12 @@ function inject_loader() {
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
-  SHR=0  
+  SHR=0
   SHR_EX=0
+  GPT=0 
+  GPT_EX=0 
   TB2T_CNT=0
-  DETECTED_SHRS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
+  DETECTED_DISKS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
   FIRST_SHR=""      # 사용자가 선택한 첫 번째 SHR 디스크
   
   while read -r edisk; do
@@ -3791,12 +3793,12 @@ function inject_loader() {
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
                   ((SHR++))
-                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
                   ;;
               "3 1")
                   echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
                   ((SHR_EX++))
-                  DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
                   FIRST_SHR="$edisk"
                   ;;
               "0 0" | "3 0")
@@ -3824,12 +3826,12 @@ function inject_loader() {
                      { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$GPT" == "ON" ]; }; then
                       echo "This is GPT Type Hard Disk(larger than 2TB). $edisk"
                       if [ $BIOS_CNT -eq 1 ]; then 
-                          ((SHR_EX++))
-                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                          ((GPT_EX++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
                           FIRST_SHR="$edisk"
                       else
-                          ((SHR++))
-                          DETECTED_SHRS+=("$edisk")  # 배열에 추가
+                          ((GPT++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
                       fi
                       ((W95_CNT++))
                       ((TB2T_CNT++))
@@ -3841,21 +3843,23 @@ function inject_loader() {
           esac
       fi
   done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
-  echo "SHR = $SHR, SHR_EX = $SHR_EX, RAID_CNT = $RAID_CNT, W95_CNT=$W95_CNT, DOS_CNT=$DOS_CNT"
-  
+  echo "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX"
+
+  SHR=$((SHR + GPT))
+  SHR_EX=$((SHR_EX + GPT_EX))
   # 사용자 메뉴 제공 및 선택 처리
   if [ -z "$FIRST_SHR" ]; then
-      if [ ${#DETECTED_SHRS[@]} -gt 0 ]; then
+      if [ ${#DETECTED_DISKS[@]} -gt 0 ]; then
           echo "Detected SHR disks:"
-          for i in "${!DETECTED_SHRS[@]}"; do
-              echo "$((i + 1)). ${DETECTED_SHRS[$i]}"
+          for i in "${!DETECTED_DISKS[@]}"; do
+              echo "$((i + 1)). ${DETECTED_DISKS[$i]}"
           done
       
           while true; do
               read -p "Select a disk (enter the number): " selection
               
-              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_SHRS[@]}" ]; then
-                  FIRST_SHR="${DETECTED_SHRS[$((selection - 1))]}"
+              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_DISKS[@]}" ]; then
+                  FIRST_SHR="${DETECTED_DISKS[$((selection - 1))]}"
                   break
               else
                   echo "Invalid selection. Please try again."
