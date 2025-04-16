@@ -3672,7 +3672,8 @@ function wr_part3() {
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
-        false
+        remove_loader
+        return 1
     fi   
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
@@ -3924,7 +3925,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
     if [ "${do_ex_first}" = "N" ]; then
         if [ $SHR -ge 1 ]; then
-            echo "New bootloader injection (including /sbin/fdisk partition creation)..."
+            echo -e "New bootloader injection (including /sbin/fdisk partition creation)...\n"
 
             BOOTMAKE=""
             SYNOP3MAKE=""
@@ -3955,7 +3956,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                     if [ $W95_CNT -ge 1 ]; then
                         # SHR OR RAID can make primary partition
-                        echo "Create primary partitions on disk. ${model}"
+                        echo -e "Create primary partitions on disk. ${model} \n"
                         # get 1st partition's end sector
                         end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
@@ -3968,7 +3969,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                     
                         # +127M
-                        echo "Create 4th partition on disks... $edisk"
+                        echo -e "Create 4th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
                                 echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
@@ -3981,7 +3982,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # gdisk 명령의 성공 여부 확인
                         if [ $? -ne 0 ]; then
-                            echo "Failed to create the 4th partition on ${edisk}. Stop processing!!!"
+                            echo  -e "Failed to create the 4th partition on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -3989,7 +3990,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sudo blockdev --rereadpt "${edisk}"
                         
                         if [ $? -ne 0 ]; then
-                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -4014,7 +4015,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         fi
                         
                         # +13M
-                        echo "Create 6th partition on disks... $edisk"
+                        echo -e "Create 6th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
@@ -4027,7 +4028,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
                         if [ $? -ne 0 ]; then
-                            echo "Failed to create the 6th partition on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to create the 6th partition on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
@@ -4035,13 +4036,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sudo blockdev --rereadpt "${edisk}"
                         
                         if [ $? -ne 0 ]; then
-                            echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
                             return
                         fi
                         sleep 4
 
-                        echo "Create 7th partition on disks... $edisk"
+                        echo -e "Create 7th partition on disks... $edisk\n"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 7th partition
                             last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
@@ -4068,7 +4069,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
                             # gdisk 명령의 성공 여부 확인 (7th partition)
                             if [ $? -ne 0 ]; then
-                                echo "Failed to create the 7th partition on ${edisk}. Stop processing!!!"
+                                echo -e "Failed to create the 7th partition on ${edisk}. Stop processing!!!\n"
                                 remove_loader
                                 return
                             fi
@@ -4076,22 +4077,22 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             sudo blockdev --rereadpt "${edisk}"
                             
                             if [ $? -ne 0 ]; then
-                                echo "Failed to reread partition table on ${edisk}. Stop processing!!!"
+                                echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                                 remove_loader
                                 return
                             fi
                             sleep 4
                         else
-                            echo "The synoboot3 was already made!!!"
+                            echo -e "The synoboot3 was already made!!!\n"
                         fi
 
                         # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo "UEFI does not require a Bios Boot Partition..."
+                                echo -e "UEFI does not require a Bios Boot Partition...\n"
                             else
                                 if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
-                                    echo "EF02 Partition is already exists!!!"
+                                    echo -e "EF02 Partition is already exists!!!\n"
                                 else
                                     echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                                 fi
@@ -4138,7 +4139,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
         fi
     elif [ "${do_ex_first}" = "Y" ]; then
         if [ $SHR_EX -eq 1 ]; then
-            echo "Reinject bootloader (into existing partition)..."
+            echo -e "Reinject bootloader (into existing partition)... \n"
 
             # If there is a SHR disk, only process that disk.
             if [ -n "$FIRST_SHR" ]; then
@@ -4186,7 +4187,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     #sudo losetup -d ${loopdev}
     #[ -z "$(losetup | grep -i ${imgpath})" ] && echo "boot-image-to-hdd.img losetup OK !!!"
     sync
-    echo "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3}"
+    echo -e "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3} \n"
     synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
