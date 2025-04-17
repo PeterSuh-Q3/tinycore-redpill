@@ -1042,8 +1042,8 @@ function langMenu() {
   set -o allexport
   
   [ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale
-  sudo localedef -c -i ${ucode} -f UTF-8 ${ucode}.UTF-8
-  sudo localedef -f UTF-8 -i ${ucode} ${ucode}.UTF-8
+  sudo localedef -c -i ${ucode} -f UTF-8 ${ucode}.UTF-8 > /dev/null 2>&1
+  sudo localedef -f UTF-8 -i ${ucode} ${ucode}.UTF-8 > /dev/null 2>&1
   
   writeConfigKey "general" "ucode" "${ucode}"  
   [ "$FRKRNL" = "NO" ] && writexsession
@@ -1728,10 +1728,10 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | w
 fi
 
 #gettext
-[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/lang.tgz
+[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/lang.tgz > /dev/null 2>&1
 [ ! -d "/usr/local/share/locale" ] && sudo mkdir -p "/usr/local/share/locale"
-gunzip -c lang.tgz | sudo tar -xvf - -C /usr/local/share/locale
-locale
+gunzip -c lang.tgz | sudo tar -xvf - -C /usr/local/share/locale > /dev/null 2>&1
+locale > /dev/null 2>&1
 #End Locale Setting process
 export TEXTDOMAINDIR="/usr/local/share/locale"
 set -o allexport
