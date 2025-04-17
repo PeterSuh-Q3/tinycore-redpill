@@ -3608,7 +3608,7 @@ function wr_part1() {
     sudo cp -vf /mnt/${loaderdisk}3/initrd-friend  "${mdiskpart}"
 
     sudo mkdir -p /usr/local/share/locale
-    sudo grub-install --target=x86_64-efi --boot-directory=${mdiskpart}/boot --efi-directory=/boot/efi --removable
+    sudo grub-install --target=x86_64-efi --boot-directory=${mdiskpart}/boot --efi-directory=${mdiskpart} --removable
     #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     sudo grub-install --target=i386-pc --boot-directory=${mdiskpart}/boot ${edisk}
     #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
