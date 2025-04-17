@@ -3608,9 +3608,8 @@ function wr_part1() {
     sudo cp -vf /mnt/${loaderdisk}3/initrd-friend  "${mdiskpart}"
 
     sudo mkdir -p /usr/local/share/locale
-    sudo grub-install --target=x86_64-efi --boot-directory="${mdiskpart}"/boot --efi-directory="${mdiskpart}" --removable > /dev/null 2>&1
-    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
-    sudo grub-install --target=i386-pc --boot-directory="${mdiskpart}"/boot "${edisk}" > /dev/null 2>&1
+
+    sudo grub-install --target=i386-pc --boot-directory=${mdiskpart}/boot ${edisk}
     #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     true
 }
@@ -4207,6 +4206,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
+
+    sudo grub-install --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+    
     mountpoint -q "${synop1}" && sudo umount ${synop1} 
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
     mountpoint -q "${synop3}" && sudo umount ${synop3}
