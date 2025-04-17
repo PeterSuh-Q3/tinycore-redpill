@@ -3882,13 +3882,13 @@ function inject_loader() {
       
           echo "You selected: $FIRST_SHR"
       else
-          echo "No SHR disks detected."
+          echo "No MBR SHR or GPT disks detected."
       fi
   fi    
   
   [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
-  sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
+  [ -n "$FIRST_SHR" ] && sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
 
   do_ex_first=""
   if [ $SHR_EX -eq 1 ]; then
@@ -3900,6 +3900,7 @@ function inject_loader() {
       do_ex_first="N"
     fi
   else
+      echo
       returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
   fi
 
