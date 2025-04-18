@@ -1594,6 +1594,8 @@ cd /home/tc
 #Get Langugae code & country code
 echo "current ucode = ${ucode}"
 
+config_ucode="${ucode}"
+
 country=$(curl -s ipinfo.io | grep country | awk '{print $2}' | cut -c 2-3 )
 
 if [ "${ucode}" == "null" ]; then 
@@ -1606,11 +1608,6 @@ else
       lcode="${country}"
     fi
   fi    
-fi
-
-echo "current lcode = ${lcode}"
-if [ "${lcode}" != "${ucode}" ]; then
-  urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh
 fi
 
 tz="${lcode}"
@@ -1635,6 +1632,8 @@ TR) ucode="tr_TR";;
 *) lcode="US"; ucode="en_US";;
 esac
 writeConfigKey "general" "ucode" "${ucode}"
+
+echo "current lcode = ${lcode}"
 
 if [ -f ~/.dialogrc ]; then
   sed -i "s/screen_color = (CYAN,GREEN,ON)/screen_color = (CYAN,BLUE,ON)/g" ~/.dialogrc
@@ -1740,6 +1739,10 @@ export TEXTDOMAINDIR="/usr/local/share/locale"
 set -o allexport
 tz="ZZ"
 load_zz
+
+if [ "${ucode}" != "${config_ucode}" ]; then
+  urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh
+fi
 
 # Download ethtool
 if [ "$FRKRNL" = "NO" ] && [ "$(which ethtool)_" == "_" ]; then
