@@ -18,7 +18,8 @@ jobs:
           echo "::set-output name=VERSION::${VERSION}"
 
           vers=`cat functions.sh | grep rploaderver= | cut -d\" -f2`
-          note=`cat functions.sh | grep "${vers} " | head -n 1`
+          note=$(sed -n "/${vers} /,/----------------/p" functions.sh)
+          #note=`cat functions.sh | grep "${vers} " | head -n 1`
           echo "    "${note} > RELEASE_NOTES.md
           echo "note: ${note}"
           echo "::set-output name=note::${note}"
