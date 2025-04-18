@@ -4226,7 +4226,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
 
-    sudo grub-install --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+    sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
     
     mountpoint -q "${synop1}" && sudo umount ${synop1} 
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
