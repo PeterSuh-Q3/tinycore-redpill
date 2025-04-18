@@ -1609,6 +1609,9 @@ else
 fi
 
 echo "current lcode = ${lcode}"
+if [ "${lcode}" != "${ucode}" ]; then
+  urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh
+fi
 
 tz="${lcode}"
 
