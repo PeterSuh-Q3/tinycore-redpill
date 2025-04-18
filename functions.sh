@@ -3190,40 +3190,43 @@ function bringoverfriend() {
 
   [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
 
-  echo -n "Checking for latest friend -> "
-  # for test
-  #curl -kLO# https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/chksum -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/bzImage-friend -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/initrd-friend
-  #return
-  
-  URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
-  [ -n "$URL" ] && curl --connect-timeout 5 -s -k -L $URL -O
-
-  if [ -f chksum ]; then
-    FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-    BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-    INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-    if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
-        msgnormal "OK, latest \n"
-    else
-        msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
-        curlfriend
-
-        if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
-            FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-            BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-            INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-            cat chksum |grep VERSION
-            echo
-            [ "$(sha256sum bzImage-friend | awk '{print $1}')" == "$BZIMAGESHA256" ] && msgnormal "bzImage-friend checksum OK !" || msgalert "bzImage-friend checksum ERROR !" || exit 99
-            [ "$(sha256sum initrd-friend | awk '{print $1}')" == "$INITRDSHA256" ] && msgnormal "initrd-friend checksum OK !" || msgalert "initrd-friend checksum ERROR !" || exit 99
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then
+      curlfriend
+  else    
+      echo -n "Checking for latest friend -> "
+      # for test
+      #curl -kLO# https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/chksum -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/bzImage-friend -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/initrd-friend
+      #return
+      
+      URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
+      [ -n "$URL" ] && curl --connect-timeout 5 -s -k -L $URL -O
+    
+      if [ -f chksum ]; then
+        FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+        BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+        INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+        if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
+            msgnormal "OK, latest \n"
         else
-            msgalert "Could not find friend files !!!!!!!!!!!!!!!!!!!!!!!"
+            msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
+            curlfriend
+    
+            if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
+                FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+                BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+                INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+                cat chksum |grep VERSION
+                echo
+                [ "$(sha256sum bzImage-friend | awk '{print $1}')" == "$BZIMAGESHA256" ] && msgnormal "bzImage-friend checksum OK !" || msgalert "bzImage-friend checksum ERROR !" || exit 99
+                [ "$(sha256sum initrd-friend | awk '{print $1}')" == "$INITRDSHA256" ] && msgnormal "initrd-friend checksum OK !" || msgalert "initrd-friend checksum ERROR !" || exit 99
+            else
+                msgalert "Could not find friend files !!!!!!!!!!!!!!!!!!!!!!!"
+            fi
         fi
-    fi
-  else
-    msgalert "No IP yet to check for latest friend \n"
-  fi
-
+      else
+        msgalert "No IP yet to check for latest friend \n"
+      fi
+   fi
 }
 
 function synctime() {
