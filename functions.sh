@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.8"
+rploaderver="1.2.2.9"
 build="master"
 redpillmake="prod"
 
@@ -173,6 +173,10 @@ function history() {
     1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
     1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
     1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+    1.2.2.9 Fixed the issue where the font of the menu focus would be broken 
+            when changing to a 2-byte Unicode language during the first execution of menu.sh.
+            Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+            (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -520,6 +524,12 @@ EOF
 # SynoDisk with bootloader injection Support xTCRP loader rebuild
 # 2025.04.15 v1.2.2.8 
 # Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+# 2025.04.18 v1.2.2.9 
+# Fixed the issue where the font of the menu focus would be broken 
+# when changing to a 2-byte Unicode language during the first execution of menu.sh.
+# Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+# (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+
     
 function showlastupdate() {
     cat <<EOF
@@ -698,6 +708,12 @@ function showlastupdate() {
 
 # 2025.04.15 v1.2.2.8 
 # Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+
+# 2025.04.18 v1.2.2.9 
+# Fixed the issue where the font of the menu focus would be broken 
+# when changing to a 2-byte Unicode language during the first execution of menu.sh.
+# Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+# (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
 
 EOF
 }
