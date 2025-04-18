@@ -1,1 +1,1 @@
-     1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+     1.2.2.9 Fixed the issue where the font of the menu focus would be broken
