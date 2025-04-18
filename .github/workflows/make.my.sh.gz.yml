@@ -24,7 +24,7 @@ jobs:
           vers=`cat functions.sh | grep rploaderver= | cut -d\" -f2`
           note=$(grep -m1 -A$((${{github.event.inputs.board}} - 1)) "${vers} " functions.sh | head -n ${{github.event.inputs.board}})
           #note=`cat functions.sh | grep "${vers} " | head -n 1`
-          echo "    "+"${note}" > RELEASE_NOTES.md
+          echo "    ""${note}" > RELEASE_NOTES.md
           echo "note: ${note}"
           echo "::set-output name=note::${note}"
 
