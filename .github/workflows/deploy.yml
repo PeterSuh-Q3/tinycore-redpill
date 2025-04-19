@@ -92,10 +92,12 @@ jobs:
           sudo mkdir -p /mnt/tarp1
           sudo mount ${LOOPZ}p1 /mnt/tarp1
 
+          sudo rm -rf /mnt/tarp1/boot/grub/locale
+
           export GRUB_VERSION=2.12
           sudo grub-install --version
+          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"          
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB
-          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
 
