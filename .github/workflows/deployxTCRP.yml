@@ -16,8 +16,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev
           #sudo apt-get install grub2 qemu-utils grub-efi-amd64-bin
-          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.0.2.4/tinycore-redpill.v1.0.2.4.m-shell.img.gz
-          gunzip tinycore-redpill.v1.0.2.4.m-shell.img.gz
+          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.2.9/tinycore-redpill.v1.2.2.9.m-shell.img.gz
+          gunzip tinycore-redpill.v1.2.2.9.m-shell.img.gz
           pwd
           ls -ltr
           
@@ -70,10 +70,10 @@ jobs:
           
           LOOPX=$(sudo losetup -f)
           echo "LOOPX = ${LOOPX}"          
-          sudo losetup -P ${LOOPX} tinycore-redpill.v1.0.2.4.m-shell.img
+          sudo losetup -P ${LOOPX} tinycore-redpill.v1.2.2.9.m-shell.img
           
           dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp.img bs=1M seek=2048 count=0
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1899M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1853M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
           echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
           #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
           
