@@ -1648,7 +1648,8 @@ function monitor() {
         echo -e "Processor Name:\t\t"$(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')
         echo -e "Machine Type:\t\t"$(
             vserver=$(lscpu | grep Hypervisor | wc -l)
-            if [ $vserver -gt 0 ]; then echo "VM (${HYPERVISOR})"; else echo "Physical"; fi
+            [ $vserver -gt 0 ] && echo -e "VM (${HYPERVISOR})\n" || echo -e "Physical\n"
+            [ -d /sys/firmware/efi ] && echo ": EFI" || echo ": LEGACY(CSM,BIOS)"
         ) 
         msgnormal "CPU Threads:\t\t"$(nproc)
         echo -e "Current Date Time:\t"$(date)
