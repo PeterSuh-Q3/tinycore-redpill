@@ -4224,10 +4224,16 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
 
-    #sudo grub-install --target=i386-pc --boot-directory=${mdiskpart}/boot ${edisk}
-    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} for BIOS(CSM,LEGACY) failed. Stop processing!!! " && false
-    #sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
-    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} for EFI failed. Stop processing!!! " && false
+    sudo rm -rf ${synop1}/boot/grub/locale
+    if [ -d /sys/firmware/efi ]; then
+        cecho y "Installing BIOS & EFI GRUB-INSTALL..."
+        sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+        [ $? -ne 0 ] && returnto "excute grub-install ${synop1} for EFI failed. Stop processing!!! " && false
+    else
+        cecho y "Installing BIOS GRUB-INSTALL..."
+        sudo grub-install --target=i386-pc --boot-directory=${synop1}/boot ${edisk}
+        [ $? -ne 0 ] && returnto "excute grub-install ${synop1} for BIOS(CSM,LEGACY) failed. Stop processing!!! " && false
+    fi    
 
     echo
     
