@@ -3628,8 +3628,6 @@ function wr_part1() {
 
     sudo mkdir -p /usr/local/share/locale
 
-    sudo grub-install --target=i386-pc --boot-directory=${mdiskpart}/boot ${edisk}
-    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} failed. Stop processing!!! " && false
     true
 }
 
@@ -4226,7 +4224,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
     synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
 
-    sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+    #sudo grub-install --target=i386-pc --boot-directory=${mdiskpart}/boot ${edisk}
+    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} for BIOS(CSM,LEGACY) failed. Stop processing!!! " && false
+    #sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+    #[ $? -ne 0 ] && returnto "excute grub-install ${mdiskpart} for EFI failed. Stop processing!!! " && false
+
+    echo
     
     mountpoint -q "${synop1}" && sudo umount ${synop1} 
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
