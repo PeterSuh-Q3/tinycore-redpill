@@ -362,10 +362,10 @@ function selectversion () {
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  if [ "${platform}" != "bromolow" ]; then
+  if [ "${platform}" = "bromolow" ]||[ "${platform}" = "avoton" ]; then
+    options=("d" "7.1.1-42962")  
+  else      
     options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
-  else  
-    options=("d" "7.1.1-42962")
   fi 
   case $MODEL in
     DS923+ | DS723+ | DS1823+ | DVA1622 | DS1522+ | DS423+ | RS2423+ )
@@ -406,7 +406,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow"
+  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -473,7 +473,7 @@ function modelMenu() {
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
-  if [ "${platform}" = "bromolow" ]; then
+  if [ "${platform}" = "bromolow" ]||[ "${platform}" = "avoton" ]; then
       BUILD="7.1.1-42962"
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
