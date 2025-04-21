@@ -859,7 +859,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake"
+    platforms="epyc7002 broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton"
 
     # Initialize MODELS array
     MODELS=()
@@ -932,6 +932,7 @@ function getvarsmshell()
       if [ $(echo ${MODELS[@]} | grep ${MODEL} | wc -l ) -gt 0 ]; then
         ORIGIN_PLATFORM="${platform}"
         case ${platform} in
+        avoton) KVER="3.10.108";;
         bromolow) KVER="3.10.108";;
         epyc7002) KVER="5.10.55";; 
         esac
@@ -2305,7 +2306,7 @@ function getvars() {
 
     case $ORIGIN_PLATFORM in
 
-    bromolow | braswell)
+    avoton | bromolow | braswell)
         KERNEL_MAJOR="3"
         MODULE_ALIAS_FILE="modules.alias.3.json"
         ;;
@@ -3415,7 +3416,7 @@ function getredpillko() {
     fi
 
     #REDPILL_MOD_NAME="redpill-linux-v$(modinfo /home/tc/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
-    if [ "${ORIGIN_PLATFORM}" = "bromolow" ]; then
+    if [ "${ORIGIN_PLATFORM}" = "bromolow" ]||[ "${ORIGIN_PLATFORM}" = "avoton" ]; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
