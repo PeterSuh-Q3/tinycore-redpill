@@ -137,8 +137,8 @@ jobs:
           curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
           -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
           -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/initrd-friend"
-          sudo mv -vf bzImage-friend /mnt/tarp3
-          sudo mv -vf initrd-friend /mnt/tarp3
+          sudo cp -vf bzImage-friend /mnt/tarp3
+          sudo cp -vf initrd-friend /mnt/tarp3
           
           ##  Finalize ##
           sudo umount /mnt/p3
