@@ -4560,7 +4560,7 @@ function my() {
   cecho c "KERNEL VERSION is $KVER"  
 
   if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
-      [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
+      [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
