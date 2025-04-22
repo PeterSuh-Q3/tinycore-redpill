@@ -7,6 +7,8 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 #####################################################################################################
 
+kver3platforms="bromolow braswell avoton"
+
 # Function to be called on Ctrl+C or ESC
 function ctrl_c() {
   echo ", Ctrl+C key pressed. Press Enter to return menu..."
@@ -362,7 +364,7 @@ function selectversion () {
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  if [ "${platform}" = "bromolow" ]||[ "${platform}" = "avoton" ]; then
+  if [ $(echo ${kver3platforms} | grep ${platform} | wc -l ) -gt 0 ]; then
     options=("d" "7.1.1-42962")  
   else      
     options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
@@ -406,7 +408,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton"
+  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -473,7 +475,7 @@ function modelMenu() {
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
-  if [ "${platform}" = "bromolow" ]||[ "${platform}" = "avoton" ]; then
+  if [ $(echo ${kver3platforms} | grep ${platform} | wc -l ) -gt 0 ]; then  
       BUILD="7.1.1-42962"
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
@@ -571,6 +573,7 @@ function setSuggest() {
     RS2418RP+)   platform="denverton";bay="RACK_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     RS2818RP+)   platform="denverton";bay="RACK_16_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     DS1515+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Core i3-4130";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RC18015xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS10613xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
