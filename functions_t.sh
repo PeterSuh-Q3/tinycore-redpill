@@ -940,6 +940,8 @@ function getvarsmshell()
         ORIGIN_PLATFORM="${platform}"
         if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
             KVER="3.10.108"
+        elif [ "${ORIGIN_PLATFORM}" == "epyc7002" ];then
+            KVER="5.10.55"
         fi
       fi
     done    
