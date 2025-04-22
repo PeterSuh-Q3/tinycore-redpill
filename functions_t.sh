@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.0"
+rploaderver="1.2.3.1"
 build="master"
 redpillmake="prod"
 
@@ -180,6 +180,7 @@ function history() {
             Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
             (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
     1.2.3.0 avoton (DS1515+ kernel 3) support started
+    1.2.3.1 cedarview (DS713+ kernel 3) support started
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -534,6 +535,8 @@ EOF
 # (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
 # 2025.04.22 v1.2.3.0 
 # avoton (DS1515+ kernel 3) support started
+# 2025.04.23 v1.2.3.1 
+# cedarview (DS713+ kernel 3) support started
     
 function showlastupdate() {
     cat <<EOF
@@ -721,6 +724,9 @@ function showlastupdate() {
 
 # 2025.04.22 v1.2.3.0 
 # avoton (DS1515+ kernel 3) support started
+
+# 2025.04.23 v1.2.3.1 
+# cedarview (DS713+ kernel 3) support started
 
 EOF
 }
