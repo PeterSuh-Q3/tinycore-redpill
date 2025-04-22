@@ -7,7 +7,7 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 #####################################################################################################
 
-kver3platforms="bromolow braswell avoton"
+kver3platforms="bromolow braswell avoton cedarview"
 
 # Function to be called on Ctrl+C or ESC
 function ctrl_c() {
@@ -408,7 +408,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell"
+  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -574,6 +574,7 @@ function setSuggest() {
     RS2818RP+)   platform="denverton";bay="RACK_16_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     DS1515+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     #DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
+    DS713+)      platform="cedarview";bay="TOWER_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Core i3-4130";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RC18015xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS10613xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
