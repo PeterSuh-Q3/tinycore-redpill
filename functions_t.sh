@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.2.9"
+rploaderver="1.2.3.0"
 build="master"
 redpillmake="prod"
 
@@ -20,6 +20,8 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 
 #Defaults
 smallfixnumber="0"
+
+kver3platforms="bromolow braswell avoton"
 
 #Check if FRIEND kernel exists
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
@@ -177,6 +179,7 @@ function history() {
             when changing to a 2-byte Unicode language during the first execution of menu.sh.
             Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
             (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+    1.2.3.0 avoton (DS1515+ kernel 3) support started
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -529,7 +532,8 @@ EOF
 # when changing to a 2-byte Unicode language during the first execution of menu.sh.
 # Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
 # (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
-
+# 2025.04.22 v1.2.3.0 
+# avoton (DS1515+ kernel 3) support started
     
 function showlastupdate() {
     cat <<EOF
@@ -714,6 +718,9 @@ function showlastupdate() {
 # when changing to a 2-byte Unicode language during the first execution of menu.sh.
 # Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
 # (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+
+# 2025.04.22 v1.2.3.0 
+# avoton (DS1515+ kernel 3) support started
 
 EOF
 }
@@ -931,12 +938,9 @@ function getvarsmshell()
       fi
       if [ $(echo ${MODELS[@]} | grep ${MODEL} | wc -l ) -gt 0 ]; then
         ORIGIN_PLATFORM="${platform}"
-        case ${platform} in
-        avoton) KVER="3.10.108";;
-        bromolow) KVER="3.10.108";;
-        epyc7002) KVER="5.10.55";; 
-        esac
-        break
+        if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+            KVER="3.10.108"
+        fi
       fi
     done    
     
@@ -2304,17 +2308,13 @@ function getvars() {
         exit 99
     fi
 
-    case $ORIGIN_PLATFORM in
-
-    avoton | bromolow | braswell)
+    if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
         KERNEL_MAJOR="3"
         MODULE_ALIAS_FILE="modules.alias.3.json"
-        ;;
-    apollolake | broadwell | broadwellnk | v1000 | denverton | geminilake | broadwellnkv2 | broadwellntbap | purley | *)
+    else
         KERNEL_MAJOR="4"
         MODULE_ALIAS_FILE="modules.alias.4.json"
-        ;;
-    esac
+    fi
 
     setplatform
 
@@ -3368,26 +3368,9 @@ function getredpillko() {
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
-        #echo "? = $?"
-        #if [ $? -ne 0 ]; then
-        #    echo "Error downloading last version of ${ORIGIN_PLATFORM} ${KVER}+ rp-lkms.zip tring other path..."
-        #    curl -skL https://raw.githubusercontent.com/PeterSuh-Q3/redpill-lkm${v}/master/rp-lkms.zip -o /mnt/${tcrppart}/rp-lkms${v}.zip
-        #    if [ $? -ne 0 ]; then
-        #        echo "Error downloading https://raw.githubusercontent.com/PeterSuh-Q3/redpill-lkm${v}/master/rp-lkms${v}.zip"
-        #        exit 99
-        #    fi    
-        #else
-        #    if [ "${ORIGIN_PLATFORM}" = "apollolake" ]; then
-                TAG="${LATESTURL##*/}"
-                #[ "${ORIGIN_PLATFORM}" = "bromolow" ] && TAG="23.12.0"
-        #    elif [ "${ORIGIN_PLATFORM}" = "epyc7002" ]; then
-        #        TAG="${LATESTURL##*/}"
-        #    else
-        #        TAG="24.4.11"
-        #    fi
-            echo "TAG is ${TAG}"
-            STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
-        #fi
+        TAG="${LATESTURL##*/}"
+        echo "TAG is ${TAG}"
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
         echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
     fi    
@@ -3398,11 +3381,6 @@ function getredpillko() {
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
         sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
-#    elif [ "${ORIGIN_PLATFORM}" = "bromolow" ]; then
-#        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-bromolow-3.10.108-prod.ko.gz" -o "/mnt/${tcrppart}/rp-bromolow-3.10.108-prod.ko.gz"`
-#        sudo cp -vf /mnt/${tcrppart}/rp-bromolow-3.10.108-prod.ko.gz /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-#        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-#        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
     else    
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
@@ -3415,8 +3393,7 @@ function getredpillko() {
         echo "TAG of VERSION is ${TAG}"
     fi
 
-    #REDPILL_MOD_NAME="redpill-linux-v$(modinfo /home/tc/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
-    if [ "${ORIGIN_PLATFORM}" = "bromolow" ]||[ "${ORIGIN_PLATFORM}" = "avoton" ]; then
+    if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
@@ -4580,8 +4557,10 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  [[ -d /sys/firmware/efi && "${ORIGIN_PLATFORM}" = "bromolow" ]] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
-  
+  if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+      [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode, Aborting the loader build!!!\n" && read answer && exit 0
+  fi
+    
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
   
   #fullupgrade="Y"
