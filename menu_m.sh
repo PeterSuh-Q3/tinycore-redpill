@@ -573,7 +573,7 @@ function setSuggest() {
     RS2418RP+)   platform="denverton";bay="RACK_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     RS2818RP+)   platform="denverton";bay="RACK_16_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     DS1515+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    #DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
+    DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom N3050";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
     DS713+)      platform="cedarview";bay="TOWER_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Core i3-4130";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RC18015xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
