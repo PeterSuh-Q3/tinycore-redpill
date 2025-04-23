@@ -366,21 +366,21 @@ function selectversion () {
 pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
-# 배열로 변환
+# 2. 배열 변환
 IFS=' ' read -ra versions <<< "$pat_versions"
 
-# 고정 인덱스 배열 (a~e)
-indices=("a" "b" "c" "d" "e")
+# 3. 고정 인덱스 (a~e)
+indices=(a b c d e)
 
-# 결과 저장 배열
+# 4. 버전 개수 기반 시작 위치 계산
+count=${#versions[@]}
+((count >5)) && count=5
+start_idx=$((5 - count))
+
+# 5. 옵션 배열 생성
 options=()
-
-# 최대 5개 버전 처리
-for i in "${!versions[@]}"; do
-    if (( i >= 5 )); then
-        break
-    fi
-    options+=("${indices[i]}" "${versions[i]}")
+for ((i=0; i<count; i++)); do
+    options+=("${indices[start_idx+i]}" "${versions[i]}")
 done
 
 # 결과 출력 (공백 구분)
