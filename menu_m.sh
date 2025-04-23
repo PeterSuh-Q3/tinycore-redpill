@@ -483,20 +483,16 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
-
   if [ "${platform}" = "epyc7002(DT)" ]; then
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
   if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then  
-      BUILD="7.1.1-42962"
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
-  else    
-      BUILD="7.2.2-72806"
   fi
+  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
   if [ "${BLOCK_DDSML}" = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${BUS}" = "mmc" ]; then
