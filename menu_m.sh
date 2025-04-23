@@ -7,9 +7,8 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 #####################################################################################################
 
-kver3explatforms="bromolow cedarview"
-
-kver3platforms="bromolow braswell avoton cedarview grantley"
+kver3explatforms="bromolow braswell cedarview grantley"
+configfile="/home/tc/redpill-load/config/pats.json"
 
 # Function to be called on Ctrl+C or ESC
 function ctrl_c() {
@@ -364,20 +363,46 @@ function selectldrmode() {
 # Shows available dsm verwsion 
 function selectversion () {
 
+pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
+echo -e "Configfile: $configfile \nPat URL : $pat_versions"
+
+# 배열로 변환 (공백 2개 기준 분리)
+IFS='  ' read -r -a versions <<< "$pat_versions"
+
+# 고정 인덱스 (a~e)
+indices=(a b c d e)
+
+# 옵션 배열 초기화
+options=()
+
+# 최대 5개 버전 처리
+for i in "${!versions[@]}"; do
+  # a~e 인덱스 범위 제한
+  if [ $i -ge 5 ]; then
+    break
+  fi
+  
+  # 인덱스+버전을 쌍으로 추가 (따옴표 포함)
+  options+=("\"${indices[i]}\"" "\"${versions[i]}\"")
+done
+
+# 결과 출력 (공백 구분)
+echo "${options[@]}"
+
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then
-    options=("d" "7.1.1-42962")  
-  else      
-    options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
-  fi 
-  case $MODEL in
-    DS923+ | DS723+ | DS1823+ | DVA1622 | DS1522+ | DS423+ | RS2423+ )
-      ;;
-    * )
-      options+=("e" "7.0.1-42218")
-      ;;
-  esac    
+#  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then
+#    options=("d" "7.1.1-42962")  
+#  else      
+#    options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
+#  fi 
+#  case $MODEL in
+#    DS923+ | DS723+ | DS1823+ | DVA1622 | DS1522+ | DS423+ | RS2423+ )
+#      ;;
+#    * )
+#      options+=("e" "7.0.1-42218")
+#      ;;
+#  esac    
 
   for ((i=0; i<${#options[@]}; i+=2)); do
     cmd+=("${options[i]}" "${options[i+1]}")
@@ -477,7 +502,7 @@ function modelMenu() {
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
-  if [ $(echo ${kver3platforms} | grep ${platform} | wc -l ) -gt 0 ]; then  
+  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then  
       BUILD="7.1.1-42962"
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
