@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.1"
+rploaderver="1.2.3.2"
 build="master"
 redpillmake="prod"
 
@@ -181,6 +181,7 @@ function history() {
             (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
     1.2.3.0 avoton (DS1515+ kernel 3) support started
     1.2.3.1 cedarview (DS713+ kernel 3) support started
+    1.2.3.2 More models supported for avoton and cedarview (including DS1815+)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -537,6 +538,8 @@ EOF
 # avoton (DS1515+ kernel 3) support started
 # 2025.04.23 v1.2.3.1 
 # cedarview (DS713+ kernel 3) support started
+# 2025.04.24 v1.2.3.2 
+# More models supported for avoton and cedarview (including DS1815+)
     
 function showlastupdate() {
     cat <<EOF
@@ -727,6 +730,9 @@ function showlastupdate() {
 
 # 2025.04.23 v1.2.3.1 
 # cedarview (DS713+ kernel 3) support started
+
+# 2025.04.24 v1.2.3.2 
+# More models supported for avoton and cedarview (including DS1815+)
 
 EOF
 }
