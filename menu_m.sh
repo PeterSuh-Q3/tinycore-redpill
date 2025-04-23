@@ -359,6 +359,9 @@ function selectldrmode() {
 
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
 
+  echo "$BUILD"
+  read answer
+
 }
 
 ###############################################################################
