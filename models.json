@@ -23,6 +23,7 @@
     },
     "avoton": {
         "productvers": {
+            "7.0": "3.10.108",
             "7.1": "3.10.108"
         },
         "models": [
@@ -37,7 +38,9 @@
     },
     "braswell": {
         "productvers": {
-            "7.1": "3.10.108"
+            "7.0": "3.10.108",            
+            "7.1": "3.10.108",
+            "7.2": "3.10.108"
         },
         "models": [
             "DS916+"
@@ -51,6 +54,7 @@
     },    
     "cedarview": {
         "productvers": {
+            "7.0": "3.10.108",            
             "7.1": "3.10.108"
         },
         "models": [
@@ -63,6 +67,22 @@
             }
         ]
     },
+    "grantley": {
+        "productvers": {
+            "7.0": "3.10.108",            
+            "7.1": "3.10.108",
+            "7.2": "3.10.108"
+        },
+        "models": [
+            "DS916+"
+        ],
+        "add_extensions": [
+            {
+              "all-modules": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json",
+              "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
+            }
+        ]
+    },    
     "bromolow": {
         "productvers": {
             "7.1": "3.10.108"
