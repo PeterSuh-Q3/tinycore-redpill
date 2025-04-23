@@ -394,18 +394,6 @@ echo "${options[@]}"
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-#  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then
-#    options=("d" "7.1.1-42962")  
-#  else      
-#    options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
-#  fi 
-#  case $MODEL in
-#    DS923+ | DS723+ | DS1823+ | DVA1622 | DS1522+ | DS423+ | RS2423+ )
-#      ;;
-#    * )
-#      options+=("e" "7.0.1-42218")
-#      ;;
-#  esac    
 
   for ((i=0; i<${#options[@]}; i+=2)); do
     cmd+=("${options[i]}" "${options[i+1]}")
