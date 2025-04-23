@@ -7,7 +7,9 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 #####################################################################################################
 
-kver3platforms="bromolow braswell avoton cedarview"
+kver3explatforms="bromolow avoton cedarview"
+
+kver3platforms="bromolow braswell avoton cedarview grantley"
 
 # Function to be called on Ctrl+C or ESC
 function ctrl_c() {
@@ -364,7 +366,7 @@ function selectversion () {
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  if [ $(echo ${kver3platforms} | grep ${platform} | wc -l ) -gt 0 ]; then
+  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then
     options=("d" "7.1.1-42962")  
   else      
     options=("a" "7.2.2-72806" "b" "7.2.1-69057" "c" "7.2.0-64570" "d" "7.1.1-42962")
@@ -408,7 +410,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview"
+  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -575,6 +577,7 @@ function setSuggest() {
     DS1515+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom N3050";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
     DS713+)      platform="cedarview";bay="TOWER_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    FS3017)      platform="grantley";bay="TOWER_12_Bay";mcpu="Intel Xeon E5 v3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Core i3-4130";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RC18015xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS10613xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
