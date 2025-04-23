@@ -586,7 +586,7 @@ function setSuggest() {
     RS815+)      platform="avoton";bay="RACK_4_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS815RP+)    platform="avoton";bay="RACK_4_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS818+)      platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS818RP)     platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS818RP+)    platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS713+)      platform="cedarview";bay="TOWER_2_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS1513+)     platform="cedarview";bay="TOWER_5_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS1813+)     platform="cedarview";bay="TOWER_8_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
