@@ -7,7 +7,7 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 #####################################################################################################
 
-kver3explatforms="bromolow avoton cedarview"
+kver3explatforms="bromolow cedarview"
 
 kver3platforms="bromolow braswell avoton cedarview grantley"
 
@@ -507,22 +507,22 @@ function setSuggest() {
     DS1621xs+)   platform="broadwellnk";bay="TOWER_6_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     DS3622xs+)   platform="broadwellnk";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1531";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS3600)      platform="broadwellnk";bay="RACK_24_Bay";mcpu="Intel Xeon D-1567";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS1619xs+)   platform="broadwellnk";bay="RACK_16_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS1619xs+)   platform="broadwellnk";bay="RACK_4_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     RS3621RPxs)  platform="broadwellnk";bay="RACK_12_Bay";mcpu="Intel Xeon D-1531";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS3621xs+)   platform="broadwellnk";bay="RACK_12_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;    
+    RS3621xs+)   platform="broadwellnk";bay="RACK_12_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     RS4021xs+)   platform="broadwellnk";bay="RACK_16_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     SA3400)      platform="broadwellnk";bay="RACK_12_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     SA3600)      platform="broadwellnk";bay="RACK_12_Bay";mcpu="Intel Xeon D-1567";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     DS3018xs)    platform="broadwellnk";bay="TOWER_6_Bay";mcpu="Intel Pentium D1508";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS1018)      platform="broadwellnk";bay="TOWER_12_Bay";mcpu="Intel Pentium D1508";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS3400)      platform="broadwellnk";bay="RACK_24_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS3618xs)    platform="broadwell";bay="RACK_12_Bay_2";mcpu="Intel Xeon D-1521";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;    
-    DS3617xs)    platform="broadwell";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;        
-    DS3617xsII)  platform="broadwell";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;        
-    FS2017)      platform="broadwell";bay="RACK_24_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;    
-    RS18017xs+)  platform="broadwell";bay="RACK_12_Bay_2";mcpu="Intel Xeon D-1531";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS3617RPxs)  platform="broadwell";bay="RACK_12_Bay_2";mcpu="Intel Xeon D-1521";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS3617xs+)   platform="broadwell";bay="RACK_12_Bay_2";mcpu="Intel Xeon E3-1230v2";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS3618xs)    platform="broadwell";bay="RACK_12_Bay";mcpu="Intel Xeon D-1521";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    DS3617xs)    platform="broadwell";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    DS3617xsII)  platform="broadwell";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    FS2017)      platform="broadwell";bay="RACK_24_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS18017xs+)  platform="broadwell";bay="RACK_12_Bay";mcpu="Intel Xeon D-1531";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS3617RPxs)  platform="broadwell";bay="RACK_12_Bay";mcpu="Intel Xeon D-1521";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS3617xs+)   platform="broadwell";bay="RACK_12_Bay";mcpu="Intel Xeon E3-1230v2";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     RS4017xs+)   platform="broadwell";bay="RACK_16_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS3410)      platform="broadwellnkv2(DT)";bay="RACK_24_Bay";mcpu="Intel Xeon D-1541";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     SA3410)      platform="broadwellnkv2(DT)";bay="RACK_12_Bay";mcpu="Intel Xeon D-1567";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
@@ -574,20 +574,38 @@ function setSuggest() {
     RS2418+)     platform="denverton";bay="RACK_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     RS2418RP+)   platform="denverton";bay="RACK_12_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     RS2818RP+)   platform="denverton";bay="RACK_16_Bay";mcpu="Intel Atom C3538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
-    DS1515+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    DS1517+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
-    DS916+)      platform="braswell";bay="TOWER_12_Bay";mcpu="Intel Atom N3050";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
-    DS713+)      platform="cedarview";bay="TOWER_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    FS3017)      platform="grantley";bay="TOWER_12_Bay";mcpu="Intel Xeon E5 v3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1515+)     platform="avoton";bay="TOWER_5_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1517+)     platform="avoton";bay="TOWER_5_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1815+)     platform="avoton";bay="TOWER_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1817+)     platform="avoton";bay="TOWER_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS2415+)     platform="avoton";bay="TOWER_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS415+)      platform="avoton";bay="TOWER_4_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS1219+)     platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS2416+)     platform="avoton";bay="RACK_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS2416RP+)   platform="avoton";bay="RACK_12_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS815+)      platform="avoton";bay="RACK_4_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS815RP+)    platform="avoton";bay="RACK_4_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS818+)      platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS818RP)     platform="avoton";bay="RACK_8_Bay";mcpu="Intel Atom C2538";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS713+)      platform="cedarview";bay="TOWER_2_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1513+)     platform="cedarview";bay="TOWER_5_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS1813+)     platform="cedarview";bay="TOWER_8_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS2413+)     platform="cedarview";bay="TOWER_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS2414+)     platform="cedarview";bay="RACK_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS2414RP+)   platform="cedarview";bay="RACK_12_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS814+)      platform="cedarview";bay="RACK_4_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS814RP+)    platform="cedarview";bay="RACK_4_Bay";mcpu="Intel Atom D2700";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS916+)      platform="braswell";bay="TOWER_4_Bay";mcpu="Intel Atom N3050";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    FS3017)      platform="grantley";bay="RACK_24_Bay";mcpu="Intel Xeon E5 v3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Core i3-4130";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RC18015xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS10613xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS18016xs+)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS3413xs+)   platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS3614rpxs)  platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS3614xs+)   platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS3614xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
-    RS3617xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;    
+    RC18015xs+)  platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3 QUAD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS10613xs+)  platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS18016xs+)  platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS3413xs+)   platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS3614rpxs)  platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS3614xs+)   platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS3614xs)    platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    RS3617xs)    platform="bromolow";bay="RACK_12_Bay";mcpu="Intel Xeon E3";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     *)    platform="Any platform";bay="Any Bay";mcpu="Intel or AMD";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
   esac
 
