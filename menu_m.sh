@@ -357,11 +357,6 @@ function selectldrmode() {
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
 
-  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
-
-  echo "$BUILD"
-  read answer
-
 }
 
 ###############################################################################
@@ -487,6 +482,8 @@ function modelMenu() {
   MODEL="`<${TMP_PATH}/resp`"
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
+
+  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
 
   if [ "${platform}" = "epyc7002(DT)" ]; then
       MDLNAME="all-modules"
