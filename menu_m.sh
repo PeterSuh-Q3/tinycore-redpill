@@ -357,12 +357,15 @@ function selectldrmode() {
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
 
+  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
+
 }
 
 ###############################################################################
 # Shows available dsm verwsion 
 function selectversion () {
 
+# 1.최대 5개의 결과물만 가져옴.
 pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
@@ -385,7 +388,6 @@ done
 
 # 결과 출력 (공백 구분)
 echo "${options[@]}"
-read answer
 
 while true; do
   cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
