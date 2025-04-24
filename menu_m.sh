@@ -421,7 +421,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
+  M_GRP1="epyc7002 v1000nk broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -483,7 +483,7 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [ "${platform}" = "epyc7002(DT)" ]; then
+  if [ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]; then
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
@@ -513,6 +513,7 @@ function setSuggest() {
 
   case $1 in
     SA6400)      platform="epyc7002(DT)";bay="RACK_12_Bay";mcpu="AMD EPYC 7272";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    DS925+)      platform="v1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     DS1621xs+)   platform="broadwellnk";bay="TOWER_6_Bay";mcpu="Intel Xeon D-1527";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     DS3622xs+)   platform="broadwellnk";bay="TOWER_12_Bay";mcpu="Intel Xeon D-1531";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS3600)      platform="broadwellnk";bay="RACK_24_Bay";mcpu="Intel Xeon D-1567";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
@@ -1429,7 +1430,7 @@ function additional() {
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
-    [ "${platform}" = "geminilake(DT)" ] || [ "${platform}" = "epyc7002(DT)" ] || [ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
+    [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "apollolake" ]||[ "${platform}" = "v1000nk(DT)" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"c \\\"${MSG52}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
