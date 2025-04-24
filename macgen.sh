@@ -1,6 +1,7 @@
 function generateMacAddress() {
     #toupper "Mac Address: 00:11:32:$(randomhex):$(randomhex):$(randomhex)"
-    if [ "${1}" = "DS923+" ] || [ "${1}" = "DS1522+" ] || [ "${1}" = "RS4021xs+" ] || [ "$1" = "SA6400" ]; then
+    macprefixmodels="DS923+ DS1522+ RS4021xs+ HD6500 RS2423RP+ RS4021xs+ SA3410"
+    if [ $(echo ${macprefixmodels} | grep ${1} | wc -l ) -gt 0 ]; then
         # DS1522xs+ and DS923+ Mac starts with 90:09:D0
         printf '90:09:D0:%02X:%02X:%02X' $((RANDOM % 256)) $((RANDOM % 256)) $((RANDOM % 256))
     else
