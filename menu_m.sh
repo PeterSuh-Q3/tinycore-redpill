@@ -269,7 +269,7 @@ function seleudev() {
 
   checkforsas
 
-  if [ ${BLOCK_DDSML} = "Y" ] || [ "${MODEL}" = "SA6400" ] || [ "${BUS}" = "mmc" ]; then
+  if [ ${BLOCK_DDSML} = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]||[ "${BUS}" = "mmc" ]; then
     menu_options=("e" "${MSG26}" "f" "${MSG40}")
   elif [ ${BLOCK_EUDEV} = "Y" ]; then  
     menu_options=("d" "${MSG27}" "f" "${MSG40}")
@@ -321,7 +321,7 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
 
-  if [ "${MODEL}" = "SA6400" ]; then  
+  if [ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]; then  
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   else  
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, rr-modules" "l" "${MSG29}, rr-modules")
@@ -495,7 +495,7 @@ function modelMenu() {
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]||[ "${BUS}" = "mmc" ]; then
     if [ "$HBADETECT" = "ON" ]; then
         DMPM="DDSML+EUDEV"
     else
