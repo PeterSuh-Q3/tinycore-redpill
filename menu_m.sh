@@ -373,15 +373,14 @@ IFS=' ' read -ra versions <<< "$pat_versions"
 # 3. 고정 인덱스 (a~e)
 indices=(a b c d e)
 
-# 4. 버전 개수 기반 시작 위치 계산
+# 4. 버전 개수 제한 (최대 5개)
 count=${#versions[@]}
-((count >5)) && count=5
-start_idx=$((5 - count))
+((count >5)) && count=5  # 기존 코드 유지
 
-# 5. 옵션 배열 생성
+# 5. 옵션 배열 생성 (a부터 순차적 할당)
 options=()
 for ((i=0; i<count; i++)); do
-    options+=("${indices[start_idx+i]}" "${versions[i]}")
+    options+=("${indices[i]}" "${versions[i]}")
 done
 
 # 결과 출력 (공백 구분)
