@@ -401,11 +401,11 @@ while true; do
 
   # 동적으로 인덱스와 BUILD 매칭
   case $resp in
-    a) BUILD="${versions[0]}"; break;;
-    b) BUILD="${versions[1]}"; break;;
-    c) BUILD="${versions[2]}"; break;;
-    d) BUILD="${versions[3]}"; break;;
-    e) BUILD="${versions[4]}"; break;;
+    a) [[ -n "${versions[0]+_}" ]] && BUILD="${versions[0]}"; break;;
+    b) [[ -n "${versions[1]+_}" ]] && BUILD="${versions[1]}"; break;;
+    c) [[ -n "${versions[2]+_}" ]] && BUILD="${versions[2]}"; break;;
+    d) [[ -n "${versions[3]+_}" ]] && BUILD="${versions[3]}"; break;;
+    e) [[ -n "${versions[4]+_}" ]] && BUILD="${versions[4]}"; break;;
     *) echo "Invalid option";;
   esac
 done
