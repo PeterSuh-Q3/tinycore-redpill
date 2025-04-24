@@ -399,12 +399,13 @@ while true; do
   resp=$(<${TMP_PATH}/resp)
   [ -z "${resp}" ] && return
 
+  # 동적으로 인덱스와 BUILD 매칭
   case $resp in
-    "a") BUILD="7.2.2-72806"; break;;
-    "b") BUILD="7.2.1-69057"; break;;
-    "c") BUILD="7.2.0-64570"; break;;
-    "d") BUILD="7.1.1-42962"; break;;
-    "e") BUILD="7.0.1-42218"; break;;
+    a) BUILD="${versions[0]}"; break;;
+    b) BUILD="${versions[1]}"; break;;
+    c) BUILD="${versions[2]}"; break;;
+    d) BUILD="${versions[3]}"; break;;
+    e) BUILD="${versions[4]}"; break;;
     *) echo "Invalid option";;
   esac
 done
