@@ -1,1 +1,1 @@
-        1.2.3.2 More models supported for avoton and cedarview (including DS1815+)
+        1.2.3.3 v1000nk (DS925+ kernel 5) support started
