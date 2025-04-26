@@ -350,7 +350,7 @@
             {
               "all-modules": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json",
               "sortnetif": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sortnetif/rpext-index.json",
-              "syno-hdd-db": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/rpext-index.json",
+              "hdddbonjunior": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/rpext-index.json",
               "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
             }
         ]
