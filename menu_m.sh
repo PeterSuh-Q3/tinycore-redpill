@@ -363,27 +363,35 @@ function selectldrmode() {
 # Shows available dsm verwsion 
 function selectversion () {
 
-# 1.최대 5개의 결과물만 가져옴.
-pat_versions=$(jq -r \
-  ".\"${MODEL}\" | keys | map(select(. | startswith(\"7.0.0-41890\") | not and startswith(\"7.1.0-42661\") | not and startswith(\"7.2.0-64561\") | not)) | map(.[0:11]) | .[:5] | reverse | join(\"  \")" \
-  "${configfile}")
-#pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
+# 1. 최대 10개 결과 추출 (기존 코드 유지)
+pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\"  \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
 # 2. 배열 변환
 IFS=' ' read -ra versions <<< "$pat_versions"
 
-# 3. 고정 인덱스 (a~e)
+# 3. 제거할 버전 목록 설정
+remove_list="7.0.0-41890 7.1.0-42661 7.2.0-64561"
+
+# 4. 필터링된 버전 배열 생성
+filtered_versions=()
+for ver in "${versions[@]}"; do
+    skip=0
+    for r in $remove_list; do
+        [[ "$ver" == "$r" ]] && { skip=1; break; }
+    done
+    [[ $skip -eq 0 ]] && filtered_versions+=("$ver")
+done
+
+# 5. 버전 개수 제한 (최대 5개)
+count=${#filtered_versions[@]}
+((count >5)) && count=5
+
+# 6. 옵션 배열 생성 (a~e 인덱스 할당)
 indices=(a b c d e)
-
-# 4. 버전 개수 제한 (최대 5개)
-count=${#versions[@]}
-((count >5)) && count=5  # 기존 코드 유지
-
-# 5. 옵션 배열 생성 (a부터 순차적 할당)
 options=()
 for ((i=0; i<count; i++)); do
-    options+=("${indices[i]}" "${versions[i]}")
+    options+=("${indices[i]}" "${filtered_versions[i]}")
 done
 
 # 결과 출력 (공백 구분)
