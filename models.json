@@ -83,7 +83,7 @@
         "add_extensions": [
             {
               "all-modules": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json",
-              "hdddbonjunior": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/rpext-index.json",                
+              "abusyboxupgrade": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/rpext-index.json",
               "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
             }
         ]
