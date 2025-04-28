@@ -364,7 +364,10 @@ function selectldrmode() {
 function selectversion () {
 
 # 1.최대 5개의 결과물만 가져옴.
-pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
+pat_versions=$(jq -r \
+  ".\"${MODEL}\" | keys | map(select(. | startswith(\"7.0.0-41890\") | not and startswith(\"7.1.0-42661\") | not and startswith(\"7.2.0-64561\") | not)) | map(.[0:11]) | .[:5] | reverse | join(\"  \")" \
+  "${configfile}")
+#pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:5] | reverse | join(\"  \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
 # 2. 배열 변환
