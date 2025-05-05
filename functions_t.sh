@@ -1535,7 +1535,11 @@ function _pat_process() {
           if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
               # No disk space to download, change it to RAMDISK
               echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
-              sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+              if [ "$FRKRNL" = "NO" ]; then
+                  sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+              else
+                  sudo sh -c "rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+              fi
           fi
       fi
   fi    
