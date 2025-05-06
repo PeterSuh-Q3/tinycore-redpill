@@ -374,13 +374,10 @@ function selectversion () {
   echo "${versions[@]}"
   
   while true; do
-    cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-  
-    for ((i=0; i<${#versions[@]}; i+=2)); do
-      cmd+=("${versions[i]}" "${versions[i+1]}")
-    done
-  
-    "${cmd[@]}" 2>${TMP_PATH}/resp
+    dialog --clear --backtitle "`backtitle`" \
+      --menu "Choose a option" 0 0 0 \
+      "${versions[@]}" \
+      2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
