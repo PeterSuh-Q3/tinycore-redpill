@@ -363,37 +363,43 @@ function selectldrmode() {
 # Shows available dsm verwsion 
 function selectversion () {
 
-  # 1. 최대 10개 결과 추출 (기존 코드 유지)
-  pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\"  \")" "${configfile}")
-  echo "PAT VERSIONS : $pat_versions"
-  
-  # 2. 배열 변환
-  IFS=' ' read -ra versions <<< "$pat_versions"
-  
-  # 결과 출력 (공백 구분)
-  echo "${versions[@]}"
-  
-  while true; do
-    dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 0 \
-      "${versions[@]}" \
-      2>${TMP_PATH}/resp
-    [ $? -ne 0 ] && return
-    resp=$(<${TMP_PATH}/resp)
-    [ -z "${resp}" ] && return
-  
-    # 동적으로 인덱스와 BUILD 매칭
-    case $resp in
-      a) [[ -n "${versions[0]+_}" ]] && BUILD="${versions[0]}"; break;;
-      b) [[ -n "${versions[1]+_}" ]] && BUILD="${versions[1]}"; break;;
-      c) [[ -n "${versions[2]+_}" ]] && BUILD="${versions[2]}"; break;;
-      d) [[ -n "${versions[3]+_}" ]] && BUILD="${versions[3]}"; break;;
-      e) [[ -n "${versions[4]+_}" ]] && BUILD="${versions[4]}"; break;;
-      *) echo "Invalid option";;
-    esac
-  done
+# 1. 최대 10개 결과 추출 (공백 한 개로 join)
+pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\" \")" "${configfile}")
+echo "PAT VERSIONS : $pat_versions"
 
-  writeConfigKey "general" "version" "${BUILD}"
+# 2. 배열 변환
+IFS=' ' read -ra versions <<< "$pat_versions"
+
+# 결과 출력 (공백 구분)
+echo "${versions[@]}"
+
+# 3. TAG-ITEM 쌍 만들기
+menu_items=()
+tags=(a b c d e f g h i j)
+for i in "${!versions[@]}"; do
+  menu_items+=("${tags[$i]}" "${versions[$i]}")
+done
+
+while true; do
+  dialog --clear --backtitle "$(backtitle)" \
+    --menu "Choose a option" 0 0 0 \
+    "${menu_items[@]}" \
+    2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp=$(<${TMP_PATH}/resp)
+  [ -z "${resp}" ] && return
+
+  # 동적으로 인덱스와 BUILD 매칭
+  for i in "${!tags[@]}"; do
+    if [[ "${resp}" == "${tags[$i]}" ]]; then
+      BUILD="${versions[$i]}"
+      break 2
+    fi
+  done
+  echo "Invalid option"
+done
+
+writeConfigKey "general" "version" "${BUILD}"
 
 }
 
