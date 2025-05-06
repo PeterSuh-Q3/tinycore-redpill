@@ -363,62 +363,38 @@ function selectldrmode() {
 # Shows available dsm verwsion 
 function selectversion () {
 
-# 1. 최대 10개 결과 추출 (기존 코드 유지)
-pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\"  \")" "${configfile}")
-echo "PAT VERSIONS : $pat_versions"
-
-# 2. 배열 변환
-IFS=' ' read -ra versions <<< "$pat_versions"
-
-# 3. 제거할 버전 목록 설정
-remove_list="7.0.0-41890 7.1.0-42661 7.2.0-64561"
-
-# 4. 필터링된 버전 배열 생성
-filtered_versions=()
-for ver in "${versions[@]}"; do
-    skip=0
-    for r in $remove_list; do
-        [[ "$ver" == "$r" ]] && { skip=1; break; }
+  # 1. 최대 10개 결과 추출 (기존 코드 유지)
+  pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\"  \")" "${configfile}")
+  echo "PAT VERSIONS : $pat_versions"
+  
+  # 2. 배열 변환
+  IFS=' ' read -ra versions <<< "$pat_versions"
+  
+  # 결과 출력 (공백 구분)
+  echo "${versions[@]}"
+  
+  while true; do
+    cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
+  
+    for ((i=0; i<${#versions[@]}; i+=2)); do
+      cmd+=("${versions[i]}" "${versions[i+1]}")
     done
-    [[ $skip -eq 0 ]] && filtered_versions+=("$ver")
-done
-
-# 5. 버전 개수 제한 (최대 5개)
-count=${#filtered_versions[@]}
-((count >5)) && count=5
-
-# 6. 옵션 배열 생성 (a~e 인덱스 할당)
-indices=(a b c d e)
-options=()
-for ((i=0; i<count; i++)); do
-    options+=("${indices[i]}" "${filtered_versions[i]}")
-done
-
-# 결과 출력 (공백 구분)
-echo "${options[@]}"
-
-while true; do
-  cmd=(dialog --clear --backtitle "`backtitle`" --menu "Choose an option" 0 0 0)
-
-  for ((i=0; i<${#options[@]}; i+=2)); do
-    cmd+=("${options[i]}" "${options[i+1]}")
+  
+    "${cmd[@]}" 2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    resp=$(<${TMP_PATH}/resp)
+    [ -z "${resp}" ] && return
+  
+    # 동적으로 인덱스와 BUILD 매칭
+    case $resp in
+      a) [[ -n "${versions[0]+_}" ]] && BUILD="${versions[0]}"; break;;
+      b) [[ -n "${versions[1]+_}" ]] && BUILD="${versions[1]}"; break;;
+      c) [[ -n "${versions[2]+_}" ]] && BUILD="${versions[2]}"; break;;
+      d) [[ -n "${versions[3]+_}" ]] && BUILD="${versions[3]}"; break;;
+      e) [[ -n "${versions[4]+_}" ]] && BUILD="${versions[4]}"; break;;
+      *) echo "Invalid option";;
+    esac
   done
-
-  "${cmd[@]}" 2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return
-
-  # 동적으로 인덱스와 BUILD 매칭
-  case $resp in
-    a) [[ -n "${options[0]+_}" ]] && BUILD="${options[0]}"; break;;
-    b) [[ -n "${options[1]+_}" ]] && BUILD="${options[1]}"; break;;
-    c) [[ -n "${options[2]+_}" ]] && BUILD="${options[2]}"; break;;
-    d) [[ -n "${options[3]+_}" ]] && BUILD="${options[3]}"; break;;
-    e) [[ -n "${options[4]+_}" ]] && BUILD="${options[4]}"; break;;
-    *) echo "Invalid option";;
-  esac
-done
 
   writeConfigKey "general" "version" "${BUILD}"
 
