@@ -1206,7 +1206,7 @@ function getlatestmshell() {
             . /home/tc/functions.sh
             showlastupdate
             echo "y"|rploader backup
-            echo "press any key to continue..."                                                                                                   
+            echo "press any key to continue..."
             read answer
         else
             rm -f /home/tc/latest.mshell.gz
@@ -4487,7 +4487,18 @@ function my() {
   fi
   
   getvarsmshell "$1"
-  
+
+  FIRST_DIGIT="${KVER:0:1}"
+
+  if [ "$FIRST_DIGIT" -eq 3 ]; then
+    if [ "${BUS}" = "nvme" ]||[ "${BUS}" = "mmc" ]; then
+      cecho y "Kernel 3 based models are restricted from using nvme or mmc type bootloaders!!!"
+      echo "press any key to continue..."
+      read answer
+      exit 0
+    fi  
+  fi
+
   #echo "$TARGET_REVISION"                                                      
   #echo "$TARGET_PLATFORM"                                            
   #echo "$SYNOMODEL"                                      
