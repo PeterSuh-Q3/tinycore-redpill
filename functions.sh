@@ -1955,7 +1955,7 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
         fi
 
         cd /home/tc/redpill-load/cache
-st "patextraction" "Pat file extracted" "VERSION:${TARGET_VERSION}-${TARGET_REVISION}"        
+st "patextraction" "Pat file extracted" "VERSION:${BUILD}"        
         sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
         os_md5=$(md5sum /home/tc/redpill-load/cache/${SYNOMODEL}.pat | awk '{print $1}')
         msgnormal "Pat file md5sum is : $os_md5"
@@ -2101,7 +2101,7 @@ function postupdate() {
     setnetwork
 
     updateuserconfigfield "general" "model" "$MODEL"
-    updateuserconfigfield "general" "version" "${TARGET_VERSION}-${TARGET_REVISION}"
+    updateuserconfigfield "general" "version" "${BUILD}"
     updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
     updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
     echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
@@ -2552,7 +2552,7 @@ EOF
 
 function tcrpfriendentry() {
     cat <<EOF
-menuentry 'Tiny Core Friend $MODEL ${TARGET_VERSION}-${TARGET_REVISION} Update ${smallfixnumber} ${DMPM}' {
+menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2582,7 +2582,7 @@ EOF
 
 function tcrpentry_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${TARGET_VERSION}-${TARGET_REVISION} Update 0 ${DMPM}' {
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2602,7 +2602,7 @@ EOF
 
 function postupdateentry() {
     cat <<EOF
-menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${TARGET_VERSION}-${TARGET_REVISION} Update ${smallfixnumber} ${DMPM}' {
+menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2626,7 +2626,7 @@ function savedefault {
     echo -n "Boot Time: "; date
     echo ""
     echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
-    echo "Version : ${TARGET_VERSION}-${TARGET_REVISION}"
+    echo "Version : ${BUILD}"
     echo "Kernel  : ${KVER}"
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
@@ -2645,7 +2645,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${TARGET_VERSION}-${TARGET_REVISION} (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${BUILD} (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3038,7 +3038,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     ### Updating user_config.json
     updateuserconfigfield "general" "model" "$MODEL"
-    updateuserconfigfield "general" "version" "${TARGET_VERSION}-${TARGET_REVISION}"
+    updateuserconfigfield "general" "version" "${BUILD}"
     updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
     updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
     zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
@@ -3061,7 +3061,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     
     [ ! -d /home/tc/rd.temp ] && mkdir /home/tc/rd.temp
     [ -d /home/tc/rd.temp ] && cd /home/tc/rd.temp
-    RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${TARGET_VERSION}-${TARGET_REVISION}/config.json | jq -r -e ' .extra .compress_rd')
+    RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${BUILD}/config.json | jq -r -e ' .extra .compress_rd')
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
         gzs_path="/dev/shm"  
@@ -4725,7 +4725,7 @@ function my() {
   echo "DN_MODEL is $DN_MODEL"
   
   cecho p "DSM PAT file pre-downloading in progress..."
-  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.url) | .[0]" "${configfile}")
+  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"
   if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
       patfile="/dev/shm/${SYNOMODEL}.pat"
@@ -4768,7 +4768,7 @@ function my() {
       os_md5=$(md5sum ${patfile} | awk '{print $1}')                                
       cecho y "Pat file md5sum is : $os_md5"                                       
        
-      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${TARGET_VERSION}-${TARGET_REVISION}\"))) | map(.value.sum) | .[0]" "${configfile}")
+      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.sum) | .[0]" "${configfile}")
       cecho p "verifyid md5sum is : $verifyid"                                        
   
       if [ "$os_md5" = "$verifyid" ]; then                                            
@@ -4794,9 +4794,9 @@ function my() {
   fi
   
   if [ "$jot" = "N" ]; then
-      echo "n"|rploader build ${TARGET_PLATFORM}-${TARGET_VERSION}-${TARGET_REVISION} withfriend
+      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} withfriend
   else
-      echo "n"|rploader build ${TARGET_PLATFORM}-${TARGET_VERSION}-${TARGET_REVISION} static
+      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
 echo "errorcode = $?"
   if [ $? -ne 0 ]; then
