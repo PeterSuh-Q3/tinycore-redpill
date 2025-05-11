@@ -4723,6 +4723,10 @@ function my() {
   echo
   DN_MODEL="$(echo $MODEL | sed 's/+/%2B/g')"
   echo "DN_MODEL is $DN_MODEL"
+
+  BUILD=$(jq -r -e '.general.version' "$userconfigfile")
+
+  echo "BUILD is $BUILD"
   
   cecho p "DSM PAT file pre-downloading in progress..."
   URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
