@@ -150,6 +150,10 @@ jobs:
             echo "set language: ${{ env.language }}"
             sudo ./writekey.sh "general" "ucode" "${{ env.language }}" $userconfigfile
           fi
+          if [ -n "${{ env.version }}" ]; then
+            echo "set version: ${{ env.version }}"
+            sudo ./writekey.sh "general" "version" "${{ env.version }}" $userconfigfile
+          fi
 
           echo "Build loader for ${{ env.model }}-${{ env.version }}"
           ls -ltr ./functions.sh
