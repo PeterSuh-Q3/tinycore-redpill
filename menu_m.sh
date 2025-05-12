@@ -459,7 +459,7 @@ function modelMenu() {
   
   # Display dialog for model selection
   dialog --backtitle "`backtitle`" --default-item "${MODEL}" --colors \
-    --menu "${MSG00}\n" 0 0 0 \
+    --menu "${MSG00} [Except SA6400]\n" 0 0 0 \
     --file "${TMP_PATH}/mdl_final" 2>${TMP_PATH}/resp
   
   # Check for dialog exit status
