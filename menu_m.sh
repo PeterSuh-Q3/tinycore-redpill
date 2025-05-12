@@ -1404,10 +1404,7 @@ function changesatadom() {
     echo "1 \"Native SATA DOM(SYNO)\""
     echo "2 \"Fake SATA DOM(Redpill)\""
   } >"${TMP_PATH}/menub"
-  dialog --clear --default-item "${SATADOM}" --backtitle "`backtitle`" --colors \ 
-     --title "Change synoboot_satadom option" \
-     --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file /${TMP_PATH}/menub \
-    2>${TMP_PATH}/resp
+  dialog --clear --default-item "${SATADOM}" --backtitle "`backtitle`" --colors --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file /${TMP_PATH}/menub  2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
   [ -z "${resp}" ] && return
