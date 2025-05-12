@@ -1459,8 +1459,8 @@ function additional() {
         echo "1 \"Native SATA DOM(SYNO)\""
         echo "2 \"Fake SATA DOM(Redpill)\""
       } >"${TMP_PATH}/menub"
-      DIALOG --title "$(TEXT "Advanced")" \
-        --default-item "${SATADOM}" --menu "$(TEXT "Choose a mode(Only supported for kernel version 4)")" 0 0 0 --file "${TMP_PATH}/menub" \
+      DIALOG --title "Change synoboot_satadom option" \
+        --default-item "${SATADOM}" --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file "${TMP_PATH}/menub" \
         2>"${TMP_PATH}/resp"
       [ $? -ne 0 ] && continue
       resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
