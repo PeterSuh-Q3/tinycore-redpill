@@ -1423,7 +1423,7 @@ function additional() {
     eval "echo \"l \\\"${MSG60}\\\"\""  > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"j \\\"Active ${DOMKIND} Satadom Option\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "apollolake" ]||[ "${platform}" = "v1000nk(DT)" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"c \\\"${MSG52}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1453,6 +1453,7 @@ function additional() {
       default_resp="y"
       ;;
     j)
+      SATADOM=$(cat /home/tc/user_config.json | jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]')
       rm -f "${TMP_PATH}/menub"
       {
         echo "0 \"Disable SATA DOM\""
@@ -1466,9 +1467,9 @@ function additional() {
       resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
       [ -z "${resp}" ] && continue
       satadom_edit "${resp}"
-      SATADOM="${resp}"
+      SATADOMRES="${resp}"
       
-      if [ "${SATADOM}" = "0" ]; then
+      if [ "${SATADOMRES}" = "0" ]; then
         DOMKIND="Disable"
       elif [ "${SATADOM}" = "1" ]; then
         DOMKIND="Native"
