@@ -616,6 +616,11 @@ function setSuggest() {
   else
     MSG00="\n"
   fi  
+  #if [ $(echo ${platform} | grep "(DT)" | wc -l) -gt 0 ]; then
+  #  eval "MSG00=\"\${MSG${tz}00}\""
+  #else
+    MSG00="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
+  #fi  
   
   result="${MSG00}${desc}"
   echo "${platform} : ${bay} : ${mcpu}"
