@@ -411,7 +411,8 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 v1000nk broadwellnk broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
+  M_GRP1="epyc7002 v1000nk broadwellnk"
+  M_GRP2="broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
@@ -425,9 +426,9 @@ function modelMenu() {
   
   # Determine which platforms to use based on AFTERHASWELL
   if [ "${AFTERHASWELL}" == "OFF" ]; then
-    platforms="${M_GRP1} ${M_GRP5} ${M_GRP6}"
+    platforms="${M_GRP1} ${M_GRP5} ${M_GRP6} ${M_GRP2}"
   else
-    platforms="${M_GRP1} ${M_GRP4} ${M_GRP5} ${M_GRP7} ${M_GRP6} ${M_GRP3}"
+    platforms="${M_GRP1} ${M_GRP4} ${M_GRP7} ${M_GRP5} ${M_GRP6} ${M_GRP3} ${M_GRP2}"
     RESTRICT=0
   fi
   
