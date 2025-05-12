@@ -456,7 +456,7 @@ function modelMenu() {
 
   eval "MSG00=\"\${MSG${tz}00}\""
   
-  header="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
+  #header="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
   
   # Display dialog for model selection
   dialog --backtitle "`backtitle`" --default-item "${MODEL}" --colors \
@@ -490,7 +490,7 @@ function modelMenu() {
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]||[ "${BUS}" = "mmc" ]; then
     if [ "$HBADETECT" = "ON" ]; then
         DMPM="DDSML+EUDEV"
     else
