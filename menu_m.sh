@@ -452,10 +452,12 @@ function modelMenu() {
     suggestion=$(setSuggest $model)
     echo "$model \"\Zb$suggestion\Zn\"" >> "${TMP_PATH}/mdl_final"
   done <<< "$model_list"
+
+  header="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
   
   # Display dialog for model selection
   dialog --backtitle "`backtitle`" --default-item "${MODEL}" --colors \
-    --menu "Choose a model\n" 0 0 0 \
+    --menu "${header}\n" 0 0 0 \
     --file "${TMP_PATH}/mdl_final" 2>${TMP_PATH}/resp
   
   # Check for dialog exit status
@@ -616,11 +618,6 @@ function setSuggest() {
   else
     MSG00="\n"
   fi  
-  #if [ $(echo ${platform} | grep "(DT)" | wc -l) -gt 0 ]; then
-  #  eval "MSG00=\"\${MSG${tz}00}\""
-  #else
-    MSG00="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
-  #fi  
   
   result="${MSG00}${desc}"
   echo "${platform} : ${bay} : ${mcpu}"
