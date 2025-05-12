@@ -1453,7 +1453,7 @@ function additional() {
       default_resp="y"
       ;;
     j)
-      SATADOM=$(cat /home/tc/user_config.json | jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]')
+      SATADOM=$(jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]' /home/tc/user_config.json)    
       rm -f "${TMP_PATH}/menub"
       {
         echo "0 \"Disable SATA DOM\""
@@ -1471,7 +1471,7 @@ function additional() {
       
       if [ "${SATADOMRES}" = "0" ]; then
         DOMKIND="Disable"
-      elif [ "${SATADOM}" = "1" ]; then
+      elif [ "${SATADOMRES}" = "1" ]; then
         DOMKIND="Native"
       else
         DOMKIND="Fake"
