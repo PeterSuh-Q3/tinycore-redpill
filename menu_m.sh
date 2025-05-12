@@ -1397,6 +1397,32 @@ function defaultchange() {
   echo "GRUB configuration file modified successfully."
 }
 
+function changesatadom() {
+  rm -f "${TMP_PATH}/menub"
+  {
+    echo "0 \"Disable SATA DOM\""
+    echo "1 \"Native SATA DOM(SYNO)\""
+    echo "2 \"Fake SATA DOM(Redpill)\""
+  } >"${TMP_PATH}/menub"
+  dialog --clear --default-item "${SATADOM}" --backtitle "`backtitle`" --colors \ 
+     --title "Change synoboot_satadom option" \
+     --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file /${TMP_PATH}/menub \
+    2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
+  [ -z "${resp}" ] && return
+  satadom_edit "${resp}"
+  
+  #SATADOMRES="${resp}"
+  #if [ "${SATADOMRES}" = "0" ]; then
+  #  DOMKIND="Disable"
+  #elif [ "${SATADOMRES}" = "1" ]; then
+  #  DOMKIND="Native"
+  #else
+  #  DOMKIND="Fake"
+  #fi
+}
+
 function additional() {
 
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
@@ -1460,32 +1486,7 @@ function additional() {
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
       default_resp="y"
       ;;
-    j)
-      rm -f "${TMP_PATH}/menub"
-      {
-        echo "0 \"Disable SATA DOM\""
-        echo "1 \"Native SATA DOM(SYNO)\""
-        echo "2 \"Fake SATA DOM(Redpill)\""
-      } >"${TMP_PATH}/menub"
-      dialog --title "Change synoboot_satadom option" \
-        --default-item "${SATADOM}" --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file "${TMP_PATH}/menub" \
-        2>"${TMP_PATH}/resp"
-      [ $? -ne 0 ] && continue
-      resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
-      [ -z "${resp}" ] && continue
-      satadom_edit "${resp}"
-      
-      #SATADOMRES="${resp}"
-      #if [ "${SATADOMRES}" = "0" ]; then
-      #  DOMKIND="Disable"
-      #elif [ "${SATADOMRES}" = "1" ]; then
-      #  DOMKIND="Native"
-      #else
-      #  DOMKIND="Fake"
-      #fi
-      
-      default_resp="j"
-      ;;
+    j) changesatadom; default_resp="j";;
     z)
       #[ "$MACHINE" = "VIRTUAL" ] && echo "VIRTUAL Machine is not supported..." && read answer && continue
       i915_edit
