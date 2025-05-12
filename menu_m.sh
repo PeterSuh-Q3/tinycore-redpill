@@ -269,7 +269,7 @@ function seleudev() {
 
   checkforsas
 
-  if [ ${BLOCK_DDSML} = "Y" ]||[ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]||[ "${BUS}" = "mmc" ]; then
     menu_options=("e" "${MSG26}" "f" "${MSG40}")
   elif [ ${BLOCK_EUDEV} = "Y" ]; then  
     menu_options=("d" "${MSG27}" "f" "${MSG40}")
