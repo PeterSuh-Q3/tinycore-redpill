@@ -1401,7 +1401,15 @@ function additional() {
 
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
-  [ $(cat /home/tc/user_config.json | grep "synoboot_satadom=2" | wc -l) -eq 1 ] && DOMKIND="Native" || DOMKIND="Fake"
+  SATADOM=$(jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]' /home/tc/user_config.json)
+  if [ "${SATADOM}" = "0" ]; then
+    DOMKIND="Disable"
+  elif [ "${SATADOM}" = "1" ]; then
+    DOMKIND="Native"
+  else
+    DOMKIND="Fake"
+  fi
+  
   [ "${I915MODE}" == "1" ] && DISPLAYI915="Disable" || DISPLAYI915="Enable"
 
   eval "MSG50=\"\${MSG${tz}50}\""
@@ -1453,7 +1461,6 @@ function additional() {
       default_resp="y"
       ;;
     j)
-      SATADOM=$(jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]' /home/tc/user_config.json)    
       rm -f "${TMP_PATH}/menub"
       {
         echo "0 \"Disable SATA DOM\""
@@ -1463,19 +1470,19 @@ function additional() {
       DIALOG --title "Change synoboot_satadom option" \
         --default-item "${SATADOM}" --menu "Choose a mode(Only supported for kernel version 4)" 0 0 0 --file "${TMP_PATH}/menub" \
         2>"${TMP_PATH}/resp"
-      [ $? -ne 0 ] && continue
+      [ $? -ne 0 ] && return
       resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
-      [ -z "${resp}" ] && continue
+      [ -z "${resp}" ] && return
       satadom_edit "${resp}"
-      SATADOMRES="${resp}"
       
-      if [ "${SATADOMRES}" = "0" ]; then
-        DOMKIND="Disable"
-      elif [ "${SATADOMRES}" = "1" ]; then
-        DOMKIND="Native"
-      else
-        DOMKIND="Fake"
-      fi
+      #SATADOMRES="${resp}"
+      #if [ "${SATADOMRES}" = "0" ]; then
+      #  DOMKIND="Disable"
+      #elif [ "${SATADOMRES}" = "1" ]; then
+      #  DOMKIND="Native"
+      #else
+      #  DOMKIND="Fake"
+      #fi
       
       default_resp="j"
       ;;
