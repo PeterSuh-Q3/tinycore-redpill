@@ -453,11 +453,13 @@ function modelMenu() {
     echo "$model \"\Zb$suggestion\Zn\"" >> "${TMP_PATH}/mdl_final"
   done <<< "$model_list"
 
+  eval "MSG00=\"\${MSG${tz}00}\""
+  
   header="Supported Models for your Hardware (v = supported / + = need Addons)\n$(printf "\Zb%-16s\Zn \Zb%-15s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-5s\Zn \Zb%-10s\Zn \Zb%-12s\Zn" "Model" "Platform" "DT" "iGPU" "HBA" "M.2 Cache" "M.2 Volume")"
   
   # Display dialog for model selection
   dialog --backtitle "`backtitle`" --default-item "${MODEL}" --colors \
-    --menu "${header}\n" 0 0 0 \
+    --menu "${MSG00}\n" 0 0 0 \
     --file "${TMP_PATH}/mdl_final" 2>${TMP_PATH}/resp
   
   # Check for dialog exit status
