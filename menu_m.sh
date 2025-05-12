@@ -793,6 +793,8 @@ function editUserConfig() {
     fi
   done
 
+  sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json
+
   MODEL="$(jq -r -e '.general.model' $USER_CONFIG_FILE)"
   SN="$(jq -r -e '.extra_cmdline.sn' $USER_CONFIG_FILE)"
   MACADDR1="$(jq -r -e '.extra_cmdline.mac1' $USER_CONFIG_FILE)"
