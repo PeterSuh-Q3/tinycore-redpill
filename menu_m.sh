@@ -1413,14 +1413,14 @@ function changesatadom() {
   [ -z "${resp}" ] && return
   satadom_edit "${resp}"
   
-  #SATADOMRES="${resp}"
-  #if [ "${SATADOMRES}" = "0" ]; then
-  #  DOMKIND="Disable"
-  #elif [ "${SATADOMRES}" = "1" ]; then
-  #  DOMKIND="Native"
-  #else
-  #  DOMKIND="Fake"
-  #fi
+  SATADOMRES="${resp}"
+  if [ "${SATADOMRES}" = "0" ]; then
+    DOMKIND="Disable"
+  elif [ "${SATADOMRES}" = "1" ]; then
+    DOMKIND="Native"
+  else
+    DOMKIND="Fake"
+  fi
 }
 
 function additional() {
