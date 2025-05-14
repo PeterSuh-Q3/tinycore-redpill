@@ -4625,6 +4625,7 @@ function my() {
   
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof=true || spoof=false
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("nvmesystem")') = true ] && nvmes=true || nvmes=false
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("vmtools")') = true ] && vmtools=true || vmtools=false  
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils=true || dbgutils=false
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
   
@@ -4648,6 +4649,7 @@ function my() {
   
   [ "$spoof" = true ] && add-addons "mac-spoof" 
   [ "$nvmes" = true ] && add-addons "nvmesystem" 
+  [ "$vmtools" = true ] && add-addons "vmtools" 
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
   [ "$sortnetif" = true ] && add-addons "sortnetif" 
 
