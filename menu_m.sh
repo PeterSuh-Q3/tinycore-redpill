@@ -176,6 +176,7 @@ I915MODE=$(jq -r -e '.general.i915mode' "$USER_CONFIG_FILE")
 BFBAY=$(jq -r -e '.general.bay' "$USER_CONFIG_FILE")
 DMPM=$(jq -r -e '.general.devmod' "$USER_CONFIG_FILE")
 NVMES=$(jq -r -e '.general.nvmesystem' "$USER_CONFIG_FILE")
+vmtools=$(jq -r -e '.general.vmtools' "$USER_CONFIG_FILE")
 LDRMODE=$(jq -r -e '.general.loadermode' "$USER_CONFIG_FILE")
 MDLNAME=$(jq -r -e '.general.modulename' "$USER_CONFIG_FILE")
 ucode=$(jq -r -e '.general.ucode' "$USER_CONFIG_FILE")
@@ -1295,6 +1296,7 @@ function add-addon() {
 
   [ "${1}" = "mac-spoof" ] && echo -n "(Warning) Enabling mac-spoof may compromise San Manager and VMM. Do you still want to add it? [yY/nN] : "
   [ "${1}" = "nvmesystem" ] && echo -n "Would you like to add nvmesystem? [yY/nN] : "
+  [ "${1}" = "vmtools" ] && echo -n "Would you like to add vmtools? [yY/nN] : "
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
   
   readanswer    
@@ -1851,6 +1853,11 @@ if [ "${NVMES}" = "null"  ]; then
     writeConfigKey "general" "nvmesystem" "${NVMES}"
 fi
 
+if [ "${VMTOOLS}" = "null"  ]; then
+    VMTOOLS="false"
+    writeConfigKey "general" "vmtools" "${VMTOOLS}"
+fi
+
 [ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
 
 if [ "${LDRMODE}" = "null" ]; then
@@ -2038,6 +2045,7 @@ chk_shr_ex
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
+  [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
   eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""   >> "${TMP_PATH}/menu"
   if [ -n "${MODEL}" ]; then
@@ -2055,6 +2063,7 @@ while true; do
     eval "echo \"k \\\"\${MSG${tz}56}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"q \\\"\${MSG${tz}41} (${bay})\\\"\""      >> "${TMP_PATH}/menu"
     eval "echo \"w \\\"${nvmeaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
+    eval "echo \"d \\\"${vmtoolsaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   [ "$FRKRNL" = "YES" ] && 
@@ -2106,6 +2115,16 @@ while true; do
       fi  
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
+      ;;
+    d)       
+      if [ "${VMTOOLS}" = "false" ]; then 
+        add-addon "vmtools"
+        VMTOOLS="true"
+      else  
+        del-addon "vmtools"
+        VMTOOLS="false"
+      fi  
+      writeConfigKey "general" "vmtools" "${VMTOOLS}"
       ;;
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make "fri" "${prevent_init}" 
