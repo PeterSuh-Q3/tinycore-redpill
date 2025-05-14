@@ -1,1 +1,1 @@
-        1.2.3.3 v1000nk (DS925+ kernel 5) support started
+        1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
