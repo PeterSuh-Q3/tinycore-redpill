@@ -2063,7 +2063,7 @@ while true; do
     eval "echo \"k \\\"\${MSG${tz}56}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"q \\\"\${MSG${tz}41} (${bay})\\\"\""      >> "${TMP_PATH}/menu"
     eval "echo \"w \\\"${nvmeaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
-    eval "echo \"d \\\"${vmtoolsaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
+    eval "echo \"d \\\"${vmtoolsaction} vmtools(with qemu-guest-agent) addon\"\""    >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   [ "$FRKRNL" = "YES" ] && 
