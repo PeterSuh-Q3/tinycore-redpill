@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.3"
+rploaderver="1.2.3.4"
 build="master"
 redpillmake="prod"
 
@@ -183,6 +183,7 @@ function history() {
     1.2.3.1 cedarview (DS713+ kernel 3) support started
     1.2.3.2 More models supported for avoton and cedarview (including DS1815+)
     1.2.3.3 v1000nk (DS925+ kernel 5) support started
+    1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -543,6 +544,8 @@ EOF
 # More models supported for avoton and cedarview (including DS1815+)
 # 2025.04.24 v1.2.3.3 
 # v1000nk (DS925+ kernel 5) support started
+# 2025.05.14 v1.2.3.4 
+# Added Addon selection menu for vmtools, qemu-guest-agent
     
 function showlastupdate() {
     cat <<EOF
@@ -739,6 +742,9 @@ function showlastupdate() {
 
 # 2025.04.24 v1.2.3.3 
 # v1000nk (DS925+ kernel 5) support started
+
+# 2025.05.14 v1.2.3.4 
+# Added Addon selection menu for vmtools, qemu-guest-agent
 
 EOF
 }
