@@ -1296,7 +1296,15 @@ function add-addon() {
 
   [ "${1}" = "mac-spoof" ] && echo -n "(Warning) Enabling mac-spoof may compromise San Manager and VMM. Do you still want to add it? [yY/nN] : "
   [ "${1}" = "nvmesystem" ] && echo -n "Would you like to add nvmesystem? [yY/nN] : "
-  [ "${1}" = "vmtools" ] && echo -n "Would you like to add vmtools? [yY/nN] : "
+  if [ "${1}" = "vmtools" ]; then 
+    if [ "${DMPM}" = "DDSML" ]; then
+      echo "vmtools requires EUDEV or DDSML+EUDEV mode. Aborting the add addon."
+      echo "press any key to continue..."
+      read answer
+      return
+    fi
+    echo -n "Would you like to add vmtools? [yY/nN] : "
+  fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
   
   readanswer    
