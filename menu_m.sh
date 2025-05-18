@@ -1301,7 +1301,7 @@ function add-addon() {
       echo "vmtools requires EUDEV or DDSML+EUDEV mode. Aborting the add addon."
       echo "press any key to continue..."
       read answer
-      return
+      return 1
     fi
     echo -n "Would you like to add vmtools? [yY/nN] : "
   fi
@@ -1310,6 +1310,9 @@ function add-addon() {
   readanswer    
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
     jsonfile=$(jq ". |= .+ {\"${1}\": \"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/${1}/rpext-index.json\"}" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json    
+    return 0
+  else
+    return 1
   fi
 }
 
@@ -2128,11 +2131,9 @@ while true; do
       ;;
     d)       
       if [ "${VMTOOLS}" = "false" ]; then 
-        add-addon "vmtools"
-        VMTOOLS="true"
+        add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
       else  
-        del-addon "vmtools"
-        VMTOOLS="false"
+        del-addon "vmtools" && VMTOOLS="false"
       fi  
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
       ;;
