@@ -2116,10 +2116,11 @@ while true; do
     q) storagepanel;      NEXT="p" ;;    
     w) 
       if [ "${NVMES}" = "false" ]; then 
-        add-addon "nvmesystem"
-        NVMES="true"
-        BLOCK_DDSML="Y"
-        DMPM="EUDEV"
+        if add-addon "nvmesystem"; then
+          NVMES="true"
+          BLOCK_DDSML="Y"
+          DMPM="EUDEV"
+        fi  
       else  
         del-addon "nvmesystem"
         NVMES="false"
