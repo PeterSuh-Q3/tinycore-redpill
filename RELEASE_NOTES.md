@@ -1,1 +1,1 @@
-        1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
+        1.2.3.5 Added DSM password reset(change) and DSM user add menus
