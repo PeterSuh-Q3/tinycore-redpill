@@ -1469,7 +1469,9 @@ function additional() {
   default_resp="l"
 
   while true; do
-    eval "echo \"l \\\"${MSG60}\\\"\""  > "${TMP_PATH}/menua"
+    echo "o \"Change DSM New Password\"" > "${TMP_PATH}/menua"
+    echo "n \"Add New DSM User\""      >> "${TMP_PATH}/menua"
+    eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
@@ -1490,6 +1492,8 @@ function additional() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
+    o) changeDSMPassword; default_resp="o" ;;
+    n) addNewDSMUser; default_resp="n" ;;
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
