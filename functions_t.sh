@@ -1191,8 +1191,8 @@ echo -e "\e[35m$1\e[0m	\e[36m$2\e[0m	$3" >> /home/tc/buildstatus
 # Find and mount the DSM root filesystem
 function findDSMRoot() {
   local DSMROOTS=""
-  [ -z "${DSMROOTS}" ] && DSMROOTS="$(mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
-  [ -z "${DSMROOTS}" ] && DSMROOTS="$(lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
+  [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
+  [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
   echo "${DSMROOTS}"
   return 0
 }
@@ -1209,12 +1209,12 @@ function changeDSMPassword() {
   fi
 
   # assemble and mount md0
-  rm -f "${TMP_PATH}/menu"
-  mkdir -p "${TMP_PATH}/mdX"
+  sudo rm -f "${TMP_PATH}/menu"
+  sudo mkdir -p "${TMP_PATH}/mdX"
   num=$(echo $DSMROOTS | /bin/wc -w)
-  /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-  T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-  mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+  sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
   if [ -f "${TMP_PATH}/mdX/etc/shadow" ]; then
     while read -r L; do
@@ -1227,9 +1227,9 @@ function changeDSMPassword() {
     done <<<"$(cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
   fi
   
-  umount "${TMP_PATH}/mdX"
-  mdadm --stop /dev/md0
-  rm -rf "${TMP_PATH}/mdX"
+  sudo umount "${TMP_PATH}/mdX"
+  sudo mdadm --stop /dev/md0
+  sudo rm -rf "${TMP_PATH}/mdX"
   if [ ! -f "${TMP_PATH}/menu" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
       --title "Change DSM New Password" \
@@ -1260,28 +1260,28 @@ function changeDSMPassword() {
       break
     fi
   done
-  rm -f "${TMP_PATH}/isOk"
+  sudo rm -f "${TMP_PATH}/isOk"
   (
-    mkdir -p "${TMP_PATH}/mdX"
+    sudo mkdir -p "${TMP_PATH}/mdX"
     local NEWPASSWD
-    NEWPASSWD="$(openssl passwd -6 -salt "$(openssl rand -hex 8)" "${STRPASSWD}")"
+    NEWPASSWD="$(sudo openssl passwd -6 -salt "$(sudo openssl rand -hex 8)" "${STRPASSWD}")"
   
     # assemble and mount md0
     num=$(echo $DSMROOTS | /bin/wc -w)
-    /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-    T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-    mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+    sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
     sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
     sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
     sed -i "s|status=on|status=off|g" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${USER}/method.config" 2>/dev/null
-    sync
+    sudo sync
   
     echo "true" >"${TMP_PATH}/isOk"
-    umount "${TMP_PATH}/mdX"
-    mdadm --stop /dev/md0
+    sudo umount "${TMP_PATH}/mdX"
+    sudo mdadm --stop /dev/md0
 
-    rm -rf "${TMP_PATH}/mdX"
+    sudo rm -rf "${TMP_PATH}/mdX"
   ) 2>&1 | dialog --backtitle "$(backtitle)" --colors --aspect 50 \
     --title "Change DSM New Password" \
     --progressbox "Resetting ..." 20 100
@@ -1318,7 +1318,7 @@ function addNewDSMUser() {
   username_escaped=$(printf "%q" "$username")
   password_escaped=$(printf "%q" "$password")
       
-  rm -f "${TMP_PATH}/isOk"
+  sudo rm -f "${TMP_PATH}/isOk"
   (
     ONBOOTUP=""
     ONBOOTUP="${ONBOOTUP}if synouser --enum local | grep -q ^${username_escaped}\$; then synouser --setpw ${username_escaped} ${password_escaped}; else synouser --add ${username_escaped} ${password_escaped} mshell 0 user@mshell.com 1; fi\n"
@@ -1326,24 +1326,24 @@ function addNewDSMUser() {
     ONBOOTUP="${ONBOOTUP}echo \"DELETE FROM task WHERE task_name LIKE ''ONBOOTUP_ADDUSER'';\" | sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db\n"
     
     # assemble and mount md0
-    mkdir -p "${TMP_PATH}/mdX"
+    sudo mkdir -p "${TMP_PATH}/mdX"
     num=$(echo $DSMROOTS | /bin/wc -w)
-    /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-    T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-    mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+    sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
     if [ -f "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" ]; then
-      sqlite3 "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" <<EOF
+      sudo sqlite3 "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" <<EOF
 DELETE FROM task WHERE task_name LIKE 'ONBOOTUP_ADDUSER';
 INSERT INTO task VALUES('ONBOOTUP_ADDUSER', '', 'bootup', '', 1, 0, 0, 0, '', 0, '$(echo -e "${ONBOOTUP}")', 'script', '{}', '', '', '{}', '{}');
 EOF
-      sync
+      sudo sync
       echo "true" >"${TMP_PATH}/isOk"
     fi
-    umount "${TMP_PATH}/mdX"
-    mdadm --stop /dev/md0
+    sudo umount "${TMP_PATH}/mdX"
+    sudo mdadm --stop /dev/md0
 
-    rm -rf "${TMP_PATH}/mdX"
+    sudo rm -rf "${TMP_PATH}/mdX"
   ) 2>&1 | dialog --title "Add New DSM User" \
     --progressbox "Adding ..." 20 100
   if [ -f "${TMP_PATH}/isOk" ]; then
