@@ -1466,7 +1466,7 @@ function additional() {
   eval "MSG62=\"\${MSG${tz}62}\""
   eval "MSG63=\"\${MSG${tz}63}\""
 
-  default_resp="l"
+  default_resp="o"
 
   while true; do
     echo "o \"Change DSM New Password\"" > "${TMP_PATH}/menua"
