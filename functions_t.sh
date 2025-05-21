@@ -1223,7 +1223,7 @@ function changeDSMPassword() {
       E=$(echo "${L}" | awk -F ':' '{if ($8 == "1") print "disabled"; else print "        ";}')
       grep -q "status=on" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${U}/method.config" 2>/dev/null
       [ $? -eq 0 ] && S="SecureSignIn" || S="            "
-      printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menu"
+      printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menuz"
     done <<<"$(cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
   fi
   
