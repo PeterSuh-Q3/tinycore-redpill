@@ -1224,7 +1224,7 @@ function changeDSMPassword() {
       grep -q "status=on" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${U}/method.config" 2>/dev/null
       [ $? -eq 0 ] && S="SecureSignIn" || S="            "
       printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menuz"
-    done <<<"$(cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
+    done <<<"$(sudo cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
   fi
   
   sudo umount "${TMP_PATH}/mdX"
@@ -1241,7 +1241,7 @@ function changeDSMPassword() {
     --no-items --menu "Choose a user name" 0 0 20 --file "${TMP_PATH}/menuz" \
     2>"${TMP_PATH}/resp"
   [ $? -ne 0 ] && return
-  USER="$(cat "${TMP_PATH}/resp" 2>/dev/null | awk '{print $1}')"
+  USER="$(sudo cat "${TMP_PATH}/resp" 2>/dev/null | awk '{print $1}')"
   [ -z "${USER}" ] && return
   local STRPASSWD
   while true; do
@@ -1250,7 +1250,7 @@ function changeDSMPassword() {
       --inputbox "$(printf "Type a new password for user '%s'" "${USER}")" 0 70 "" \
       2>"${TMP_PATH}/resp"
     [ $? -ne 0 ] && break
-    resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
+    resp="$(sudo cat "${TMP_PATH}/resp" 2>/dev/null)"
     if [ -z "${resp}" ]; then
       dialog --backtitle "$(backtitle)" --colors --aspect 50 \
         --title "Change DSM New Password" \
@@ -1272,9 +1272,9 @@ function changeDSMPassword() {
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
-    sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
-    sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
-    sed -i "s|status=on|status=off|g" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${USER}/method.config" 2>/dev/null
+    sudo sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
+    sudo sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
+    sudo sed -i "s|status=on|status=off|g" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${USER}/method.config" 2>/dev/null
     sudo sync
   
     echo "true" >"${TMP_PATH}/isOk"
@@ -1312,8 +1312,8 @@ function addNewDSMUser() {
     "password:" 2 1 "" 2 10 50 0 \
     2>"${TMP_PATH}/resp"
   [ $? -ne 0 ] && return
-  username=$(sed -n '1p' "${TMP_PATH}/resp")
-  password=$(sed -n '2p' "${TMP_PATH}/resp")
+  username=$(sudo sed -n '1p' "${TMP_PATH}/resp")
+  password=$(sudo sed -n '2p' "${TMP_PATH}/resp")
 
   username_escaped=$(printf "%q" "$username")
   password_escaped=$(printf "%q" "$password")
