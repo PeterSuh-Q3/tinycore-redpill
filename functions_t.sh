@@ -1209,7 +1209,7 @@ function changeDSMPassword() {
   fi
 
   # assemble and mount md0
-  sudo rm -f "${TMP_PATH}/menu"
+  sudo rm -f "${TMP_PATH}/menuz"
   sudo mkdir -p "${TMP_PATH}/mdX"
   num=$(echo $DSMROOTS | /bin/wc -w)
   sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
@@ -1230,7 +1230,7 @@ function changeDSMPassword() {
   sudo umount "${TMP_PATH}/mdX"
   sudo mdadm --stop /dev/md0
   sudo rm -rf "${TMP_PATH}/mdX"
-  if [ ! -f "${TMP_PATH}/menu" ]; then
+  if [ ! -f "${TMP_PATH}/menuz" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
       --title "Change DSM New Password" \
       --msgbox "All existing users have been disabled. Please try adding new user." 0 0
@@ -1238,7 +1238,7 @@ function changeDSMPassword() {
   fi
   dialog --backtitle "$(backtitle)" --colors --aspect 50 \
     --title "Change DSM New Password" \
-    --no-items --menu "Choose a user name" 0 0 20 --file "${TMP_PATH}/menu" \
+    --no-items --menu "Choose a user name" 0 0 20 --file "${TMP_PATH}/menuz" \
     2>"${TMP_PATH}/resp"
   [ $? -ne 0 ] && return
   USER="$(cat "${TMP_PATH}/resp" 2>/dev/null | awk '{print $1}')"
