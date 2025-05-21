@@ -1221,6 +1221,7 @@ function changeDSMPassword() {
   num=$(echo $DSMROOTS | wc -w)
   sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
   sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
   if [ -f "${TMP_PATH}/mdX/etc/shadow" ]; then
@@ -1277,6 +1278,7 @@ function changeDSMPassword() {
     num=$(echo $DSMROOTS | wc -w)
     sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
     sudo sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
@@ -1337,6 +1339,7 @@ function addNewDSMUser() {
     num=$(echo $DSMROOTS | wc -w)
     sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
     if [ -f "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" ]; then
