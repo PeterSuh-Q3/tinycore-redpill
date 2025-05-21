@@ -1218,8 +1218,8 @@ function changeDSMPassword() {
   # assemble and mount md0
   sudo rm -f "${TMP_PATH}/menuz"
   sudo mkdir -p "${TMP_PATH}/mdX"
-  num=$(echo $DSMROOTS | /bin/wc -w)
-  sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  num=$(echo $DSMROOTS | wc -w)
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
   sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
@@ -1274,8 +1274,8 @@ function changeDSMPassword() {
     NEWPASSWD="$(sudo openssl passwd -6 -salt "$(sudo openssl rand -hex 8)" "${STRPASSWD}")"
   
     # assemble and mount md0
-    num=$(echo $DSMROOTS | /bin/wc -w)
-    sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    num=$(echo $DSMROOTS | wc -w)
+    sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
@@ -1334,8 +1334,8 @@ function addNewDSMUser() {
     
     # assemble and mount md0
     sudo mkdir -p "${TMP_PATH}/mdX"
-    num=$(echo $DSMROOTS | /bin/wc -w)
-    sudo /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    num=$(echo $DSMROOTS | wc -w)
+    sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
