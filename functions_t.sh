@@ -1193,6 +1193,7 @@ function findDSMRoot() {
   local DSMROOTS=""
   [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
   [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
+  [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetect" | grep -E '16785407|4982527' | awk '{print $1}')"
   echo "${DSMROOTS}"
   return 0
 }
