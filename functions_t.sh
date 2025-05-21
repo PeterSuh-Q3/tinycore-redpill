@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.4"
+rploaderver="1.2.3.5"
 build="master"
 redpillmake="prod"
 
@@ -184,6 +184,7 @@ function history() {
     1.2.3.2 More models supported for avoton and cedarview (including DS1815+)
     1.2.3.3 v1000nk (DS925+ kernel 5) support started
     1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
+    1.2.3.5 Added DSM password reset(change) and DSM user add menus
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -546,6 +547,8 @@ EOF
 # v1000nk (DS925+ kernel 5) support started
 # 2025.05.14 v1.2.3.4 
 # Added Addon selection menu for vmtools, qemu-guest-agent
+# 2025.05.21 v1.2.3.5 
+# Added DSM password reset (change) and DSM user add menus
     
 function showlastupdate() {
     cat <<EOF
@@ -745,6 +748,9 @@ function showlastupdate() {
 
 # 2025.05.14 v1.2.3.4 
 # Added Addon selection menu for vmtools, qemu-guest-agent
+
+# 2025.05.21 v1.2.3.5 
+# Added DSM password reset (change) and DSM user add menus
 
 EOF
 }
@@ -1179,6 +1185,175 @@ function READ_YN () { # ${1}:question ${2}:default
 function st() {
 echo -e "[$(date '+%T.%3N')]:-------------------------------------------------------------" >> /home/tc/buildstatus
 echo -e "\e[35m$1\e[0m	\e[36m$2\e[0m	$3" >> /home/tc/buildstatus
+}
+
+###############################################################################
+# Find and mount the DSM root filesystem
+function findDSMRoot() {
+  local DSMROOTS=""
+  [ -z "${DSMROOTS}" ] && DSMROOTS="$(mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
+  [ -z "${DSMROOTS}" ] && DSMROOTS="$(lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
+  echo "${DSMROOTS}"
+  return 0
+}
+
+###############################################################################
+# Reset DSM system password
+function changeDSMPassword() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  # assemble and mount md0
+  rm -f "${TMP_PATH}/menu"
+  mkdir -p "${TMP_PATH}/mdX"
+  num=$(echo $DSMROOTS | /bin/wc -w)
+  /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+
+  if [ -f "${TMP_PATH}/mdX/etc/shadow" ]; then
+    while read -r L; do
+      U=$(echo "${L}" | awk -F ':' '{if ($2 != "*" && $2 != "!!") print $1;}')
+      [ -z "${U}" ] && continue
+      E=$(echo "${L}" | awk -F ':' '{if ($8 == "1") print "disabled"; else print "        ";}')
+      grep -q "status=on" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${U}/method.config" 2>/dev/null
+      [ $? -eq 0 ] && S="SecureSignIn" || S="            "
+      printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menu"
+    done <<<"$(cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
+  fi
+  
+  umount "${TMP_PATH}/mdX"
+  mdadm --stop /dev/md0
+  rm -rf "${TMP_PATH}/mdX"
+  if [ ! -f "${TMP_PATH}/menu" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --msgbox "All existing users have been disabled. Please try adding new user." 0 0
+    return
+  fi
+  dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --no-items --menu "Choose a user name" 0 0 20 --file "${TMP_PATH}/menu" \
+    2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  USER="$(cat "${TMP_PATH}/resp" 2>/dev/null | awk '{print $1}')"
+  [ -z "${USER}" ] && return
+  local STRPASSWD
+  while true; do
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --inputbox "$(printf "Type a new password for user '%s'" "${USER}")" 0 70 "" \
+      2>"${TMP_PATH}/resp"
+    [ $? -ne 0 ] && break
+    resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
+    if [ -z "${resp}" ]; then
+      dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+        --title "Change DSM New Password" \
+        --msgbox "Invalid password" 0 0
+    else
+      STRPASSWD="${resp}"
+      break
+    fi
+  done
+  rm -f "${TMP_PATH}/isOk"
+  (
+    mkdir -p "${TMP_PATH}/mdX"
+    local NEWPASSWD
+    NEWPASSWD="$(openssl passwd -6 -salt "$(openssl rand -hex 8)" "${STRPASSWD}")"
+  
+    # assemble and mount md0
+    num=$(echo $DSMROOTS | /bin/wc -w)
+    /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+
+    sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
+    sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
+    sed -i "s|status=on|status=off|g" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${USER}/method.config" 2>/dev/null
+    sync
+  
+    echo "true" >"${TMP_PATH}/isOk"
+    umount "${TMP_PATH}/mdX"
+    mdadm --stop /dev/md0
+
+    rm -rf "${TMP_PATH}/mdX"
+  ) 2>&1 | dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --progressbox "Resetting ..." 20 100
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG="$(printf "Reset password for user '%s' completed." "${USER}")"
+  else
+    MSG="$(printf "Reset password for user '%s' failed." "${USER}")"
+  fi
+  dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --msgbox "${MSG}" 0 0
+  return
+}
+
+###############################################################################
+# Add new DSM user
+function addNewDSMUser() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --title "Add New DSM User" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+  MSG="Add to administrators group by default"
+  dialog --title "Add New DSM User" \
+    --form "${MSG}" 8 60 3 \
+    "username:" 1 1 "" 1 10 50 0 \
+    "password:" 2 1 "" 2 10 50 0 \
+    2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  username=$(sed -n '1p' "${TMP_PATH}/resp")
+  password=$(sed -n '2p' "${TMP_PATH}/resp")
+
+  username_escaped=$(printf "%q" "$username")
+  password_escaped=$(printf "%q" "$password")
+      
+  rm -f "${TMP_PATH}/isOk"
+  (
+    ONBOOTUP=""
+    ONBOOTUP="${ONBOOTUP}if synouser --enum local | grep -q ^${username_escaped}\$; then synouser --setpw ${username_escaped} ${password_escaped}; else synouser --add ${username_escaped} ${password_escaped} mshell 0 user@mshell.com 1; fi\n"
+    ONBOOTUP="${ONBOOTUP}synogroup --memberadd administrators ${username_escaped}\n"
+    ONBOOTUP="${ONBOOTUP}echo \"DELETE FROM task WHERE task_name LIKE ''ONBOOTUP_ADDUSER'';\" | sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db\n"
+    
+    # assemble and mount md0
+    mkdir -p "${TMP_PATH}/mdX"
+    num=$(echo $DSMROOTS | /bin/wc -w)
+    /sbin/mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+    T="$(blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+    mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+
+    if [ -f "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" ]; then
+      sqlite3 "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" <<EOF
+DELETE FROM task WHERE task_name LIKE 'ONBOOTUP_ADDUSER';
+INSERT INTO task VALUES('ONBOOTUP_ADDUSER', '', 'bootup', '', 1, 0, 0, 0, '', 0, '$(echo -e "${ONBOOTUP}")', 'script', '{}', '', '', '{}', '{}');
+EOF
+      sync
+      echo "true" >"${TMP_PATH}/isOk"
+    fi
+    umount "${TMP_PATH}/mdX"
+    mdadm --stop /dev/md0
+
+    rm -rf "${TMP_PATH}/mdX"
+  ) 2>&1 | dialog --title "Add New DSM User" \
+    --progressbox "Adding ..." 20 100
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG=$(printf "Add new user '%s' completed." "${username}")
+  else
+    MSG=$(printf "Add new user '%s' failed." "${username}")
+  fi
+  dialog --title "Add New DSM User" \
+    --msgbox "${MSG}" 0 0
+  return
 }
 
 function getlatestmshell() {
