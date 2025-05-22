@@ -1989,6 +1989,7 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ "$(which ntpclient)_" == "_" ]; then
    echo "ntpclient does not exist, install from tinycore"
    tce-load -iw ntpclient 2>&1 >/dev/null
+   sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
    sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
@@ -1996,6 +1997,7 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ "$(which mdadm)_" == "_" ]; then  
     echo "mdadm does not exist, install from tinycore"
     tce-load -iw mdadm 2>&1 >/dev/null
+    sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     sudo echo "mdadm.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
@@ -2003,7 +2005,9 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ "$(which sqlite3)_" == "_" ]; then 
     echo "sqlite3 does not exist, install from tinycore"
     tce-load -iw sqlite3-bin 2>&1 >/dev/null
+    sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     sudo echo "sqlite3-bin.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+    echo 'Y'|rploader backup
 fi    
 
 # Download pigz
@@ -2012,6 +2016,7 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/pigz
     chmod 700 pigz
     sudo mv -vf pigz /usr/local/bin/
+    echo 'Y'|rploader backup
 fi
 
 #if [ "$FRKRNL" = "YES" ]; then
