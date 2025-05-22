@@ -1987,13 +1987,24 @@ fi
 
 # Download ntpclient
 if [ "$FRKRNL" = "NO" ] && [ "$(which ntpclient)_" == "_" ]; then
-    echo "ntpclient does not exist, install from tinycore"
+   echo "ntpclient does not exist, install from tinycore"
    tce-load -iw ntpclient 2>&1 >/dev/null
    sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download mdadm
-[ "$(which mdadm)_" == "_" ] && tce-load -iw mdadm
+if [ "$FRKRNL" = "NO" ] && [ "$(which mdadm)_" == "_" ]; then  
+    echo "mdadm does not exist, install from tinycore"
+    tce-load -iw mdadm 2>&1 >/dev/null
+    sudo echo "mdadm.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
+
+# Download sqlite3-bin
+if [ "$FRKRNL" = "NO" ] && [ "$(which sqlite3)_" == "_" ]; then 
+    echo "sqlite3 does not exist, install from tinycore"
+    tce-load -iw sqlite3-bin 2>&1 >/dev/null
+    sudo echo "sqlite3-bin.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi    
 
 # Download pigz
 if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
