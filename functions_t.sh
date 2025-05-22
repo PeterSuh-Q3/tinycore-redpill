@@ -1196,8 +1196,9 @@ function findDSMRoot() {
       [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
   else
       if [ "$(which mdadm)_" == "_" ]; then
-          tce-load -iw mdadm 2>&1 >/dev/null
-      fi    
+          tce-load -iw mdadm
+      fi
+      sleep 3
       [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetect" | grep -E '16785407|4982527' | awk '{print $1}')"
   fi
   echo "${DSMROOTS}"
