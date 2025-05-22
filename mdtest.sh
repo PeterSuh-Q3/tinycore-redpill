@@ -14,4 +14,4 @@ T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
 [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
 sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
-ll "${TMP_PATH}/mdX/etc/shadow"
+ls -l "${TMP_PATH}/mdX/etc/shadow"
