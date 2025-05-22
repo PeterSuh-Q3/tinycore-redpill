@@ -1992,6 +1992,9 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which ntpclient)_" == "_" ]; then
    sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
+# Download mdadm
+[ "$(which mdadm)_" == "_" ] && tce-load -iw mdadm
+
 # Download pigz
 if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     echo "pigz does not exist, bringing over from repo"
