@@ -1237,8 +1237,8 @@ function changeDSMPassword() {
   sudo mdadm --stop /dev/md0
   sudo rm -rf "${TMP_PATH}/mdX"
 
-  sudo cat "${TMP_PATH}/menuz"
-  read answer
+  #sudo cat "${TMP_PATH}/menuz"
+  #read answer
   
   if [ ! -f "${TMP_PATH}/menuz" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
