@@ -10,8 +10,8 @@ DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetec
 sudo rm -f "${TMP_PATH}/menuz"
 sudo mkdir -p "${TMP_PATH}/mdX"
 num=$(echo $DSMROOTS | wc -w)
-sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS
+T="$(sudo blkid -o value -s TYPE /dev/md0"
 [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
 sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
