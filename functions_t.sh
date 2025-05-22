@@ -1236,6 +1236,10 @@ function changeDSMPassword() {
   sudo umount "${TMP_PATH}/mdX"
   sudo mdadm --stop /dev/md0
   sudo rm -rf "${TMP_PATH}/mdX"
+
+  sudo cat "${TMP_PATH}/menuz"
+  read answer
+  
   if [ ! -f "${TMP_PATH}/menuz" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
       --title "Change DSM New Password" \
