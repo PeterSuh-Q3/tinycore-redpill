@@ -14,7 +14,7 @@ num=$(echo $DSMROOTS | wc -w)
 sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS
 T="$(sudo blkid -o value -s TYPE /dev/md0)"
 sudo tune2fs -O ^quota /dev/md0
-sleep 2
+#sleep 2
 sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
 sudo ls -l ${TMP_PATH}/mdX/etc/shadow
