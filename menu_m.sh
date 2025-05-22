@@ -1823,7 +1823,6 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ "$(which ethtool)_" == "_" ]; then
    echo "ethtool does not exist, install from tinycore"
    tce-load -iw ethtool iproute2 2>&1 >/dev/null
-   sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional   
    sudo echo "ethtool.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
    sudo echo "iproute2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
@@ -1988,26 +1987,22 @@ fi
 # Download ntpclient
 if [ "$FRKRNL" = "NO" ] && [ "$(which ntpclient)_" == "_" ]; then
    echo "ntpclient does not exist, install from tinycore"
-   tce-load -iw ntpclient 2>&1 >/dev/null
-   sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
+   tce-load -iw ntpclient 
    sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download mdadm
 if [ "$FRKRNL" = "NO" ] && [ "$(which mdadm)_" == "_" ]; then  
     echo "mdadm does not exist, install from tinycore"
-    tce-load -iw mdadm 2>&1 >/dev/null
-    sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
+    tce-load -iw mdadm 
     sudo echo "mdadm.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download sqlite3-bin
 if [ "$FRKRNL" = "NO" ] && [ "$(which sqlite3)_" == "_" ]; then 
     echo "sqlite3 does not exist, install from tinycore"
-    tce-load -iw sqlite3-bin 2>&1 >/dev/null
-    sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
+    tce-load -iw sqlite3-bin 
     sudo echo "sqlite3-bin.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-    echo 'Y'|rploader backup
 fi    
 
 # Download pigz
@@ -2063,6 +2058,12 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware-broadcom_bnx2x | wc -w) -eq 0 ]; then
     installtcz "firmware-broadcom_bnx2x.tcz"
     echo "Install firmware-broadcom_bnx2x OK !!!"
+    echo 'Y'|rploader backup
+fi
+
+# copy tinycore pack and backup
+if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
+    sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     echo 'Y'|rploader backup
 fi
 
