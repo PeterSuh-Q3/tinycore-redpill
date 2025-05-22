@@ -1198,7 +1198,7 @@ function findDSMRoot() {
       if [ "$(which mdadm)_" == "_" ]; then
           tce-load -iw mdadm 2>&1 >/dev/null
       fi    
-      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetect" | grep -E '16785407|4982527' | awk '{print $1}')"
+      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep -E '16785407|4982527' | awk '{print $1}')"
   fi
   echo "${DSMROOTS}"
   return 0
