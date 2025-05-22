@@ -21,3 +21,5 @@ sudo ls -l ${TMP_PATH}/mdX/etc/shadow
 sudo umount "${TMP_PATH}/mdX"
 sudo mdadm --stop /dev/md0
 sudo rm -rf "${TMP_PATH}/mdX"
+
+echo "Finished!"
