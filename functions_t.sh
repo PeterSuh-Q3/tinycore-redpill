@@ -1195,8 +1195,10 @@ function findDSMRoot() {
       [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
       [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
   else
-      [ "$(which mdadm)_" == "_" ] && tce-load -iw mdadm
-      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetect" | grep -E '16785407|4982527' | awk '{print $1}')"
+      if [ "$(which mdadm)_" == "_" ]; then
+          tce-load -iw mdadm 2>&1 >/dev/null
+      fi    
+      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep -E '16785407|4982527' | awk '{print $1}')"
   fi
   echo "${DSMROOTS}"
   return 0
@@ -1217,7 +1219,7 @@ function changeDSMPassword() {
   sudo rm -f "${TMP_PATH}/menuz"
   sudo mkdir -p "${TMP_PATH}/mdX"
   num=$(echo $DSMROOTS | wc -w)
-  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS #2>/dev/null
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
   [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
   sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
@@ -1236,10 +1238,6 @@ function changeDSMPassword() {
   sudo umount "${TMP_PATH}/mdX"
   sudo mdadm --stop /dev/md0
   sudo rm -rf "${TMP_PATH}/mdX"
-
-  #sudo cat "${TMP_PATH}/menuz"
-  #read answer
-  
   if [ ! -f "${TMP_PATH}/menuz" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
       --title "Change DSM New Password" \
@@ -1310,9 +1308,6 @@ function changeDSMPassword() {
 ###############################################################################
 # Add new DSM user
 function addNewDSMUser() {
-  if [ "$FRKRNL" = "NO" ]&&[ "$(which sqlite3)_" == "_" ]; then 
-      tce-load -iw sqlite3-bin
-  fi    
   DSMROOTS="$(findDSMRoot)"
   if [ -z "${DSMROOTS}" ]; then
     dialog --title "Add New DSM User" \
