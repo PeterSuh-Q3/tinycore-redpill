@@ -2,6 +2,8 @@
 
 TMP_PATH=/tmp
 
+set -u # Unbound variable errors are not allowed
+
 [ "$(which mdadm)_" == "_" ] && tce-load -iw mdadm
 DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep "Linux raid autodetect" | grep -E '16785407|4982527' | awk '{print $1}')"
 
