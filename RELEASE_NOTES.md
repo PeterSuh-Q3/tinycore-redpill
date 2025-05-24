@@ -1,1 +1,1 @@
-        1.2.3.5 Added DSM password reset(change) and DSM user add menus
+        1.2.3.6 Added Clean System Partition(md0) menu
