@@ -1406,13 +1406,26 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
   [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
-    sudo rm -vrf "${TMP_PATH}/mdX"/@autoupdate/*
-    sudo rm -vrf "${TMP_PATH}/mdX"/upd@te/*
-    sudo rm -vrf "${TMP_PATH}/mdX"/.log.junior/*
-    sudo sync
-    echo "true" >"${TMP_PATH}/isOk"
-    echo "press any key to continue..."
-    read answer
+      removed=0
+  
+      for dir in "@autoupdate" "upd@te" ".log.junior"; do
+          path="${TMP_PATH}/mdX/${dir}/*"
+          if ls $path 1>/dev/null 2>&1; then
+              sudo rm -vrf ${TMP_PATH}/mdX/${dir}/*
+              removed=1
+          fi
+      done
+  
+      sudo sync
+  
+      if [ $removed -eq 0 ]; then
+          echo "Nothing to remove file"
+      else
+          echo "true" >"${TMP_PATH}/isOk"
+      fi
+  
+      echo "press any key to continue..."
+      read answer
   fi
 
   sudo umount "${TMP_PATH}/mdX"
