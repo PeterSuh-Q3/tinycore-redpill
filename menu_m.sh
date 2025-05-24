@@ -1471,6 +1471,7 @@ function additional() {
   while true; do
     echo "o \"Change DSM New Password\"" > "${TMP_PATH}/menua"
     echo "n \"Add New DSM User\""      >> "${TMP_PATH}/menua"
+    echo "p \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menua"
     eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
@@ -1494,6 +1495,7 @@ function additional() {
     case `<"${TMP_PATH}/resp"` in
     o) changeDSMPassword; default_resp="o" ;;
     n) addNewDSMUser; default_resp="n" ;;
+    p) CleanSystemPart; default_resp="p" ;;
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
