@@ -1396,23 +1396,29 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
   sudo rm -f "${TMP_PATH}/isOk"
   # assemble and mount md0
+  sudo mkdir -p "${TMP_PATH}/mdX"
   num=$(echo $DSMROOTS | wc -w)
   sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
   [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
-  sudo mount -t "${T:-ext4}" /dev/md0 /mnt/md0
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
   [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
-  if [ -b /dev/md0 ]; then
-    sudo rm -vrf /mnt/md0/@autoupdate/*
-    sudo rm -vrf /mnt/md0/upd@te/*
-    sudo rm -vrf /mnt/md0/.log.junior/*
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+    sudo rm -vrf "${TMP_PATH}/mdX"/@autoupdate/*
+    sudo rm -vrf "${TMP_PATH}/mdX"/upd@te/*
+    sudo rm -vrf "${TMP_PATH}/mdX"/.log.junior/*
     sudo sync
     echo "true" >"${TMP_PATH}/isOk"
     echo "press any key to continue..."
     read answer
   fi
+
+  sudo umount "${TMP_PATH}/mdX"
+  sudo mdadm --stop /dev/md0
+
+  sudo rm -rf "${TMP_PATH}/mdX"
   
   if [ -f "${TMP_PATH}/isOk" ]; then
     MSG=$(printf "Clean System Partition(md0) completed.")
