@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.5"
+rploaderver="1.2.3.6"
 build="master"
 redpillmake="prod"
 
@@ -185,6 +185,7 @@ function history() {
     1.2.3.3 v1000nk (DS925+ kernel 5) support started
     1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
     1.2.3.5 Added DSM password reset(change) and DSM user add menus
+    1.2.3.6 Added Clean System Partition(md0) menu
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -549,6 +550,8 @@ EOF
 # Added Addon selection menu for vmtools, qemu-guest-agent
 # 2025.05.21 v1.2.3.5 
 # Added DSM password reset (change) and DSM user add menus
+# 2025.05.24 v1.2.3.6
+# Added Clean System Partition(md0) menu
     
 function showlastupdate() {
     cat <<EOF
@@ -751,6 +754,9 @@ function showlastupdate() {
 
 # 2025.05.21 v1.2.3.5 
 # Added DSM password reset (change) and DSM user add menus
+
+# 2025.05.24 v1.2.3.6
+# Added Clean System Partition(md0) menu
 
 EOF
 }
@@ -1224,6 +1230,8 @@ function changeDSMPassword() {
   [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
   sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
   if [ -f "${TMP_PATH}/mdX/etc/shadow" ]; then
     while read -r L; do
       U=$(echo "${L}" | awk -F ':' '{if ($2 != "*" && $2 != "!!") print $1;}')
@@ -1280,6 +1288,8 @@ function changeDSMPassword() {
     T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
     [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+
+    [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
     sudo sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
     sudo sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
@@ -1342,6 +1352,8 @@ function addNewDSMUser() {
     [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
     sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 
+    [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
     if [ -f "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" ]; then
       sudo sqlite3 "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" <<EOF
 DELETE FROM task WHERE task_name LIKE 'ONBOOTUP_ADDUSER';
@@ -1364,6 +1376,74 @@ EOF
   dialog --title "Add New DSM User" \
     --msgbox "${MSG}" 0 0
   return
+}
+
+###############################################################################
+# CleanSystemPart
+function CleanSystemPart() {
+
+echo -n "(Warning) Do you want to clean the System Partition(md0)? [yY/nN] : "
+readanswer
+if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Clean System Partition(md0)" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  sudo rm -f "${TMP_PATH}/isOk"
+  # assemble and mount md0
+  sudo mkdir -p "${TMP_PATH}/mdX"
+  num=$(echo $DSMROOTS | wc -w)
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+      removed=0
+  
+      for dir in "@autoupdate" "upd@te" ".log.junior"; do
+          path="${TMP_PATH}/mdX/${dir}/*"
+          if ls $path 1>/dev/null 2>&1; then
+              sudo rm -vrf ${TMP_PATH}/mdX/${dir}/*
+              removed=1
+          fi
+      done
+  
+      sudo sync
+  
+      if [ $removed -eq 0 ]; then
+          echo "Nothing to remove file"
+      else
+          echo "true" >"${TMP_PATH}/isOk"
+      fi
+  
+      echo "press any key to continue..."
+      read answer
+  fi
+
+  sudo umount "${TMP_PATH}/mdX"
+  sudo mdadm --stop /dev/md0
+
+  sudo rm -rf "${TMP_PATH}/mdX"
+  
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG=$(printf "Clean System Partition(md0) completed.")
+  else
+    MSG=$(printf "Clean System Partition(md0) failed.")
+  fi
+  dialog --title "Clean System Partition(md0)" \
+    --msgbox "${MSG}" 0 0
+  return
+  
+fi
+
 }
 
 function getlatestmshell() {
