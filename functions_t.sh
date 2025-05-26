@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.6"
+rploaderver="1.2.3.7"
 build="master"
 redpillmake="prod"
 
@@ -186,6 +186,7 @@ function history() {
     1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
     1.2.3.5 Added DSM password reset(change) and DSM user add menus
     1.2.3.6 Added Clean System Partition(md0) menu
+    1.2.3.7 Bootentry Update version correction
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -552,6 +553,8 @@ EOF
 # Added DSM password reset (change) and DSM user add menus
 # 2025.05.24 v1.2.3.6
 # Added Clean System Partition(md0) menu
+# 2025.05.26 v1.2.3.7 
+# Bootentry Update version correction
     
 function showlastupdate() {
     cat <<EOF
@@ -757,6 +760,9 @@ function showlastupdate() {
 
 # 2025.05.24 v1.2.3.6
 # Added Clean System Partition(md0) menu
+
+# 2025.05.26 v1.2.3.7 
+# Bootentry Update version correction
 
 EOF
 }
@@ -1193,6 +1199,23 @@ echo -e "[$(date '+%T.%3N')]:---------------------------------------------------
 echo -e "\e[35m$1\e[0m	\e[36m$2\e[0m	$3" >> /home/tc/buildstatus
 }
 
+function open_md0() {
+  # assemble and mount md0
+  sudo rm -f "${TMP_PATH}/menuz"
+  sudo mkdir -p "${TMP_PATH}/mdX"
+  num=$(echo $DSMROOTS | wc -w)
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+}
+
+function close_md0() {
+  sudo umount "${TMP_PATH}/mdX"
+  sudo mdadm --stop /dev/md0
+  sudo rm -rf "${TMP_PATH}/mdX"
+}
+
 ###############################################################################
 # Find and mount the DSM root filesystem
 function findDSMRoot() {
@@ -1222,13 +1245,7 @@ function changeDSMPassword() {
   fi
 
   # assemble and mount md0
-  sudo rm -f "${TMP_PATH}/menuz"
-  sudo mkdir -p "${TMP_PATH}/mdX"
-  num=$(echo $DSMROOTS | wc -w)
-  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
-  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+  open_md0
 
   [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
@@ -1242,10 +1259,9 @@ function changeDSMPassword() {
       printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menuz"
     done <<<"$(sudo cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
   fi
-  
-  sudo umount "${TMP_PATH}/mdX"
-  sudo mdadm --stop /dev/md0
-  sudo rm -rf "${TMP_PATH}/mdX"
+
+  close_md0
+   
   if [ ! -f "${TMP_PATH}/menuz" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
       --title "Change DSM New Password" \
@@ -1283,11 +1299,7 @@ function changeDSMPassword() {
     NEWPASSWD="$(sudo openssl passwd -6 -salt "$(sudo openssl rand -hex 8)" "${STRPASSWD}")"
   
     # assemble and mount md0
-    num=$(echo $DSMROOTS | wc -w)
-    sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-    T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-    [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
-    sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+    open_md0
 
     [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
@@ -1297,10 +1309,8 @@ function changeDSMPassword() {
     sudo sync
   
     echo "true" >"${TMP_PATH}/isOk"
-    sudo umount "${TMP_PATH}/mdX"
-    sudo mdadm --stop /dev/md0
-
-    sudo rm -rf "${TMP_PATH}/mdX"
+    close_md0
+    
   ) 2>&1 | dialog --backtitle "$(backtitle)" --colors --aspect 50 \
     --title "Change DSM New Password" \
     --progressbox "Resetting ..." 20 100
@@ -1343,14 +1353,9 @@ function addNewDSMUser() {
     ONBOOTUP="${ONBOOTUP}if synouser --enum local | grep -q ^${username_escaped}\$; then synouser --setpw ${username_escaped} ${password_escaped}; else synouser --add ${username_escaped} ${password_escaped} mshell 0 user@mshell.com 1; fi\n"
     ONBOOTUP="${ONBOOTUP}synogroup --memberadd administrators ${username_escaped}\n"
     ONBOOTUP="${ONBOOTUP}echo \"DELETE FROM task WHERE task_name LIKE ''ONBOOTUP_ADDUSER'';\" | sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db\n"
-    
+
     # assemble and mount md0
-    sudo mkdir -p "${TMP_PATH}/mdX"
-    num=$(echo $DSMROOTS | wc -w)
-    sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-    T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-    [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
-    sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+    open_md0
 
     [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
@@ -1362,10 +1367,9 @@ EOF
       sudo sync
       echo "true" >"${TMP_PATH}/isOk"
     fi
-    sudo umount "${TMP_PATH}/mdX"
-    sudo mdadm --stop /dev/md0
 
-    sudo rm -rf "${TMP_PATH}/mdX"
+    close_md0
+    
   ) 2>&1 | dialog --title "Add New DSM User" \
     --progressbox "Adding ..." 20 100
   if [ -f "${TMP_PATH}/isOk" ]; then
@@ -1396,12 +1400,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
   sudo rm -f "${TMP_PATH}/isOk"
   # assemble and mount md0
-  sudo mkdir -p "${TMP_PATH}/mdX"
-  num=$(echo $DSMROOTS | wc -w)
-  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
-  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
-  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+  open_md0
 
   [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
@@ -1428,10 +1427,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
       read answer
   fi
 
-  sudo umount "${TMP_PATH}/mdX"
-  sudo mdadm --stop /dev/md0
-
-  sudo rm -rf "${TMP_PATH}/mdX"
+  close_md0
   
   if [ -f "${TMP_PATH}/isOk" ]; then
     MSG=$(printf "Clean System Partition(md0) completed.")
@@ -1439,6 +1435,53 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     MSG=$(printf "Clean System Partition(md0) failed.")
   fi
   dialog --title "Clean System Partition(md0)" \
+    --msgbox "${MSG}" 0 0
+  return
+  
+fi
+
+}
+
+###############################################################################
+# Fix SmallFixNumber of Bootentry
+function fixBootEntry() {
+
+echo -n "(Warning) Do you want to fix Bootentry Update version? [yY/nN] : "
+readanswer
+if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Bootentry Update version correction" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  sudo rm -f "${TMP_PATH}/isOk"
+  # assemble and mount md0
+  open_md0
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+      . ${TMP_PATH}/mdX/etc/VERSION
+      cat ${TMP_PATH}/mdX/etc/VERSION
+      updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
+      sudo sed -i "s/Update [0-9]/Update $smallfixnumber/g" "/mnt/${loaderdisk}1/boot/grub/grub.cfg"
+      grep menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg
+      echo "press any key to continue..."
+      read answer
+  fi
+
+  close_md0
+  
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG=$(printf "Bootentry Update version correction completed.")
+  else
+    MSG=$(printf "Bootentry Update version correction failed.")
+  fi
+  dialog --title "Bootentry Update version correction" \
     --msgbox "${MSG}" 0 0
   return
   
