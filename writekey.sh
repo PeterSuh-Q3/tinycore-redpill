@@ -9,7 +9,7 @@ function writeConfigKey() {
     value="$3"
     userconfigfile="$4"
 
-    if [ -n "$1 " ] && [ -n "$2" ]; then
+    if [ -n "$1" ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
     else
