@@ -11,7 +11,7 @@ function writeConfigKey() {
 
     if [ -n "$1" ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile
+        echo $jsonfile | jq . > "$userconfigfile"
     else
         echo "No values to update"
     fi
