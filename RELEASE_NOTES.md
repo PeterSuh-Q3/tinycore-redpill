@@ -1,1 +1,1 @@
-        1.2.3.6 Added Clean System Partition(md0) menu
+        1.2.3.7 Added Bootentry Update version correction menu
