@@ -1472,6 +1472,7 @@ function additional() {
     echo "o \"Change DSM New Password\"" > "${TMP_PATH}/menua"
     echo "n \"Add New DSM User\""      >> "${TMP_PATH}/menua"
     echo "p \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menua"
+    echo "q \"Bootentry Update version correction\""      >> "${TMP_PATH}/menua"
     eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
@@ -1496,6 +1497,7 @@ function additional() {
     o) changeDSMPassword; default_resp="o" ;;
     n) addNewDSMUser; default_resp="n" ;;
     p) CleanSystemPart; default_resp="p" ;;
+    q) fixBootEntry; default_resp="q" ;;
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
