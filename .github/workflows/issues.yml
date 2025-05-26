@@ -65,6 +65,10 @@ jobs:
           set_output("mac2", mac2)
           set_output("mac3", mac3)
           set_output("mac4", mac4)
+          set_output("mac5", mac5)
+          set_output("mac6", mac6)
+          set_output("mac7", mac7)
+          set_output("mac8", mac8)
           set_output("sn", sn)
           set_output("format", format)
           set_output("language", language)
@@ -139,9 +143,31 @@ jobs:
           fi          
           if [ -n "${{ env.mac4 }}" ]; then
             echo "set mac4: ${{ env.mac4 }}"
-            sudo ./writekey.sh "extra_cmdline" "mac4" "${{ env.mac4 }}"
+            sudo ./writekey.sh "extra_cmdline" "mac4" "${{ env.mac4 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "4" $userconfigfile
           fi          
+          
+          if [ -n "${{ env.mac5 }}" ]; then
+            echo "set mac5: ${{ env.mac5 }}"
+            sudo ./writekey.sh "extra_cmdline" "mac5" "${{ env.mac5 }}" $userconfigfile
+            sudo ./writekey.sh "extra_cmdline" "netif_num" "5" $userconfigfile
+          fi
+          if [ -n "${{ env.mac6 }}" ]; then
+            echo "set mac6: ${{ env.mac6 }}"
+            sudo ./writekey.sh "extra_cmdline" "mac6" "${{ env.mac6 }}" $userconfigfile
+            sudo ./writekey.sh "extra_cmdline" "netif_num" "6" $userconfigfile
+          fi          
+          if [ -n "${{ env.mac7 }}" ]; then
+            echo "set mac7: ${{ env.mac7 }}"
+            sudo ./writekey.sh "extra_cmdline" "mac7" "${{ env.mac7 }}" $userconfigfile
+            sudo ./writekey.sh "extra_cmdline" "netif_num" "7" $userconfigfile
+          fi          
+          if [ -n "${{ env.mac8 }}" ]; then
+            echo "set mac8: ${{ env.mac8 }}"
+            sudo ./writekey.sh "extra_cmdline" "mac8" "${{ env.mac8 }}" $userconfigfile
+            sudo ./writekey.sh "extra_cmdline" "netif_num" "8" $userconfigfile
+          fi          
+          
           if [ -n "${{ env.sn }}" ]; then
             echo "set sn: ${{ env.sn }}"
             sudo ./writekey.sh "extra_cmdline" "sn" "${{ env.sn }}" $userconfigfile
