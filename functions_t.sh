@@ -186,7 +186,7 @@ function history() {
     1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
     1.2.3.5 Added DSM password reset(change) and DSM user add menus
     1.2.3.6 Added Clean System Partition(md0) menu
-    1.2.3.7 Bootentry Update version correction
+    1.2.3.7 Added Bootentry Update version correction menu
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -554,7 +554,7 @@ EOF
 # 2025.05.24 v1.2.3.6
 # Added Clean System Partition(md0) menu
 # 2025.05.26 v1.2.3.7 
-# Bootentry Update version correction
+# Added Bootentry Update version correction menu
     
 function showlastupdate() {
     cat <<EOF
@@ -762,7 +762,7 @@ function showlastupdate() {
 # Added Clean System Partition(md0) menu
 
 # 2025.05.26 v1.2.3.7 
-# Bootentry Update version correction
+# Added Bootentry Update version correction menu
 
 EOF
 }
