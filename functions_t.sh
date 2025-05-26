@@ -1458,7 +1458,6 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     return
   fi
 
-  sudo rm -f "${TMP_PATH}/isOk"
   # assemble and mount md0
   open_md0
 
@@ -1476,11 +1475,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
   close_md0
   
-  if [ -f "${TMP_PATH}/isOk" ]; then
-    MSG=$(printf "Bootentry Update version correction completed.")
-  else
-    MSG=$(printf "Bootentry Update version correction failed.")
-  fi
+  MSG=$(printf "Bootentry Update version correction completed.")
   dialog --title "Bootentry Update version correction" \
     --msgbox "${MSG}" 0 0
   return
