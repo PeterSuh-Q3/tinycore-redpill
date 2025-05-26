@@ -34,6 +34,10 @@ jobs:
           mac2 = ''
           mac3 = ''
           mac4 = ''
+          mac5 = ''
+          mac6 = ''
+          mac7 = ''
+          mac8 = ''
           sn = ''
           format = ''
           language = ''
@@ -47,6 +51,10 @@ jobs:
                   mac2 = jsonbody.get('mac2', '')
                   mac3 = jsonbody.get('mac3', '')
                   mac4 = jsonbody.get('mac4', '')
+                  mac5 = jsonbody.get('mac5', '')
+                  mac6 = jsonbody.get('mac6', '')
+                  mac7 = jsonbody.get('mac7', '')
+                  mac8 = jsonbody.get('mac8', '')
                   sn = jsonbody.get('sn', '')
                   format = jsonbody.get('format', '')
                   language = jsonbody.get('language', '')
