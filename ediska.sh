@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for edisk in $(fdisk -l | grep "Disk /dev/sd" | awk '{print $2}' | sed 's/://' ); do
+for edisk in $(fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' ); do
     model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
     echo
     echo
