@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.7"
+rploaderver="1.2.3.8"
 build="master"
 redpillmake="prod"
 
@@ -22,6 +22,7 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview grantley"
+kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
 
 #Check if FRIEND kernel exists
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
@@ -187,6 +188,7 @@ function history() {
     1.2.3.5 Added DSM password reset(change) and DSM user add menus
     1.2.3.6 Added Clean System Partition(md0) menu
     1.2.3.7 Added Bootentry Update version correction menu
+    1.2.3.8 r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -555,6 +557,8 @@ EOF
 # Added Clean System Partition(md0) menu
 # 2025.05.26 v1.2.3.7 
 # Added Bootentry Update version correction menu
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     
 function showlastupdate() {
     cat <<EOF
@@ -764,6 +768,9 @@ function showlastupdate() {
 # 2025.05.26 v1.2.3.7 
 # Added Bootentry Update version correction menu
 
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
+
 EOF
 }
 
@@ -908,7 +915,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 v1000nk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
+    platforms="epyc7002 v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
 
     # Initialize MODELS array
     MODELS=()
@@ -982,7 +989,7 @@ function getvarsmshell()
         ORIGIN_PLATFORM="${platform}"
         if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
             KVER="3.10.108"
-        elif [ "${ORIGIN_PLATFORM}" == "epyc7002" ]||[ "${ORIGIN_PLATFORM}" == "v1000nk" ]; then
+        elif [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
             KVER="5.10.55"
         fi
       fi
@@ -2344,7 +2351,7 @@ function addrequiredexts() {
         fi
     done
 
-    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ]||[ "${ORIGIN_PLATFORM}" = "v1000nk" ]; then
+    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
         vkersion=${major}${minor}_${KVER}
     else
         vkersion=${KVER}
@@ -3183,7 +3190,7 @@ st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
 
-    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ]||[ "${ORIGIN_PLATFORM}" = "v1000nk" ]; then
+    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
         vkersion=${major}${minor}_${KVER}
     else
         vkersion=${KVER}
@@ -3404,8 +3411,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     sudo cp -vf /home/tc/ifcfg-eth* /home/tc/rd.temp/etc/sysconfig/network-scripts/
 
     # SA6400 patches for JOT Mode
-    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ]||[ "${ORIGIN_PLATFORM}" = "v1000nk" ]; then
-        echo -e "Apply Epyc7002, v1000nk Fixes"
+    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+        echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
 
@@ -3706,7 +3713,7 @@ function getredpillko() {
 
     sudo rm -f /home/tc/custom-module/*.gz
     sudo rm -f /home/tc/custom-module/*.ko
-    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ]||[ "${ORIGIN_PLATFORM}" = "v1000nk" ]; then    
+    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
         sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
@@ -4113,8 +4120,7 @@ function inject_loader() {
   fi
 
   plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
-  [ "${plat}" = "epyc7002" ] &&    returnto "Epyc7002 like SA6400 is not supported... Stop processing!!! " && return
-  [ "${plat}" = "v1000nk" ] &&    returnto "V1000nk like DS925+ is not supported... Stop processing!!! " && return
+  [ $(echo ${kver5platforms} | grep ${plat} | wc -l ) -gt 0 ] && returnto "${plat} is not supported... Stop processing!!! " && return
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
