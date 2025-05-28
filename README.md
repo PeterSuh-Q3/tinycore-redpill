@@ -27,17 +27,17 @@ This is using the GitHub ACTIONS-COOL build bot.
 
 3. The title of the issue (the word custom must be included in the title.)
 
-custom DS920+
+custom SA6400
 
 The content of the main text is
 
-{"model":"DS920+","version":"7.2.2-72806"}
+{"model":"SA6400","version":"7.2.2-72806"}
 
 Or
 
 If you have a full-size serial and Mac address, please enter it in the following format. (Mac addresses are supported up to 4, mac4 only.)
 
-{"model":"DS920+","version":"7.2.2-72806","mac1":"112233445566","mac2":"77889900aabb","sn":"1111222233333"}
+{"model":"SA6400","version":"7.2.2-72806","mac1":"112233445566","mac2":"77889900aabb","sn":"1111222233333"}
 
 If the Mac address and serial are omitted, they will be randomly generated.
 
