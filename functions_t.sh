@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.3.7"
+rploaderver="1.2.3.8"
 build="master"
 redpillmake="prod"
 
@@ -188,6 +188,7 @@ function history() {
     1.2.3.5 Added DSM password reset(change) and DSM user add menus
     1.2.3.6 Added Clean System Partition(md0) menu
     1.2.3.7 Added Bootentry Update version correction menu
+    1.2.3.8 r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -556,6 +557,8 @@ EOF
 # Added Clean System Partition(md0) menu
 # 2025.05.26 v1.2.3.7 
 # Added Bootentry Update version correction menu
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     
 function showlastupdate() {
     cat <<EOF
@@ -764,6 +767,9 @@ function showlastupdate() {
 
 # 2025.05.26 v1.2.3.7 
 # Added Bootentry Update version correction menu
+
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
 
 EOF
 }
