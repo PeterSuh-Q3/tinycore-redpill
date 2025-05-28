@@ -355,5 +355,37 @@
               "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
             }
         ]
+    },
+    "r1000nk": {
+        "productvers": {
+            "7.2": "7.2-5.10.55"
+        },
+        "models": [
+            "DS725+"
+        ],
+        "add_extensions": [
+            {
+              "all-modules": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json",
+              "hdddbonjunior": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/rpext-index.json",
+              "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
+            }
+        ]
+    },
+    "geminilakenk": {
+        "productvers": {
+            "7.2": "7.2-5.10.55"
+        },
+        "models": [
+            "DS225+",
+            "DS425+",
+            "DS625slim"
+        ],
+        "add_extensions": [
+            {
+              "all-modules": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json",
+              "hdddbonjunior": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/rpext-index.json",
+              "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
+            }
+        ]
     }
 }
