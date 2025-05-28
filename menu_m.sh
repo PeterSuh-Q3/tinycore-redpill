@@ -8,6 +8,7 @@ set -u # Unbound variable errors are not allowed
 #####################################################################################################
 
 kver3explatforms="bromolow braswell cedarview grantley"
+kver5explatforms="epyc7002(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
 configfile="/home/tc/redpill-load/config/pats.json"
 
 # Function to be called on Ctrl+C or ESC
@@ -270,7 +271,7 @@ function seleudev() {
 
   checkforsas
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ]||[ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]||[ "${BUS}" = "mmc" ]; then
     menu_options=("e" "${MSG26}" "f" "${MSG40}")
   elif [ ${BLOCK_EUDEV} = "Y" ]; then  
     menu_options=("d" "${MSG27}" "f" "${MSG40}")
@@ -322,7 +323,7 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
 
-  if [ "${MODEL}" = "SA6400" ]||[ "${MODEL}" = "DS925+" ]; then  
+  if [ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then    
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   else  
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, rr-modules" "l" "${MSG29}, rr-modules")
@@ -412,7 +413,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 v1000nk broadwellnk"
+  M_GRP1="epyc7002 v1000nk r1000nk geminilakenk broadwellnk"
   M_GRP2="broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
   M_GRP3="denverton"
   M_GRP4="apollolake"
@@ -479,7 +480,7 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]; then
+  if [ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then    
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
@@ -491,7 +492,7 @@ function modelMenu() {
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "v1000nk(DT)" ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ]||[ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]||[ "${BUS}" = "mmc" ]; then
     if [ "$HBADETECT" = "ON" ]; then
         DMPM="DDSML+EUDEV"
     else
@@ -511,7 +512,9 @@ function setSuggest() {
     SA6400)      platform="epyc7002(DT)";bay="RACK_12_Bay";mcpu="AMD EPYC 7272";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     DS925+)      platform="v1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     DS1525+)     platform="v1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
-    DS1825+)     platform="v1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;    
+    DS1825+)     platform="v1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    DS725+)      platform="r1000nk(DT)";bay="TOWER_4_Bay";mcpu="AMD Ryzen V1500B";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    DS425+)      platform="geminilakenk(DT)";bay="TOWER_4_Bay";mcpu="Intel Celeron J4125";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;    
     DS1019+)     platform="apollolake";bay="TOWER_5_Bay";mcpu="Intel Celeron J3455";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}17}\"";;
     DS620slim)   platform="apollolake";bay="TOWER_6_Bay";mcpu="Intel Celeron J3355";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}17}\"";;
     DS218+)      platform="apollolake";bay="TOWER_2_Bay";mcpu="Intel Celeron J3355";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}17}\"";;
@@ -1477,7 +1480,7 @@ function additional() {
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
-    [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "epyc7002(DT)" ]||[ "${platform}" = "apollolake" ]||[ "${platform}" = "v1000nk(DT)" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
+    [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"c \\\"${MSG52}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
