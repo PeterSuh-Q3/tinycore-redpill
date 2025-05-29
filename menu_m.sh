@@ -2068,6 +2068,13 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware
     echo 'Y'|rploader backup
 fi
 
+# Download filesystems-6.1.2-tinycore64
+if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep filesystems-6.1.2-tinycore64 | wc -w) -eq 0 ]; then
+    echo "filesystems-6.1.2-tinycore64 does not exist, install from tinycore"
+    tce-load -iw filesystems-6.1.2-tinycore64
+    sudo echo "filesystems-6.1.2-tinycore64.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
+
 # copy tinycore pack and backup
 if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
