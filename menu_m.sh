@@ -2068,12 +2068,12 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware
     echo 'Y'|rploader backup
 fi
 
-# Download filesystems-6.1.2-tinycore64
-#if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep filesystems-6.1.2-tinycore64 | wc -w) -eq 0 ]; then
-#    echo "filesystems-6.1.2-tinycore64 does not exist, install from tinycore"
-#    tce-load -iw filesystems-6.1.2-tinycore64
-#    sudo echo "filesystems-6.1.2-tinycore64.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-#fi
+# Download btrfs-progs
+if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep btrfs-progs | wc -w) -eq 0 ]; then
+    echo "btrfs-progs does not exist, install from tinycore"
+    tce-load -iw btrfs-progs
+    sudo echo "btrfs-progs.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
 
 # copy tinycore pack and backup
 if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
