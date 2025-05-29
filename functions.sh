@@ -987,9 +987,9 @@ function getvarsmshell()
       fi
       if [ $(echo ${MODELS[@]} | grep ${MODEL} | wc -l ) -gt 0 ]; then
         ORIGIN_PLATFORM="${platform}"
-        if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+        if echo " ${kver3platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
             KVER="3.10.108"
-        elif [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+        elif echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
             KVER="5.10.55"
         fi
       fi
@@ -2351,7 +2351,7 @@ function addrequiredexts() {
         fi
     done
 
-    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         vkersion=${major}${minor}_${KVER}
     else
         vkersion=${KVER}
@@ -2648,7 +2648,7 @@ function getvars() {
         exit 99
     fi
 
-    if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver3platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         KERNEL_MAJOR="3"
         MODULE_ALIAS_FILE="modules.alias.3.json"
     else
@@ -3190,7 +3190,7 @@ st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
 
-    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         vkersion=${major}${minor}_${KVER}
     else
         vkersion=${KVER}
@@ -3411,7 +3411,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     sudo cp -vf /home/tc/ifcfg-eth* /home/tc/rd.temp/etc/sysconfig/network-scripts/
 
     # SA6400 patches for JOT Mode
-    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
@@ -3713,7 +3713,7 @@ function getredpillko() {
 
     sudo rm -f /home/tc/custom-module/*.gz
     sudo rm -f /home/tc/custom-module/*.ko
-    if [ $(echo ${kver5platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
         gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
         sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
@@ -3729,7 +3729,7 @@ function getredpillko() {
         echo "TAG of VERSION is ${TAG}"
     fi
 
-    if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+    if echo " ${kver3platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
@@ -4120,7 +4120,10 @@ function inject_loader() {
   fi
 
   plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
-  [ $(echo ${kver5platforms} | grep ${plat} | wc -l ) -gt 0 ] && returnto "${plat} is not supported... Stop processing!!! " && return
+  if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
+      returnto "${plat} is not supported... Stop processing!!! " 
+      return
+  fi
 
   #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
 
@@ -4904,7 +4907,7 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  if [ $(echo ${kver3platforms} | grep ${ORIGIN_PLATFORM} | wc -l ) -gt 0 ]; then
+  if echo " ${kver3platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
       [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
   fi
     
