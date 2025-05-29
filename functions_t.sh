@@ -996,7 +996,7 @@ function getvarsmshell()
         fi
       fi
     done    
-    echo "KVER = ${KVER}"
+    
     case ${MODEL} in
     DS224+)
         permanent="WBR"
