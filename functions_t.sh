@@ -957,7 +957,7 @@ function getvarsmshell()
     elif [ "$TARGET_REVISION" == "42962" ]; then
         KVER="4.4.180"
         MODELS6="DS423+ DS723+ DS923+ DS1823xs+ RS3621xs+ RS4021xs+ RS3618xs SA6400"
-        if echo " ${MODELS6} " | grep -qw ${MODEL}; then
+        if echo ${MODELS6}| grep -qw ${MODEL}; then
            SUVP="-6"
         else
            SUVP="-1"
@@ -986,7 +986,7 @@ function getvarsmshell()
       if [ -n "$models" ]; then
         MODELS=($models)
       fi
-      if echo " ${MODELS[@]} " | grep -qw ${MODEL}; then
+      if echo ${MODELS[@]} | grep -qw ${MODEL}; then
         ORIGIN_PLATFORM="${platform}"
         if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
             KVER="3.10.108"
