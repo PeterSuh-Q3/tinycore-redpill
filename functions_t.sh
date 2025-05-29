@@ -944,8 +944,8 @@ function getvarsmshell()
     #echo "MODEL is $MODEL"
     TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/' | sed 's/RS/rs/' | sed 's/+/p/' | sed 's/DVA/dva/' | sed 's/FS/fs/' | sed 's/SA/sa/' )
     SYNOMODEL="${TARGET_PLATFORM}_${TARGET_REVISION}"
-    
-    if [ $(echo ${MODELS[@]} | grep ${MODEL} | wc -l ) -eq 0 ]; then
+
+    if ! echo " ${MODELS[@]} " | grep -qw " ${MODEL} "; then
         echo "This synology model not supported by TCRP."
         exit 99
     fi
@@ -956,7 +956,7 @@ function getvarsmshell()
     elif [ "$TARGET_REVISION" == "42962" ]; then
         KVER="4.4.180"
         MODELS6="DS423+ DS723+ DS923+ DS1823xs+ RS3621xs+ RS4021xs+ RS3618xs SA6400"
-        if [ $(echo ${MODELS6} | grep ${MODEL} | wc -l ) -gt 0 ]; then
+        if echo " ${MODELS6} " | grep -qw " ${MODEL} "; then
            SUVP="-6"
         else
            SUVP="-1"
@@ -985,16 +985,17 @@ function getvarsmshell()
       if [ -n "$models" ]; then
         MODELS=($models)
       fi
-      if [ $(echo ${MODELS[@]} | grep ${MODEL} | wc -l ) -gt 0 ]; then
+      if echo " ${MODELS[@]} " | grep -qw " ${MODEL} "; then
         ORIGIN_PLATFORM="${platform}"
         if echo " ${kver3platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
             KVER="3.10.108"
-        elif echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
+        fi    
+        if echo " ${kver5platforms} " | grep -qw " ${ORIGIN_PLATFORM} "; then
             KVER="5.10.55"
         fi
       fi
     done    
-    
+    echo "KVER = ${KVER}"
     case ${MODEL} in
     DS224+)
         permanent="WBR"
