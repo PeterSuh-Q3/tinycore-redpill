@@ -944,8 +944,8 @@ function getvarsmshell()
     #echo "MODEL is $MODEL"
     TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/' | sed 's/RS/rs/' | sed 's/+/p/' | sed 's/DVA/dva/' | sed 's/FS/fs/' | sed 's/SA/sa/' )
     SYNOMODEL="${TARGET_PLATFORM}_${TARGET_REVISION}"
-    echo ${MODELS[@]}
-    echo ${MODEL}
+    
+    
     if ! echo ${MODELS[@]} | grep -qw ${MODEL}; then
         echo "This synology model not supported by TCRP."
         exit 99
@@ -996,7 +996,7 @@ function getvarsmshell()
         fi
       fi
     done    
-    echo "KVER = ${KVER}"
+    
     case ${MODEL} in
     DS224+)
         permanent="WBR"
