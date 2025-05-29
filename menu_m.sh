@@ -271,7 +271,7 @@ function seleudev() {
 
   checkforsas
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo " ${kver5explatforms} " | grep -qw " ${platform} "; then
     menu_options=("e" "${MSG26}" "f" "${MSG40}")
   elif [ ${BLOCK_EUDEV} = "Y" ]; then  
     menu_options=("d" "${MSG27}" "f" "${MSG40}")
@@ -323,7 +323,7 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
 
-  if [ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then    
+  if echo " ${kver5explatforms} " | grep -qw " ${platform} "; then
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   else  
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, rr-modules" "l" "${MSG29}, rr-modules")
@@ -480,19 +480,19 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then    
+  if echo " ${kver5explatforms} " | grep -qw " ${platform} "; then
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
 
-  if [ $(echo ${kver3explatforms} | grep ${platform} | wc -l ) -gt 0 ]; then  
+  if echo " ${kver3explatforms} " | grep -qw " ${platform} "; then
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
-  if [ "${BLOCK_DDSML}" = "Y" ]||[ $(echo ${kver5explatforms} | grep ${platform} | wc -l ) -gt 0 ]||[ "${BUS}" = "mmc" ]; then
+  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo " ${kver5explatforms} " | grep -qw " ${platform} "; then
     if [ "$HBADETECT" = "ON" ]; then
         DMPM="DDSML+EUDEV"
     else
