@@ -945,7 +945,7 @@ function getvarsmshell()
     TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/' | sed 's/RS/rs/' | sed 's/+/p/' | sed 's/DVA/dva/' | sed 's/FS/fs/' | sed 's/SA/sa/' )
     SYNOMODEL="${TARGET_PLATFORM}_${TARGET_REVISION}"
 
-    if ! echo " ${MODELS[@]} " | grep -qw " ${MODEL} "; then
+    if ! echo ${MODELS[@]} | grep -qw ${MODEL}; then
         echo "This synology model not supported by TCRP."
         exit 99
     fi
