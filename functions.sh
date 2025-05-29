@@ -1215,7 +1215,9 @@ function open_md0() {
   num=$(echo $DSMROOTS | wc -w)
   sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-  [ "$FRKRNL" = "NO" ] && sudo tune2fs -O ^quota /dev/md0
+  if [ "$FRKRNL" = "NO" ] && [ "$T" = "ext4" ]
+      sudo tune2fs -O ^quota /dev/md0
+  fi    
   sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
 }
 
