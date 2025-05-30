@@ -1033,6 +1033,11 @@ function getvarsmshell()
         serialstart="2270"
         suffix="alpha"
         ;;
+    DS925+)
+        permanent="YHR"
+        serialstart="2520"
+        suffix="alpha"
+        ;;
     DS1019+)
         permanent="QXR"
         serialstart="1850 1880"
