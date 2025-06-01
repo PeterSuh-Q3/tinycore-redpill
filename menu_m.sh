@@ -1526,24 +1526,42 @@ function additional() {
 function mountvol () {
 
   listvol=()
-  # 2024.07.06 Add NVMe
-  listvol+=( dev/$(sudo lvs | grep volume | awk '{print $1 "-" $2}' ) )
-
-  if [ ${#listusb[@]} -eq 0 ]; then 
+  #listvol+=($(sudo lvs 2>/dev/null | grep volume | awk '{print "/dev/mapper/"$2 "-" $1}'))
+  mapfile -t lvm_volumes < <(
+    sudo lvs --noheadings -o vg_name,lv_name 2>/dev/null \
+    | grep volume \
+    | awk '{print "/dev/mapper/"$1 "-" $2}'
+  )
+  listvol+=("${lvm_volumes[@]}")
+  
+  if [ ${#listvol[@]} -eq 0 ]; then 
     echo "No Available Syno lvm Volume, press any key continue..."
-    read answer                       
+    read -n 1 -s answer                       
     return 0   
   fi
-
+  
   dialog --backtitle "`backtitle`" --no-items --colors \
     --menu "Choose a Volume to mount.\Zn" 0 0 0 "${listvol[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return 
-
-  echo "Mount Volume ${resp} completed, press any key to continue..."
-  read answer
+  [ -z "${resp}" ] && return
+  
+  T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
+  
+  sudo mkdir -p /mnt/syno
+  if [ "$T" = "btrfs" ]; then
+    sudo mount -t btrfs "${resp}" /mnt/syno -o ro,degraded
+  elif [ "$T" = "ext4" ]; then  
+    sudo mount -t ext4 "${resp}" /mnt/syno
+  fi  
+  
+  if mountpoint -q /mnt/syno; then
+    echo "Mount Volume ${resp} completed, press any key to continue..."
+  else
+    echo "Mount failed! Check filesystem type."
+  fi
+  read -n 1 -s answer
   return 0
 }
 
@@ -1559,7 +1577,7 @@ function synopart() {
     echo "c \"Clean System Partition(md0)\""            >> "${TMP_PATH}/menuc"
     echo "d \"Bootentry Update version correction\""    >> "${TMP_PATH}/menuc"
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
-    echo "f \"Mount Syno Disk volume(Read only)\""      >> "${TMP_PATH}/menuc"
+    echo "f \"Mount Syno Disk Volume(Read only)\""      >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
