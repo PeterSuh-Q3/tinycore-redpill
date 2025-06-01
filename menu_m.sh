@@ -1550,11 +1550,8 @@ function mountvol () {
   T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
   
   sudo mkdir -p /mnt/syno
-  if [ "$T" = "btrfs" ]; then
-    sudo mount -t btrfs "${resp}" /mnt/syno -o ro,degraded
-  elif [ "$T" = "ext4" ]; then  
-    sudo mount -t ext4 "${resp}" /mnt/syno
-  fi  
+  sudo mount -t "${T:-btrfs}" "${resp}" /mnt/syno -o ro,degraded
+    #sudo mount -t ext4 "${resp}" /mnt/syno
   
   if mountpoint -q /mnt/syno; then
     echo "Mount Volume ${resp} completed, press any key to continue..."
