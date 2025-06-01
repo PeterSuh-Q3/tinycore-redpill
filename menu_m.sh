@@ -1523,6 +1523,30 @@ function additional() {
   done
 }
 
+function mountvol () {
+
+  listvol=()
+  # 2024.07.06 Add NVMe
+  listvol+=( dev/$(sudo lvs | grep volume | awk '{print $1 "-" $2}' ) )
+
+  if [ ${#listusb[@]} -eq 0 ]; then 
+    echo "No Available Syno lvm Volume, press any key continue..."
+    read answer                       
+    return 0   
+  fi
+
+  dialog --backtitle "`backtitle`" --no-items --colors \
+    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${listvol[@]}" \
+    2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp=$(<${TMP_PATH}/resp)
+  [ -z "${resp}" ] && return 
+
+  echo "Mount Volume ${resp} completed, press any key to continue..."
+  read answer
+  return 0
+}
+
 function synopart() {
 
   default_resp="a"
@@ -1530,22 +1554,24 @@ function synopart() {
   eval "MSG12=\"\${MSG${tz}12}\""
 
   while true; do
-    echo "a \"Change DSM New Password\"" > "${TMP_PATH}/menuc"
-    echo "b \"Add New DSM User\""      >> "${TMP_PATH}/menuc"
-    echo "c \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menuc"
-    echo "d \"Bootentry Update version correction\""      >> "${TMP_PATH}/menuc"
-    eval "echo \"e \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menuc"
+    echo "a \"Change DSM New Password\""                > "${TMP_PATH}/menuc"
+    echo "b \"Add New DSM User\""                       >> "${TMP_PATH}/menuc"
+    echo "c \"Clean System Partition(md0)\""            >> "${TMP_PATH}/menuc"
+    echo "d \"Bootentry Update version correction\""    >> "${TMP_PATH}/menuc"
+    eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
+    echo "f \"Mount Syno Disk volume(Read only)\""      >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
-    a) changeDSMPassword; default_resp="o" ;;
-    b) addNewDSMUser; default_resp="n" ;;
-    c) CleanSystemPart; default_resp="p" ;;
-    d) fixBootEntry; default_resp="q" ;;
-    e) erasedisk; default_resp="g";;
+    a) changeDSMPassword; default_resp="a" ;;
+    b) addNewDSMUser; default_resp="b" ;;
+    c) CleanSystemPart; default_resp="c" ;;
+    d) fixBootEntry; default_resp="d" ;;
+    e) erasedisk; default_resp="e";;
+    f) mountvol; default_resp="f";;
     *) return;;
     esac
     
