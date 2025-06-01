@@ -1524,7 +1524,7 @@ function additional() {
 }
 
 function mountvol () {
-
+  sudo mdadm --assemble --scan
   listvol=()
   #listvol+=($(sudo lvs 2>/dev/null | grep volume | awk '{print "/dev/mapper/"$2 "-" $1}'))
   mapfile -t lvm_volumes < <(
