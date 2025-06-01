@@ -1462,20 +1462,15 @@ function additional() {
   eval "MSG53=\"\${MSG${tz}53}\""
   eval "MSG54=\"\${MSG${tz}54}\""
   eval "MSG55=\"\${MSG${tz}55}\""
-  eval "MSG12=\"\${MSG${tz}12}\""
   eval "MSG11=\"\${MSG${tz}11}\""  
   eval "MSG60=\"\${MSG${tz}60}\""
   eval "MSG61=\"\${MSG${tz}61}\""
   eval "MSG62=\"\${MSG${tz}62}\""
   eval "MSG63=\"\${MSG${tz}63}\""
 
-  default_resp="o"
+  default_resp="l"
 
   while true; do
-    echo "o \"Change DSM New Password\"" > "${TMP_PATH}/menua"
-    echo "n \"Add New DSM User\""      >> "${TMP_PATH}/menua"
-    echo "p \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menua"
-    echo "q \"Bootentry Update version correction\""      >> "${TMP_PATH}/menua"
     eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
@@ -1486,7 +1481,6 @@ function additional() {
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"g \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
     [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
     [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1497,10 +1491,6 @@ function additional() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
-    o) changeDSMPassword; default_resp="o" ;;
-    n) addNewDSMUser; default_resp="n" ;;
-    p) CleanSystemPart; default_resp="p" ;;
-    q) fixBootEntry; default_resp="q" ;;
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
@@ -1523,11 +1513,39 @@ function additional() {
     d) viewerrorlog; default_resp="d";;
     e) burnloader; default_resp="e";;
     f) cloneloader; default_resp="f";;
-    g) erasedisk; default_resp="g";;
     h) inject_loader && chk_shr_ex; default_resp="h";;
     m) remove_loader && chk_shr_ex; default_resp="m";;
     i) packing_loader; default_resp="i";;
     k) keymapMenu; default_resp="k";;
+    *) return;;
+    esac
+    
+  done
+}
+
+function synopart() {
+
+  default_resp="a"
+
+  eval "MSG12=\"\${MSG${tz}12}\""
+
+  while true; do
+    echo "a \"Change DSM New Password\"" > "${TMP_PATH}/menua"
+    echo "b \"Add New DSM User\""      >> "${TMP_PATH}/menua"
+    echo "c \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menua"
+    echo "d \"Bootentry Update version correction\""      >> "${TMP_PATH}/menua"
+    eval "echo \"e \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
+    dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
+      --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
+    2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+
+    case `<"${TMP_PATH}/resp"` in
+    a) changeDSMPassword; default_resp="o" ;;
+    b) addNewDSMUser; default_resp="n" ;;
+    c) CleanSystemPart; default_resp="p" ;;
+    d) fixBootEntry; default_resp="q" ;;
+    e) erasedisk; default_resp="g";;
     *) return;;
     esac
     
@@ -2120,6 +2138,7 @@ while true; do
   [ "$FRKRNL" = "YES" ] && 
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
+  echo "x \"Syno disk and partition handling\""          >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -2187,9 +2206,10 @@ while true; do
          NEXT="r"
        fi  
        ;;
-    y) sudo /root/boot.sh normal ;;   
+    y) sudo /root/boot.sh normal ;;
     n) additional;      NEXT="p" ;;
-    u) editUserConfig;    NEXT="p" ;;
+    x) synopart;        NEXT="r" ;;
+    u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
