@@ -1471,7 +1471,7 @@ function additional() {
   default_resp="l"
 
   while true; do
-    eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
@@ -1530,13 +1530,13 @@ function synopart() {
   eval "MSG12=\"\${MSG${tz}12}\""
 
   while true; do
-    echo "a \"Change DSM New Password\"" > "${TMP_PATH}/menua"
-    echo "b \"Add New DSM User\""      >> "${TMP_PATH}/menua"
-    echo "c \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menua"
-    echo "d \"Bootentry Update version correction\""      >> "${TMP_PATH}/menua"
-    eval "echo \"e \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menua"
+    echo "a \"Change DSM New Password\"" > "${TMP_PATH}/menuc"
+    echo "b \"Add New DSM User\""      >> "${TMP_PATH}/menuc"
+    echo "c \"Clean System Partition(md0)\""      >> "${TMP_PATH}/menuc"
+    echo "d \"Bootentry Update version correction\""      >> "${TMP_PATH}/menuc"
+    eval "echo \"e \\\"${MSG12}\\\"\"" >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
-      --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menua" \
+      --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
 
