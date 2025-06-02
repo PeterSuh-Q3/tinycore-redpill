@@ -1524,29 +1524,34 @@ function additional() {
 }
 
 function mountvol () {
-  sudo mdadm --assemble --scan
-  sudo pvscan  # PV(Physical Volume) scan
-  sudo vgscan  # VG(Volume Group) scan
-  sudo vgchange -ay  # VG Avtivate (--activationmode degraded Option Retry)
+
+  # RAID 어레이가 이미 활성화되었는지 확인
+  if ! grep -q "active" /proc/mdstat 2>/dev/null; then
+    sudo mdadm --assemble --scan
+  fi
+  
+  # LVM 볼륨 그룹 활성화 상태 확인
+  if ! sudo vgs &>/dev/null; then
+    sudo pvscan # PV(Physical Volume) scan
+    sudo vgscan # VG(Volume Group) scan
+    sudo vgchange -ay # VG Avtivate (--activationmode degraded Option Retry)
+  fi
 
   lvm_volumes=()
-  while IFS= read -r -d '' line; do
-    lvm_volumes+=("$line")
-  done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null \
-    | grep volume \
-    | awk -v OFS='\0' '{print $1, $1 " " $2}')
-
-  listvol=()
-  listvol+=("${lvm_volumes[@]}")
+  while IFS= read -r line; do
+    path=$(echo "$line" | awk '{print $1}')
+    size=$(echo "$line" | awk '{print $2}')
+    lvm_volumes+=("$path" "$path ($size)")  # 태그=경로, 표시=경로+크기
+  done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null | grep volume)
   
-  if [ ${#listvol[@]} -eq 0 ]; then 
+  if [ ${#lvm_volumes[@]} -eq 0 ]; then 
     echo "No Available Syno lvm Volume, press any key continue..."
     read -n 1 -s answer                       
     return 0   
   fi
   
   dialog --backtitle "`backtitle`" --no-items --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${listvol[@]}" \
+    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -1566,7 +1571,7 @@ function mountvol () {
   fi
   
   if mountpoint -q "${mount_point}"; then
-    echo "Mount Volume ${resp} to ${mount_point} completed, press any key to continue..."
+    echo -e "\e[32mMount success: ${resp} -> ${mount_point}\e[0m, press any key to continue..."
   else
     echo "Mount failed! Check filesystem type."
   fi
