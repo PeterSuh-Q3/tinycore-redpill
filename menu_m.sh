@@ -1528,13 +1528,15 @@ function mountvol () {
   sudo pvscan  # PV(Physical Volume) scan
   sudo vgscan  # VG(Volume Group) scan
   sudo vgchange -ay  # VG Avtivate (--activationmode degraded Option Retry)
-  
-  listvol=()
-  mapfile -t lvm_volumes < <(
-    sudo lvs --noheadings -o vg_name,lv_name 2>/dev/null \
+
+  lvm_volumes=()
+  while IFS= read -r -d '' line; do
+    lvm_volumes+=("$line")
+  done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null \
     | grep volume \
-    | awk '{print "/dev/mapper/"$1 "-" $2}'
-  )
+    | awk -v OFS='\0' '{print $1, $1 " " $2}')
+
+  listvol=()
   listvol+=("${lvm_volumes[@]}")
   
   if [ ${#listvol[@]} -eq 0 ]; then 
