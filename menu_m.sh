@@ -1527,11 +1527,8 @@ function mountvol () {
 
   # RAID 어레이가 이미 활성화되었는지 확인
   if ! grep -q "active" /proc/mdstat 2>/dev/null; then
+    echo -e "\e[32mInitializing RAID/LVM...\e[0m"
     sudo mdadm --assemble --scan
-  fi
-  
-  # LVM 볼륨 그룹 활성화 상태 확인
-  if ! sudo vgs &>/dev/null; then
     sudo pvscan # PV(Physical Volume) scan
     sudo vgscan # VG(Volume Group) scan
     sudo vgchange -ay # VG Avtivate (--activationmode degraded Option Retry)
