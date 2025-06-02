@@ -1541,7 +1541,9 @@ function mountvol () {
   while IFS= read -r line; do
     path=$(echo "$line" | awk '{print $1}')
     size=$(echo "$line" | awk '{print $2}')
-    lvm_volumes+=("$path" "$path ($size)")  # 태그=경로, 표시=경로+크기
+    # 볼륨 이름만 추출하여 사용자 친화적 표시
+    vol_name="${path##*/}"
+    lvm_volumes+=("$path" "$vol_name ($size)")
   done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null | grep volume)
   
   if [ ${#lvm_volumes[@]} -eq 0 ]; then 
@@ -1550,7 +1552,7 @@ function mountvol () {
     return 0   
   fi
   
-  dialog --backtitle "`backtitle`" --no-items --colors \
+  dialog --backtitle "`backtitle`" --colors \
     --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
