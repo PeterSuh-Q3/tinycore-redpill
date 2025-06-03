@@ -2150,6 +2150,13 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep btrfs-pr
     sudo echo "btrfs-progs.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
+# Download lvm2
+if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep lvm2 | wc -w) -eq 0 ]; then
+    echo "lvm2 does not exist, install from tinycore"
+    tce-load -iw lvm2
+    sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
+
 # copy tinycore pack and backup
 if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
