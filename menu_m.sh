@@ -2151,7 +2151,7 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep btrfs-pr
 fi
 
 # Download lvm2
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep lvm2 | wc -w) -eq 0 ]; then
+if [ "$FRKRNL" = "NO" ] && [ "$(which lvm)_" == "_" ]; then
     echo "lvm2 does not exist, install from tinycore"
     tce-load -iw lvm2
     sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
