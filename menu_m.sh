@@ -63,49 +63,6 @@ function restoresession() {
     fi
 }
 
-function get_tinycore() {
-    cd /mnt/${tcrppart}
-    echo "Downloading tinycore 14.0..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
-    md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
-    md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
-    if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
-      echo "tinycore 14.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo mv corepure64.gz_copy corepure64.gz
-      sudo mv vmlinuz64_copy vmlinuz64
-      cd ~      
-      return 0
-    else
-      cd ~
-      return 1
-    fi
-}
-
-function update_tinycore() {
-  echo "check update for tinycore 14.0..."
-  md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64.gz | awk '{print $1}')
-  md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64 | awk '{print $1}')
-  if [ ${md5_corepure64} != "f33c4560e3909a7784c0e83ce424ff5c" ] || [ ${md5_vmlinuz64} != "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
-      echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
-      get_tinycore
-      if [ $? -eq 0 ]; then
-        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
-        echo "/etc/shadow" >> /opt/.filetool.lst
-        echo 'Y'|rploader backup
-        restart
-      fi
-  fi
-}
-
-function update_motd() {
-  echo "check update for /etc/motd"
-  md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
-  if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
-    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
-  fi
-}
-
 if [ -f /home/tc/my.sh ]; then
   rm /home/tc/my.sh
 fi
