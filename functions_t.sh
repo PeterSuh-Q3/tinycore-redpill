@@ -1429,6 +1429,23 @@ function getlatestmshell() {
 
 }
 
+function get_tinycore9() {
+    echo "Downloading tinycore 9.0..."
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/core9.gz -o /mnt/${tcrppart}/core9.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64_9 -o /mnt/${tcrppart}/vmlinuz64_9
+    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/core9.gz | awk '{print $1}')
+    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64_9 | awk '{print $1}')
+    if [ ${md5_corepure64} = "745ca3b57052d759e17d97a171365bf8" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
+      echo "tinycore 9.0 md5 check is OK! ( core9.gz / vmlinuz64_9 ) "
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/etc/shadow -o /etc/shadow
+      echo "/etc/shadow" >> /opt/.filetool.lst
+      echo 'Y'|rploader backup
+      restart
+    else
+      return 1
+    fi
+}
+
 function get_tinycore() {
     cd /mnt/${tcrppart}
     echo "Downloading tinycore 14.0..."
@@ -2791,7 +2808,7 @@ function checkfilechecksum() {
 
 function tinyentry() {
     cat <<EOF
-menuentry 'Tiny Core Image Build' {
+menuentry 'Tiny Core Image Build (Version 14.0)' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2799,6 +2816,21 @@ menuentry 'Tiny Core Image Build' {
         echo Loading initramfs...
         initrd /corepure64.gz
         echo Booting TinyCore for loader creation
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tinyentry9() {
+    cat <<EOF
+menuentry 'Tiny Core Image Build (Version 9.0)' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /vmlinuz64_9 loglevel=3 cde waitusb=5 vga=791
+        echo Loading initramfs...
+        initrd /core9.gz
+        echo Booting TinyCore for mount btrfs volume
         set gfxpayload=1024x768x16,1024x768
 }
 EOF
