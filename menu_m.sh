@@ -1493,6 +1493,7 @@ function synopart() {
     echo "d \"Bootentry Update version correction\""    >> "${TMP_PATH}/menuc"
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
     echo "f \"Mount Syno Disk Volume(Read only)\""      >> "${TMP_PATH}/menuc"
+    echo "g \"Douwngrade Tinycore for mount btrfs Syno Disk Volume\""      >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
@@ -1505,6 +1506,7 @@ function synopart() {
     d) fixBootEntry; default_resp="d" ;;
     e) erasedisk; default_resp="e";;
     f) mountvol; default_resp="f";;
+    g) tinyentry9 | sudo tee --append /mnt/${loaderdisk}1/boot/grub/grub.cfg; get_tinycore9; default_resp="g";;
     *) return;;
     esac
     
