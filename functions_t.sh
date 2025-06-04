@@ -2825,7 +2825,7 @@ function tinyentry9() {
     cat <<EOF
 menuentry 'Tiny Core Image Build (Version 9.0)' {
         savedefault
-        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading Linux...
         linux /vmlinuz64_9 loglevel=3 cde waitusb=5 vga=791
         echo Loading initramfs...
