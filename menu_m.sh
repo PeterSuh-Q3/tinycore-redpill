@@ -1506,7 +1506,7 @@ function synopart() {
     d) fixBootEntry; default_resp="d" ;;
     e) erasedisk; default_resp="e";;
     f) mountvol; default_resp="f";;
-    g) tinyentry9 | sudo tee --append /mnt/${loaderdisk}1/boot/grub/grub.cfg; get_tinycore9; default_resp="g";;
+    g) tinyentry8 | sudo tee --append /mnt/${loaderdisk}1/boot/grub/grub.cfg; get_tinycore8; default_resp="g";;
     *) return;;
     esac
     
