@@ -1448,16 +1448,16 @@ function get_tinycore8() {
 
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/rootfs.gz -o /mnt/${tcrppart}/rootfs.gz
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/modules64.gz -o /mnt/${tcrppart}/modules64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64_9.gz -o /mnt/${tcrppart}/corepure64_9.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/rootfs64.gz -o /mnt/${tcrppart}/rootfs64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/modules64.gz -o /mnt/${tcrppart}/modules64.gz
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64_9.gz -o /mnt/${tcrppart}/corepure64_9.gz
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64_9 -o /mnt/${tcrppart}/vmlinuz64_9
-    #md5_rootfs=$(sudo md5sum /mnt/${tcrppart}/rootfs.gz | awk '{print $1}')
-    #md5_modules64=$(sudo md5sum /mnt/${tcrppart}/modules64.gz | awk '{print $1}')
-    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64_9.gz | awk '{print $1}')
+    md5_rootfs64=$(sudo md5sum /mnt/${tcrppart}/rootfs64.gz | awk '{print $1}')
+    md5_modules64=$(sudo md5sum /mnt/${tcrppart}/modules64.gz | awk '{print $1}')
+    #md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64_9.gz | awk '{print $1}')
     md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64_9 | awk '{print $1}')
-    if [ ${md5_corepure64} = "038ecc93d5b7e850782e6fc10ef49ffb" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
-      echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+    if [ ${md5_rootfs64} = "e8fa99e187ded76a1e2470b9f5af78a1" ] && [ ${md5_modules64} = "5b09308a6788066199622975ac775b92" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
+      echo "tinycore 9.0 md5 check is OK! ( rootfs64.gz / modules64.gz / vmlinuz64 ) "
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
       echo "/etc/shadow" >> /opt/.filetool.lst
       echo 'Y'|rploader backup
@@ -2850,7 +2850,7 @@ menuentry 'Tiny Core Image Build (Version 9.0)' {
         echo Loading Linux...
         linux /vmlinuz64_9 loglevel=3 cde waitusb=5 vga=791
         echo Loading initramfs...
-        initrd /corepure64_9.gz
+        initrd /rootfs64.gz /modules64.gz
         echo Booting TinyCore for mount btrfs volume
         set gfxpayload=1024x768x16,1024x768
 }
