@@ -1431,10 +1431,10 @@ function getlatestmshell() {
 
 function get_tinycore8() {
     echo "Downloading tinycore 8.2.1..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/corepure64_8.gz -o corepure64_8.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/vmlinuz64_8 -o vmlinuz64_8
-    md5_corepure64=$(sudo md5sum corepure64_8.gz | awk '{print $1}')
-    md5_vmlinuz64=$(sudo md5sum vmlinuz64_8 | awk '{print $1}')
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/corepure64_8.gz -o /mnt/${tcrppart}/corepure64_8.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/vmlinuz64_8 -o /mnt/${tcrppart}/vmlinuz64_8
+    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64_8.gz | awk '{print $1}')
+    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64_8 | awk '{print $1}')
     if [ ${md5_corepure64} = "00a123f9c8f17d59ef9ba460062a9492" ] && [ ${md5_vmlinuz64} = "6b0e1446467f7a685ee0379d5486f067" ]; then
       echo "tinycore 8.2.1 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
