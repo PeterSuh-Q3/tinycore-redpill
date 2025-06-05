@@ -1429,23 +1429,6 @@ function getlatestmshell() {
 
 }
 
-function get_tinycore8() {
-    echo "Downloading tinycore 8.2.1..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/corepure64_8.gz -o /mnt/${tcrppart}/corepure64_8.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_8.0/vmlinuz64_8 -o /mnt/${tcrppart}/vmlinuz64_8
-    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64_8.gz | awk '{print $1}')
-    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64_8 | awk '{print $1}')
-    if [ ${md5_corepure64} = "00a123f9c8f17d59ef9ba460062a9492" ] && [ ${md5_vmlinuz64} = "6b0e1446467f7a685ee0379d5486f067" ]; then
-      echo "tinycore 8.2.1 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
-      echo "/etc/shadow" >> /opt/.filetool.lst
-      echo 'Y'|rploader backup
-      restart
-    else
-      return 1
-    fi
-}
-
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
     sudo mkdir -p /mnt/${tcrppart}/v9/cde
@@ -2847,24 +2830,9 @@ menuentry 'Tiny Core Image Build (Version 9.0)' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading Linux...
-        linux /v9/vmlinuz64 loglevel=3 cde=/v9/cde waitusb=5 vga=791
+        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
         echo Loading initramfs...
         initrd /v9/corepure64.gz
-        echo Booting TinyCore for mount btrfs volume
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
-}
-
-function tinyentry8() {
-    cat <<EOF
-menuentry 'Tiny Core Image Build (Version 8.2.1)' {
-        savedefault
-        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
-        echo Loading Linux...
-        linux /vmlinuz64_8 loglevel=3 cde waitusb=5 vga=791
-        echo Loading initramfs...
-        initrd /corepure64_8.gz
         echo Booting TinyCore for mount btrfs volume
         set gfxpayload=1024x768x16,1024x768
 }
