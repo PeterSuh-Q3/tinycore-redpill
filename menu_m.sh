@@ -1486,7 +1486,7 @@ function synopart() {
 
   default_resp="a"
   cfg_file="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
-  entry_title="menuentry 'Tiny Core Image Build (Version 9.0)'"
+  entry_title="menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)'"
 
   eval "MSG12=\"\${MSG${tz}12}\""
 
