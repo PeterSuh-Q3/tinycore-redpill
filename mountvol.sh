@@ -12,7 +12,6 @@ function cleanup() {
 trap cleanup SIGINT SIGTERM
 
 function mountvol () {
-
   # RAID 어레이가 이미 활성화되었는지 확인
   if ! grep -q "active" /proc/mdstat 2>/dev/null; then
     echo -e "\e[32mInitializing RAID/LVM...\e[0m"
@@ -33,9 +32,12 @@ function mountvol () {
   
   if [ ${#lvm_volumes[@]} -eq 0 ]; then 
     echo "No Available Syno lvm Volume, press any key continue..."
-    read -n 1 -s answer                       
+    read -n 1 -s answer < /dev/tty || return 0
     return 0   
   fi
+  
+  # Exit 메뉴 옵션 추가
+  lvm_volumes+=("exit" "Exit Menu")
   
   while true; do
     dialog --backtitle "Mount Syno Disks" --colors \
@@ -44,6 +46,12 @@ function mountvol () {
     [ $? -ne 0 ] && return
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
+    
+    # Exit 메뉴 선택 확인
+    if [ "${resp}" = "exit" ]; then
+      echo -e "\e[32mExiting menu...\e[0m"
+      return 0
+    fi
     
     # 볼륨 이름 추출 (예: /dev/mapper/vg1000-lv → lv)
     vol_name="${resp##*-}"  # LV 이름만 추출
@@ -63,6 +71,8 @@ function mountvol () {
     else
       echo "Mount failed! Check filesystem type."
     fi
+    
+    # 백그라운드 프로세스에서 안전한 키보드 입력 처리
     read -n 1 -s answer < /dev/tty || break  # 오류 시 루프 종료
   done  
 }
