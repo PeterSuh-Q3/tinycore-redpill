@@ -58,6 +58,6 @@ function mountvol () {
 }
 
 tce-load -wi dialog
-tce-load -wi mountpoint
+tce-load -wi util-linux
 sudo modprobe btrfs
 mountvol
