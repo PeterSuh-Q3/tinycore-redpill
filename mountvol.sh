@@ -54,7 +54,6 @@ function mountvol () {
     echo "Mount failed! Check filesystem type."
   fi
   read -n 1 -s answer
-  return 0
 }
 
 tce-load -wi dialog
