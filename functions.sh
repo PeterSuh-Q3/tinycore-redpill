@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.0"
+rploaderver="1.2.5.1"
 build="master"
 redpillmake="prod"
 
@@ -190,6 +190,8 @@ function history() {
     1.2.3.7 Added Bootentry Update version correction menu
     1.2.3.8 r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     1.2.5.0 Added SYNO RAID (LVM) volume mount menu (for data recovery)
+    1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+            Requires Tinycore version 9 with kernel 4, like Synology.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -562,6 +564,9 @@ EOF
 # r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
 # 2025.06.03 v1.2.5.0 
 # Added SYNO RAID (LVM) volume mount menu (for data recovery)
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
     
 function showlastupdate() {
     cat <<EOF
@@ -601,6 +606,10 @@ function showlastupdate() {
 
 # 2025.06.03 v1.2.5.0 
 # Added SYNO RAID (LVM) volume mount menu (for data recovery)
+
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
 
 EOF
 }
@@ -1427,6 +1436,70 @@ function getlatestmshell() {
         rm -f /home/tc/latest.mshell.gz
     fi
 
+}
+
+function get_tinycore9() {
+    echo "Downloading tinycore 9.0..."
+    sudo mkdir -p /mnt/${tcrppart}/v9/cde
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
+    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
+    if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
+      echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
+      chmod +x /home/tc/mountvol.sh
+      sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
+      echo 'Y'|rploader backup
+      restart
+    else
+      return 1
+    fi
+}
+
+function get_tinycore() {
+    cd /mnt/${tcrppart}
+    echo "Downloading tinycore 14.0..."
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
+    md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
+    md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
+    if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
+      echo "tinycore 14.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+      sudo mv corepure64.gz_copy corepure64.gz
+      sudo mv vmlinuz64_copy vmlinuz64
+      cd ~      
+      return 0
+    else
+      cd ~
+      return 1
+    fi
+}
+
+function update_tinycore() {
+  echo "check update for tinycore 14.0..."
+  md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64.gz | awk '{print $1}')
+  md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64 | awk '{print $1}')
+  if [ ${md5_corepure64} != "f33c4560e3909a7784c0e83ce424ff5c" ] || [ ${md5_vmlinuz64} != "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
+      echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
+      get_tinycore
+      if [ $? -eq 0 ]; then
+        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
+        echo "etc/shadow" >> /opt/.filetool.lst
+        echo 'Y'|rploader backup
+        restart
+      fi
+  fi
+}
+
+function update_motd() {
+  echo "check update for /etc/motd"
+  md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
+  if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+  fi
 }
 
 function macgen() {
@@ -2748,7 +2821,7 @@ function checkfilechecksum() {
 
 function tinyentry() {
     cat <<EOF
-menuentry 'Tiny Core Image Build' {
+menuentry 'Tiny Core Image Build (version 14.0)' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2756,6 +2829,21 @@ menuentry 'Tiny Core Image Build' {
         echo Loading initramfs...
         initrd /corepure64.gz
         echo Booting TinyCore for loader creation
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tinyentry9() {
+    cat <<EOF
+menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading Linux...
+        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
+        echo Loading initramfs...
+        initrd /v9/corepure64.gz
+        echo Booting TinyCore for mount btrfs volume
         set gfxpayload=1024x768x16,1024x768
 }
 EOF
