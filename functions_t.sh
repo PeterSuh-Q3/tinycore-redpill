@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.0"
+rploaderver="1.2.5.1"
 build="master"
 redpillmake="prod"
 
@@ -190,6 +190,8 @@ function history() {
     1.2.3.7 Added Bootentry Update version correction menu
     1.2.3.8 r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
     1.2.5.0 Added SYNO RAID (LVM) volume mount menu (for data recovery)
+    1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+            Requires Tinycore version 9 with kernel 4, like Synology.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -562,6 +564,9 @@ EOF
 # r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
 # 2025.06.03 v1.2.5.0 
 # Added SYNO RAID (LVM) volume mount menu (for data recovery)
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
     
 function showlastupdate() {
     cat <<EOF
@@ -601,6 +606,10 @@ function showlastupdate() {
 
 # 2025.06.03 v1.2.5.0 
 # Added SYNO RAID (LVM) volume mount menu (for data recovery)
+
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
 
 EOF
 }
