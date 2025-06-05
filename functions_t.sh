@@ -1440,8 +1440,6 @@ function get_tinycore9() {
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
-      echo "/etc/shadow" >> /opt/.filetool.lst
       echo 'Y'|rploader backup
       restart
     else
@@ -1477,7 +1475,7 @@ function update_tinycore() {
       get_tinycore
       if [ $? -eq 0 ]; then
         sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
-        echo "/etc/shadow" >> /opt/.filetool.lst
+        echo "etc/shadow" >> /opt/.filetool.lst
         echo 'Y'|rploader backup
         restart
       fi
