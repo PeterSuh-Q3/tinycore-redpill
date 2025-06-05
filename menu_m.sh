@@ -985,7 +985,7 @@ function writexsession() {
     # Add the required lines to .xsession
     [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
     [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
-    echo "sudo /home/tc/ttyd login -f tc" >> /opt/bootlocal.sh
+    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
 
     # Notify the user about the changes and prompt for reboot
     echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
@@ -995,6 +995,8 @@ function writexsession() {
     restart
   else
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
+    sudo sed -i "/ttyd/d" /opt/bootlocal.sh
+    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
   fi
 
 }
