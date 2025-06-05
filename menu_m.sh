@@ -996,7 +996,9 @@ function writexsession() {
   else
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
     sudo sed -i "/ttyd/d" /opt/bootlocal.sh
+    sudo sed -i "/mountvol/d" /opt/bootlocal.sh
     echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+    echo '[ $(/bin/uname -r | /bin/grep 4.14.10 | /usr/bin/wc -l) -eq 1 ] && /home/tc/mountvol.sh &' >> /opt/bootlocal.sh
   fi
 
 }
