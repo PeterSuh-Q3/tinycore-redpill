@@ -28,32 +28,34 @@ function mountvol () {
     return 0   
   fi
   
-  dialog --backtitle "Mount Syno Disks" --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
-    2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return
-  
-  # 볼륨 이름 추출 (예: /dev/mapper/vg1000-lv → lv)
-  vol_name="${resp##*-}"  # LV 이름만 추출
-  mount_point="/mnt/${vol_name}"  # 마운트 경로 생성
-  
-  T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
-  
-  sudo mkdir -p "${mount_point}"
-  if [ "$T" = "btrfs" ]; then
-    sudo mount -t btrfs "${resp}" "${mount_point}" -o ro,degraded
-  elif [ "$T" = "ext4" ]; then  
-    sudo mount -t ext4 "${resp}" "${mount_point}"
-  fi
-  
-  if mountpoint -q "${mount_point}"; then
-    echo -e "\e[32mMount success: ${resp} -> ${mount_point}\e[0m, press any key to continue..."
-  else
-    echo "Mount failed! Check filesystem type."
-  fi
-  read -n 1 -s answer
+  while true; do
+    dialog --backtitle "Mount Syno Disks" --colors \
+      --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    resp=$(<${TMP_PATH}/resp)
+    [ -z "${resp}" ] && return
+    
+    # 볼륨 이름 추출 (예: /dev/mapper/vg1000-lv → lv)
+    vol_name="${resp##*-}"  # LV 이름만 추출
+    mount_point="/mnt/${vol_name}"  # 마운트 경로 생성
+    
+    T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
+    
+    sudo mkdir -p "${mount_point}"
+    if [ "$T" = "btrfs" ]; then
+      sudo mount -t btrfs "${resp}" "${mount_point}" -o ro,degraded
+    elif [ "$T" = "ext4" ]; then  
+      sudo mount -t ext4 "${resp}" "${mount_point}"
+    fi
+    
+    if mountpoint -q "${mount_point}"; then
+      echo -e "\e[32mMount success: ${resp} -> ${mount_point}\e[0m, press any key to continue..."
+    else
+      echo "Mount failed! Check filesystem type."
+    fi
+    read -n 1 -s answer
+  done  
 }
 
 tce-load -wi dialog
