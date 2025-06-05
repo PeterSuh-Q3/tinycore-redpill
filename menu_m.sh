@@ -1483,6 +1483,8 @@ function additional() {
 function synopart() {
 
   default_resp="a"
+  cfg_file="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
+  entry_title="menuentry 'Tiny Core Image Build (Version 9.0)'"
 
   eval "MSG12=\"\${MSG${tz}12}\""
 
@@ -1506,7 +1508,13 @@ function synopart() {
     d) fixBootEntry; default_resp="d" ;;
     e) erasedisk; default_resp="e";;
     f) mountvol; default_resp="f";;
-    g) tinyentry9 | sudo tee --append /mnt/${loaderdisk}1/boot/grub/grub.cfg; get_tinycore9; default_resp="g";;
+    g) 
+       if ! grep -qF "$entry_title" "$cfg_file"; then
+         tinyentry9 | sudo tee --append "$cfg_file"
+       fi
+       get_tinycore9
+       default_resp="g"
+       ;;
     *) return;;
     esac
     
