@@ -1448,16 +1448,15 @@ function get_tinycore8() {
 
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/rootfs64.gz -o /mnt/${tcrppart}/rootfs64.gz
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/modules64.gz -o /mnt/${tcrppart}/modules64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64_9.gz -o /mnt/${tcrppart}/corepure64_9.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64_9 -o /mnt/${tcrppart}/vmlinuz64_9
-    #md5_rootfs64=$(sudo md5sum /mnt/${tcrppart}/rootfs64.gz | awk '{print $1}')
-    #md5_modules64=$(sudo md5sum /mnt/${tcrppart}/modules64.gz | awk '{print $1}')
-    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64_9.gz | awk '{print $1}')
-    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64_9 | awk '{print $1}')
+    sudo mkdir -p /mnt/${tcrppart}/v9/cde
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
+    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
     if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz -C /mnt/${tcrppart}/v9/cde
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
       echo "/etc/shadow" >> /opt/.filetool.lst
       echo 'Y'|rploader backup
