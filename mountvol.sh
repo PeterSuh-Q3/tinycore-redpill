@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TMP_PATH=/tmp
+
 function mountvol () {
 
   # RAID 어레이가 이미 활성화되었는지 확인
@@ -26,7 +28,7 @@ function mountvol () {
     return 0   
   fi
   
-  dialog --backtitle "`backtitle`" --colors \
+  dialog --backtitle "Mount Syno Disks" --colors \
     --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
