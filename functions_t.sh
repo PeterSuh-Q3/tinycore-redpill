@@ -2813,7 +2813,7 @@ function checkfilechecksum() {
 
 function tinyentry() {
     cat <<EOF
-menuentry 'Tiny Core Image Build (Version 14.0)' {
+menuentry 'Tiny Core Image Build (version 14.0)' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -2828,7 +2828,7 @@ EOF
 
 function tinyentry9() {
     cat <<EOF
-menuentry 'Tiny Core Image Build (Version 9.0)' {
+menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading Linux...
