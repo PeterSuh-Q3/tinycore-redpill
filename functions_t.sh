@@ -1456,7 +1456,7 @@ function get_tinycore9() {
     if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
-      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz -C /mnt/${tcrppart}/v9/cde
+      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
       echo "/etc/shadow" >> /opt/.filetool.lst
       echo 'Y'|rploader backup
