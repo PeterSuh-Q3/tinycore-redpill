@@ -1451,7 +1451,6 @@ function get_tinycore9() {
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
       curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
-      echo '[ $(/bin/uname -r | /bin/grep 4.14.10 | /usr/bin/wc -l) -eq 1 ] && /home/tc/mountvol.sh &' >> /opt/bootlocal.sh
       sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
       echo 'Y'|rploader backup
       restart
