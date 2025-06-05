@@ -2,6 +2,15 @@
 
 TMP_PATH=/tmp
 
+# 신호 처리 함수 정의
+function cleanup() {
+    echo -e "\n\e[33mScript interrupted. Cleaning up...\e[0m"
+    exit 0
+}
+
+# SIGINT, SIGTERM 신호를 trap으로 처리
+trap cleanup SIGINT SIGTERM
+
 function mountvol () {
 
   # RAID 어레이가 이미 활성화되었는지 확인
@@ -54,9 +63,12 @@ function mountvol () {
     else
       echo "Mount failed! Check filesystem type."
     fi
-    read -n 1 -s answer
+    read -n 1 -s answer < /dev/tty || break  # 오류 시 루프 종료
   done  
 }
 
 sudo modprobe btrfs
 mountvol
+
+# trap 해제
+trap - SIGINT SIGTERM
