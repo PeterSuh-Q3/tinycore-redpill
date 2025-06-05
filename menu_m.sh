@@ -1496,8 +1496,8 @@ function synopart() {
     echo "c \"Clean System Partition(md0)\""            >> "${TMP_PATH}/menuc"
     echo "d \"Bootentry Update version correction\""    >> "${TMP_PATH}/menuc"
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
-    echo "f \"Mount Syno Disk Volume(Read only)\""      >> "${TMP_PATH}/menuc"
-    echo "g \"Douwngrade Tinycore for mount btrfs Syno Disk Volume\""      >> "${TMP_PATH}/menuc"
+    echo "f \"Mount Syno Disk Volume(Ext4 only)\""      >> "${TMP_PATH}/menuc"
+    echo "g \"Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol\""      >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
