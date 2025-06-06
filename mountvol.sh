@@ -11,6 +11,62 @@ function cleanup() {
 # SIGINT, SIGTERM 신호를 trap으로 처리
 trap cleanup SIGINT SIGTERM
 
+loaderdisk=""
+# Get the loader disk using the UUID "6234-C863"
+loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+mount /dev/${loaderdisk}1
+
+function defaultchange() {
+
+  [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
+
+  # Get the list of boot entries and write to /tmp/menub
+  grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
+  
+  # Create an array of menu options with (*) for the default entry and index
+  index=97 # ASCII code for 'a'
+  echo "" > /tmp/menub2
+  # Initialize default item
+  default_item="a"
+  
+  while true; do
+    # Get the default entry index from grub.cfg
+    default_index=$(grep -m 1 -i "set default=" /mnt/${loaderdisk}1/boot/grub/grub.cfg | cut -d '=' -f2- | tr -d '[:space:]' | tr -d '"')
+    
+    # Update menu options with (*) for the default entry and index
+    echo "" > /tmp/menub2
+    
+    while IFS= read -r line; do
+        if [ $((index-97)) -eq $default_index ]; then
+            echo "$(printf \\$(printf '%03o' $index)) \"(*) ${line:1:-1}\"" >> /tmp/menub2
+        else
+            echo "$(printf \\$(printf '%03o' $index)) \"${line:1:-1}\"" >> /tmp/menub2
+        fi
+        ((index++))
+    done < /tmp/menub
+    index=97 # Reset index for next iteration
+
+    # Display the menu and get the selection
+    dialog --clear --default-item ${default_item} --backtitle "Change GRUB boot entry default value" --colors \
+    --menu "Choose a boot entry" 0 0 0 --file /${TMP_PATH}/menub2 \
+    2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    
+    case `<"${TMP_PATH}/resp"` in
+      a) sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="a" ;;
+      b) sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="b" ;;
+      c) sudo sed -i "/set default=/cset default=\"2\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="c" ;;
+      d) sudo sed -i "/set default=/cset default=\"3\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="d" ;;
+      e) sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="e" ;;
+      f) sudo sed -i "/set default=/cset default=\"5\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="f" ;;
+      g) sudo sed -i "/set default=/cset default=\"6\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg; default_item="g" ;;
+      *) return;;
+    esac
+    
+  done
+  echo "GRUB configuration file modified successfully."
+}
+
 function mountvol () {
   # RAID 어레이가 이미 활성화되었는지 확인
   if ! grep -q "active" /proc/mdstat 2>/dev/null; then
@@ -35,7 +91,9 @@ function mountvol () {
     read -n 1 -s answer < /dev/tty || return 0
     return 0   
   fi
-  
+
+  # Change GRUB boot entry default value 메뉴 옵션 추가
+  lvm_volumes+=("boot" "Change GRUB boot entry default value")
   # Exit 메뉴 옵션 추가
   lvm_volumes+=("exit" "Exit Menu")
   
@@ -46,6 +104,11 @@ function mountvol () {
     [ $? -ne 0 ] && return
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
+
+    # GRUB boot entry 기본 값 변경 메뉴
+    if [ "${resp}" = "boot" ]; then
+      defaultchange 
+    fi
     
     # Exit 메뉴 선택 확인
     if [ "${resp}" = "exit" ]; then
@@ -76,11 +139,6 @@ function mountvol () {
     read -n 1 -s answer < /dev/tty || break  # 오류 시 루프 종료
   done  
 }
-
-loaderdisk=""
-# Get the loader disk using the UUID "6234-C863"
-loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
-mount /dev/${loaderdisk}1
 
 sudo modprobe btrfs
 mountvol
