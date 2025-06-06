@@ -77,6 +77,11 @@ function mountvol () {
   done  
 }
 
+loaderdisk=""
+# Get the loader disk using the UUID "6234-C863"
+loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+mount /dev/${loaderdisk}1
+
 sudo modprobe btrfs
 mountvol
 
