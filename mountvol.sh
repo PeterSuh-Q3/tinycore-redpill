@@ -107,7 +107,8 @@ function mountvol () {
 
     # GRUB boot entry 기본 값 변경 메뉴
     if [ "${resp}" = "boot" ]; then
-      defaultchange 
+      defaultchange
+      continue
     fi
     
     # Exit 메뉴 선택 확인
