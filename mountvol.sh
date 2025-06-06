@@ -83,7 +83,14 @@ function mountvol () {
     size=$(echo "$line" | awk '{print $2}')
     # 볼륨 이름만 추출하여 사용자 친화적 표시
     vol_name="${path##*/}"
-    lvm_volumes+=("$path" "$vol_name ($size)")
+    
+    # 파티션 타입 조회
+    partition_type=$(sudo blkid -o value -s TYPE "${path}" 2>/dev/null)
+    # 파티션 타입이 없는 경우 "unknown"으로 표시
+    [ -z "$partition_type" ] && partition_type="unknown"
+    
+    # 메뉴에 볼륨명, 사이즈, 파티션 타입을 모두 표시
+    lvm_volumes+=("$path" "$vol_name ($size - $partition_type)")
   done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null | grep volume)
   
   if [ ${#lvm_volumes[@]} -eq 0 ]; then 
