@@ -2459,18 +2459,6 @@ function postupdate() {
 #            echo "Removing temp ramdisk space " && rm -rf ramdisk
 #            exit 0
 #        fi
-
-#m shell only
-        checkmachine
-
-        if [ "$MACHINE" = "VIRTUAL" ]; then
-            echo "Setting default boot entry to SATA"
-            sudo sed -i "/set default=/cset default=\"1\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
-        else
-            echo "Setting default boot entry to USB"
-            sudo sed -i "/set default=/cset default=\"0\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
-        fi
-
 #    fi
 
 }
