@@ -1451,7 +1451,13 @@ function get_tinycore9() {
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
       curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
-      sudo sed -i "/set default=/cset default=\"4\"" /mnt/${loaderdisk}1/boot/grub/grub.cfg
+
+      #GRUB 부트엔트리 Default 값 조정
+      grub_cfg="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
+      entry_count=$(grep -c '^menuentry' "$grub_cfg")
+      new_default=$((entry_count - 1))
+      sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
+      
       echo 'Y'|rploader backup
       restart
     else
