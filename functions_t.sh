@@ -1455,7 +1455,8 @@ function get_tinycore9() {
       #GRUB 부트엔트리 Default 값 조정
       grub_cfg="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
       entry_count=$(grep -c '^menuentry' "$grub_cfg")
-      sudo sed -i "/^set default=/cset default=\"${entry_count}\"" "$grub_cfg"
+      new_default=$((entry_count - 1))
+      sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
       
       echo 'Y'|rploader backup
       restart
