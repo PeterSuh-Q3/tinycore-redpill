@@ -4299,10 +4299,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "Create 4th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                parttype="EF00"
                             else
-                                echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
-                            fi    
+                                parttype="8300"
+                            fi
+                            echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -4346,11 +4347,12 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            #if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
-                            #    echo -e "n\n$last_sector\n+12M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                            #else
-                                echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
-                            #fi
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                partsize="12800K"
+                            else
+                                partsize="13M"
+                            fi
+                            echo -e "n\n$last_sector\n+$partsize\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
