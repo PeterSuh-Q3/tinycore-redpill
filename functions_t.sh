@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.1"
+rploaderver="1.2.5.2"
 build="master"
 redpillmake="prod"
 
@@ -192,6 +192,7 @@ function history() {
     1.2.5.0 Added SYNO RAID (LVM) volume mount menu (for data recovery)
     1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
             Requires Tinycore version 9 with kernel 4, like Synology.
+    1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -567,6 +568,8 @@ EOF
 # 2025.06.05 v1.2.5.1 
 # Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
 # Requires Tinycore version 9 with kernel 4, like Synology.
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     
 function showlastupdate() {
     cat <<EOF
@@ -610,6 +613,9 @@ function showlastupdate() {
 # 2025.06.05 v1.2.5.1 
 # Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
 # Requires Tinycore version 9 with kernel 4, like Synology.
+
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
 
 EOF
 }
