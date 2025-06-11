@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.1"
+rploaderver="1.2.5.2"
 build="master"
 redpillmake="prod"
 
@@ -192,6 +192,7 @@ function history() {
     1.2.5.0 Added SYNO RAID (LVM) volume mount menu (for data recovery)
     1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
             Requires Tinycore version 9 with kernel 4, like Synology.
+    1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -567,6 +568,8 @@ EOF
 # 2025.06.05 v1.2.5.1 
 # Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
 # Requires Tinycore version 9 with kernel 4, like Synology.
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     
 function showlastupdate() {
     cat <<EOF
@@ -610,6 +613,9 @@ function showlastupdate() {
 # 2025.06.05 v1.2.5.1 
 # Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
 # Requires Tinycore version 9 with kernel 4, like Synology.
+
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
 
 EOF
 }
@@ -4299,10 +4305,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "Create 4th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
                             if [ -d /sys/firmware/efi ]; then
-                                echo -e "n\n4\n$last_sector\n+127M\nEF00\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                parttype="EF00"
                             else
-                                echo -e "n\n4\n$last_sector\n+127M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
-                            fi    
+                                parttype="8300"
+                            fi
+                            echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
@@ -4347,10 +4354,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
                             if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
-                                echo -e "n\n$last_sector\n+12M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                                partsize="12800K"
                             else
-                                echo -e "n\n$last_sector\n+13M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                                partsize="13M"
                             fi
+                            echo -e "n\n$last_sector\n+$partsize\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
