@@ -225,3 +225,8 @@ msgstr "주입된 부트로더 파티션 제거"
 #: MSGKR63 
 msgid "Packing loader file for remote update"
 msgstr "원격 업데이트용 로더 파일 패키징"
+
+#: MSGKR07
+msgid "Syno disk and partition handling"
+msgstr "Syno 디스크 및 파티션 처리"
+
