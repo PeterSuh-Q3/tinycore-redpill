@@ -225,3 +225,7 @@ msgstr "Remove the injected bootloader partition"
 #: MSGUS63
 msgid "Packing loader file for remote update"
 msgstr "Packing loader file for remote update"
+
+#: MSGUS07
+msgid "Syno disk and partition handling"
+msgstr "Syno disk and partition handling"
