@@ -2952,6 +2952,12 @@ menuentry 'RedPill $MODEL ${BUILD} (USB/SATA, Verbose, ${DMPM})' {
         echo Loading DSM initramfs...
         initrd /initrd-dsm
         echo Starting kernel with USB/SATA boot
+        echo
+        echo -en "\r$(TEXT "\"HTTP, Synology Web Assistant (BusyBox httpd)\" service may take 20 - 40 seconds.")\n"
+        echo -en "\r$(TEXT "(Network access is not immediately available)")\n"
+        echo -en "\r$(TEXT "Kernel loading has started, nothing will be displayed here anymore ...")\n"
+        echo -en "\r$(TEXT "Enter the following address in your web browser :")"
+        echo " http://${IP}:5000"
 }
 EOF
 }
@@ -3452,11 +3458,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     else
         echo
         msgnormal "Setting default boot entry to JOT ${BUS}"
-        #if [ "${BUS}" = "usb" ]; then
-            sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
-        #else
-        #    sudo sed -i "/set default=\"*\"/cset default=\"3\"" /tmp/grub.cfg
-        #fi
+
+        #GRUB 부트엔트리 Default 값 조정 (Cover xTCRP)
+        grub_cfg=/tmp/grub.cfg
+        entry_count=$(grep -c '^menuentry' "$grub_cfg")
+        new_default=$((entry_count - 1))
+        sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
     fi
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
