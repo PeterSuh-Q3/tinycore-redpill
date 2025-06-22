@@ -2920,6 +2920,7 @@ function savedefault {
     saved_entry="\${chosen}"
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
+    set color_normal=green/black    
     echo "TCRP-MSHELL JOT Version : ${rploaderver}"
     echo "BUS Type:   ${BUS}"
     echo -n "Boot Time: "; date
@@ -3450,9 +3451,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             (cd /home/tc/rd.temp && find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         fi
     fi
-
-    sed -i 's/^set color_normal=.*/set color_normal=green\/black/' /tmp/grub.cfg
-    sed -i 's/^set color_highlight=.*/set color_highlight=black\/green/' /tmp/grub.cfg
 
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
