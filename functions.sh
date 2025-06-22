@@ -3450,6 +3450,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         fi
     fi
 
+    sed -i 's/^set color_normal=.*/set color_normal=light-cyan\/black/' /tmp/grub.cfg
+    sed -i 's/^set color_highlight=.*/set color_highlight=black\/light-cyan/' /tmp/grub.cfg
+
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg
@@ -3458,10 +3461,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         msgnormal "Setting default boot entry to JOT ${BUS}"
 
         #GRUB 부트엔트리 Default 값 조정 (Cover xTCRP)
-        grub_cfg=/tmp/grub.cfg
-        entry_count=$(grep -c '^menuentry' "$grub_cfg")
+        entry_count=$(grep -c '^menuentry' /tmp/grub.cfg)
         new_default=$((entry_count - 1))
-        sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
+        sudo sed -i "/^set default=/cset default=\"${new_default}\"" /tmp/grub.cfg
     fi
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
