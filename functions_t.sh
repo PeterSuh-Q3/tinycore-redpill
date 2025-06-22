@@ -2934,8 +2934,6 @@ function savedefault {
     echo "Cmdline:"
     echo "${CMD_LINE}"
     echo ""
-    echo "IP Addr : ${IP} (Last Detected)"
-    echo ""
     echo "Access http://find.synology.com/ or http://${IP}:5000 to connect the DSM via web."
     echo ""
 }    
@@ -2953,10 +2951,10 @@ menuentry 'RedPill $MODEL ${BUILD} (USB/SATA, Verbose, ${DMPM})' {
         initrd /initrd-dsm
         echo Starting kernel with USB/SATA boot
         echo
-        echo -en "\r$(TEXT "\"HTTP, Synology Web Assistant (BusyBox httpd)\" service may take 20 - 40 seconds.")\n"
-        echo -en "\r$(TEXT "(Network access is not immediately available)")\n"
-        echo -en "\r$(TEXT "Kernel loading has started, nothing will be displayed here anymore ...")\n"
-        echo -en "\r$(TEXT "Enter the following address in your web browser :")"
+        echo "HTTP, Synology Web Assistant (BusyBox httpd) service may take 20 - 40 seconds."
+        echo "(Network access is not immediately available)"
+        echo "Kernel loading has started, nothing will be displayed here anymore ..."
+        echo -en "Enter the following address in your web browser :"
         echo " http://${IP}:5000"
 }
 EOF
