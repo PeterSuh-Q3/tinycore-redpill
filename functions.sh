@@ -2930,7 +2930,8 @@ function savedefault {
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
-    echo ""    
+    echo ""
+    set color_normal=light-cyan/black
     echo "Cmdline:"
     echo "${CMD_LINE}"
     echo ""
@@ -3450,8 +3451,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         fi
     fi
 
-    sed -i 's/^set color_normal=.*/set color_normal=light-cyan\/black/' /tmp/grub.cfg
-    sed -i 's/^set color_highlight=.*/set color_highlight=black\/light-cyan/' /tmp/grub.cfg
+    sed -i 's/^set color_normal=.*/set color_normal=green\/black/' /tmp/grub.cfg
+    sed -i 's/^set color_highlight=.*/set color_highlight=black\/green/' /tmp/grub.cfg
 
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
