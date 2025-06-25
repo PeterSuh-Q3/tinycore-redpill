@@ -225,3 +225,28 @@ msgstr "Supprimer la partition de chargeur d'amorçage injectée"
 #: MSGFR63 
 msgid "Packing loader file for remote update"
 msgstr "Packager le fichier de chargeur pour une mise à jour à distance"
+
+#: MSGFR08
+msgid "Change DSM New Password"
+msgstr "Changer le nouveau mot de passe DSM"
+
+#: MSGFR09
+msgid "Add New DSM User"
+msgstr "Ajouter un nouvel utilisateur DSM"
+
+#: MSGFR19
+msgid "Clean System Partition(md0)"
+msgstr "Nettoyer la partition système(md0)"
+
+#: MSGFR64
+msgid "Bootentry Update version correction"
+msgstr "Correction de version de mise à jour Bootentry"
+
+#: MSGFR65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Monter le volume disque Syno(Ext4 seulement)"
+
+#: MSGFR66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Ajouter l'entrée de menu Tinycore v9 pour monter le volume Syno Disk BTRFS"
+
