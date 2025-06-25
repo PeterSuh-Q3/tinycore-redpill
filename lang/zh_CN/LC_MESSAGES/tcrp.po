@@ -225,3 +225,32 @@ msgstr "删除注入的引导程序分区"
 #: MSGCN63 
 msgid "Packing loader file for remote update"
 msgstr "打包远程更新的加载器文件"
+
+#: MSGCN07
+msgid "Syno disk and partition handling"
+msgstr "Syno磁盘和分区处理"
+
+#: MSGCN08
+msgid "Change DSM New Password"
+msgstr "更改DSM新密码"
+
+#: MSGCN09
+msgid "Add New DSM User"
+msgstr "添加新DSM用户"
+
+#: MSGCN19
+msgid "Clean System Partition(md0)"
+msgstr "清理系统分区(md0)"
+
+#: MSGCN64
+msgid "Bootentry Update version correction"
+msgstr "引导项更新版本修正"
+
+#: MSGCN65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "挂载Syno磁盘卷(仅限Ext4)"
+
+#: MSGCN66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "为挂载Syno磁盘BTRFS卷添加Tinycore v9菜单项"
+
