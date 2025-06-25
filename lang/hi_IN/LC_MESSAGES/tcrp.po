@@ -225,3 +225,32 @@ msgstr "इंजेक्ट किए गए बूटलोडर पार�
 #: MSGIN63 
 msgid "Packing loader file for remote update"
 msgstr "दूरस्थ अद्यतन के लिए लोडर फ़ाइल पैक करना"
+
+#: MSGIN07
+msgid "Syno disk and partition handling"
+msgstr "Syno डिस्क और पार्टिशन हैंडलिंग"
+
+#: MSGIN08
+msgid "Change DSM New Password"
+msgstr "DSM नया पासवर्ड बदलें"
+
+#: MSGIN09
+msgid "Add New DSM User"
+msgstr "नया DSM उपयोगकर्ता जोड़ें"
+
+#: MSGIN19
+msgid "Clean System Partition(md0)"
+msgstr "सिस्टम पार्टिशन साफ़ करें(md0)"
+
+#: MSGIN64
+msgid "Bootentry Update version correction"
+msgstr "बूट एंट्री अपडेट संस्करण सुधार"
+
+#: MSGIN65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno डिस्क वॉल्यूम माउंट करें(केवल Ext4)"
+
+#: MSGIN66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno डिस्क BTRFS वॉल्यूम माउंट के लिए Tinycore v9 मेनू एंट्री जोड़ें"
+
