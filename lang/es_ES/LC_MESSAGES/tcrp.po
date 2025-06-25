@@ -226,6 +226,10 @@ msgstr "Eliminar la partición del cargador de arranque inyectada"
 msgid "Packing loader file for remote update"
 msgstr "Empaquetar el archivo del cargador para actualización remota"
 
+#: MSGES07
+msgid "Syno disk and partition handling"
+msgstr "Manejo de disco y particiones Syno"
+
 #: MSGES08
 msgid "Change DSM New Password"
 msgstr "Cambiar contraseña nueva de DSM"
