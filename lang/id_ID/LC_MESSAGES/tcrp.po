@@ -225,3 +225,32 @@ msgstr "Hapus partisi bootloader yang disuntikkan"
 #: MSGID63 
 msgid "Packing loader file for remote update"
 msgstr "Mengemas file loader untuk pembaruan jarak jauh"
+
+#: MSGID07
+msgid "Syno disk and partition handling"
+msgstr "Penanganan disk dan partisi Syno"
+
+#: MSGID08
+msgid "Change DSM New Password"
+msgstr "Ubah kata sandi baru DSM"
+
+#: MSGID09
+msgid "Add New DSM User"
+msgstr "Tambah pengguna DSM baru"
+
+#: MSGID19
+msgid "Clean System Partition(md0)"
+msgstr "Bersihkan partisi sistem(md0)"
+
+#: MSGID64
+msgid "Bootentry Update version correction"
+msgstr "Koreksi versi pembaruan bootentry"
+
+#: MSGID65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Mount volume disk Syno(hanya Ext4)"
+
+#: MSGID66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Tambah menu entry Tinycore v9 untuk mount volume disk Syno BTRFS"
+
