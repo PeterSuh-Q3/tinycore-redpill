@@ -226,6 +226,10 @@ msgstr "إزالة قسم برنامج الإقلاع المحقون"
 msgid "Packing loader file for remote update"
 msgstr "تحزيم ملف المُحمل لتحديث عن بعد"
 
+#: MSGEG07
+msgid "Syno disk and partition handling"
+msgstr "التعامل مع قرص وأقسام Syno"
+
 #: MSGEG08
 msgid "Change DSM New Password"
 msgstr "تغيير كلمة مرور DSM الجديدة"
