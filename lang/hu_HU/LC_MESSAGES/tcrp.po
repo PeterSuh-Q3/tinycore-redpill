@@ -225,3 +225,32 @@ msgstr "A befecskendezett bootloader partíció eltávolítása"
 #: MSGHU63 
 msgid "Packing loader file for remote update"
 msgstr "Betöltő fájl csomagolása távoli frissítéshez"
+
+#: MSGHU07
+msgid "Syno disk and partition handling"
+msgstr "Syno lemez és partíció kezelés"
+
+#: MSGHU08
+msgid "Change DSM New Password"
+msgstr "DSM új jelszó módosítása"
+
+#: MSGHU09
+msgid "Add New DSM User"
+msgstr "Új DSM felhasználó hozzáadása"
+
+#: MSGHU19
+msgid "Clean System Partition(md0)"
+msgstr "Rendszer partíció tisztítása(md0)"
+
+#: MSGHU64
+msgid "Bootentry Update version correction"
+msgstr "Bootentry frissítés verzió javítás"
+
+#: MSGHU65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno lemez kötet csatolása(csak Ext4)"
+
+#: MSGHU66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Tinycore v9 menübejegyzés hozzáadása Syno lemez BTRFS kötet csatolásához"
+
