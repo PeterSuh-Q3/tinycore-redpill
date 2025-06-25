@@ -225,3 +225,28 @@ msgstr "Eingefügte Bootloader-Partition entfernen"
 #: MSGDE63 
 msgid "Packing loader file for remote update"
 msgstr "Lader-Datei für Fernupdate packen"
+
+#: MSGDE08
+msgid "Change DSM New Password"
+msgstr "DSM Neues Passwort ändern"
+
+#: MSGDE09
+msgid "Add New DSM User"
+msgstr "Neuen DSM-Benutzer hinzufügen"
+
+#: MSGDE19
+msgid "Clean System Partition(md0)"
+msgstr "Systempartition bereinigen(md0)"
+
+#: MSGDE64
+msgid "Bootentry Update version correction"
+msgstr "Bootentry Update Versionskorrektur"
+
+#: MSGDE65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno Disk Volume einbinden(nur Ext4)"
+
+#: MSGDE66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Tinycore v9 Menüeintrag zum Einbinden von Syno Disk BTRFS Vol hinzufügen"
+
