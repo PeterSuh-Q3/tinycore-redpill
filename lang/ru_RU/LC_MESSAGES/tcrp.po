@@ -225,3 +225,32 @@ msgstr "Удалить внедренную загрузочную секцию"
 #: MSGRU63 
 msgid "Packing loader file for remote update"
 msgstr "Упаковка файла загрузчика для удаленного обновления"
+
+#: MSGRU07
+msgid "Syno disk and partition handling"
+msgstr "Обработка дисков и разделов Syno"
+
+#: MSGRU08
+msgid "Change DSM New Password"
+msgstr "Изменить новый пароль DSM"
+
+#: MSGRU09
+msgid "Add New DSM User"
+msgstr "Добавить нового пользователя DSM"
+
+#: MSGRU19
+msgid "Clean System Partition(md0)"
+msgstr "Очистить системный раздел(md0)"
+
+#: MSGRU64
+msgid "Bootentry Update version correction"
+msgstr "Исправление версии обновления загрузочной записи"
+
+#: MSGRU65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Монтировать том диска Syno(только Ext4)"
+
+#: MSGRU66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Добавить пункт меню Tinycore v9 для монтирования тома Syno Disk BTRFS"
+
