@@ -225,3 +225,28 @@ msgstr "አስገባው ቡትሎደር ክፍል አስወግድ"
 #: MSGET63 
 msgid "Packing loader file for remote update"
 msgstr "ርሞት አስተካክል ለሎደር ፋይል አስተካክል"
+
+#: MSGET08
+msgid "Change DSM New Password"
+msgstr "DSM አዲስ ይለፍ ቃል ቀይር"
+
+#: MSGET09
+msgid "Add New DSM User"
+msgstr "አዲስ DSM ተጠቃሚ ጨምር"
+
+#: MSGET19
+msgid "Clean System Partition(md0)"
+msgstr "የስርዓት ክፍል ጽዳት(md0)"
+
+#: MSGET64
+msgid "Bootentry Update version correction"
+msgstr "Bootentry ማሻሻያ ስሪት ማረሚያ"
+
+#: MSGET65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno ዲስክ ወልሙ ተራራ(Ext4 ብቻ)"
+
+#: MSGET66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno ዲስክ BTRFS Vol ለመተራረቅ Tinycore v9 የሜኑ ግቤት ጨምር"
+
