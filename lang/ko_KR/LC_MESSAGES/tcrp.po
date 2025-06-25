@@ -247,9 +247,9 @@ msgid "Bootentry Update version correction"
 msgstr "부트 엔트리 업데이트 버전 수정"
 
 #: MSGKR65
-msgid "Mount Syno Disk Volume(Ext4 only)")
-msgstr "Syno 디스크 볼륨 마운트(Ext4 전용)")
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno 디스크 볼륨 마운트(Ext4 전용)"
 
 #: MSGKR66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
-msgstr "Syno 디스크 BTRFS 볼륨 마운트를 위한 Tinycore v9 메뉴 항목 추가")
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno 디스크 BTRFS 볼륨 마운트를 위한 Tinycore v9 메뉴 항목 추가"
