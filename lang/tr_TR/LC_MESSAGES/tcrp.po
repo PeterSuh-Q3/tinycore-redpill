@@ -225,3 +225,32 @@ msgstr "Enjekte edilen bootloader bölümünü kaldır"
 #: MSGTR63 
 msgid "Packing loader file for remote update"
 msgstr "Uzaktan güncelleme için yükleyici dosyasını paketle"
+
+#: MSGTR07
+msgid "Syno disk and partition handling"
+msgstr "Syno disk ve bölüm yönetimi"
+
+#: MSGTR08
+msgid "Change DSM New Password"
+msgstr "DSM Yeni Şifre Değiştir"
+
+#: MSGTR09
+msgid "Add New DSM User"
+msgstr "Yeni DSM Kullanıcısı Ekle"
+
+#: MSGTR19
+msgid "Clean System Partition(md0)"
+msgstr "Sistem Bölümünü Temizle(md0)"
+
+#: MSGTR64
+msgid "Bootentry Update version correction"
+msgstr "Bootentry Güncelleme sürüm düzeltmesi"
+
+#: MSGTR65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Syno Disk Hacmini Bağla(Sadece Ext4)"
+
+#: MSGTR66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno Disk BTRFS Hacmini bağlamak için Tinycore v9 menü girişi ekle"
+
