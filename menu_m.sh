@@ -1490,16 +1490,22 @@ function synopart() {
   cfg_file="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
   entry_title="menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)'"
 
-  eval "MSG12=\"\${MSG${tz}12}\""
+  eval "MSG08=\"\${MSG${tz}08}\""
+  eval "MSG09=\"\${MSG${tz}09}\""
+  eval "MSG19=\"\${MSG${tz}19}\""
+  eval "MSG64=\"\${MSG${tz}64}\""
+  eval "MSG12=\"\${MSG${tz}12}\""  
+  eval "MSG65=\"\${MSG${tz}65}\""
+  eval "MSG66=\"\${MSG${tz}66}\""
 
   while true; do
-    echo "a \"Change DSM New Password\""                > "${TMP_PATH}/menuc"
-    echo "b \"Add New DSM User\""                       >> "${TMP_PATH}/menuc"
-    echo "c \"Clean System Partition(md0)\""            >> "${TMP_PATH}/menuc"
-    echo "d \"Bootentry Update version correction\""    >> "${TMP_PATH}/menuc"
+    eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
+    eval "echo \"b \\\"${MSG09}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"c \\\"${MSG19}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"d \\\"${MSG64}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
-    echo "f \"Mount Syno Disk Volume(Ext4 only)\""      >> "${TMP_PATH}/menuc"
-    echo "g \"Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol\""      >> "${TMP_PATH}/menuc"
+    eval "echo \"f \\\"${MSG65}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/resp
