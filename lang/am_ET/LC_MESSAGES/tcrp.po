@@ -226,6 +226,10 @@ msgstr "አስገባው ቡትሎደር ክፍል አስወግድ"
 msgid "Packing loader file for remote update"
 msgstr "ርሞት አስተካክል ለሎደር ፋይል አስተካክል"
 
+#: MSGET07
+msgid "Syno disk and partition handling"
+msgstr "Syno ዲስክ እና ክፍል አያያዝ"
+
 #: MSGET08
 msgid "Change DSM New Password"
 msgstr "DSM አዲስ ይለፍ ቃል ቀይር"
