@@ -229,3 +229,27 @@ msgstr "Packing loader file for remote update"
 #: MSGUS07
 msgid "Syno disk and partition handling"
 msgstr "Syno disk and partition handling"
+
+#: MSGUS08
+msgid "Change DSM New Password"
+msgstr "Change DSM New Password"
+
+#: MSGUS09
+msgid "Add New DSM User"
+msgstr "Add New DSM User"
+
+#: MSGUS19
+msgid "Clean System Partition(md0)"
+msgstr "Clean System Partition(md0)"
+
+#: MSGUS64
+msgid "Bootentry Update version correction"
+msgstr "Bootentry Update version correction"
+
+#: MSGUS65
+msgid "Mount Syno Disk Volume(Ext4 only)")
+msgstr "Mount Syno Disk Volume(Ext4 only)")
+
+#: MSGUS66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
+msgstr "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
