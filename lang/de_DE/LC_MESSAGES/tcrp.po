@@ -226,6 +226,10 @@ msgstr "Eingefügte Bootloader-Partition entfernen"
 msgid "Packing loader file for remote update"
 msgstr "Lader-Datei für Fernupdate packen"
 
+#: MSGDE07
+msgid "Syno disk and partition handling"
+msgstr "Syno Festplatten- und Partitionsverwaltung"
+
 #: MSGDE08
 msgid "Change DSM New Password"
 msgstr "DSM Neues Passwort ändern"
