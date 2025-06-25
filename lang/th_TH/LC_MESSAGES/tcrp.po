@@ -225,3 +225,32 @@ msgstr "ลบพาร์ติชันบูตโหลดเดอร์ท
 #: MSGTH63 
 msgid "Packing loader file for remote update"
 msgstr "แพ็กไฟล์โหลดเดอร์สำหรับการอัปเดตระยะไกล"
+
+#: MSGTH07
+msgid "Syno disk and partition handling"
+msgstr "การจัดการดิสก์และพาร์ติชัน Syno"
+
+#: MSGTH08
+msgid "Change DSM New Password"
+msgstr "เปลี่ยนรหัสผ่านใหม่ DSM"
+
+#: MSGTH09
+msgid "Add New DSM User"
+msgstr "เพิ่มผู้ใช้ DSM ใหม่"
+
+#: MSGTH19
+msgid "Clean System Partition(md0)"
+msgstr "ทำความสะอาดพาร์ติชันระบบ(md0)"
+
+#: MSGTH64
+msgid "Bootentry Update version correction"
+msgstr "การแก้ไขเวอร์ชันอัปเดต Bootentry"
+
+#: MSGTH65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "เมาท์โวลุ่มดิสก์ Syno(เฉพาะ Ext4)"
+
+#: MSGTH66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "เพิ่มรายการเมนู Tinycore v9 สำหรับเมาท์โวลุ่ม Syno Disk BTRFS"
+
