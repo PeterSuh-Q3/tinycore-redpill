@@ -225,3 +225,27 @@ msgstr "إزالة قسم برنامج الإقلاع المحقون"
 #: MSGEG63 
 msgid "Packing loader file for remote update"
 msgstr "تحزيم ملف المُحمل لتحديث عن بعد"
+
+#: MSGEG08
+msgid "Change DSM New Password"
+msgstr "تغيير كلمة مرور DSM الجديدة"
+
+#: MSGEG09
+msgid "Add New DSM User"
+msgstr "إضافة مستخدم DSM جديد"
+
+#: MSGEG19
+msgid "Clean System Partition(md0)"
+msgstr "تنظيف قسم النظام(md0)"
+
+#: MSGEG64
+msgid "Bootentry Update version correction"
+msgstr "تصحيح إصدار تحديث إدخال التمهيد"
+
+#: MSGEG65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "تركيب مجلد قرص Syno (Ext4 فقط)"
+
+#: MSGEG66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "إضافة إدخال قائمة Tinycore v9 لتركيب مجلد Syno Disk BTRFS"
