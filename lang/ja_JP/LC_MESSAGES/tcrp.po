@@ -225,3 +225,32 @@ msgstr "注入されたブートローダーパーティションを削除"
 #: MSGJP63 
 msgid "Packing loader file for remote update"
 msgstr "リモートアップデート用のローダーファイルをパッキング"
+
+#: MSGJP07
+msgid "Syno disk and partition handling"
+msgstr "Synoディスクとパーティション処理"
+
+#: MSGJP08
+msgid "Change DSM New Password"
+msgstr "DSM新しいパスワードの変更"
+
+#: MSGJP09
+msgid "Add New DSM User"
+msgstr "新しいDSMユーザーの追加"
+
+#: MSGJP19
+msgid "Clean System Partition(md0)"
+msgstr "システムパーティションのクリーニング(md0)"
+
+#: MSGJP64
+msgid "Bootentry Update version correction"
+msgstr "ブートエントリーアップデートバージョン修正"
+
+#: MSGJP65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Synoディスクボリュームのマウント(Ext4のみ)"
+
+#: MSGJP66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "SynoディスクBTRFSボリュームマウント用Tinycore v9メニューエントリーの追加"
+
