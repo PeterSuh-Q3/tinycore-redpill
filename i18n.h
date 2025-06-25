@@ -57,8 +57,11 @@ MSGZZ61=$(gettext "tcrp" "Inject Bootloader to Syno DISK")
 MSGZZ62=$(gettext "tcrp" "Remove the injected bootloader partition")
 MSGZZ63=$(gettext "tcrp" "Packing loader file for remote update")
 MSGZZ07=$(gettext "tcrp" "Syno disk and partition handling")
-MSGZZ08=""
-MSGZZ09=""
-MSGZZ19=""
+MSGZZ08=$(gettext "tcrp" "Change DSM New Password")
+MSGZZ09=$(gettext "tcrp" "Add New DSM User")
+MSGZZ19=$(gettext "tcrp" "Clean System Partition(md0)")
+MSGZZ64=$(gettext "tcrp" "Bootentry Update version correction")
+MSGZZ65=$(gettext "tcrp" "Mount Syno Disk Volume(Ext4 only)")
+MSGZZ66=$(gettext "tcrp" "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
 }
