@@ -225,3 +225,27 @@ msgstr "Eliminar la partición del cargador de arranque inyectada"
 #: MSGES63 
 msgid "Packing loader file for remote update"
 msgstr "Empaquetar el archivo del cargador para actualización remota"
+
+#: MSGES08
+msgid "Change DSM New Password"
+msgstr "Cambiar contraseña nueva de DSM"
+
+#: MSGES09
+msgid "Add New DSM User"
+msgstr "Agregar nuevo usuario DSM"
+
+#: MSGES19
+msgid "Clean System Partition(md0)"
+msgstr "Limpiar partición del sistema(md0)"
+
+#: MSGES64
+msgid "Bootentry Update version correction"
+msgstr "Corrección de versión de actualización Bootentry"
+
+#: MSGES65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Montar volumen de disco Syno(solo Ext4)"
+
+#: MSGES66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Agregar entrada de menú Tinycore v9 para montar volumen Syno Disk BTRFS"
