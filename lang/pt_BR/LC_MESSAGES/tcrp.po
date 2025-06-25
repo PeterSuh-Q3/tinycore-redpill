@@ -225,3 +225,31 @@ msgstr "Remover a partição do carregador de inicialização injetada"
 #: MSGBR63 
 msgid "Packing loader file for remote update"
 msgstr "Empacotar o arquivo do carregador para atualização remota"
+
+#: MSGBR07
+msgid "Syno disk and partition handling"
+msgstr "Manuseio de disco e partição Syno"
+
+#: MSGBR08
+msgid "Change DSM New Password"
+msgstr "Alterar nova senha DSM"
+
+#: MSGBR09
+msgid "Add New DSM User"
+msgstr "Adicionar novo usuário DSM"
+
+#: MSGBR19
+msgid "Clean System Partition(md0)"
+msgstr "Limpar partição do sistema(md0)"
+
+#: MSGBR64
+msgid "Bootentry Update version correction"
+msgstr "Correção de versão de atualização do bootentry"
+
+#: MSGBR65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Montar volume do disco Syno(apenas Ext4)"
+
+#: MSGBR66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Adicionar entrada de menu Tinycore v9 para montar volume Syno Disk BTRFS"
