@@ -230,3 +230,26 @@ msgstr "원격 업데이트용 로더 파일 패키징"
 msgid "Syno disk and partition handling"
 msgstr "Syno 디스크 및 파티션 처리"
 
+#: MSGKR08
+msgid "Change DSM New Password"
+msgstr "DSM 새 암호 변경"
+
+#: MSGKR09
+msgid "Add New DSM User"
+msgstr "새 DSM 사용자 추가"
+
+#: MSGKR19
+msgid "Clean System Partition(md0)"
+msgstr "시스템 파티션 정리(md0)"
+
+#: MSGKR64
+msgid "Bootentry Update version correction"
+msgstr "부트 엔트리 업데이트 버전 수정"
+
+#: MSGKR65
+msgid "Mount Syno Disk Volume(Ext4 only)")
+msgstr "Syno 디스크 볼륨 마운트(Ext4 전용)")
+
+#: MSGKR66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
+msgstr "Syno 디스크 BTRFS 볼륨 마운트를 위한 Tinycore v9 메뉴 항목 추가")
