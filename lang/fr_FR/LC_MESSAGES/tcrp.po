@@ -226,6 +226,10 @@ msgstr "Supprimer la partition de chargeur d'amorçage injectée"
 msgid "Packing loader file for remote update"
 msgstr "Packager le fichier de chargeur pour une mise à jour à distance"
 
+#: MSGFR07
+msgid "Syno disk and partition handling"
+msgstr "Gestion des disques et partitions Syno"
+
 #: MSGFR08
 msgid "Change DSM New Password"
 msgstr "Changer le nouveau mot de passe DSM"
