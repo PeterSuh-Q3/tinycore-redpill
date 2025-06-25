@@ -247,9 +247,9 @@ msgid "Bootentry Update version correction"
 msgstr "Bootentry Update version correction"
 
 #: MSGUS65
-msgid "Mount Syno Disk Volume(Ext4 only)")
-msgstr "Mount Syno Disk Volume(Ext4 only)")
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "Mount Syno Disk Volume(Ext4 only)"
 
 #: MSGUS66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
-msgstr "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
