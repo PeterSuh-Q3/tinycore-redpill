@@ -1501,10 +1501,10 @@ function synopart() {
     eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
-    2>${TMP_PATH}/resp
+    2>${TMP_PATH}/respc
     [ $? -ne 0 ] && return
 
-    case `<"${TMP_PATH}/resp"` in
+    case `<"${TMP_PATH}/respc"` in
     a) changeDSMPassword; default_resp="a" ;;
     b) addNewDSMUser; default_resp="b" ;;
     c) CleanSystemPart; default_resp="c" ;;
