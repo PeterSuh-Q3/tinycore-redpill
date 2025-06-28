@@ -4568,7 +4568,7 @@ function formatDisks() {
   while read -r KNAME ID SIZE TYPE PKNAME; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
     [ "${KNAME:0:7}" = "/dev/md" ] && continue
-    [ "${KNAME}" = "${LOADER_DISK}" ] || [ "${PKNAME}" = "${LOADER_DISK}" ] && continue
+    [ "${KNAME}" = "${loaderdisk}" ] || [ "${PKNAME}" = "${loaderdisk}" ] && continue
     printf "\"%s\" \"%-6s %-4s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${ID}" >>"${TMP_PATH}/opts"
   done <<<"$(lsblk -Jpno KNAME,ID,SIZE,TYPE,PKNAME 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.id) \(.size) \(.type) \(.pkname)"' 2>/dev/null | sort)"
   if [ ! -f "${TMP_PATH}/opts" ]; then
