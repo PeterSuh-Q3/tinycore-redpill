@@ -4570,7 +4570,7 @@ function formatDisks() {
     [ "${KNAME:0:7}" = "/dev/md" ] && continue
     [ "${KNAME:0:9}" = "/dev/loop" ] && continue
     [ "${KNAME:0:9}" = "/dev/zram" ] && continue
-    [ "${KNAME}" = "${loaderdisk}" ] || [ "${PKNAME}" = "${loaderdisk}" ] && continue
+    [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
     printf "\"%s\" \"%-6s %-4s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" >>"${TMP_PATH}/opts"
   done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,PKNAME 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.id) \(.size) \(.type) \(.pkname)"' 2>/dev/null | sort)"
   if [ ! -f "${TMP_PATH}/opts" ]; then
