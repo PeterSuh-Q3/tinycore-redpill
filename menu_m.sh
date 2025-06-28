@@ -1090,7 +1090,8 @@ function keymapMenu() {
 }
 
 function erasedisk() {
-  ./edisk.sh
+  #./edisk.sh
+  formatDisks
   echo "press any key to continue..."
   read answer
   return 0
