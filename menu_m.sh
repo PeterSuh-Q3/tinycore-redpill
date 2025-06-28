@@ -1491,6 +1491,9 @@ function synopart() {
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
 
+  prepareopts
+  sync
+
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
     eval "echo \"b \\\"${MSG09}\\\"\""                  >> "${TMP_PATH}/menuc"
@@ -1628,7 +1631,7 @@ function chk_diskcnt() {
 
 }
 
-function formatDisks() {
+function prepareopts() {
   rm -f "${TMP_PATH}/opts"
   while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
@@ -1640,6 +1643,9 @@ function formatDisks() {
     echo "\"${KNAME}\" \"${SIZE} ${TYPE} ${SERIAL} ${TRAN} ${VENDOR} ${MODEL}\" \"off\"" >> "${TMP_PATH}/opts"
     sync     
   done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
+}
+
+function formatDisks() {
   if [ ! -f "${TMP_PATH}/opts" ]; then
     dialog --title "Format Disks" --msgbox "No disk found!" 0 0
     return
