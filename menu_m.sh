@@ -1642,7 +1642,7 @@ function prepareopts() {
     #printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${SERIAL}" "${TRAN}" "${VENDOR}" "${MODEL}" >>"${TMP_PATH}/opts"
     echo "\"${KNAME}\" \"${SIZE} ${TYPE} ${SERIAL} ${TRAN} ${VENDOR} ${MODEL}\" \"off\"" >> "${TMP_PATH}/opts"
     sync     
-  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
+  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
 }
 
 function formatDisks() {
