@@ -16,8 +16,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev
           #sudo apt-get install grub2 qemu-utils grub-efi-amd64-bin
-          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.2.2.9/tinycore-redpill.v1.2.2.9.m-shell.img.gz
-          gunzip tinycore-redpill.v1.2.2.9.m-shell.img.gz
+          
+          LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
+          TAG="${LATESTURL##*/}"
+          echo "TAG is ${TAG}"
+          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
+          gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
           pwd
           ls -ltr
           
