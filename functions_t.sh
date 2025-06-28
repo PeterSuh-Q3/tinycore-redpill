@@ -4585,14 +4585,6 @@ function formatDisks() {
   [ -z "${resp}" ] && return
   dialog --title "Format Disks" --yesno "Warning:\nThis operation is irreversible. Please backup important data. Do you want to continue?" 0 0
   [ $? -ne 0 ] && return
-  if [ "$(ls /dev/md[0-9]* 2>/dev/null | wc -l)" -gt 0 ]; then
-    dialog --title "Format Disks" --yesno "Warning:\nThe current hds is in raid, do you still want to format them?" 0 0
-    [ $? -ne 0 ] && return
-    for F in /dev/md[0-9]*; do
-      [ ! -e "${F}" ] && continue
-      mdadm -S "${F}" >/dev/null 2>&1
-    done
-  fi
   for I in ${resp}; do
     if [ "${I:0:8}" = "/dev/mmc" ]; then
       sudo mkfs.ext4 -F -T largefile4 -E nodiscard "${I}"
