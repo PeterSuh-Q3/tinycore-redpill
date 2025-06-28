@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Bring last uploaded files from tinycore-redpill & lastest img
+        id: get-tag
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev
@@ -20,6 +21,9 @@ jobs:
           LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
           TAG="${LATESTURL##*/}"
           echo "TAG is ${TAG}"
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          
           curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
           gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
           pwd
@@ -74,7 +78,9 @@ jobs:
           
           LOOPX=$(sudo losetup -f)
           echo "LOOPX = ${LOOPX}"          
-          sudo losetup -P ${LOOPX} tinycore-redpill.v1.2.2.9.m-shell.img
+
+          echo "Using TAG: ${RELEASE_TAG}"
+          sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
           
           dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp.img bs=1M seek=2048 count=0
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1853M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
