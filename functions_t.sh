@@ -4595,9 +4595,9 @@ function formatDisks() {
   fi
   for I in ${resp}; do
     if [ "${I:0:8}" = "/dev/mmc" ]; then
-      echo y | mkfs.ext4 -T largefile4 -E nodiscard "${I}"
+      sudo mkfs.ext4 -F -T largefile4 -E nodiscard "${I}"
     else
-      echo y | mkfs.ext4 -T largefile4 "${I}"
+      sudo mkfs.ext4 -F -T largefile4 "${I}"
     fi
   done 2>&1 | dialog --title "Format Disks" --progressbox "Formatting ..." 20 100
   dialog --title "Format Disks" --msgbox "Formatting is complete." 0 0
