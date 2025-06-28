@@ -4565,14 +4565,14 @@ fi
 
 function formatDisks() {
   rm -f "${TMP_PATH}/opts"
-  while read -r KNAME SIZE TYPE PKNAME; do
+  while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
     [ "${KNAME:0:7}" = "/dev/md" ] && continue
     [ "${KNAME:0:9}" = "/dev/loop" ] && continue
     [ "${KNAME:0:9}" = "/dev/zram" ] && continue
     [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
-    printf "\"%s\" \"%-6s %-4s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${PKNAME}" >>"${TMP_PATH}/opts"
-  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,PKNAME 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.pkname)"' 2>/dev/null | sort)"
+    printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${VENDOR}" "${MODEL}" "${SERIAL}" "${TRAN}" >>"${TMP_PATH}/opts"
+  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
   if [ ! -f "${TMP_PATH}/opts" ]; then
     dialog --title "Format Disks" --msgbox "No disk found!" 0 0
     return
