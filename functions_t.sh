@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.2"
+rploaderver="1.2.5.3"
 build="master"
 redpillmake="prod"
 
@@ -193,6 +193,7 @@ function history() {
     1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
             Requires Tinycore version 9 with kernel 4, like Synology.
     1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+    1.2.5.3 Format Disk Menu Improvements
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -570,6 +571,8 @@ EOF
 # Requires Tinycore version 9 with kernel 4, like Synology.
 # 2025.06.11 v1.2.5.2 
 # Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+# 2025.06.28 v1.2.5.3 
+# Format Disk Menu Improvements
     
 function showlastupdate() {
     cat <<EOF
@@ -616,6 +619,9 @@ function showlastupdate() {
 
 # 2025.06.11 v1.2.5.2 
 # Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+
+# 2025.06.28 v1.2.5.3 
+# Format Disk Menu Improvements
 
 EOF
 }
@@ -4555,6 +4561,50 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
 
+}
+
+function formatDisks() {
+  rm -f "${TMP_PATH}/opts"
+  while read -r KNAME ID SIZE TYPE PKNAME; do
+    [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
+    [ "${KNAME:0:7}" = "/dev/md" ] && continue
+    [ "${KNAME}" = "${LOADER_DISK}" ] || [ "${PKNAME}" = "${LOADER_DISK}" ] && continue
+    printf "\"%s\" \"%-6s %-4s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${ID}" >>"${TMP_PATH}/opts"
+  done <<<"$(lsblk -Jpno KNAME,ID,SIZE,TYPE,PKNAME 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.id) \(.size) \(.type) \(.pkname)"' 2>/dev/null | sort)"
+  if [ ! -f "${TMP_PATH}/opts" ]; then
+    dialog --title "Format Disks" \
+      --msgbox "No disk found!" 0 0
+    return
+  fi
+  dialog --title "Format Disks" \
+    --checklist "Format Disks" 0 0 0 --file "${TMP_PATH}/opts" \
+    2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
+  [ -z "${resp}" ] && return
+  dialog --title "Format Disks" \  
+    --yesno "Warning:\nThis operation is irreversible. Please backup important data. Do you want to continue?" 0 0
+  [ $? -ne 0 ] && return
+  if [ "$(ls /dev/md[0-9]* 2>/dev/null | wc -l)" -gt 0 ]; then
+    dialog --title "Format Disks" \  
+      --yesno "Warning:\nThe current hds is in raid, do you still want to format them?" 0 0
+    [ $? -ne 0 ] && return
+    for F in /dev/md[0-9]*; do
+      [ ! -e "${F}" ] && continue
+      mdadm -S "${F}" >/dev/null 2>&1
+    done
+  fi
+  for I in ${resp}; do
+    if [ "${I:0:8}" = "/dev/mmc" ]; then
+      echo y | mkfs.ext4 -T largefile4 -E nodiscard "${I}"
+    else
+      echo y | mkfs.ext4 -T largefile4 "${I}"
+    fi
+  done 2>&1 | dialog --title "Format Disks" \
+    --progressbox "Formatting ..." 20 100
+  dialog --title "Format Disks" \
+    --msgbox "Formatting is complete." 0 0
+  return
 }
 
 function debug_msg() {
