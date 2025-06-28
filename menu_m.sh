@@ -1491,9 +1491,6 @@ function synopart() {
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
 
-  prepareopts
-  sync
-
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
     eval "echo \"b \\\"${MSG09}\\\"\""                  >> "${TMP_PATH}/menuc"
@@ -1631,17 +1628,9 @@ function chk_diskcnt() {
 
 }
 
-function prepareopts() {
+function formatDisks() {
   rm -f "${TMP_PATH}/opts"
   local KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN
-  local temp_file="${TMP_PATH}/lsblk_output"
-  
-  # 먼저 출력을 임시 파일에 저장
-  lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN | \
-  sed 's|null|"N/A"|g' | \
-  jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' | \
-  sort > "$temp_file"
-  
   while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
     [ "${KNAME:0:7}" = "/dev/md" ] && continue
@@ -1649,12 +1638,7 @@ function prepareopts() {
     [ "${KNAME:0:9}" = "/dev/zram" ] && continue
     [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
     printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${SERIAL}" "${TRAN}" "${VENDOR}" "${MODEL}" >>"${TMP_PATH}/opts"
-  done < "$temp_file"
-
-  rm -f "$temp_file"  
-}
-
-function formatDisks() {
+  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
   if [ ! -f "${TMP_PATH}/opts" ]; then
     dialog --title "Format Disks" --msgbox "No disk found!" 0 0
     return
