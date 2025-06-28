@@ -1629,6 +1629,7 @@ function chk_diskcnt() {
 }
 
 function formatDisks() {
+  local old_settings=$(stty -g)
   rm -f "${TMP_PATH}/opts"
   while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
@@ -1640,16 +1641,17 @@ function formatDisks() {
   done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
   if [ ! -f "${TMP_PATH}/opts" ]; then
     dialog --title "Format Disks" --msgbox "No disk found!" 0 0
+    stty "$old_settings"
     return
   fi
   dialog --title "Format Disks" \
     --checklist "Select Disks" 0 0 0 --file "${TMP_PATH}/opts" \
     2>"${TMP_PATH}/format_resp"
-  [ $? -ne 0 ] && return
+  [ $? -ne 0 ] && stty "$old_settings" && return
   resp="$(cat "${TMP_PATH}/format_resp" 2>/dev/null)"
-  [ -z "${resp}" ] && return
+  [ -z "${resp}" ] && stty "$old_settings" && return
   dialog --title "Format Disks" --yesno "Warning:\nThis operation is irreversible. Please backup important data. Do you want to continue?" 0 0
-  [ $? -ne 0 ] && return
+  [ $? -ne 0 ] && stty "$old_settings" && return
   for I in ${resp}; do
     if [ "${I:0:8}" = "/dev/mmc" ]; then
       sudo mkfs.ext4 -F -T largefile4 -E nodiscard "${I}"
@@ -1658,6 +1660,7 @@ function formatDisks() {
     fi
   done 2>&1 | dialog --title "Format Disks" --progressbox "Formatting ..." 20 100
   dialog --title "Format Disks" --msgbox "Formatting is complete." 0 0
+  stty "$old_settings"
   return
   
 }
