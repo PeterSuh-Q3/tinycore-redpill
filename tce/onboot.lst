@@ -100,3 +100,7 @@ gettext.tcz
 ethtool.tcz
 iproute2.tcz
 scsi-6.1.2-tinycore64.tcz
+mdadm.tcz
+sqlite3-bin.tcz
+btrfs-progs.tcz
+lvm2.tcz
