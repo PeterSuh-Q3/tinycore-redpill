@@ -1633,6 +1633,14 @@ function chk_diskcnt() {
 
 function prepareopts() {
   rm -f "${TMP_PATH}/opts"
+  local temp_file="${TMP_PATH}/lsblk_output"
+  
+  # 먼저 출력을 임시 파일에 저장
+  lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN | \
+  sed 's|null|"N/A"|g' | \
+  jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' | \
+  sort > "$temp_file"
+  
   while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
     [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
     [ "${KNAME:0:7}" = "/dev/md" ] && continue
@@ -1640,7 +1648,9 @@ function prepareopts() {
     [ "${KNAME:0:9}" = "/dev/zram" ] && continue
     [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
     printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${SERIAL}" "${TRAN}" "${VENDOR}" "${MODEL}" >>"${TMP_PATH}/opts"
-  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' | sort)"
+  done < "$temp_file"
+
+  rm -f "$temp_file"  
 }
 
 function formatDisks() {
