@@ -1089,14 +1089,6 @@ function keymapMenu() {
   restart
 }
 
-function erasedisk() {
-  #./edisk.sh
-  formatDisks
-  echo "press any key to continue..."
-  read answer
-  return 0
-}
-
 function backup() {
 
   echo "Cleaning redpill-load/cache directory for backup!"
@@ -1517,7 +1509,7 @@ function synopart() {
     b) addNewDSMUser; default_resp="b" ;;
     c) CleanSystemPart; default_resp="c" ;;
     d) fixBootEntry; default_resp="d" ;;
-    e) erasedisk; default_resp="e";;
+    e) formatDisks; default_resp="e";;
     f) mountvol; default_resp="f";;
     g) 
        if ! grep -qF "$entry_title" "$cfg_file"; then
@@ -1652,9 +1644,9 @@ function formatDisks() {
   fi
   dialog --title "Format Disks" \
     --checklist "Select Disks" 0 0 0 --file "${TMP_PATH}/opts" \
-    2>"${TMP_PATH}/resp"
+    2>"${TMP_PATH}/format_resp"
   [ $? -ne 0 ] && return
-  resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
+  resp="$(cat "${TMP_PATH}/format_resp" 2>/dev/null)"
   [ -z "${resp}" ] && return
   dialog --title "Format Disks" --yesno "Warning:\nThis operation is irreversible. Please backup important data. Do you want to continue?" 0 0
   [ $? -ne 0 ] && return
