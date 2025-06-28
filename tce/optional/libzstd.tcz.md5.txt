@@ -1,1 +1,1 @@
-13a8b50e538db90276ab8ed4d5647f0f  libzstd.tcz
+f71624c933dd8ddc005fdff27b26380d  libzstd.tcz
