@@ -1633,6 +1633,7 @@ function chk_diskcnt() {
 
 function prepareopts() {
   rm -f "${TMP_PATH}/opts"
+  local KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN
   local temp_file="${TMP_PATH}/lsblk_output"
   
   # 먼저 출력을 임시 파일에 저장
