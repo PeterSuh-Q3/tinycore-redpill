@@ -1652,7 +1652,7 @@ function formatDisks() {
     
     # 제한 해제 옵션 추가
     if [ ${RESTRICT_DISK} -eq 1 ]; then
-      echo "\"[R] Show-All-Partitions\" \"Press ENTER to show all disks and partitions\" \"off\"" >> "${TMP_PATH}/opts"
+      echo "\"Release-disk-restriction\" \"Show all disks and partitions\" \"off\"" >> "${TMP_PATH}/opts"
     fi
     
     if [ ! -f "${TMP_PATH}/opts" ]; then
@@ -1662,7 +1662,7 @@ function formatDisks() {
     
     # 제한 상태에 따른 제목 변경
     if [ ${RESTRICT_DISK} -eq 1 ]; then
-      TITLE="Select Disks (Press ENTER to show all disks and partitions)"
+      TITLE="Select Disks (Space key to show partitions)"
     else
       TITLE="Select Disks/Partitions"
     fi
