@@ -1629,28 +1629,71 @@ function chk_diskcnt() {
 }
 
 function formatDisks() {
-  rm -f "${TMP_PATH}/opts"
-  local KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN
-  while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
-    [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
-    [ "${KNAME:0:7}" = "/dev/md" ] && continue
-    [ "${KNAME:0:9}" = "/dev/loop" ] && continue
-    [ "${KNAME:0:9}" = "/dev/zram" ] && continue
-    [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
-    printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${SERIAL}" "${TRAN}" "${VENDOR}" "${MODEL}" >>"${TMP_PATH}/opts"
-  done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
-  if [ ! -f "${TMP_PATH}/opts" ]; then
-    dialog --title "Format Disks" --msgbox "No disk found!" 0 0
-    return
-  fi
-  dialog --title "Format Disks" \
-    --checklist "Select Disks" 0 0 0 --file "${TMP_PATH}/opts" \
-    2>"${TMP_PATH}/format_resp"
-  [ $? -ne 0 ] && return
-  resp="$(cat "${TMP_PATH}/format_resp" 2>/dev/null)"
-  [ -z "${resp}" ] && return
+  local RESTRICT_DISK=1  # 초기에는 디스크만 표시하도록 제한
+  
+  while true; do
+    rm -f "${TMP_PATH}/opts"
+    local KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN
+    
+    while read -r KNAME SIZE TYPE VENDOR MODEL SERIAL TRAN; do
+      [ "${KNAME}" = "N/A" ] || [ "${SIZE:0:1}" = "0" ] && continue
+      [ "${KNAME:0:7}" = "/dev/md" ] && continue
+      [ "${KNAME:0:9}" = "/dev/loop" ] && continue
+      [ "${KNAME:0:9}" = "/dev/zram" ] && continue
+      [[ "${KNAME}" == "/dev/${loaderdisk}"* ]] && continue
+      
+      # RESTRICT_DISK가 1이면 디스크만 표시, 0이면 모든 장치 표시
+      if [ ${RESTRICT_DISK} -eq 1 ] && [ "${TYPE}" != "disk" ]; then
+        continue
+      fi
+      
+      printf "\"%s\" \"%-6s %-4s %s %s %s %s %s\" \"off\"\n" "${KNAME}" "${SIZE}" "${TYPE}" "${SERIAL}" "${TRAN}" "${VENDOR}" "${MODEL}" >>"${TMP_PATH}/opts"
+    done <<<"$(lsblk -Jpno KNAME,SIZE,TYPE,VENDOR,MODEL,SERIAL,TRAN 2>/dev/null | sed 's|null|"N/A"|g' | jq -r '.blockdevices[] | "\(.kname) \(.size) \(.type) \(.vendor) \(.model) \(.serial) \(.tran)"' 2>/dev/null | sort)"
+    
+    # 제한 해제 옵션 추가
+    if [ ${RESTRICT_DISK} -eq 1 ]; then
+      echo "\"Release-disk-restriction\" \"Show all disks and partitions\" \"off\"" >> "${TMP_PATH}/opts"
+    fi
+    
+    if [ ! -f "${TMP_PATH}/opts" ]; then
+      dialog --title "Format Disks" --msgbox "No disk found!" 0 0
+      return
+    fi
+    
+    # 제한 상태에 따른 제목 변경
+    if [ ${RESTRICT_DISK} -eq 1 ]; then
+      TITLE="Select Disks (Space key to show partitions)"
+    else
+      TITLE="Select Disks/Partitions"
+    fi
+    
+    dialog --title "Format Disks" \
+      --checklist "${TITLE}" 0 0 0 --file "${TMP_PATH}/opts" \
+      2>"${TMP_PATH}/format_resp"
+    
+    [ $? -ne 0 ] && return
+    resp="$(cat "${TMP_PATH}/format_resp" 2>/dev/null)"
+    [ -z "${resp}" ] && return
+    
+    # 제한 해제 옵션이 선택되었는지 확인
+    if echo "${resp}" | grep -q "Release-disk-restriction"; then
+      RESTRICT_DISK=0
+      # Release-disk-restriction을 응답에서 제거
+      resp=$(echo "${resp}" | sed 's/Release-disk-restriction//g' | sed 's/  / /g' | sed 's/^ *//g' | sed 's/ *$//g')
+      # 아무것도 선택되지 않았으면 다시 메뉴로
+      [ -z "${resp}" ] && continue
+    fi
+    
+    # 실제 장치가 선택되었으면 포맷 진행
+    if [ -n "${resp}" ]; then
+      break
+    fi
+  done
+  
+  # 포맷 확인 및 실행
   dialog --title "Format Disks" --yesno "Warning:\nThis operation is irreversible. Please backup important data. Do you want to continue?" 0 0
   [ $? -ne 0 ] && return
+  
   for I in ${resp}; do
     if [ "${I:0:8}" = "/dev/mmc" ]; then
       sudo mkfs.ext4 -F -T largefile4 -E nodiscard "${I}"
@@ -1660,7 +1703,6 @@ function formatDisks() {
   done 2>&1 | dialog --title "Format Disks" --progressbox "Formatting ..." 20 100
   dialog --title "Format Disks" --msgbox "Formatting is complete." 0 0
   return
-  
 }
 
 function chk_shr_ex()
