@@ -1662,7 +1662,7 @@ function formatDisks() {
     
     # 제한 상태에 따른 제목 변경
     if [ ${RESTRICT_DISK} -eq 1 ]; then
-      TITLE="Select Disks (Space key to show partitions)"
+      TITLE="Select Disks (To release, select Release-disk-restriction and click OK)"
     else
       TITLE="Select Disks/Partitions"
     fi
