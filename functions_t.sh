@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.3"
+rploaderver="1.2.5.4"
 build="master"
 redpillmake="prod"
 
@@ -194,6 +194,7 @@ function history() {
             Requires Tinycore version 9 with kernel 4, like Synology.
     1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     1.2.5.3 Format Disk Menu Improvements
+    1.2.5.4 Apply separate patched buildroot to older AMD CPUs
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -323,7 +324,7 @@ EOF
 # 2023.03.14
 # Update : Automatic handling of grub.cfg disable_mtrr_trim=1 to unlock AMD Platform 3.5GB RAM limitation
 # 2023.03.17
-# Update : AMD CPU FRIEND mode menu usage restriction release (except HP N36L/N40L/N54L)
+# Update : AMD CPU FRIEND mode menu usage restriction release (except  N36L/N40L/N54L)
 # 2023.03.18
 # Update : TCRP FRIEND / JOT menu selection method improvement
 # 2023.03.21
@@ -351,7 +352,7 @@ EOF
 # 2023.05.23
 # Update : Add Getty Console to DSM 7.2
 # 2023.05.26
-# Update : Added ds916+ (braswell), 7.2.0 Jot Menu Creation for HP PCs
+# Update : Added ds916+ (braswell), 7.2.0 Jot Menu Creation for  PCs
 # 2023.06.03
 # Update : Add Support DSM 7.2-64570 Official Version
 # 2023.06.17
@@ -573,6 +574,8 @@ EOF
 # Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
 # 2025.06.28 v1.2.5.3 
 # Format Disk Menu Improvements
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
     
 function showlastupdate() {
     cat <<EOF
@@ -622,6 +625,9 @@ function showlastupdate() {
 
 # 2025.06.28 v1.2.5.3 
 # Format Disk Menu Improvements
+
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
 
 EOF
 }
@@ -3526,6 +3532,7 @@ function curlfriend() {
 
     LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
     FRTAG="${LATESTURL##*/}"
+    [ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
     echo "FRIEND TAG is ${FRTAG}"        
     curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
     -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
