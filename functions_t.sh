@@ -3533,7 +3533,7 @@ function curlfriend() {
 
     LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
     FRTAG="${LATESTURL##*/}"
-    [ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
+    #[ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
     echo "FRIEND TAG is ${FRTAG}"        
     curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
     -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
@@ -3551,7 +3551,7 @@ function bringoverfriend() {
 
   [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]||[ "${CPU}" = "HP" ]; then
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then  #||[ "${CPU}" = "HP" ]
       curlfriend
   else    
       echo -n "Checking for latest friend -> "
