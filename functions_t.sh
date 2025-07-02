@@ -3551,7 +3551,7 @@ function bringoverfriend() {
 
   [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]||[ "${CPU}" = "HP" ]; then
       curlfriend
   else    
       echo -n "Checking for latest friend -> "
