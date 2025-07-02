@@ -324,7 +324,7 @@ EOF
 # 2023.03.14
 # Update : Automatic handling of grub.cfg disable_mtrr_trim=1 to unlock AMD Platform 3.5GB RAM limitation
 # 2023.03.17
-# Update : AMD CPU FRIEND mode menu usage restriction release (except  N36L/N40L/N54L)
+# Update : AMD CPU FRIEND mode menu usage restriction release (except HP N36L/N40L/N54L)
 # 2023.03.18
 # Update : TCRP FRIEND / JOT menu selection method improvement
 # 2023.03.21
@@ -352,7 +352,7 @@ EOF
 # 2023.05.23
 # Update : Add Getty Console to DSM 7.2
 # 2023.05.26
-# Update : Added ds916+ (braswell), 7.2.0 Jot Menu Creation for  PCs
+# Update : Added ds916+ (braswell), 7.2.0 Jot Menu Creation for HP PCs
 # 2023.06.03
 # Update : Add Support DSM 7.2-64570 Official Version
 # 2023.06.17
