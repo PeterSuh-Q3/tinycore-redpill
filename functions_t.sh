@@ -1707,7 +1707,8 @@ function checkforsas() {
 function checkcpu() {
 
     if [ $(lscpu |grep Intel |wc -l) -gt 0 ]; then
-        CPU="INTEL"
+        CPU="HP"
+        #CPU="INTEL"
     else
         if [ $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//' | grep -e N36L -e N40L -e N54L | wc -l) -gt 0 ]; then
             CPU="HP"
