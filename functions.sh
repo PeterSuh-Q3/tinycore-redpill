@@ -3263,8 +3263,8 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     # Share RD of friend kernel with JOT 2023.05.01
     if [ ! -f /home/tc/friend/initrd-friend ] && [ ! -f /home/tc/friend/bzImage-friend ]; then
 st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"        
-        #bringoverfriend
-        upgrademan v0.1.3m
+        bringoverfriend
+        #upgrademan v0.1.3m
     fi
 
     if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
