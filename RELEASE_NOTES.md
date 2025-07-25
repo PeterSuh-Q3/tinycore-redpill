@@ -1,1 +1,1 @@
-        1.2.5.3 Format Disk Menu Improvements
+        1.2.5.4 Apply separate patched buildroot to older AMD CPUs
