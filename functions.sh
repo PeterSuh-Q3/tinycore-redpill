@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.3"
+rploaderver="1.2.5.4"
 build="master"
 redpillmake="prod"
 
@@ -194,6 +194,7 @@ function history() {
             Requires Tinycore version 9 with kernel 4, like Synology.
     1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     1.2.5.3 Format Disk Menu Improvements
+    1.2.5.4 Apply separate patched buildroot to older AMD CPUs
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -573,6 +574,8 @@ EOF
 # Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
 # 2025.06.28 v1.2.5.3 
 # Format Disk Menu Improvements
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
     
 function showlastupdate() {
     cat <<EOF
@@ -622,6 +625,9 @@ function showlastupdate() {
 
 # 2025.06.28 v1.2.5.3 
 # Format Disk Menu Improvements
+
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
 
 EOF
 }
@@ -1703,13 +1709,13 @@ function checkcpu() {
     if [ $(lscpu |grep Intel |wc -l) -gt 0 ]; then
         CPU="INTEL"
     else
-        if [ $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//' | grep -e N36L -e N40L -e N54L | wc -l) -gt 0 ]; then
-            CPU="HP"
-            LDRMODE="JOT"
-            writeConfigKey "general" "loadermode" "${LDRMODE}"
-        else
+        #if [ $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//' | grep -e N36L -e N40L -e N54L | wc -l) -gt 0 ]; then
+        #    CPU="HP"
+        #    LDRMODE="JOT"
+        #    writeConfigKey "general" "loadermode" "${LDRMODE}"
+        #else
             CPU="AMD"
-        fi        
+        #fi        
     fi
     
     if [ $(lscpu |grep movbe |wc -l) -gt 0 ]; then    
@@ -3257,7 +3263,8 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     # Share RD of friend kernel with JOT 2023.05.01
     if [ ! -f /home/tc/friend/initrd-friend ] && [ ! -f /home/tc/friend/bzImage-friend ]; then
 st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"        
-        bringoverfriend
+        #bringoverfriend
+        upgrademan v0.1.3m
     fi
 
     if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
@@ -3526,6 +3533,7 @@ function curlfriend() {
 
     LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
     FRTAG="${LATESTURL##*/}"
+    #[ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
     echo "FRIEND TAG is ${FRTAG}"        
     curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
     -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
@@ -3543,7 +3551,7 @@ function bringoverfriend() {
 
   [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then  #||[ "${CPU}" = "HP" ]
       curlfriend
   else    
       echo -n "Checking for latest friend -> "
