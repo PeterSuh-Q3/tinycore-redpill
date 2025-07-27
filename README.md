@@ -15,10 +15,20 @@ This is a supplementary custom package required to handle the StoragePanel Addon
 
 Please select the appropriate .spk package source for your Synology DSM version and platform and proceed with manual installation from Synology Package Center.
 
-The storage panel size shown in the Disk Manager overview is only a design element and does not affect Synology's functions.
+The storage panel size shown (Drive Infomation) in the Storage Manager overview is only a design element and does not affect Synology's functions.
+
+
+<img width="604" height="259" alt="스크린샷 2025-07-27 오전 10 16 57" src="https://github.com/user-attachments/assets/d55a4567-b01b-4781-a02b-e940295836b0" />
 
 
 https://github.com/PeterSuh-Q3/synology-package-builder/releases
+
+
+<img width="784" height="418" alt="스크린샷 2025-07-27 오전 10 17 46" src="https://github.com/user-attachments/assets/643af338-479d-4b34-95f0-df033f254eb5" />
+
+
+<img width="1406" height="416" alt="스크린샷 2025-07-27 오전 10 18 59" src="https://github.com/user-attachments/assets/7e2714b1-9643-4b5c-ab07-6a3011fa6213" />
+
 
 <img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
 
