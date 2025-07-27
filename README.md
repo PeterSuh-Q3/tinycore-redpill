@@ -9,6 +9,21 @@ https://paypal.me/PeterSuhQ3
 
 -------------------------------------------------------------------------------
 
+### About Synology 3rd party Custom Package Change Panel Size 
+
+This is a supplementary custom package required to handle the StoragePanel Addon included as a default installation Addon in Mshell. 
+
+Please select the appropriate .spk package source for your Synology DSM version and platform and proceed with manual installation from Synology Package Center.
+
+The storage panel size shown in the Disk Manager overview is only a design element and does not affect Synology's functions.
+
+
+https://github.com/PeterSuh-Q3/synology-package-builder/releases
+
+<img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
+
+
+-------------------------------------------------------------------------------
 
 ![스크린샷 2023-10-28 오전 9 13 45](https://github.com/PeterSuh-Q3/tinycore-redpill/assets/85427533/f0a293de-0765-43d1-b75c-89271b417124)
 
