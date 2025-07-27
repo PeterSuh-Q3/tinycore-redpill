@@ -33,6 +33,13 @@ https://github.com/PeterSuh-Q3/synology-package-builder/releases
 <img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
 
 
+# <Caution>
+Changepanelsize user must be granted the authority to process with sudoers.
+Check if the file already exists with the command below, and if not,
+sudores processing as below is absolutely necessary.
+If sudores does not exist, panel size change will not be processed due to insufficient authority.
+
+
 ```
 sudo -i
 ll /etc/sudoers.d/Changepanelsize
