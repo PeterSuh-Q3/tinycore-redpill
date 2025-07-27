@@ -33,6 +33,17 @@ https://github.com/PeterSuh-Q3/synology-package-builder/releases
 <img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
 
 
+```
+sudo -i
+ll /etc/sudoers.d/Changepanelsize
+```
+
+```
+sudo -i
+echo "Changepanelsize ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/Changepanelsize
+chmod 0440 /etc/sudoers.d/Changepanelsize
+```
+
 -------------------------------------------------------------------------------
 
 ![스크린샷 2023-10-28 오전 9 13 45](https://github.com/PeterSuh-Q3/tinycore-redpill/assets/85427533/f0a293de-0765-43d1-b75c-89271b417124)
