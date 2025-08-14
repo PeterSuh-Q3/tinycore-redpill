@@ -1,1 +1,1 @@
-        1.2.5.4 Apply separate patched buildroot to older AMD CPUs
+        1.2.5.5 Separate build pre-option selection menu
