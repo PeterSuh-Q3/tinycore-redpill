@@ -63,5 +63,6 @@ MSGZZ19=$(gettext "tcrp" "Clean System Partition(md0)")
 MSGZZ64=$(gettext "tcrp" "Bootentry Update version correction")
 MSGZZ65=$(gettext "tcrp" "Mount Syno Disk Volume(Ext4 only)")
 MSGZZ66=$(gettext "tcrp" "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol")
+MSGZZ67=$(gettext "tcrp" "Select build pre-option (required or not required)")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
 }
