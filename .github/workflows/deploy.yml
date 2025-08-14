@@ -73,7 +73,7 @@ jobs:
         run: |
           VERSION=v`cat functions.sh | grep rploaderver= | cut -d\" -f2`
           echo "Version: ${VERSION}"
-          echo "::set-output name=VERSION::${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           mkdir /opt/output
           
           LOOPX=$(sudo losetup -f)
