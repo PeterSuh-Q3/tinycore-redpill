@@ -938,7 +938,7 @@ function make() {
   fi
 
 st "finishloader" "Loader build status" "Finished building the loader"  
-  echo "Ready!"
+  cecho g "The loader was created successfully!!!"
   echo "press any key to continue..."
   read answer
   rm -f /home/tc/buildstatus  
