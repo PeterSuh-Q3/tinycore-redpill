@@ -1524,6 +1524,61 @@ function synopart() {
   done
 }
 
+function build-pre-option() {
+
+  default_resp="z"
+
+  MSG64="vmtools(with qemu-guest-agent) addon"
+
+  while true; do
+    eval "echo \"a \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   > "${TMP_PATH}/menud"
+    eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                            >> "${TMP_PATH}/menud"
+    eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
+    eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
+    eval "echo \"e \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
+    echo "z exit"                                                       >> "${TMP_PATH}/menud"
+    
+    dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
+      --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menud" \
+    2>${TMP_PATH}/respd
+    [ $? -ne 0 ] && return
+
+    case `<"${TMP_PATH}/respd"` in
+    a) selectldrmode ;    NEXT="z" ;;
+    b) remapsata     ;    NEXT="z" ;;
+    c) storagepanel;      NEXT="z" ;;    
+    d) 
+      if [ "${NVMES}" = "false" ]; then 
+        if add-addon "nvmesystem"; then
+          NVMES="true"
+          BLOCK_DDSML="Y"
+          DMPM="EUDEV"
+        fi  
+      else  
+        del-addon "nvmesystem"
+        NVMES="false"
+        BLOCK_DDSML="N"
+        DMPM="DDSML"
+      fi  
+      writeConfigKey "general" "nvmesystem" "${NVMES}"
+      writeConfigKey "general" "devmod" "${DMPM}"
+      NEXT="z" ;;
+    e)       
+      if [ "${VMTOOLS}" = "false" ]; then 
+        add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
+      else  
+        del-addon "vmtools" && VMTOOLS="false"
+      fi  
+      writeConfigKey "general" "vmtools" "${VMTOOLS}"
+      NEXT="z" ;;
+    z) return;;  
+    *) return;;
+    esac
+    
+  done
+
+}
+
 function sortnetif() {
   ETHLIST=""
   ETHX=$(ls /sys/class/net/ 2>/dev/null | grep eth) # real network cards list
@@ -2164,8 +2219,6 @@ writeConfigKey "general" "bay" "${bay}"
 
 chk_shr_ex
 
-MSG64="vmtools(with qemu-guest-agent) addon"
-
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
@@ -2183,11 +2236,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && eval "echo \"o \\\"\${MSG${tz}04} 6\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"v \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
-    [ "${CPU}" != "HP" ] && eval "echo \"z \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}56}\\\"\""             >> "${TMP_PATH}/menu"
-    eval "echo \"q \\\"\${MSG${tz}41} (${bay})\\\"\""      >> "${TMP_PATH}/menu"
-    eval "echo \"w \\\"${nvmeaction} \${MSG${tz}57}\\\"\""    >> "${TMP_PATH}/menu"
-    eval "echo \"d \\\"${vmtoolsaction} \${MSG64}\\\"\""    >> "${TMP_PATH}/menu"
+    echo "z Select build pre-option (required or not required)"   >> "${TMP_PATH}/menu"      
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   [ "$FRKRNL" = "YES" ] && 
@@ -2223,33 +2272,7 @@ while true; do
     t) macMenu "eth6"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
     v) macMenu "eth7";    NEXT="p" ;; 
-    z) selectldrmode ;    NEXT="p" ;;
-    k) remapsata ;        NEXT="p" ;;
-    q) storagepanel;      NEXT="p" ;;    
-    w) 
-      if [ "${NVMES}" = "false" ]; then 
-        if add-addon "nvmesystem"; then
-          NVMES="true"
-          BLOCK_DDSML="Y"
-          DMPM="EUDEV"
-        fi  
-      else  
-        del-addon "nvmesystem"
-        NVMES="false"
-        BLOCK_DDSML="N"
-        DMPM="DDSML"
-      fi  
-      writeConfigKey "general" "nvmesystem" "${NVMES}"
-      writeConfigKey "general" "devmod" "${DMPM}"
-      ;;
-    d)       
-      if [ "${VMTOOLS}" = "false" ]; then 
-        add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
-      else  
-        del-addon "vmtools" && VMTOOLS="false"
-      fi  
-      writeConfigKey "general" "vmtools" "${VMTOOLS}"
-      ;;
+    z) build-pre-option ; NEXT="p" ;;
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make "fri" "${prevent_init}" 
        else  
