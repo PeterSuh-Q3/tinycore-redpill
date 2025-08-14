@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.4"
+rploaderver="1.2.5.5"
 build="master"
 redpillmake="prod"
 
@@ -195,6 +195,7 @@ function history() {
     1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
     1.2.5.3 Format Disk Menu Improvements
     1.2.5.4 Apply separate patched buildroot to older AMD CPUs
+    1.2.5.5 Separate build pre-option selection menu
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -576,6 +577,8 @@ EOF
 # Format Disk Menu Improvements
 # 2025.07.02 v1.2.5.4 
 # Apply separate patched buildroot to older AMD CPUs
+# 2025.08.14 v1.2.5.5 
+# Separate build pre-option selection menu
     
 function showlastupdate() {
     cat <<EOF
@@ -628,6 +631,9 @@ function showlastupdate() {
 
 # 2025.07.02 v1.2.5.4 
 # Apply separate patched buildroot to older AMD CPUs
+
+# 2025.08.14 v1.2.5.5
+# Separate build pre-option selection menu
 
 EOF
 }
