@@ -254,3 +254,6 @@ msgstr "Syno ዲስክ ወልሙ ተራራ(Ext4 ብቻ)"
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "Syno ዲስክ BTRFS Vol ለመተራረቅ Tinycore v9 የሜኑ ግቤት ጨምር"
 
+#: MSGET67
+msgid "Select build pre-option (required or not required)"
+msgstr "የግንባታ ቅድመ አማራጭ ይምረጡ (ግዴታ ወይም አለመሆን)"

@@ -254,3 +254,6 @@ msgstr "Syno lemez kötet csatolása(csak Ext4)"
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "Tinycore v9 menübejegyzés hozzáadása Syno lemez BTRFS kötet csatolásához"
 
+#: MSGHU67
+msgid "Select build pre-option (required or not required)"
+msgstr "Válassza ki az előzetes build opciót (kötelező vagy nem kötelező)"

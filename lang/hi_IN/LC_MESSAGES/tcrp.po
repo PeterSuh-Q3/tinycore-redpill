@@ -254,3 +254,6 @@ msgstr "Syno डिस्क वॉल्यूम माउंट करें(
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "Syno डिस्क BTRFS वॉल्यूम माउंट के लिए Tinycore v9 मेनू एंट्री जोड़ें"
 
+#: MSGHI67
+msgid "Select build pre-option (required or not required)"
+msgstr "बिल्ड प्री-ऑप्शन चुनें (आवश्यक या आवश्यक नहीं)"

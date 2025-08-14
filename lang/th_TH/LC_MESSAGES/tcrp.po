@@ -254,3 +254,6 @@ msgstr "เมาท์โวลุ่มดิสก์ Syno(เฉพาะ Ex
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "เพิ่มรายการเมนู Tinycore v9 สำหรับเมาท์โวลุ่ม Syno Disk BTRFS"
 
+#: MSGTH67
+msgid "Select build pre-option (required or not required)"
+msgstr "เลือกตัวเลือกการสร้างล่วงหน้า (จำเป็นหรือไม่จำเป็น)"

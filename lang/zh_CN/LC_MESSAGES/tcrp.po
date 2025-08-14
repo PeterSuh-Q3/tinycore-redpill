@@ -254,3 +254,6 @@ msgstr "挂载Syno磁盘卷(仅限Ext4)"
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "为挂载Syno磁盘BTRFS卷添加Tinycore v9菜单项"
 
+#: MSGCN67
+msgid "Select build pre-option (required or not required)"
+msgstr "选择构建预设选项（必选或可选）"

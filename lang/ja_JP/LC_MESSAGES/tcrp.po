@@ -254,3 +254,6 @@ msgstr "Synoディスクボリュームのマウント(Ext4のみ)"
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "SynoディスクBTRFSボリュームマウント用Tinycore v9メニューエントリーの追加"
 
+#: MSGJP67
+msgid "Select build pre-option (required or not required)"
+msgstr "ビルド事前オプションを選択（必須または任意）"

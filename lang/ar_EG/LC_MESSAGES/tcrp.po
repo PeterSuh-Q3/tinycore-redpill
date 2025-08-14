@@ -253,3 +253,7 @@ msgstr "تركيب مجلد قرص Syno (Ext4 فقط)"
 #: MSGEG66
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "إضافة إدخال قائمة Tinycore v9 لتركيب مجلد Syno Disk BTRFS"
+
+#: MSGEG67
+msgid "Select build pre-option (required or not required)"
+msgstr "اختر خيار البناء المسبق (مطلوب أو غير مطلوب)"

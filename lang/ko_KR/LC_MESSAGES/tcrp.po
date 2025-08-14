@@ -253,3 +253,7 @@ msgstr "Syno 디스크 볼륨 마운트(Ext4 전용)"
 #: MSGKR66
 msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 msgstr "Syno 디스크 BTRFS 볼륨 마운트를 위한 Tinycore v9 메뉴 항목 추가"
+
+#: MSGKR67
+msgid "Select build pre-option (required or not required)"
+msgstr "빌드 사전 옵션 선택 (필수 또는 선택)"
