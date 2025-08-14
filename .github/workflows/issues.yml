@@ -113,7 +113,7 @@ jobs:
           gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
           pwd
           ls -ltr
-          echo "::set-output name=TAG::${TAG}"
+          echo "TAG=${TAG}" >> $GITHUB_OUTPUT
 
           LOOPX=$(sudo losetup -f)
           sudo losetup -P ${LOOPX} tinycore-redpill.${TAG}.m-shell.img
