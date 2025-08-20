@@ -377,8 +377,7 @@
         },
         "models": [
             "DS425+",
-            "DS225+",
-            "DS625slim"
+            "DS225+"
         ],
         "add_extensions": [
             {
