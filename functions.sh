@@ -1821,9 +1821,11 @@ function _pat_process() {
   PAT_PATH="${patfile}"
   #mirrors=("global.synologydownload.com" "global.download.synology.com" "cndl.synology.cn")
   #mirrors=("global.synologydownload.com" "global.download.synology.com")
+  #fastest=$(_get_fastest "${mirrors[@]}")  
+  
   mirrors=("global.download.synology.com")
-
-  fastest=$(_get_fastest "${mirrors[@]}")
+  fastest=("global.download.synology.com")
+  
   echo "fastest = " "${fastest}"
   mirror="$(echo ${PATURL} | sed 's|^http[s]*://\([^/]*\).*|\1|')"
   echo "mirror = " "${mirror}"
