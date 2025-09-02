@@ -1820,7 +1820,8 @@ function _pat_process() {
   PAT_FILE="${SYNOMODEL}.pat"
   PAT_PATH="${patfile}"
   #mirrors=("global.synologydownload.com" "global.download.synology.com" "cndl.synology.cn")
-  mirrors=("global.synologydownload.com" "global.download.synology.com")
+  #mirrors=("global.synologydownload.com" "global.download.synology.com")
+  mirrors=("global.download.synology.com")
 
   fastest=$(_get_fastest "${mirrors[@]}")
   echo "fastest = " "${fastest}"
