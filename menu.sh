@@ -131,7 +131,7 @@ else
   touch /tmp/test_mode
 fi
 
-if [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
+if [ -d /dev/shm/tcrp-modules/ ]; then
     offline="YES"
 else
     offline="NO"
