@@ -1820,12 +1820,9 @@ function _pat_process() {
   PAT_FILE="${SYNOMODEL}.pat"
   PAT_PATH="${patfile}"
   #mirrors=("global.synologydownload.com" "global.download.synology.com" "cndl.synology.cn")
-  #mirrors=("global.synologydownload.com" "global.download.synology.com")
-  #fastest=$(_get_fastest "${mirrors[@]}")  
-  
-  mirrors=("global.download.synology.com")
-  fastest=("global.download.synology.com")
-  
+  mirrors=("global.synologydownload.com" "global.download.synology.com")
+
+  fastest=$(_get_fastest "${mirrors[@]}")
   echo "fastest = " "${fastest}"
   mirror="$(echo ${PATURL} | sed 's|^http[s]*://\([^/]*\).*|\1|')"
   echo "mirror = " "${mirror}"
@@ -4688,7 +4685,7 @@ function rploader() {
     build)
 
         getvars $ORIGIN_PLATFORM
-        if [ -d /mnt/${tcrppart}/redpill-load/ ]; then
+        if [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
             offline="YES"
         else
             offline="NO"
@@ -4799,7 +4796,7 @@ function my() {
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
   fi
   
-  if [ -d /mnt/${tcrppart}/redpill-load/ ]; then
+  if [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
       offline="YES"
   else
       offline="NO"
