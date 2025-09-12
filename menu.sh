@@ -86,7 +86,7 @@ getBus "${loaderdisk}"
 
 tcrppart="${loaderdisk}3"
 
-if [ -d /mnt/${tcrppart}/redpill-load/ ] && [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
+if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
     echo "Repositories for offline loader building have been confirmed. Copy the repositories to the required location..."
     echo "Press any key to continue..."    
     read answer
@@ -131,7 +131,7 @@ else
   touch /tmp/test_mode
 fi
 
-if [ -d /mnt/${tcrppart}/redpill-load/ ]; then
+if [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
     offline="YES"
 else
     offline="NO"
