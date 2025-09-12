@@ -30,6 +30,7 @@ curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-mod
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/releases/firmware.tgz -o ./tcrp-modules/all-modules/releases/firmware.tgz
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/releases/firmwarei915.tgz -o ./tcrp-modules/all-modules/releases/firmwarei915.tgz
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/releases/epyc700272.json -o ./tcrp-modules/all-modules/releases/epyc700272.json
+curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/src/install.sh -o ./tcrp-modules/all-modules/src/install.sh
 curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/${tag}/epyc7002-7.2-5.10.55.tgz -o ./tcrp-modules/all-modules/releases/epyc7002-7.2-5.10.55.tgz
 
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/eudev/rpext-index.json -o ./tcrp-modules/eudev/rpext-index.json
