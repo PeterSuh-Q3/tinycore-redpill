@@ -2199,8 +2199,8 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which lvm)_" == "_" ]; then
     sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
-# copy tinycore pack and backup
-if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
+# copy tinycore pack and backup, except scsi-6.1.2-tinycore64.tcz
+if [ $(ls /tmp/tce/optional/ | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     echo 'Y'|rploader backup
 fi
