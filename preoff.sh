@@ -15,9 +15,6 @@ cd /mnt/$tcrppart/
 
 sudo rm /mnt/$tcrppart/xtcrp.tgz
 
-sudo rm -rf /mnt/$tcrppart/redpill-load
-sudo cp -rf /home/tc/redpill-load/ /mnt/$tcrppart/.
-
 sudo rm -rf /mnt/$tcrppart/tcrp-modules
 
 mkdir -p ./tcrp-modules/all-modules/releases
