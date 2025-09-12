@@ -11,12 +11,12 @@ echo "tcrppart: $tcrppart"
 
 cd /mnt/$tcrppart/
 
-[[ -d /dev/shm/tcrp-addons ]] && sudo mv -vf /dev/shm/tcrp-addons/ /mnt/$tcrppart/.
+[[ -d /dev/shm/tcrp-addons ]] && sudo mv -f /dev/shm/tcrp-addons/ /mnt/$tcrppart/.
 
 sudo rm /mnt/$tcrppart/xtcrp.tgz
 
 sudo rm -rf /mnt/$tcrppart/redpill-load
-sudo cp -vrf /home/tc/redpill-load/ /mnt/$tcrppart/.
+sudo cp -rf /home/tc/redpill-load/ /mnt/$tcrppart/.
 
 sudo rm -rf /mnt/$tcrppart/tcrp-modules
 
