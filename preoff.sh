@@ -11,7 +11,9 @@ echo "tcrppart: $tcrppart"
 
 cd /mnt/$tcrppart/
 
-[[ -d /dev/shm/tcrp-addons ]] && sudo mv -f /dev/shm/tcrp-addons/ /mnt/$tcrppart/.
+[[ -d /dev/shm/tcrp-addons ]] && sudo cp -rf /dev/shm/tcrp-addons/ /mnt/$tcrppart/.
+
+rm -rf /dev/shm/tcrp-addons/
 
 sudo rm /mnt/$tcrppart/xtcrp.tgz
 
