@@ -2178,11 +2178,6 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | 
     sudo echo "kmaps.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
-# Download scsi-6.1.2-tinycore64.tcz
-if [ "$FRKRNL" = "NO" ] && [ $(lspci -d ::107 | wc -l) -gt 0 ]; then
-    tce-load -iw scsi-6.1.2-tinycore64.tcz
-fi
-
 # Download firmware-broadcom_bnx2x
 if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware-broadcom_bnx2x | wc -w) -eq 0 ]; then
     installtcz "firmware-broadcom_bnx2x.tcz"
@@ -2208,6 +2203,11 @@ fi
 if [ $(ls /tmp/tce/optional/ | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     echo 'Y'|rploader backup
+fi
+
+# Download scsi-6.1.2-tinycore64.tcz
+if [ "$FRKRNL" = "NO" ] && [ $(lspci -d ::107 | wc -l) -gt 0 ]; then
+    tce-load -iw scsi-6.1.2-tinycore64.tcz
 fi
 
 NEXT="m"
