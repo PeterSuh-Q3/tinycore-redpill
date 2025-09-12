@@ -2807,15 +2807,24 @@ function backuploader() {
         sudo ln -sf /home/tc/menu.sh /usr/bin/menu.sh
         sudo ln -sf /home/tc/monitor.sh /usr/bin/monitor.sh
         sudo ln -sf /home/tc/ntp.sh /usr/bin/ntp.sh
+
         # Define the patterns to be added
         PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
         
-        # Add each pattern to the file if it does not already exist
+        # 파일이 존재하고 FILE_PATH에 없는 경우만 추가
         for pattern in "${PATTERNS[@]}"; do
-            if [ -f "/$pattern" ] && ! grep -qF "$pattern" "$FILE_PATH"; then
-                echo "$pattern" >> "$FILE_PATH"
-            fi        
-        done > /dev/null 2>&1
+            if [ -f "/$pattern" ]; then
+                # 중복 확인 후 추가
+                if [ -f "$FILE_PATH" ] && grep -qF "$pattern" "$FILE_PATH"; then
+                    echo "Already exists in list: $pattern" >&2
+                else
+                    echo "$pattern" >> "$FILE_PATH"
+                    echo "Added to backup list: $pattern" >&2
+                fi
+            else
+                echo "File not found, skipping: /$pattern" >&2
+            fi
+        done 2>/dev/null  # 전체 오류 출력 억제
         
         if filetool.sh -b ${loaderdisk}3; then
             echo ""
