@@ -38,5 +38,5 @@ curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/eudev/r
 
 sha256=$(sha256sum ./tcrp-modules/all-modules/releases/epyc7002-7.2-5.10.55.tgz | awk '{print $1}')
 org=$(jq -r '.files[0].sha256' ./tcrp-modules/all-modules/releases/epyc700272.json)
-sudo sed -i 's/$org/$sha256/g' ./tcrp-modules/all-modules/releases/epyc700272.json
+sudo sed -i "s/$org/$sha256/g" ./tcrp-modules/all-modules/releases/epyc700272.json
 
