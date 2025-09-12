@@ -17,6 +17,7 @@ rm -rf /dev/shm/tcrp-addons/
 
 sudo rm /mnt/$tcrppart/xtcrp.tgz
 
+rm -rf /dev/shm/tcrp-modules/
 sudo rm -rf /mnt/$tcrppart/tcrp-modules
 
 mkdir -p ./tcrp-modules/all-modules/releases
