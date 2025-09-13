@@ -26,6 +26,9 @@ mkdir -p ./tcrp-modules/all-modules/src
 mkdir -p ./tcrp-modules/eudev/releases
 mkdir -p ./tcrp-modules/eudev/recipes
 
+mkdir -p ./tcrp-modules/ddsml/releases
+mkdir -p ./tcrp-modules/ddsml/recipes
+
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/rpext-index.json -o ./tcrp-modules/all-modules/rpext-index.json
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/releases/epyc700272.json -o ./tcrp-modules/all-modules/releases/epyc700272.json
 curl -kL https://github.com/PeterSuh-Q3/tcrp-modules/raw/refs/heads/main/all-modules/releases/firmware.tgz -o ./tcrp-modules/all-modules/releases/firmware.tgz
