@@ -3748,6 +3748,7 @@ function getredpillko() {
     fi
 
     if [ -z "${TAG}" ]; then
+        rm -f /tmp/VERSION
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        VERSION -d /tmp >/dev/null 2>&1
         TAG=$(cat /tmp/VERSION )
         echo "TAG of VERSION is ${TAG}"
