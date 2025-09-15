@@ -1768,6 +1768,9 @@ function chk_shr_ex()
 
 # Main loop
 
+# Fix bug /opt/bootlocal.sh ownership 2025.09.15
+sudo chown tc:118 /opt/bootlocal.sh
+
 chk_diskcnt
 writeConfigKey "general" "diskcount" "${DISKCNT}"
 CHKDISK=$(jq -r -e '.general.check_diskcnt' "$USER_CONFIG_FILE")
