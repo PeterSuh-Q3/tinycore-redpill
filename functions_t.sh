@@ -2977,7 +2977,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3748,7 +3748,7 @@ function getredpillko() {
     fi
 
     if [ -z "${TAG}" ]; then
-        rm -f /tmp/VERSION    
+        rm -f /tmp/VERSION
         unzip /mnt/${tcrppart}/rp-lkms${v}.zip        VERSION -d /tmp >/dev/null 2>&1
         TAG=$(cat /tmp/VERSION )
         echo "TAG of VERSION is ${TAG}"
