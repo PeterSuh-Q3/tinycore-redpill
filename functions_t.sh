@@ -3500,8 +3500,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #sudo chmod +x /home/tc/rd.temp/usr/sbin/losetup
 
     RAMDISK_PATH="/home/tc/rd.temp"
-    mkdir -p "${RAMDISK_PATH}/addons"
     # Patch synoinfo.conf
+    mkdir -p "${RAMDISK_PATH}/addons"    
     echo -n "."
     echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
     for KEY in "${!SYNOINFO[@]}"; do
