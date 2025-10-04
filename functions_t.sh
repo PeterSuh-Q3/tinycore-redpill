@@ -3162,6 +3162,30 @@ function checkUserConfig() {
   fi
 }
 
+###############################################################################
+# Replace/remove/add values in .conf K=V file
+# 1 - file
+# 2 - key
+# 3 - value
+function _set_conf_kv() {
+  # Delete
+  if [ -z "${3}" ]; then
+    sed -i "/^${2}=/d" "${1}" 2>/dev/null
+    return $?
+  fi
+
+  # Replace
+  if grep -q "^${2}=" "${1}" 2>/dev/null; then
+    sed -i "s#^${2}=.*#${2}=\"${3}\"#" "${1}" 2>/dev/null
+    return $?
+  fi
+
+  # Add if doesn't exist
+  mkdir -p "$(dirname "${1}" 2>/dev/null)" 2>/dev/null
+  echo "${2}=\"${3}\"" >>"${1}" 2>/dev/null
+  return $?
+}
+
 function buildloader() {
 
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
@@ -3397,6 +3421,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     # Repack custom.gz including /usr/lib/modules and /usr/lib/firmware in all_modules 2024.02.18
     # Compining rd.gz and custom.gz
+
+    declare -A SYNOINFO    
+    # Read synoinfo from user config
+    # SYNOINFO["SN"]="${SN}"
+    while read -r KEY VALUE; do
+      SYNOINFO["$KEY"]="$VALUE"
+    done < <(jq -r '.synoinfo | to_entries[] | "\(.key) \(.value)"' "${userconfigfile}")
     
     [ ! -d /home/tc/rd.temp ] && mkdir /home/tc/rd.temp
     [ -d /home/tc/rd.temp ] && cd /home/tc/rd.temp
@@ -3467,6 +3498,17 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o /home/tc/rd.temp/usr/lib/libsmartcols.so.1
     #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o /home/tc/rd.temp/usr/sbin/losetup
     #sudo chmod +x /home/tc/rd.temp/usr/sbin/losetup
+
+    RAMDISK_PATH="/home/tc/rd.temp"
+    # Patch synoinfo.conf
+    echo -n "."
+    echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
+    for KEY in "${!SYNOINFO[@]}"; do
+      echo "Set synoinfo ${KEY}"
+      echo "${KEY}=\"${SYNOINFO[${KEY}]}\"" >>"${RAMDISK_PATH}/addons/synoinfo.conf"
+      _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+      _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+    done
 
     # Reassembly ramdisk
     if [ "$RD_COMPRESSED" = "false" ]; then
