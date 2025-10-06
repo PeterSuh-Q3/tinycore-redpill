@@ -28,7 +28,7 @@ function readanswer() {
 }
  
 function restart() {
-    sync
+    (sync &)
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
@@ -42,10 +42,10 @@ function writebackcache() {
         grep -E 'Dirty|Writeback:' /proc/meminfo
         echo "Writing data that has not yet been written to disk (data waiting in the cache)."
         
-        writeback_kb=$(grep '^Writeback:' /proc/meminfo | awk '{print $2}')
+        dirty_kb=$(grep '^Dirty:' /proc/meminfo | awk '{print $2}')
         
-        if [ "$writeback_kb" -le 3000 ]; then
-            echo "Writeback is below 3000 kB: $writeback_kb kB, exiting loop."
+        if [ "$dirty_kb" -le 5000 ]; then
+            echo "Dirty cache is below 5000 kB: $dirty_kb kB, exiting loop."
             break
         fi
         
