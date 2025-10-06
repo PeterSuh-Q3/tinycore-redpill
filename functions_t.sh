@@ -3594,7 +3594,6 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 fi
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
-            (sync &)
         fi    
     fi    
 }
