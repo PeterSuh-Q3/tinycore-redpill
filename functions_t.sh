@@ -2831,7 +2831,7 @@ function backuploader() {
         done 2>/dev/null  # 전체 오류 출력 억제
 
         cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cvf - | pigz -p ${thread} > /dev/shm/mydata.tgz 2>/dev/null
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
         sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
         if [ $? -ne 0 ]; then
             echo "Error: Couldn't backup files"
