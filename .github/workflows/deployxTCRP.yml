@@ -15,11 +15,15 @@ jobs:
         id: get-tag
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev
+          sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev jq
           #sudo apt-get install grub2 qemu-utils grub-efi-amd64-bin
 
-          LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
-          TAG="${LATESTURL##*/}"
+          #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
+          #TAG="${LATESTURL##*/}"
+
+          PREV_TAG=$(curl -s https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases | jq -r '.[1].tag_name')
+          TAG="${PREV_TAG}"
+          
           echo "TAG is ${TAG}"
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
