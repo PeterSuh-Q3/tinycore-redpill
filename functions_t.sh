@@ -2785,10 +2785,10 @@ function backuploader() {
         return
     fi
     
-    if [ $(cat /usr/bin/filetool.sh | grep pigz | wc -l ) -eq 0 ]; then
-        sudo sed -i "s/\-czvf/\-cvf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
-        sudo sed -i "s/\-czf/\-cf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
-    fi
+    #if [ $(cat /usr/bin/filetool.sh | grep pigz | wc -l ) -eq 0 ]; then
+    #    sudo sed -i "s/\-czvf/\-cvf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #    sudo sed -i "s/\-czf/\-cf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #fi
   fi  
 #    loaderdisk=$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
     homesize=$(du -sh /home/tc | awk '{print $1}')
@@ -2826,14 +2826,12 @@ function backuploader() {
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
 
-        cecho y "Backing up files to /mnt/${tcrppart}/mydata.tgz Done."
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cvf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        cecho y " /mnt/${tcrppart}/mydata.tgz Done."
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cvf - | pigz -p ${thread} > /dev/shm/mydata.tgz 2>/dev/null
         sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
-#        if filetool.sh -b ${loaderdisk}3; then
-#            echo ""
-#        else
-#            echo "Error: Couldn't backup files"
-#        fi
+        if [ $? -ne 0 ]; then
+            echo "Error: Couldn't backup files"
+        fi
     else
         echo "OK, keeping last status"
     fi
