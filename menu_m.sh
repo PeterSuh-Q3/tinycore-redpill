@@ -28,7 +28,6 @@ function readanswer() {
 }
  
 function restart() {
-    (sync &)
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
@@ -2307,7 +2306,7 @@ while true; do
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
-    e) sync && writebackcache && sudo poweroff ;;
+    e) writebackcache && sudo poweroff ;;
   esac
 done
 
