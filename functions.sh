@@ -2836,7 +2836,6 @@ function backuploader() {
         if [ $? -ne 0 ]; then
             echo "Error: Couldn't backup files"
         fi
-        (sync &)
     else
         echo "OK, keeping last status"
     fi
