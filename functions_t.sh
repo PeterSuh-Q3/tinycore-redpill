@@ -2825,12 +2825,15 @@ function backuploader() {
                 echo "File not found, skipping: /$pattern" >&2
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
-        
-        if filetool.sh -b ${loaderdisk}3; then
-            echo ""
-        else
-            echo "Error: Couldn't backup files"
-        fi
+
+        cecho y "Backing up files to /mnt/${tcrppart}/mydata.tgz Done."
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cvf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
+#        if filetool.sh -b ${loaderdisk}3; then
+#            echo ""
+#        else
+#            echo "Error: Couldn't backup files"
+#        fi
     else
         echo "OK, keeping last status"
     fi
