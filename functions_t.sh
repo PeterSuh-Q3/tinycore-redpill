@@ -3588,9 +3588,9 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
             if [ -f ${patfile} ]; then
                 echo "Found ${patfile}, moving to cache directory : ${local_cache} "
                 if [ "$FRKRNL" = "NO" ]; then
-                    dd if=${patfile} of=${local_cache} conv=fsync status=progress && rm -vf /home/tc/redpill-load/cache/*.pat                
+                    dd if=${patfile} of=${local_cache}/${patfile} conv=fsync status=progress && rm -vf /home/tc/redpill-load/cache/*.pat                
                 else
-                    sudo dd if=${patfile} of=${local_cache} conv=fsync status=progress && sudo rm -vf /home/tc/redpill-load/cache/*.pat
+                    sudo dd if=${patfile} of=${local_cache}/${patfile} conv=fsync status=progress && sudo rm -vf /home/tc/redpill-load/cache/*.pat
                 fi
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
