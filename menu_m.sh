@@ -32,13 +32,17 @@ function restart() {
     read -n 1 -s  # Wait for a key press
     clear
     sudo reboot
+    writebackcache
 }
 
-function restartx() {
-    echo "X window needs to be restarted. Press any key to restart x window..."
-    read answer
-    clear
-    { kill $(cat /tmp/.X${DISPLAY:1:1}-lock) ; sleep 2 >/dev/tty0 ; startx >/dev/tty0 ; } &
+function writebackcache() {
+    sync
+    while true; do
+      clear
+      grep -E 'Dirty|Writeback' /proc/meminfo
+      echo "Writing data that has not yet been written to disk (data waiting in the cache)."
+      sleep 1
+    done
 }
 
 function installtcz() {
@@ -2295,7 +2299,7 @@ while true; do
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
-    e) sudo poweroff ;;
+    e) sudo poweroff && writebackcache;;
   esac
 done
 
