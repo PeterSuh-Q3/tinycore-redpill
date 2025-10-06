@@ -3319,11 +3319,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
       if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
-        sudo cp /home/tc/friend/initrd-friend /mnt/${loaderdisk}1/
-        sudo cp /home/tc/friend/bzImage-friend /mnt/${loaderdisk}1/
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${loaderdisk}1/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${loaderdisk}1/bzImage-friend conv=fsync status=progress
       else
-        sudo cp /home/tc/friend/initrd-friend /mnt/${loaderdisk}3/
-        sudo cp /home/tc/friend/bzImage-friend /mnt/${loaderdisk}3/
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${loaderdisk}3/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${loaderdisk}3/bzImage-friend conv=fsync status=progress
       fi  
     fi
 
@@ -3523,7 +3523,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             (cd /home/tc/rd.temp && sudo find . | sudo cpio -o -H newc -R root:root >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
             (cd /home/tc/rd.temp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
-            sudo cp -v /tmp/initrd-dsm /mnt/${loaderdisk}3/initrd-dsm
+            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
         echo "Ramdisk in compressed "
@@ -3881,8 +3881,8 @@ function upgrademan() {
     changeautoupdate "off"
 
     if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
-        cp /home/tc/friend/initrd-friend /mnt/${tcrppart}/
-        cp /home/tc/friend/bzImage-friend /mnt/${tcrppart}/
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${tcrppart}/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${tcrppart}/bzImage-friend conv=fsync status=progress
         sudo rm -rf /home/tc/friend
     fi
 
