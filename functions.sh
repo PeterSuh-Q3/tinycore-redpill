@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.6"
+rploaderver="1.2.5.7"
 build="master"
 redpillmake="prod"
 
@@ -197,6 +197,7 @@ function history() {
     1.2.5.4 Apply separate patched buildroot to older AMD CPUs
     1.2.5.5 Separate build pre-option selection menu
     1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+    1.2.5.7 Dramatically improved USB backup speed
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -582,6 +583,8 @@ EOF
 # Separate build pre-option selection menu
 # 2025.09.01 v1.2.5.6 
 # Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
     
 function showlastupdate() {
     cat <<EOF
@@ -640,6 +643,9 @@ function showlastupdate() {
 
 # 2025.09.01 v1.2.5.6 
 # Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
 
 EOF
 }
@@ -2785,10 +2791,10 @@ function backuploader() {
         return
     fi
     
-    if [ $(cat /usr/bin/filetool.sh | grep pigz | wc -l ) -eq 0 ]; then
-        sudo sed -i "s/\-czvf/\-cvf \- \| pigz -p "${thread}" \>/g" /usr/bin/filetool.sh
-        sudo sed -i "s/\-czf/\-cf \- \| pigz -p "${thread}" \>/g" /usr/bin/filetool.sh
-    fi
+    #if [ $(cat /usr/bin/filetool.sh | grep pigz | wc -l ) -eq 0 ]; then
+    #    sudo sed -i "s/\-czvf/\-cvf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #    sudo sed -i "s/\-czf/\-cf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #fi
   fi  
 #    loaderdisk=$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
     homesize=$(du -sh /home/tc | awk '{print $1}')
@@ -2799,8 +2805,6 @@ function backuploader() {
     echo "Should i update the $loaderdisk with your current files [Yy/Nn]"
     readanswer
     if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
-        echo -n "Backing up home files to $loaderdisk : "
-
         # Define the path to the file
         FILE_PATH="/opt/.filetool.lst"
 
@@ -2825,10 +2829,11 @@ function backuploader() {
                 echo "File not found, skipping: /$pattern" >&2
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
-        
-        if filetool.sh -b ${loaderdisk}3; then
-            echo ""
-        else
+
+        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
+        if [ $? -ne 0 ]; then
             echo "Error: Couldn't backup files"
         fi
     else
