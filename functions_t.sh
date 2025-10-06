@@ -2805,8 +2805,6 @@ function backuploader() {
     echo "Should i update the $loaderdisk with your current files [Yy/Nn]"
     readanswer
     if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
-        echo -n "Backing up home files to $loaderdisk : "
-
         # Define the path to the file
         FILE_PATH="/opt/.filetool.lst"
 
@@ -2832,7 +2830,7 @@ function backuploader() {
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
 
-        cecho y " /mnt/${tcrppart}/mydata.tgz Done."
+        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cvf - | pigz -p ${thread} > /dev/shm/mydata.tgz 2>/dev/null
         sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
         if [ $? -ne 0 ]; then
