@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.6"
+rploaderver="1.2.5.7"
 build="master"
 redpillmake="prod"
 
@@ -197,6 +197,7 @@ function history() {
     1.2.5.4 Apply separate patched buildroot to older AMD CPUs
     1.2.5.5 Separate build pre-option selection menu
     1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+    1.2.5.7 Dramatically improved USB backup speed
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -582,6 +583,8 @@ EOF
 # Separate build pre-option selection menu
 # 2025.09.01 v1.2.5.6 
 # Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
     
 function showlastupdate() {
     cat <<EOF
@@ -640,6 +643,9 @@ function showlastupdate() {
 
 # 2025.09.01 v1.2.5.6 
 # Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
 
 EOF
 }
