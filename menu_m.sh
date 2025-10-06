@@ -32,16 +32,24 @@ function restart() {
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
-    sudo reboot
     writebackcache
+    sudo reboot
 }
 
 function writebackcache() {
     while true; do
-      clear
-      grep -E 'Dirty|Writeback' /proc/meminfo
-      echo "Writing data that has not yet been written to disk (data waiting in the cache)."
-      sleep 1
+        clear
+        grep -E 'Dirty|Writeback:' /proc/meminfo
+        echo "Writing data that has not yet been written to disk (data waiting in the cache)."
+        
+        writeback_kb=$(grep '^Writeback:' /proc/meminfo | awk '{print $2}')
+        
+        if [ "$writeback_kb" -le 3000 ]; then
+            echo "Writeback is below 3000 kB: $writeback_kb kB, exiting loop."
+            break
+        fi
+        
+        sleep 1
     done
 }
 
@@ -2299,7 +2307,7 @@ while true; do
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
-    e) sync && sudo poweroff && writebackcache;;
+    e) sync && writebackcache && sudo poweroff ;;
   esac
 done
 
