@@ -2832,7 +2832,7 @@ function backuploader() {
 
         cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
-        sudo cp -vf /dev/shm/mydata.tgz /mnt/${tcrppart}/mydata.tgz 
+        sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
         if [ $? -ne 0 ]; then
             echo "Error: Couldn't backup files"
         fi
