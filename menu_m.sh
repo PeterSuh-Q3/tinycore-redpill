@@ -28,6 +28,7 @@ function readanswer() {
 }
  
 function restart() {
+    sync
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
@@ -36,7 +37,6 @@ function restart() {
 }
 
 function writebackcache() {
-    sync
     while true; do
       clear
       grep -E 'Dirty|Writeback' /proc/meminfo
@@ -2299,7 +2299,7 @@ while true; do
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
-    e) sudo poweroff && writebackcache;;
+    e) sync && sudo poweroff && writebackcache;;
   esac
 done
 
