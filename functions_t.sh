@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.5.7"
+rploaderver="1.2.6.0"
 build="master"
 redpillmake="prod"
 
@@ -198,6 +198,7 @@ function history() {
     1.2.5.5 Separate build pre-option selection menu
     1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
     1.2.5.7 Dramatically improved USB backup speed
+    1.2.6.0 Add Support DSM 7.3.0-81180 Official Version
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -585,6 +586,8 @@ EOF
 # Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
 # 2025.10.06 v1.2.5.7 
 # Dramatically improved USB backup speed
+# 2025.10.08 v1.2.6.0 
+# Add Support DSM 7.3.0-81180 Official Version
     
 function showlastupdate() {
     cat <<EOF
@@ -646,6 +649,9 @@ function showlastupdate() {
 
 # 2025.10.06 v1.2.5.7 
 # Dramatically improved USB backup speed
+
+# 2025.10.08 v1.2.6.0 
+# Add Support DSM 7.3.0-81180 Official Version
 
 EOF
 }
@@ -845,6 +851,9 @@ function getvarsmshell()
         KVER="4.4.302"
         SUVP="-1"
     elif [ "$TARGET_REVISION" == "72806" ]; then
+        KVER="4.4.302"
+        SUVP="" 
+    elif [ "$TARGET_REVISION" == "81180" ]; then
         KVER="4.4.302"
         SUVP="" 
     else
