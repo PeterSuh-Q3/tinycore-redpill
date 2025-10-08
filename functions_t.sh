@@ -2390,11 +2390,11 @@ function addrequiredexts() {
 
 #m shell only
  #Use user define dts file instaed of dtbpatch ext now
-    if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "r1000" ]; then
-        echo "For user define dts file instaed of dtbpatch ext"
-        patchdtc
-        echo "Patch dtc is superseded by fbelavenuto dtbpatch"
-    fi
+    #if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "r1000" ]; then
+    #    echo "For user define dts file instaed of dtbpatch ext"
+    #    patchdtc
+    #    echo "Patch dtc is superseded by fbelavenuto dtbpatch"
+    #fi
     
 }
 
