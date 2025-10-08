@@ -3244,8 +3244,8 @@ checkmachine
     [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
 
     [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
-#st "extensions" "Extensions collection" "Extensions collection..."
-#    addrequiredexts
+st "extensions" "Extensions collection" "Extensions collection..."
+    addrequiredexts
 st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
