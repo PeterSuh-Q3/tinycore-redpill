@@ -3483,14 +3483,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
         if [ "$TARGET_REVISION" == "81180" ]; then
-            sudo sed -i '/^echo "START"/a\
-            \
-            mknod -m 0666 /dev/console c 1 3
-            \
-            echo "[INIT] Waiting 190 seconds for devices to settle..."
-            \
-            sleep 190
-            ' /home/tc/rd.temp/linuxrc.syno
+            sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3 && echo "[INIT] Waiting 190 seconds for devices to settle..." && sleep 190' /home/tc/rd.temp/linuxrc.syno
         else
             sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
         fi
