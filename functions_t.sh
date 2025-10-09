@@ -3514,9 +3514,9 @@ while [ $MAX_WAIT -gt 0 ]; do
 done
 EOF
             chmod +x /home/tc/rd.temp/nic-wait-snippet.sh
-            ls -l /home/tc/rd.temp/nic-wait-snippet.sh
-            cat /home/tc/rd.temp/nic-wait-snippet.sh
-            sudo sed -i '/^echo "START/a \\nnic-wait-snippet.sh' /home/tc/rd.temp/linuxrc.syno
+            #ls -l /home/tc/rd.temp/nic-wait-snippet.sh
+            #cat /home/tc/rd.temp/nic-wait-snippet.sh
+            sudo sed -i '/^echo "START/a \\n./nic-wait-snippet.sh' /home/tc/rd.temp/linuxrc.syno
         else
             sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
         fi
