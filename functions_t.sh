@@ -3482,11 +3482,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
-sudo sed -i '/^echo "START"/a\
-mknod -m 0666 /dev/console c 1 3
-echo "[INIT] Waiting 190 seconds for devices to settle..."
-sleep 190
-' /home/tc/rd.temp/linuxrc.syno
+        sudo sed -i \
+          -e '/^echo "START"/a\mknod -m 0666 /dev/console c 1 3' \
+          -e '/^echo "START"/a\echo "[INIT] Waiting 190 seconds for devices to settle..."' \
+          -e '/^echo "START"/a\sleep 190' \
+          /home/tc/rd.temp/linuxrc.syno
         #sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
 
         #[ ! -d /home/tc/rd.temp/usr/lib/firmware ] && sudo mkdir /home/tc/rd.temp/usr/lib/firmware
