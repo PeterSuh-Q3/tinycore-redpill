@@ -3487,6 +3487,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
           -e '/^echo "START"/a\echo "[INIT] Waiting 190 seconds for devices to settle..."' \
           -e '/^echo "START"/a\sleep 190' \
           /home/tc/rd.temp/linuxrc.syno
+        sudo cat /home/tc/rd.temp/linuxrc.syno  
         #sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
 
         #[ ! -d /home/tc/rd.temp/usr/lib/firmware ] && sudo mkdir /home/tc/rd.temp/usr/lib/firmware
