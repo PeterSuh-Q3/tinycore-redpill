@@ -3483,7 +3483,29 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
         if [ "$TARGET_REVISION" == "81180" ]; then
-            sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3 && echo "[INIT] Waiting 190 seconds for devices to settle..." && sleep 190' /home/tc/rd.temp/linuxrc.syno
+sudo sed -i '/^echo "START"$/a\
+mknod -m 0666 /dev/console c 1 3
+echo "[INIT] Waiting up to 190 seconds for NICs to get permanent MAC..."
+MAX_WAIT=190
+while [ $MAX_WAIT -gt 0 ]; do
+  ALL_READY=true
+  for dev in $(ls /sys/class/net | grep -v "^lo$"); do
+    [ -e "/sys/class/net/$dev/addr_assign_type" ] || continue
+    TYPE=$(cat /sys/class/net/$dev/addr_assign_type)
+    if [ "$TYPE" != "0" ]; then
+      ALL_READY=false
+      break
+    fi
+  done
+  if [ "$ALL_READY" = true ]; then
+    echo "[INIT] All NICs ready with permanent MAC. Continuing boot..."
+    break
+  fi
+  echo "[INIT] Waiting... $MAX_WAIT sec left"
+  sleep 1
+  MAX_WAIT=$((MAX_WAIT - 1))
+done
+' /home/tc/rd.temp/linuxrc.syno
         else
             sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
         fi
