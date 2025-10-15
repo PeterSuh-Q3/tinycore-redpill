@@ -3485,6 +3485,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "$TARGET_REVISION" == "81180" ]; then
 
 cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
+mount -t devtmpfs devtmpfs /dev
 mknod -m 0666 /dev/console c 1 3
 echo "[INIT] Waiting up to 190 seconds for NICs (addr_assign_type=0)..."
 MAX_WAIT=190
