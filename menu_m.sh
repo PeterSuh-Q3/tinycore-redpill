@@ -545,7 +545,7 @@ function setSuggest() {
     FS3400)      platform="broadwell";bay="RACK_24_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;    
     RS18017xs+)  platform="broadwell";bay="RACK_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     RS3617RPxs)  platform="broadwell";bay="RACK_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
-    RS3617xs+)   platform="broadwell";bay="RACK_12_Bay";mcpu="KERNEL 3.10-1230v2";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
+    RS3617xs+)   platform="broadwell";bay="RACK_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     RS4017xs+)   platform="broadwell";bay="RACK_16_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     FS3410)      platform="broadwellnkv2(DT)";bay="RACK_24_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
     SA3410)      platform="broadwellnkv2(DT)";bay="RACK_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}16}\"";;
