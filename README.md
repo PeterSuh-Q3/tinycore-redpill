@@ -20,9 +20,8 @@ The storage panel size shown (Drive Infomation) in the Storage Manager overview 
 
 <img width="604" height="259" alt="스크린샷 2025-07-27 오전 10 16 57" src="https://github.com/user-attachments/assets/d55a4567-b01b-4781-a02b-e940295836b0" />
 
-
-https://github.com/PeterSuh-Q3/synology-package-builder/releases
-
+https://github.com/PeterSuh-Q3/ChangePanelSize/releases
+https://github.com/PeterSuh-Q3/SynoSmartInfo/releases
 
 <img width="784" height="418" alt="스크린샷 2025-07-27 오전 10 17 46" src="https://github.com/user-attachments/assets/643af338-479d-4b34-95f0-df033f254eb5" />
 
