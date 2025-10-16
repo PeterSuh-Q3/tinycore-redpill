@@ -3442,9 +3442,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     while read -r KEY VALUE; do
       SYNOINFO["$KEY"]="$VALUE"
     done < <(jq -r '.synoinfo | to_entries[] | "\(.key) \(.value)"' "${userconfigfile}")
+
+    rdtemp="/home/tc/rd.temp"
     
-    [ ! -d /home/tc/rd.temp ] && mkdir /home/tc/rd.temp
-    [ -d /home/tc/rd.temp ] && cd /home/tc/rd.temp
+    [ ! -d $rdtemp ] && mkdir $rdtemp
+    [ -d $rdtemp ] && cd $rdtemp
     RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${BUILD}/config.json | jq -r -e ' .extra .compress_rd')
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
@@ -3476,36 +3478,29 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     for N in $(seq 0 7); do
       echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
     done
-    sudo cp -vf /home/tc/ifcfg-eth* /home/tc/rd.temp/etc/sysconfig/network-scripts/
+    sudo cp -vf /home/tc/ifcfg-eth* $rdtemp/etc/sysconfig/network-scripts/
 
     # SA6400 patches for JOT Mode
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
-        sudo sed -i 's#/dev/console#/var/log/lrc#g' /home/tc/rd.temp/usr/bin/busybox
+        sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
         if [ "$TARGET_REVISION" == "81180" ]; then
 
 cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
-mknod -m 0666 /dev/console c 1 3
 echo "[INIT] Waiting up to 190 seconds for NICs (addr_assign_type=0)..."
 MAX_WAIT=190
 while [ $MAX_WAIT -gt 0 ]; do
   ALL_READY=true
   for dev in $(ls /sys/class/net | grep -v "^lo$"); do
     [ -e "/sys/class/net/$dev/device" ] || continue
-    if [ -e "/sys/class/net/$dev/addr_assign_type" ]; then
-      TYPE=$(cat "/sys/class/net/$dev/addr_assign_type")
-      if [ "$TYPE" != "0" ]; then
-        ALL_READY=false
-        break
-      fi
-    else
-      MAC=$(cat "/sys/class/net/$dev/address" 2>/dev/null)
-      echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && \
-      [ "$MAC" != "00:00:00:00:00:00" ] || { ALL_READY=false; break; }
-    fi
+    MAC=$(cat "/sys/class/net/$dev/address" 2>/dev/null)
+    echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && \
+    [ "$MAC" != "00:00:00:00:00:00" ] || { ALL_READY=false; break; }
   done
   if [ "$ALL_READY" = true ]; then
     echo "[INIT] All NICs ready. Continuing boot..."
+    cat "/sys/class/net/$dev/address
+    ip a
     break
   fi
   echo "[INIT] Waiting... $MAX_WAIT sec left"
@@ -3513,45 +3508,43 @@ while [ $MAX_WAIT -gt 0 ]; do
   MAX_WAIT=$((MAX_WAIT - 1))
 done
 EOF
-            chmod +x /home/tc/rd.temp/nic-wait-snippet.sh
-            #ls -l /home/tc/rd.temp/nic-wait-snippet.sh
-            #cat /home/tc/rd.temp/nic-wait-snippet.sh
-            sudo sed -i '/^echo "START/a \\n./nic-wait-snippet.sh' /home/tc/rd.temp/linuxrc.syno
-        else
-            sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' /home/tc/rd.temp/linuxrc.syno     
+            chmod +x $rdtemp/nic-wait-snippet.sh
+            #ls -l $rdtemp/nic-wait-snippet.sh
+            #cat $rdtemp/nic-wait-snippet.sh
         fi
-        sudo cat /home/tc/rd.temp/linuxrc.syno  
+        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
+        sudo cat $rdtemp/linuxrc.syno  
 
-        #[ ! -d /home/tc/rd.temp/usr/lib/firmware ] && sudo mkdir /home/tc/rd.temp/usr/lib/firmware
+        #[ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
         #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.0.1.0/usr.tgz -o /tmp/usr.tgz
-        #sudo tar xvfz /tmp/usr.tgz -C /home/tc/rd.temp
+        #sudo tar xvfz /tmp/usr.tgz -C $rdtemp
 
-        #sudo tar xvfz /home/tc/rd.temp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C /home/tc/rd.temp/usr/lib/modules/        
-        #sudo tar xvfz /home/tc/rd.temp/exts/all-modules/firmware.tgz -C /home/tc/rd.temp/usr/lib/firmware        
+        #sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
+        #sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware        
         #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/addons.tgz -o /tmp/addons.tgz
-        #sudo tar xvfz /tmp/addons.tgz -C /home/tc/rd.temp
+        #sudo tar xvfz /tmp/addons.tgz -C $rdtemp
         #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/modules.tgz -o /tmp/modules.tgz
-        #sudo tar xvfz /tmp/modules.tgz -C /home/tc/rd.temp/usr/lib/modules/
-        #sudo tar xvfz /home/tc/rd.temp/exts/all-modules/sbin.tgz -C /home/tc/rd.temp
-        #sudo cp -vf /home/tc/tools/dtc /home/tc/rd.temp/usr/bin
-        #sudo curl -kL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/rr/linuxrc.syno.impl -o /home/tc/rd.temp/linuxrc.syno.impl        
+        #sudo tar xvfz /tmp/modules.tgz -C $rdtemp/usr/lib/modules/
+        #sudo tar xvfz $rdtemp/exts/all-modules/sbin.tgz -C $rdtemp
+        #sudo cp -vf /home/tc/tools/dtc $rdtemp/usr/bin
+        #sudo curl -kL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/rr/linuxrc.syno.impl -o $rdtemp/linuxrc.syno.impl        
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
-        sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "/home/tc/rd.temp/usr/syno/share/environments.sh"
+        sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
-    sudo chmod +x /home/tc/rd.temp/usr/sbin/modprobe    
+    sudo chmod +x $rdtemp/usr/sbin/modprobe    
 
     # add dummy loop0 test
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/boot-image-dummy-sda.img.gz -o /home/tc/rd.temp/root/boot-image-dummy-sda.img.gz
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/load-sda-first.sh -o /home/tc/rd.temp/root/load-sda-first.sh
-    #sudo chmod +x /home/tc/rd.temp/root/load-sda-first.sh 
-    #sudo mkdir -p /home/tc/rd.temp/etc/udev/rules.d
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/etc/udev/rules.d/99-custom.rules -o /home/tc/rd.temp/etc/udev/rules.d/99-custom.rules
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o /home/tc/rd.temp/usr/lib/libsmartcols.so.1
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o /home/tc/rd.temp/usr/sbin/losetup
-    #sudo chmod +x /home/tc/rd.temp/usr/sbin/losetup
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/boot-image-dummy-sda.img.gz -o $rdtemp/root/boot-image-dummy-sda.img.gz
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/load-sda-first.sh -o $rdtemp/root/load-sda-first.sh
+    #sudo chmod +x $rdtemp/root/load-sda-first.sh 
+    #sudo mkdir -p $rdtemp/etc/udev/rules.d
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/etc/udev/rules.d/99-custom.rules -o $rdtemp/etc/udev/rules.d/99-custom.rules
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o $rdtemp/usr/lib/libsmartcols.so.1
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o $rdtemp/usr/sbin/losetup
+    #sudo chmod +x $rdtemp/usr/sbin/losetup
 
-    RAMDISK_PATH="/home/tc/rd.temp"
+    RAMDISK_PATH="$rdtemp"
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"    
     echo -n "."
@@ -3567,17 +3560,17 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         echo "Ramdisk in not compressed "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd /home/tc/rd.temp && sudo find . | sudo cpio -o -H newc -R root:root >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
-            (cd /home/tc/rd.temp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
         echo "Ramdisk in compressed "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd /home/tc/rd.temp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
-            (cd /home/tc/rd.temp && find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         fi
     fi
 
@@ -3604,7 +3597,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
 
-    sudo rm -rf /home/tc/rd.temp /home/tc/friend /home/tc/cache/*.pat
+    sudo rm -rf $rdtemp /home/tc/friend /home/tc/cache/*.pat
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
         msgnormal "Skip Caching files on xTCRP with Synoboot Injected."
