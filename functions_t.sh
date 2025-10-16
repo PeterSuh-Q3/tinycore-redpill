@@ -3518,7 +3518,7 @@ EOF
             chmod +x $rdtemp/nic-wait-snippet.sh
             #ls -l $rdtemp/nic-wait-snippet.sh
             #cat $rdtemp/nic-wait-snippet.sh
-            sudo sed -i '/^echo "START/a \\n./nic-wait-snippet.sh' $rdtemp/linuxrc.syno
+            sudo sed -i '/^echo "START/a \\n/nic-wait-snippet.sh' $rdtemp/linuxrc.syno
         else
             sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno     
         fi
