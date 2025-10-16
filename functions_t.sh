@@ -3499,7 +3499,7 @@ while [ $MAX_WAIT -gt 0 ]; do
   done
   if [ "$ALL_READY" = true ]; then
     echo "[INIT] All NICs ready. Continuing boot..."
-    cat "/sys/class/net/$dev/address
+    cat /sys/class/net/$dev/address
     ip a
     break
   fi
