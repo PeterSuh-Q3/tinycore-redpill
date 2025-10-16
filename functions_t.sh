@@ -3573,7 +3573,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
 
-    sudo rm -rf /home/tc/friend /home/tc/cache/*.pat # $rdtemp
+    sudo rm -rf /home/tc/friend /home/tc/cache/*.pat $rdtemp
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
         msgnormal "Skip Caching files on xTCRP with Synoboot Injected."
