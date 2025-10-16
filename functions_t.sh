@@ -3487,26 +3487,25 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "$TARGET_REVISION" == "81180" ]; then
 
 cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
-echo "[INIT] Waiting up to 190 seconds for NICs (addr_assign_type=0)..."
+echo "[INIT] Waiting up to 190 seconds for eth0 NIC (addr_assign_type=0)..."
 MAX_WAIT=190
 while [ $MAX_WAIT -gt 0 ]; do
-  ALL_READY=true
-  for dev in $(ls /sys/class/net | grep -v "^lo$"); do
-    [ -e "/sys/class/net/$dev/device" ] || continue
-    MAC=$(cat "/sys/class/net/$dev/address" 2>/dev/null)
-    echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && \
-    [ "$MAC" != "00:00:00:00:00:00" ] || { ALL_READY=false; break; }
-  done
-  if [ "$ALL_READY" = true ]; then
-    echo "[INIT] All NICs ready. Continuing boot..."
-    cat /sys/class/net/$dev/address
-    ip a
-    break
+  if [ -e "/sys/class/net/eth0" ]; then
+    MAC=$(cat "/sys/class/net/eth0/address" 2>/dev/null)
+    if echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && [ "$MAC" != "00:00:00:00:00:00" ]; then
+      echo "[INIT] eth0 is ready with MAC: $MAC"
+      ip a show eth0
+      break
+    fi
   fi
   echo "[INIT] Waiting... $MAX_WAIT sec left"
   sleep 1
   MAX_WAIT=$((MAX_WAIT - 1))
 done
+
+if [ $MAX_WAIT -le 0 ]; then
+  echo "[INIT] Warning: eth0 NIC did not become ready within timeout."
+fi
 EOF
             chmod +x $rdtemp/nic-wait-snippet.sh
             #ls -l $rdtemp/nic-wait-snippet.sh
