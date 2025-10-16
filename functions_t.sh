@@ -3485,7 +3485,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "$TARGET_REVISION" == "81180" ]; then
 
 cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
-mount -t devtmpfs devtmpfs /dev
 mknod -m 0666 /dev/console c 1 3
 echo "[INIT] Waiting up to 190 seconds for NICs (addr_assign_type=0)..."
 MAX_WAIT=190
@@ -3824,7 +3823,7 @@ function getredpillko() {
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
-        TAG="25.10.12" #"${LATESTURL##*/}"
+        TAG="${LATESTURL##*/}"
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
