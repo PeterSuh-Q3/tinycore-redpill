@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.0"
+rploaderver="1.2.6.1"
 build="master"
 redpillmake="prod"
 
@@ -199,6 +199,7 @@ function history() {
     1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
     1.2.5.7 Dramatically improved USB backup speed
     1.2.6.0 Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+    1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -588,6 +589,8 @@ EOF
 # Dramatically improved USB backup speed
 # 2025.10.08 v1.2.6.0 
 # Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+# 2025.10.22 v1.2.6.1 
+# Loader image size is distributed in two sizes: 2GB and 4GB.
     
 function showlastupdate() {
     cat <<EOF
@@ -652,6 +655,9 @@ function showlastupdate() {
 
 # 2025.10.08 v1.2.6.0 
 # Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+
+# 2025.10.22 v1.2.6.1 
+# Loader image size is distributed in two sizes: 2GB and 4GB.
 
 EOF
 }
