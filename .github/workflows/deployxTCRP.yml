@@ -1,4 +1,4 @@
-name: release tags xtcrp (2GB)
+name: release tags xtcrp (2GB/4GB)
 
 on:
   release:
@@ -161,7 +161,7 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
-          sudo losetup -d ${LOOPX}
+
           gzip -c tinycore-redpill.${VERSION}.xtcrp.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vmdk
           gzip -c tinycore-redpill.${VERSION}.xtcrp.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vmdk.gz
@@ -242,10 +242,12 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
-          sudo losetup -d ${LOOPX}
+
           gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp-4GB.img tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk
           gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk.gz
+
+          sudo losetup -d ${LOOPX}
           
           ls -ltr /opt/output
           
