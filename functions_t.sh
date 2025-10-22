@@ -3312,10 +3312,12 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
-        if [ "${BUS}" != "usb" ]; then
-            DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
-            sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
-        fi
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            if [ "${BUS}" != "usb" ]; then
+                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+                sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
+            fi
+        fi    
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
         sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
     fi
@@ -3431,8 +3433,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     
     msgwarning "Updated user_config with USB Command Line : $USB_LINE"
     json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
-    msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
-    json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
+        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    fi    
 
     sudo cp $userconfigfile /mnt/${loaderdisk}3/
 
