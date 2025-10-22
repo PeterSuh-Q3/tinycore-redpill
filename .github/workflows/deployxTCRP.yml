@@ -85,7 +85,8 @@ jobs:
 
           echo "Using TAG: ${RELEASE_TAG}"
           sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
-          
+
+          # 2GB
           dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp.img bs=1M seek=1862 count=0
           echo "Prepare partitions"
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
@@ -164,8 +165,88 @@ jobs:
           gzip -c tinycore-redpill.${VERSION}.xtcrp.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vmdk
           gzip -c tinycore-redpill.${VERSION}.xtcrp.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vmdk.gz
-          #qemu-img convert -f raw -O vhdx -o subformat=dynamic -p tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vhdx
-          #gzip -c tinycore-redpill.${VERSION}.xtcrp.vhdx > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vhdx.gz
+
+          # 4GB
+          
+          dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp-4GB.img bs=1M seek=3724 count=0
+          echo "Prepare partitions"
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          
+          LOOPZ=$(sudo losetup -f)
+          sudo losetup -P ${LOOPZ} tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          echo "LOOPZ = ${LOOPZ}"
+          sudo fdisk -l ${LOOPZ}
+          
+          ## Format 3rd partition with vfat ##
+          #sudo mkfs.vfat -F16 ${LOOPZ}p1
+          #sudo mkfs.vfat -F16 ${LOOPZ}p2
+          sudo mkfs.vfat -i 6234C863 -F16 ${LOOPZ}p3
+          
+          ## Copy 1st,2nd,3rd partition from source to target (with grub 2.12 install) ##
+          sudo dd if="${LOOPX}p1" of="${LOOPZ}p1"
+          sudo mkdir -p /mnt/tarp1
+          sudo mount ${LOOPZ}p1 /mnt/tarp1
+
+          sudo rm -rf /mnt/tarp1/boot/grub/locale
+
+          export GRUB_VERSION=2.12
+          sudo grub-install --version
+          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
+          sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB          
+
+          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grub.cfg /mnt/tarp1/boot/grub/grub.cfg
+
+          ls -ltr /mnt/tarp1/boot/grub/x86_64-efi/
+          echo "Copy and check EFI files"
+          ls -ltr /mnt/tarp1/EFI/BOOT/
+          
+          sudo cat /mnt/tarp1/EFI/BOOT/grub.cfg
+          sudo blkid "${LOOPX}p1"
+          sudo blkid "${LOOPZ}p1"
+
+          ##  Copy 2nd partition from source to target ##
+          sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
+          
+          ## Copy 3rd partition from source to target ##
+          sudo mkdir -p /mnt/p3
+          sudo mount ${LOOPX}p3 /mnt/p3
+          sudo mkdir -p /mnt/tarp3
+          sudo mount ${LOOPZ}p3 /mnt/tarp3
+          cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
+          ls -ltr /mnt/tarp3
+          
+          ## add tinycore packages
+          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubbkg.png /mnt/tarp3/grubbkg.png
+          sudo cp -vf ${GITHUB_WORKSPACE}/xtcrp.tgz /mnt/tarp3/xtcrp.tgz
+          sudo cp -vf ${GITHUB_WORKSPACE}/xtcrp.tgz /mnt/tarp3/xtcrpb.tgz
+          sudo rm -rf /mnt/tarp3/cde          
+          sudo rm -f /mnt/tarp3/corepure64.gz
+          sudo rm -f /mnt/tarp3/vmlinuz64
+          sudo rm -f /mnt/tarp3/mydata.tgz
+
+          ## add friend gnu kernel
+          cd $GITHUB_WORKSPACE          
+          LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
+          FRTAG="${LATESTURL##*/}"
+          echo "FRIEND TAG is ${FRTAG}"        
+          curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
+          -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
+          -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/initrd-friend"
+          sudo cp -vf bzImage-friend /mnt/tarp3
+          sudo cp -vf initrd-friend /mnt/tarp3
+          
+          ##  Finalize ##
+          sudo umount /mnt/p3
+          sudo umount /mnt/tarp1
+          sudo umount /mnt/tarp3
+          sudo losetup -d ${LOOPZ}
+          sudo losetup -d ${LOOPX}
+          gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.img.gz
+          qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp-4GB.img tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk
+          gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk.gz
+          
           ls -ltr /opt/output
           
       - name: Upload MshellImage-${{ steps.get-version.outputs.VERSION }}
