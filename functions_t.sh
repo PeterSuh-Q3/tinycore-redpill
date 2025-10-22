@@ -3436,6 +3436,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
         msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
         json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    else
+        msgwarning "Starting with kernel 5, the unused sata_line element is removed."
+        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
     fi    
 
     sudo cp $userconfigfile /mnt/${loaderdisk}3/
