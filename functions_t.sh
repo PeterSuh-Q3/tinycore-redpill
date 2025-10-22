@@ -3345,49 +3345,53 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
-    SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+        SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
+        if [ -n "$SATA_DOM" ]; then
+            SATA_LINE="synoboot_satadom=${SATA_DOM} "
+        fi        
+    fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
         USB_LINE="${USB_LINE} nox2apic"
-        SATA_LINE="${SATA_LINE} nox2apic"    
     fi
 
     if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
         echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
         USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
-        SATA_LINE="${SATA_LINE} modprobe.blacklist=mpt3sas"
     fi
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
             USB_LINE="${USB_LINE} disable_mtrr_trim=1"
-            SATA_LINE="${SATA_LINE} disable_mtrr_trim=1"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
             #        USB_LINE="${USB_LINE} intel_iommu=igfx_off "
-            #        SATA_LINE="${SATA_LINE} intel_iommu=igfx_off "
             #    fi   
             #fi    
     
             if [ -d "/home/tc/redpill-load/custom/extensions/nvmesystem" ]; then
                 echo "Add configuration pci=nommconf for nvmesystem addon"
                 USB_LINE="${USB_LINE} pci=nommconf"
-                SATA_LINE="${SATA_LINE} pci=nommconf"
             fi
         fi
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
         USB_LINE="${USB_LINE} syno_hw_version=${MODEL} "
-        SATA_LINE="${SATA_LINE} syno_hw_version=${MODEL} "
     fi    
 
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE=${USB_LINE}
     else
-        CMD_LINE=${SATA_LINE}
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            CMD_LINE=${USB_LINE}+" "+${SATA_LINE}
+        else
+            CMD_LINE=${USB_LINE}
+        fi
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
