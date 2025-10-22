@@ -86,7 +86,7 @@ jobs:
           echo "Using TAG: ${RELEASE_TAG}"
           sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
           
-          dd if=/dev/zero of=tinycore-redpill.${VERSION}.m-shell-4GB.img bs=1M seek=2048 count=0
+          dd if=/dev/zero of=tinycore-redpill.${VERSION}.m-shell-4GB.img bs=1M seek=3724 count=0
           echo "PREPARE partitions"
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.m-shell-4GB.img
           
