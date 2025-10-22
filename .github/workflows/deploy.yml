@@ -153,7 +153,7 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
-          sudo losetup -d ${LOOPX}
+
           gzip -c tinycore-redpill.${VERSION}.m-shell.img > /opt/output/tinycore-redpill.${VERSION}.m-shell.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.m-shell.img tinycore-redpill.${VERSION}.m-shell.vmdk
           gzip -c tinycore-redpill.${VERSION}.m-shell.vmdk > /opt/output/tinycore-redpill.${VERSION}.m-shell.vmdk.gz
@@ -225,11 +225,12 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
-          sudo losetup -d ${LOOPX}
+
           gzip -c tinycore-redpill.${VERSION}.m-shell-4GB.img > /opt/output/tinycore-redpill.${VERSION}.m-shell-4GB.img.gz
           qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.m-shell-4GB.img tinycore-redpill.${VERSION}.m-shell-4GB.vmdk
           gzip -c tinycore-redpill.${VERSION}.m-shell-4GB.vmdk > /opt/output/tinycore-redpill.${VERSION}.m-shell-4GB.vmdk.gz
 
+          sudo losetup -d ${LOOPX}
           
           ls -ltr /opt/output
           
