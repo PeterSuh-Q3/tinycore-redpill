@@ -1,4 +1,4 @@
-name: release tags mshell
+name: release tags mshell (2GB)
 
 on:
   release:
@@ -87,7 +87,9 @@ jobs:
           sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
           
           dd if=/dev/zero of=tinycore-redpill.${VERSION}.m-shell.img bs=1M seek=2048 count=0
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1853M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
+          echo "PREPARE partitions"
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
+          
           echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
           #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
           
