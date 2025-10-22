@@ -1,4 +1,4 @@
-name: release tags mshell (2GB)
+name: release tags mshell (2GB/4GB)
 
 on:
   release:
