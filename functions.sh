@@ -3312,10 +3312,12 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
-        if [ "${BUS}" != "usb" ]; then
-            DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
-            sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
-        fi
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            if [ "${BUS}" != "usb" ]; then
+                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+                sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
+            fi
+        fi    
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
         sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
     fi
@@ -3343,49 +3345,53 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
-    SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+        SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
+        if [ -n "$SATA_DOM" ]; then
+            SATA_LINE="synoboot_satadom=${SATA_DOM} "
+        fi        
+    fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
         USB_LINE="${USB_LINE} nox2apic"
-        SATA_LINE="${SATA_LINE} nox2apic"    
     fi
 
     if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
         echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
         USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
-        SATA_LINE="${SATA_LINE} modprobe.blacklist=mpt3sas"
     fi
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
             USB_LINE="${USB_LINE} disable_mtrr_trim=1"
-            SATA_LINE="${SATA_LINE} disable_mtrr_trim=1"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
             #        USB_LINE="${USB_LINE} intel_iommu=igfx_off "
-            #        SATA_LINE="${SATA_LINE} intel_iommu=igfx_off "
             #    fi   
             #fi    
     
             if [ -d "/home/tc/redpill-load/custom/extensions/nvmesystem" ]; then
                 echo "Add configuration pci=nommconf for nvmesystem addon"
                 USB_LINE="${USB_LINE} pci=nommconf"
-                SATA_LINE="${SATA_LINE} pci=nommconf"
             fi
         fi
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
         USB_LINE="${USB_LINE} syno_hw_version=${MODEL} "
-        SATA_LINE="${SATA_LINE} syno_hw_version=${MODEL} "
     fi    
 
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE=${USB_LINE}
     else
-        CMD_LINE=${SATA_LINE}
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            CMD_LINE=${USB_LINE}+" "+${SATA_LINE}
+        else
+            CMD_LINE=${USB_LINE}
+        fi
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
@@ -3431,8 +3437,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     
     msgwarning "Updated user_config with USB Command Line : $USB_LINE"
     json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
-    msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
-    json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
+        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    else
+        msgwarning "Starting with kernel 5, the unused sata_line element is removed."
+        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
+    fi    
 
     sudo cp $userconfigfile /mnt/${loaderdisk}3/
 
