@@ -26,13 +26,33 @@ function readanswer() {
         esac
     done
 }
+
+function chk_filetime_n_backup() {
+  # 로그인 시각
+  login_time=$(who -u am i | awk '{print $3, $4}' | head -n1)
+  login_epoch=$(date -d "$login_time" +%s)
+  
+  # 파일 수정 시각
+  file_epoch=$(stat -c %Y "$userconfigfile")
+
+  if [ "$file_epoch" -gt "$login_epoch" ]; then
+    echo 'Y'|rploader backup
+  fi
+}
  
 function restart() {
+    chk_filetime_n_backup
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
     writebackcache
     sudo reboot
+}
+
+function byebye() {
+    chk_filetime_n_backup
+    writebackcache 
+    sudo poweroff
 }
 
 function writebackcache() {
@@ -2313,7 +2333,7 @@ while true; do
     l) langMenu ;;
     b) backup ;;
     r) restart ;;
-    e) writebackcache && sudo poweroff ;;
+    e) byebye ;;
   esac
 done
 
