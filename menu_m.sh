@@ -28,10 +28,12 @@ function readanswer() {
 }
 
 function chk_filetime_n_backup() {
-  # 로그인 시각
-  login_time=$(who -u am i | awk '{print $3, $4}' | head -n1)
-  login_epoch=$(date -d "$login_time" +%s)
-  
+  # 현재 시각 (epoch)
+  current_epoch=$(date +%s)
+  # uptime에서 부팅 후 경과 시간 추출 (초 단위)
+  uptime_seconds=$(awk '{print int($1)}' /proc/uptime)
+  # 로그인(부팅) 시각 계산
+  login_epoch=$((current_epoch - uptime_seconds))
   # 파일 수정 시각
   file_epoch=$(stat -c %Y "$userconfigfile")
 
