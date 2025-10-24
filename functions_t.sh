@@ -1654,6 +1654,30 @@ function readanswer() {
     done
 }        
 
+function sync_usb_line() {
+    # 현재 usb_line 추출
+    updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
+    
+    # extra_cmdline의 각 항목을 읽어서 처리
+    while IFS='=' read -r key value; do
+        if [ -z "$value" ] || [ "$value" = "null" ]; then
+            continue
+        fi
+        
+        if echo "$updated_usb_line" | grep -q " ${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/ ${key}=[^ ]*/ ${key}=${value}/g")
+        elif echo "$updated_usb_line" | grep -q "^${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/^${key}=[^ ]*/${key}=${value}/")
+        else
+            updated_usb_line="${updated_usb_line}${key}=${value} "
+        fi
+        
+    done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
+    
+    # JSON 파일 업데이트
+    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+}
+
 ###############################################################################
 # Write to json config file
 function writeConfigKey() {
@@ -1664,26 +1688,8 @@ function writeConfigKey() {
 
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile        
-        jq '
-          .general.usb_line = (
-            .general.usb_line as $usb_line |
-            .extra_cmdline |
-            to_entries |
-            reduce .[] as $item (
-              $usb_line;
-              if $item.value != "" then
-                if test("\\b" + $item.key + "=[^ ]*") then
-                  gsub("\\b" + $item.key + "=[^ ]*"; $item.key + "=" + $item.value)
-                else
-                  . + $item.key + "=" + $item.value + " "
-                end
-              else
-                .
-              end
-            )
-          )
-        ' "$userconfigfile" > "$userconfigfile.tmp" && mv "$userconfigfile.tmp" "$userconfigfile"
+        echo $jsonfile | jq . >$userconfigfile
+        sync_usb_line
         # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
         sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     else
