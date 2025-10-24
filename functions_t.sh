@@ -1664,7 +1664,26 @@ function writeConfigKey() {
 
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile
+        echo $jsonfile | jq . >$userconfigfile        
+        jq '
+          .general.usb_line = (
+            .general.usb_line as $usb_line |
+            .extra_cmdline |
+            to_entries |
+            reduce .[] as $item (
+              $usb_line;
+              if $item.value != "" then
+                if test("\\b" + $item.key + "=[^ ]*") then
+                  gsub("\\b" + $item.key + "=[^ ]*"; $item.key + "=" + $item.value)
+                else
+                  . + $item.key + "=" + $item.value + " "
+                end
+              else
+                .
+              end
+            )
+          )
+        ' "$userconfigfile" > "$userconfigfile.tmp" && mv "$userconfigfile.tmp" "$userconfigfile"
         # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
         sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     else
