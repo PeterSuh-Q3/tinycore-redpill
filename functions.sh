@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.1"
+rploaderver="1.2.6.2"
 build="master"
 redpillmake="prod"
 
@@ -199,7 +199,8 @@ function history() {
     1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
     1.2.5.7 Dramatically improved USB backup speed
     1.2.6.0 Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
-    1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB.
+    1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB
+    1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -590,7 +591,9 @@ EOF
 # 2025.10.08 v1.2.6.0 
 # Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
 # 2025.10.22 v1.2.6.1 
-# Loader image size is distributed in two sizes: 2GB and 4GB.
+# Loader image size is distributed in two sizes: 2GB and 4GB
+# 2025.10.24 v1.2.6.2 
+# When changing user_config.json, process cmd_line at once without loader build
     
 function showlastupdate() {
     cat <<EOF
@@ -657,7 +660,10 @@ function showlastupdate() {
 # Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
 
 # 2025.10.22 v1.2.6.1 
-# Loader image size is distributed in two sizes: 2GB and 4GB.
+# Loader image size is distributed in two sizes: 2GB and 4GB
+
+# 2025.10.24 v1.2.6.2 
+# When changing user_config.json, process cmd_line at once without loader build
 
 EOF
 }
@@ -1648,6 +1654,30 @@ function readanswer() {
     done
 }        
 
+function sync_usb_line() {
+    # 현재 usb_line 추출
+    updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
+    
+    # extra_cmdline의 각 항목을 읽어서 처리
+    while IFS='=' read -r key value; do
+        if [ -z "$value" ] || [ "$value" = "null" ]; then
+            continue
+        fi
+        
+        if echo "$updated_usb_line" | grep -q " ${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/ ${key}=[^ ]*/ ${key}=${value}/g")
+        elif echo "$updated_usb_line" | grep -q "^${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/^${key}=[^ ]*/${key}=${value}/")
+        else
+            updated_usb_line="${updated_usb_line}${key}=${value} "
+        fi
+        
+    done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
+    
+    # JSON 파일 업데이트
+    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+}
+
 ###############################################################################
 # Write to json config file
 function writeConfigKey() {
@@ -1659,6 +1689,7 @@ function writeConfigKey() {
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
+        sync_usb_line
         # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
         sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     else
