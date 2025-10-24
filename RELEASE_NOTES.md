@@ -1,1 +1,1 @@
-        1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB.
+        1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
