@@ -1690,8 +1690,6 @@ function writeConfigKey() {
         jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
         sync_usb_line
-        # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
-        sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     else
         echo "No values to update"
     fi
