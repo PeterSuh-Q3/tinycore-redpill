@@ -28,18 +28,21 @@ function readanswer() {
 }
 
 function chk_filetime_n_backup() {
-  # 현재 시각 (epoch)
-  current_epoch=$(date +%s)
-  # uptime에서 부팅 후 경과 시간 추출 (초 단위)
-  uptime_seconds=$(awk '{print int($1)}' /proc/uptime)
-  # 로그인(부팅) 시각 계산
-  login_epoch=$((current_epoch - uptime_seconds))
-  # 파일 수정 시각
-  file_epoch=$(stat -c %Y "$userconfigfile")
+  file1="$userconfigfile"
+  file2="/mnt/${tcrppart}/user_config.json"
 
-  if [ "$file_epoch" -gt "$login_epoch" ]; then
+  # md5sum 계산
+  md5_1=$(md5sum "$file1" | awk '{print $1}')
+  md5_2=$(md5sum "$file2" | awk '{print $1}')
+
+  echo "File 1 ($file1): $md5_1"
+  echo "File 2 ($file2): $md5_2"  
+
+  # 비교
+  if [ "$md5_1" != "$md5_2" ]; then
+    echo "$file1 and $file2 are differnt!, need to backup!"
     echo 'Y'|rploader backup
-  fi
+  fi  
 }
  
 function restart() {
