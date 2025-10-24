@@ -41,6 +41,8 @@ function chk_filetime_n_backup() {
   # 비교
   if [ "$md5_1" != "$md5_2" ]; then
     echo "$file1 and $file2 are differnt!, need to backup!"
+    # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
+    sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     echo 'Y'|rploader backup
   fi  
 }
