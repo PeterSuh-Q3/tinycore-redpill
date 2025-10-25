@@ -62,6 +62,23 @@ function byebye() {
     sudo poweroff
 }
 
+function writebackcache() {
+    while true; do
+        clear
+        grep -E 'Dirty|Writeback:' /proc/meminfo
+        echo "Writing data that has not yet been written to disk (data waiting in the cache)."
+        
+        dirty_kb=$(grep '^Dirty:' /proc/meminfo | awk '{print $2}')
+        
+        if [ "$dirty_kb" -le 5000 ]; then
+            echo "Dirty cache is below 5000 kB: $dirty_kb kB, exiting loop."
+            break
+        fi
+        
+        sleep 1
+    done
+}
+
 function installtcz() {
   tczpack="${1}"
   cd /mnt/${tcrppart}/cde/optional
