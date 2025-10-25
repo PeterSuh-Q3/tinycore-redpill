@@ -62,23 +62,6 @@ function byebye() {
     sudo poweroff
 }
 
-function writebackcache() {
-    while true; do
-        clear
-        grep -E 'Dirty|Writeback:' /proc/meminfo
-        echo "Writing data that has not yet been written to disk (data waiting in the cache)."
-        
-        dirty_kb=$(grep '^Dirty:' /proc/meminfo | awk '{print $2}')
-        
-        if [ "$dirty_kb" -le 5000 ]; then
-            echo "Dirty cache is below 5000 kB: $dirty_kb kB, exiting loop."
-            break
-        fi
-        
-        sleep 1
-    done
-}
-
 function installtcz() {
   tczpack="${1}"
   cd /mnt/${tcrppart}/cde/optional
@@ -1035,8 +1018,10 @@ function writexsession() {
   else
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
     sudo sed -i "/ttyd/d" /opt/bootlocal.sh
+    sudo sed -i "/sync/d" /opt/bootlocal.sh
     sudo sed -i "/mountvol/d" /opt/bootlocal.sh
     echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+    echo '( while true; do sync; sleep 15; done ) &' >> /opt/bootlocal.sh
     echo '[ $(/bin/uname -r | /bin/grep 4.14.10 | /usr/bin/wc -l) -eq 1 ] && {( sleep 5; sudo openvt -c 2 -s bash -c "/home/tc/mountvol.sh; exec sudo login -f tc") & }' >> /opt/bootlocal.sh
   fi
 
