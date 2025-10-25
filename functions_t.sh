@@ -5313,7 +5313,7 @@ echo "errorcode = $?"
       [ "${BUS}" = "block" ] && exit 0
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
       echo "y"|rploader backup
-      writebackcache
+      #writebackcache
   fi
 #[ "$FRKRNL" = "YES" ] && readanswer  
 }
