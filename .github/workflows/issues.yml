@@ -201,7 +201,7 @@ jobs:
           #make target img
           cd ${path}/
           dd if=/dev/zero of=tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img bs=1M seek=2048 count=0
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1899M\nw\nq\n" | sudo fdisk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img
           echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img
 
           LOOPZ=$(sudo losetup -f)
