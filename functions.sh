@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.2"
+rploaderver="1.2.6.3"
 build="master"
 redpillmake="prod"
 
@@ -201,6 +201,7 @@ function history() {
     1.2.6.0 Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
     1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB
     1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
+    1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -594,6 +595,8 @@ EOF
 # Loader image size is distributed in two sizes: 2GB and 4GB
 # 2025.10.24 v1.2.6.2 
 # When changing user_config.json, process cmd_line at once without loader build
+# 2025.10.29 v1.2.6.3
+# Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
     
 function showlastupdate() {
     cat <<EOF
@@ -664,6 +667,9 @@ function showlastupdate() {
 
 # 2025.10.24 v1.2.6.2 
 # When changing user_config.json, process cmd_line at once without loader build
+
+# 2025.10.29 v1.2.6.3
+# Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
 
 EOF
 }
@@ -867,7 +873,10 @@ function getvarsmshell()
         SUVP="" 
     elif [ "$TARGET_REVISION" == "81180" ]; then
         KVER="4.4.302"
-        SUVP="" 
+        SUVP=""
+    elif [ "$TARGET_REVISION" == "86003" ]; then
+        KVER="4.4.302"
+        SUVP=""         
     else
         echo "Synology model revision not supported by TCRP."
         exit 0
