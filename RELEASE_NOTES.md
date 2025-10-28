@@ -1,1 +1,1 @@
-        1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
+        1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
