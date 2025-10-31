@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.3"
+rploaderver="1.2.6.4"
 build="master"
 redpillmake="prod"
 
@@ -202,6 +202,7 @@ function history() {
     1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB
     1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
     1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+    1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -597,6 +598,8 @@ EOF
 # When changing user_config.json, process cmd_line at once without loader build
 # 2025.10.29 v1.2.6.3
 # Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
     
 function showlastupdate() {
     cat <<EOF
@@ -670,6 +673,9 @@ function showlastupdate() {
 
 # 2025.10.29 v1.2.6.3
 # Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
 
 EOF
 }
