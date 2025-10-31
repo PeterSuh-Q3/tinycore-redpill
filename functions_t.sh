@@ -850,8 +850,11 @@ function getvarsmshell()
         echo "This synology model not supported by TCRP."
         exit 99
     fi
-    
-    if [ "$TARGET_REVISION" == "42218" ]; then
+
+    if [ "$TARGET_REVISION" == "25556" ]; then
+        KVER="4.4.59"
+        SUVP=""
+    elif [ "$TARGET_REVISION" == "42218" ]; then
         KVER="4.4.180"
         SUVP=""
     elif [ "$TARGET_REVISION" == "42962" ]; then
@@ -895,7 +898,11 @@ function getvarsmshell()
       if echo ${MODELS[@]} | grep -qw ${MODEL}; then
         ORIGIN_PLATFORM="${platform}"
         if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-            KVER="3.10.108"
+            if [ "$TARGET_REVISION" == "25556" ]; then
+                KVER="3.10.105"
+            else
+                KVER="3.10.108"
+            fi
         fi    
         if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
             KVER="5.10.55"
