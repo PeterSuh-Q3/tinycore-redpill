@@ -3914,7 +3914,7 @@ function getredpillko() {
         echo "TAG of VERSION is ${TAG}"
     fi
 
-    if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+    if [ "$(echo "${KVER:-3}" | cut -d'.' -f1)" -eq 3 ]; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
