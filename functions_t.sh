@@ -903,7 +903,7 @@ function getvarsmshell()
       fi
       if echo ${MODELS[@]} | grep -qw ${MODEL}; then
         ORIGIN_PLATFORM="${platform}"
-        if [ ${ORIGIN_PLATFORM} == "BROADWELL" ]
+        if [ ${ORIGIN_PLATFORM} == "BROADWELL" ]; then
             if [ "$TARGET_REVISION" == "25556" ]; then
                 KVER="3.10.105"
             fi
