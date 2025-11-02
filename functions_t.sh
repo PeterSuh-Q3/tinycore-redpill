@@ -3728,6 +3728,7 @@ function curlfriend() {
             echo "Pre-release tag found: $PRERELEASE_TAG"
             FRTAG="$PRERELEASE_TAG"
         fi
+        jsonfile=$(jq . $userconfigfile)
         jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"false" }' || echo $jsonfile | jq .)        
     fi
     
