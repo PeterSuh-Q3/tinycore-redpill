@@ -3717,8 +3717,26 @@ st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 
 function curlfriend() {
 
-    LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
-    FRTAG="${LATESTURL##*/}"
+    REPO="PeterSuh-Q3/tcrpfriend"
+    FRTAG=""
+    
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"
+        PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+          jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+        if [ -n "$PRERELEASE_TAG" ]; then
+            echo "Pre-release tag found: $PRERELEASE_TAG"
+            FRTAG="$PRERELEASE_TAG"
+        fi
+        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"false" }' || echo $jsonfile | jq .)        
+    fi
+    
+    if [ -z "$FRTAG" ]; then
+        LATESTURL=$(curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest")
+        FRTAG="${LATESTURL##*/}"
+        [ -f /tmp/test_mode ] || echo "Latest tag: $FRTAG"
+    fi
+
     #[ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
     echo "FRIEND TAG is ${FRTAG}"        
     curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
