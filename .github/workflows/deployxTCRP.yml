@@ -47,7 +47,7 @@ jobs:
             --disable-efiemu     \
             --enable-grub-mkfont \
             --with-platform=efi  \
-            --target=x86_64      \
+            --target=i386-pc --target=x86_64      \
             --disable-werror     \
             --enable-freetype &&
             unset TARGET_CC
