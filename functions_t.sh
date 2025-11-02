@@ -3716,10 +3716,9 @@ st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 }
 
 function curlfriend() {
-
     REPO="PeterSuh-Q3/tcrpfriend"
     FRTAG=""
-    
+
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
         PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
@@ -3728,28 +3727,28 @@ function curlfriend() {
             echo "Pre-release tag found: $PRERELEASE_TAG"
             FRTAG="$PRERELEASE_TAG"
         fi
-        jsonfile=$(jq . $userconfigfile)
-        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"false" }' || echo $jsonfile | jq .)        
+        jsonfile=$(jq . "$userconfigfile")
+        jsonfile=$(echo "$jsonfile" | jq '.general |= . + { "friendautoupd":"false" }' || echo "$jsonfile")
     fi
-    
+
     if [ -z "$FRTAG" ]; then
         LATESTURL=$(curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest")
         FRTAG="${LATESTURL##*/}"
         [ -f /tmp/test_mode ] || echo "Latest tag: $FRTAG"
     fi
 
-    #[ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
-    echo "FRIEND TAG is ${FRTAG}"        
-    curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
-    -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
-    -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/initrd-friend"
+    # [ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
+    echo "FRIEND TAG is ${FRTAG}"
+
+    curl -kLO# "https://github.com/$REPO/releases/download/${FRTAG}/chksum" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/bzImage-friend" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/initrd-friend"
 
     if [ $? -ne 0 ]; then
         msgalert "Download failed from github.com friend... !!!!!!!!"
     else
-        msgnormal "Bringing over my friend from github.com Done!!!!!!!!!!!!!!"            
+        msgnormal "Bringing over my friend from github.com Done!!!!!!!!!!!!!!"
     fi
-
 }
 
 function bringoverfriend() {
