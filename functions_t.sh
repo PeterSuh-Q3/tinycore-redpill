@@ -814,6 +814,10 @@ function cecho () {
     echo -e "$text"                                                                                                                                                 
 }   
 
+function zeropadingver() {
+  ZPADKVER=$(printf "%03d%03d%03d\n" $(echo "$1" | tr '.' ' '))
+}
+
 function getvarsmshell()
 {
 
@@ -891,6 +895,7 @@ function getvarsmshell()
         exit 0
     fi
 
+    zeropadingver ${KVER}
     #SFVAL=${SUVP:--0}
 
     # Extract models for each platform and add them to the mdl file
@@ -5094,8 +5099,8 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-      [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
+  if [ "$ZPADKVER" -lt 004004059 ]; then
+      [ -d /sys/firmware/efi ] && msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
