@@ -3727,8 +3727,7 @@ function curlfriend() {
             echo "Pre-release tag found: $PRERELEASE_TAG"
             FRTAG="$PRERELEASE_TAG"
         fi
-        jsonfile=$(jq . "$userconfigfile")
-        jsonfile=$(echo "$jsonfile" | jq '.general |= . + { "friendautoupd":"false" }' || echo "$jsonfile")
+        writeConfigKey "general" "friendautoupd" "false"
     fi
 
     if [ -z "$FRTAG" ]; then
@@ -3959,13 +3958,13 @@ function changeautoupdate {
     getloaderdisk
     tcrppart="${loaderdisk}3"
 
-    jsonfile=$(jq . $userconfigfile)
+    jsonfile=$(jq . "$userconfigfile")
     
     echo -n "friendautoupd on User config file needs update, updating -> "
     if [ "$1" = "on" ]; then
-        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"true" }' || echo $jsonfile | jq .)
+        writeConfigKey "general" "friendautoupd" "true"
     else
-        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"false" }' || echo $jsonfile | jq .)
+        writeConfigKey "general" "friendautoupd" "false"
     fi
     cp $userconfigfile /mnt/${tcrppart}/
     echo $jsonfile | jq . >$userconfigfile && echo "Done" || echo "Failed"
