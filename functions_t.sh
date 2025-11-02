@@ -5099,8 +5099,13 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
+  echo "ZPADKVER is $ZPADKVER"  
+  read answer
+
   if [ "$ZPADKVER" -lt 4004059 ]; then
-      [ -d /sys/firmware/efi ] && msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
+      [ -d /sys/firmware/efi ] && msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier. Change to LEGACY boot mode. Aborting the loader build!!!\n" 
+      read answer 
+      exit 0
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
