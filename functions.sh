@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.3"
+rploaderver="1.2.6.4"
 build="master"
 redpillmake="prod"
 
@@ -202,6 +202,7 @@ function history() {
     1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB
     1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
     1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+    1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -597,6 +598,8 @@ EOF
 # When changing user_config.json, process cmd_line at once without loader build
 # 2025.10.29 v1.2.6.3
 # Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
     
 function showlastupdate() {
     cat <<EOF
@@ -670,6 +673,9 @@ function showlastupdate() {
 
 # 2025.10.29 v1.2.6.3
 # Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
 
 EOF
 }
@@ -808,6 +814,10 @@ function cecho () {
     echo -e "$text"                                                                                                                                                 
 }   
 
+function zeropadingver() {
+  ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$1" | tr '.' ' '))
+}
+
 function getvarsmshell()
 {
 
@@ -850,8 +860,11 @@ function getvarsmshell()
         echo "This synology model not supported by TCRP."
         exit 99
     fi
-    
-    if [ "$TARGET_REVISION" == "42218" ]; then
+
+    if [ "$TARGET_REVISION" == "25556" ]; then
+        KVER="4.4.59"
+        SUVP=""
+    elif [ "$TARGET_REVISION" == "42218" ]; then
         KVER="4.4.180"
         SUVP=""
     elif [ "$TARGET_REVISION" == "42962" ]; then
@@ -882,6 +895,7 @@ function getvarsmshell()
         exit 0
     fi
 
+    zeropadingver ${KVER}
     #SFVAL=${SUVP:--0}
 
     # Extract models for each platform and add them to the mdl file
@@ -894,8 +908,17 @@ function getvarsmshell()
       fi
       if echo ${MODELS[@]} | grep -qw ${MODEL}; then
         ORIGIN_PLATFORM="${platform}"
+        if [ ${ORIGIN_PLATFORM} == "broadwell" ]; then
+            if [ "$TARGET_REVISION" == "25556" ]; then
+                KVER="3.10.105"
+            fi
+        fi
         if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-            KVER="3.10.108"
+            if [ "$TARGET_REVISION" == "25556" ]; then
+                KVER="3.10.105"
+            else
+                KVER="3.10.108"
+            fi
         fi    
         if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
             KVER="5.10.55"
@@ -3693,28 +3716,45 @@ st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 }
 
 function curlfriend() {
+    REPO="PeterSuh-Q3/tcrpfriend"
+    FRTAG=""
 
-    LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest"`"
-    FRTAG="${LATESTURL##*/}"
-    #[ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
-    echo "FRIEND TAG is ${FRTAG}"        
-    curl -kLO# "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/chksum" \
-    -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/bzImage-friend" \
-    -O "https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/${FRTAG}/initrd-friend"
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"
+        PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+          jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+        if [ -n "$PRERELEASE_TAG" ]; then
+            echo "Pre-release tag found: $PRERELEASE_TAG"
+            FRTAG="$PRERELEASE_TAG"
+        fi
+        writeConfigKey "general" "friendautoupd" "false"
+    fi
+
+    if [ -z "$FRTAG" ]; then
+        LATESTURL=$(curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest")
+        FRTAG="${LATESTURL##*/}"
+        [ -f /tmp/test_mode ] || echo "Latest tag: $FRTAG"
+    fi
+
+    # [ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
+    echo "FRIEND TAG is ${FRTAG}"
+
+    curl -kLO# "https://github.com/$REPO/releases/download/${FRTAG}/chksum" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/bzImage-friend" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/initrd-friend"
 
     if [ $? -ne 0 ]; then
         msgalert "Download failed from github.com friend... !!!!!!!!"
     else
-        msgnormal "Bringing over my friend from github.com Done!!!!!!!!!!!!!!"            
+        msgnormal "Bringing over my friend from github.com Done!!!!!!!!!!!!!!"
     fi
-
 }
 
 function bringoverfriend() {
 
   [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ]; then  #||[ "${CPU}" = "HP" ]
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then  #||[ "${CPU}" = "HP" ]
       curlfriend
   else    
       echo -n "Checking for latest friend -> "
@@ -3896,7 +3936,7 @@ function getredpillko() {
         echo "TAG of VERSION is ${TAG}"
     fi
 
-    if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+    if [ "$(echo "${KVER:-3}" | cut -d'.' -f1)" -eq 3 ]; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
@@ -3918,13 +3958,13 @@ function changeautoupdate {
     getloaderdisk
     tcrppart="${loaderdisk}3"
 
-    jsonfile=$(jq . $userconfigfile)
+    jsonfile=$(jq . "$userconfigfile")
     
     echo -n "friendautoupd on User config file needs update, updating -> "
     if [ "$1" = "on" ]; then
-        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"true" }' || echo $jsonfile | jq .)
+        writeConfigKey "general" "friendautoupd" "true"
     else
-        jsonfile=$(echo $jsonfile | jq '.general |= . + { "friendautoupd":"false" }' || echo $jsonfile | jq .)
+        writeConfigKey "general" "friendautoupd" "false"
     fi
     cp $userconfigfile /mnt/${tcrppart}/
     echo $jsonfile | jq . >$userconfigfile && echo "Done" || echo "Failed"
@@ -5076,8 +5116,12 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-      [ -d /sys/firmware/efi ] && msgalert "${ORIGIN_PLATFORM} does not working in UEFI boot mode. Change to LEGACY boot mode. Aborting the loader build!!!\n" && read answer && exit 0
+  if [ -d /sys/firmware/efi ]; then
+    if [ "$ZPADKVER" -le 4004059 ]; then
+      msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier. Change to LEGACY boot mode. Aborting the loader build!!!\n" 
+      read answer 
+      exit 0
+    fi  
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
@@ -5256,7 +5300,12 @@ function my() {
       if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
         curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
       else  
-        curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json -o $configfile
+        if [ -f /tmp/test_mode ]; then
+            cecho g "###############################  This is Test Mode  ############################"        
+            curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
+        else
+            curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json -o $configfile
+        fi    
       fi  
       echo "offline = ${offline}"
         [ "${offline}" = "NO" ] && _pat_process    
