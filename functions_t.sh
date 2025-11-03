@@ -5119,7 +5119,7 @@ function my() {
   if [ -d /sys/firmware/efi ]; then
     if [ "$ZPADKVER" -le 4004059 ]; then
       msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
-      msgwarning "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode) boot mode. Aborting the loader build!!!\n"
+      msgwarning "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
       read answer 
       exit 0
     fi  
