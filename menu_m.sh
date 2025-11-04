@@ -1807,6 +1807,7 @@ function chk_shr_ex()
 }
 
 function addon_gitdown()
+{
 # add git download 2023.10.18
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
