@@ -1806,7 +1806,20 @@ function chk_shr_ex()
   [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 }
 
-# Main loop
+function addon_gitdown()
+# add git download 2023.10.18
+  rm -rf /dev/shm/tcrp-addons
+  mkdir -p /dev/shm/tcrp-addons
+  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+  if [ $? -ne 0 ]; then
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+    rm -rf /dev/shm/tcrp-modules
+    mkdir -p /dev/shm/tcrp-modules
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
+  fi    
+}
+
+# Main loop ###########################################################################################
 
 # Fix bug /opt/bootlocal.sh ownership 2025.09.15
 sudo chown tc:118 /opt/bootlocal.sh
