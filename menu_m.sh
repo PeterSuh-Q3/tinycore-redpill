@@ -1806,6 +1806,18 @@ function chk_shr_ex()
   [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 }
 
+function addon_gitdown()
+# add git download 2023.10.18
+  rm -rf /dev/shm/tcrp-addons
+  mkdir -p /dev/shm/tcrp-addons
+  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+  if [ $? -ne 0 ]; then
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+    rm -rf /dev/shm/tcrp-modules
+    mkdir -p /dev/shm/tcrp-modules
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
+  fi    
+}
 # Main loop
 
 # Fix bug /opt/bootlocal.sh ownership 2025.09.15
@@ -1817,16 +1829,8 @@ CHKDISK=$(jq -r -e '.general.check_diskcnt' "$USER_CONFIG_FILE")
 [ -n "${CHKDISK}" ] && writeConfigKey "general" "check_diskcnt" "false"
 
 # add git download 2023.10.18
-cd /dev/shm
-if [ -d /dev/shm/tcrp-addons ]; then
-  echo "tcrp-addons already downloaded!"    
-else    
-  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git"
-  if [ $? -ne 0 ]; then
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git"
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
-  fi    
-fi
+addon_gitdown
+
 #if [ -d /dev/shm/tcrp-modules ]; then
 #  echo "tcrp-modules already downloaded!"    
 #else    
