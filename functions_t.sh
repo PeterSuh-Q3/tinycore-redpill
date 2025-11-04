@@ -818,6 +818,19 @@ function zeropadingver() {
   ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$1" | tr '.' ' '))
 }
 
+function addon_gitdown()
+# add git download 2023.10.18
+  rm -rf /dev/shm/tcrp-addons
+  mkdir -p /dev/shm/tcrp-addons
+  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+  if [ $? -ne 0 ]; then
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+    rm -rf /dev/shm/tcrp-modules
+    mkdir -p /dev/shm/tcrp-modules
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+  fi    
+}
+
 function getvarsmshell()
 {
 
