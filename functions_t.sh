@@ -4563,7 +4563,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
                                 # +65 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                             else
@@ -4577,7 +4577,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
                                 partsize="12800K"
                             else
                                 partsize="13M"
@@ -4610,7 +4610,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                if [ ${ORIGIN_PLATFORM} = "geminilake" ]||[ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
                                     # +65 sectors 
                                     [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                                 else
@@ -5015,17 +5015,6 @@ function my() {
   
   getvarsmshell "$1"
 
-  FIRST_DIGIT="${KVER:0:1}"
-
-  if [ "$FIRST_DIGIT" -eq 3 ]; then
-    if [ "${BUS}" = "nvme" ]||[ "${BUS}" = "mmc" ]; then
-      cecho y "Kernel 3 based models are restricted from using nvme or mmc type bootloaders!!!"
-      echo "press any key to continue..."
-      read answer
-      exit 0
-    fi  
-  fi
-
   #echo "$TARGET_REVISION"                                                      
   #echo "$TARGET_PLATFORM"                                            
   #echo "$SYNOMODEL"                                      
@@ -5116,13 +5105,26 @@ function my() {
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
-  if [ -d /sys/firmware/efi ]; then
-    if [ "$ZPADKVER" -le 4004059 ]; then
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    if [ -d /sys/firmware/efi ]; then
       msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
       msgwarning "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
+      echo "press any key to continue..."      
       read answer 
       exit 0
     fi  
+    if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
+      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!"
+      echo "Aborting the loader build, press any key to continue..."
+      read answer
+      exit 0
+    fi  
+    if [ "${DMPM}" != "DDSML" ]; then    
+      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!"
+      echo "Aborting the loader build, press any key to continue..."
+      read answer
+      exit 0
+    fi
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
@@ -5244,7 +5246,7 @@ function my() {
       cat user_config.json
       echo "y"|rploader identifyusb
   
-      if [ "$ORIGIN_PLATFORM" = "v1000" ]||[ "$ORIGIN_PLATFORM" = "r1000" ]||[ "$ORIGIN_PLATFORM" = "geminilake" ]; then
+      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
           cecho p "Device Tree based model does not need SataPortMap setting...."     
       else    
           rploader satamap    
@@ -5275,7 +5277,7 @@ function my() {
       TARGET_VERSION="7.2.0"
   fi
   
-  #if [ "$ORIGIN_PLATFORM" = "apollolake" ]||[ "$ORIGIN_PLATFORM" = "geminilake" ]; then
+  #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/drivedatabase
   #   jsonfile=$(jq 'del(.reboottotcrp)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
