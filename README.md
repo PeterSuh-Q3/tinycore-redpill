@@ -77,7 +77,8 @@ A typical build process starts with:
 
 3. Loader Building
 
-<img width="1021" alt="스크린샷 2023-03-01 오후 8 29 11" src="https://user-images.githubusercontent.com/85427533/222127202-64d8ec9b-118d-42d7-b2a7-048098836c1d.png">
+
+<img width="1019" height="758" alt="스크린샷 2025-11-06 오전 8 50 59" src="https://github.com/user-attachments/assets/58657e2e-55e0-486d-8421-6ffcdf834f9d" />
 
 
         A. Choose one of the Synology models.
