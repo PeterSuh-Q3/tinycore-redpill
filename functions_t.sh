@@ -23,7 +23,7 @@ smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview grantley"
 kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
-dsm6notsupported="geminilake v1000 braswell denverton broadwellntbap grantley"
+dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap grantley"
 
 #Check if FRIEND kernel exists
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
