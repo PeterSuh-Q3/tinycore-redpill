@@ -5126,6 +5126,12 @@ function my() {
       read answer
       exit 0
     fi
+    if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
+      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!"
+      echo "Aborting the loader build, press any key to continue..."
+      read answer
+      exit 0
+    fi
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
