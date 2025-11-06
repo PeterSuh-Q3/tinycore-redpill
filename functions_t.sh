@@ -1474,7 +1474,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
       read answer
   fi
 
-  close_md0
+  #close_md0
   
   MSG=$(printf "Bootentry Update version correction completed.")
   dialog --title "Bootentry Update version correction" \
