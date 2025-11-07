@@ -1531,7 +1531,7 @@ function synopart() {
   eval "MSG12=\"\${MSG${tz}12}\""  
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
-  eval "MSG67=\"\${MSG${tz}68}\""
+  eval "MSG68=\"\${MSG${tz}68}\""
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
