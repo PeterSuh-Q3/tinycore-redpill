@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.4"
+rploaderver="1.2.6.5"
 build="master"
 redpillmake="prod"
 
@@ -204,6 +204,7 @@ function history() {
     1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
     1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
     1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
+    1.2.6.5 Added Format System Partition(md0) menu for new install
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -601,6 +602,8 @@ EOF
 # Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
 # 2025.10.31 v1.2.6.4 
 # Add Support DSM 6.2.4-25556 Official Version
+# 2025.11.07 v1.2.6.5 
+# Added Format System Partition(md0) menu for new install
     
 function showlastupdate() {
     cat <<EOF
@@ -677,6 +680,9 @@ function showlastupdate() {
 
 # 2025.10.31 v1.2.6.4 
 # Add Support DSM 6.2.4-25556 Official Version
+
+# 2025.11.07 v1.2.6.5 
+# Added Format System Partition(md0) menu for new install
 
 EOF
 }
@@ -1387,14 +1393,16 @@ EOF
 # CleanSystemPart
 function CleanSystemPart() {
 
-echo -n "(Warning) Do you want to clean the System Partition(md0)? [yY/nN] : "
+param="${1}"
+
+echo -n "(Warning) Do you want to ${param} the System Partition(md0)? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
   DSMROOTS="$(findDSMRoot)"
   if [ -z "${DSMROOTS}" ]; then
     dialog --backtitle "$(backtitle)" --colors --aspect 50 \
-      --title "Clean System Partition(md0)" \
+      --title "${param} System Partition(md0)" \
       --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
     return
   fi
@@ -1405,25 +1413,34 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
   [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
 
-  if [ -d "${TMP_PATH}/mdX/etc" ]; then
-      removed=0
-  
-      for dir in "@autoupdate" "upd@te" ".log.junior"; do
-          path="${TMP_PATH}/mdX/${dir}/*"
-          if ls $path 1>/dev/null 2>&1; then
-              sudo rm -vrf ${TMP_PATH}/mdX/${dir}/*
-              removed=1
+  if [ "${param}" = "clean" ]; then
+
+      if [ -d "${TMP_PATH}/mdX/etc" ]; then
+          removed=0
+      
+          for dir in "@autoupdate" "upd@te" ".log.junior"; do
+              path="${TMP_PATH}/mdX/${dir}/*"
+              if ls $path 1>/dev/null 2>&1; then
+                  sudo rm -vrf ${TMP_PATH}/mdX/${dir}/*
+                  removed=1
+              fi
+          done
+      
+          sudo sync
+      
+          if [ $removed -eq 0 ]; then
+              echo "Nothing to remove file"
+          else
+              echo "true" >"${TMP_PATH}/isOk"
           fi
-      done
-  
-      sudo sync
-  
-      if [ $removed -eq 0 ]; then
-          echo "Nothing to remove file"
-      else
-          echo "true" >"${TMP_PATH}/isOk"
+      
+          echo "press any key to continue..."
+          read answer
       fi
-  
+  else
+      sudo rm -rf "${TMP_PATH}/mdX/*"
+      sudo sync      
+      echo "true" >"${TMP_PATH}/isOk"        
       echo "press any key to continue..."
       read answer
   fi
@@ -1431,11 +1448,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
   close_md0
   
   if [ -f "${TMP_PATH}/isOk" ]; then
-    MSG=$(printf "Clean System Partition(md0) completed.")
+    MSG=$(printf "${param} System Partition(md0) completed.")
   else
-    MSG=$(printf "Clean System Partition(md0) failed.")
+    MSG=$(printf "${param} System Partition(md0) failed.")
   fi
-  dialog --title "Clean System Partition(md0)" \
+  dialog --title "${param} System Partition(md0)" \
     --msgbox "${MSG}" 0 0
   return
   
@@ -1474,7 +1491,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
       read answer
   fi
 
-  #close_md0
+  close_md0
   
   MSG=$(printf "Bootentry Update version correction completed.")
   dialog --title "Bootentry Update version correction" \
