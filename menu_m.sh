@@ -1531,7 +1531,7 @@ function synopart() {
   eval "MSG12=\"\${MSG${tz}12}\""  
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
-  eval "MSG67=\"\${MSG${tz}67}\""
+  eval "MSG67=\"\${MSG${tz}68}\""
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
@@ -1541,7 +1541,7 @@ function synopart() {
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"f \\\"${MSG65}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
-    eval "echo \"h \\\"${MSG67}\\\"\""                  >> "${TMP_PATH}/menuc"    
+    eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/respc
