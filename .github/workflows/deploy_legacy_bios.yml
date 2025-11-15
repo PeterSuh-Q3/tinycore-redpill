@@ -1,8 +1,8 @@
 name: release tags mshell (2GB/4GB) - Legacy BIOS Only
 
 on:
-  release:
-    types: [published]
+  #release:
+  #  types: [published]
   workflow_dispatch:
 
 jobs:
