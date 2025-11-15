@@ -1965,8 +1965,10 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | w
   if [ $(cat ~/.Xdefaults|grep "URxvt.foreground: white" | wc -w) -eq 0 ]; then    
     echo "URxvt.foreground: white"  >> ~/.Xdefaults
   fi
-  if [ $(cat ~/.Xdefaults|grep "URxvt.transparent: true" | wc -w) -eq 0 ]; then    
-    echo "URxvt.transparent: true"  >> ~/.Xdefaults
+  if grep -q "^URxvt.transparent:" ~/.Xdefaults; then
+    sed -i 's/^URxvt.transparent:.*/URxvt.transparent: false/' ~/.Xdefaults
+  else
+    echo "URxvt.transparent: false" >> ~/.Xdefaults
   fi
   if [ $(cat ~/.Xdefaults|grep "URxvt\*encoding: UTF-8" | wc -w) -eq 0 ]; then    
     echo "URxvt*encoding: UTF-8"  >> ~/.Xdefaults
