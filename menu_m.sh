@@ -2306,7 +2306,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ] && eval "echo \"i \\\"\${MSG${tz}04} 5\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && eval "echo \"o \\\"\${MSG${tz}04} 6\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"v \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
+    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
@@ -2343,8 +2343,13 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && NEXT="t" || NEXT="p" ;;
     t) macMenu "eth6"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
-    v) macMenu "eth7";    NEXT="p" ;; 
+    d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
+    v)
+        # Verbose Mode Toggle
+        toggle_verbose_menu
+        NEXT="p"
+        ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
        else  
