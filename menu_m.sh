@@ -5,6 +5,7 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES #####################################################################################################
 . /home/tc/functions.sh
 . /home/tc/i18n.h
+. /home/tc/verbose_control.sh
 #####################################################################################################
 
 kver3explatforms="bromolow braswell cedarview grantley"
@@ -2283,6 +2284,14 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
+
+        clear
+        
+        eval "echo \\\"┌─────────────────────────────────────────────────┐\\\""
+        eval "echo \\\"│  Synology RedPill Mshell Bootloader Builder     │\\\""
+        eval "echo \\\"└─────────────────────────────────────────────────┘\\\""
+        echo ""
+
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
@@ -2309,6 +2318,7 @@ while true; do
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \\\"v \\\\\\\"🔧 Verbose Mode (${VERBOSE_MODE})\\\\\\\"\\\""
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
     --menu "${result}" 0 0 0 --file "${TMP_PATH}/menu" \
@@ -2336,9 +2346,9 @@ while true; do
     v) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
-         make "fri" "${prevent_init}" 
+         make_with_progress "fri" "${prevent_init}" 
        else  
-         make "jot" "${prevent_init}"
+         make_with_progress "jot" "${prevent_init}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
          NEXT="y"
@@ -2351,7 +2361,7 @@ while true; do
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
-    b) backup ;;
+    b) backup_loader NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
   esac
