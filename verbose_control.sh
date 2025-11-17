@@ -66,14 +66,31 @@ log_backup_step() {
 # Build with Progress Bar
 #################################################################################
 make_with_progress() {
-    local ldr_mode="${1:prod}"
+    local ldr_mode="${1:}"
     local prevent_init="${2:}"
-    local build_cmd="make -C /home/tc/redpill-load ${VERBOSE_FLAG} \
-        LDR_MODE=${ldr_mode} PREVENT_INIT=${prevent_init}"
+    local build_cmd=""
+
+    checkUserConfig 
+    if [ $? -ne 0 ]; then
+        dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0      
+        return 1  
+    fi
+    
+    usbidentify
+    clear
+
+    if [ "${prevent_init}" = "OFF" ]; then
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} | tee /home/tc/zlastbuild.log"
+    else
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
+    fi 
+#    build_cmd="make -C /home/tc/redpill-load ${VERBOSE_FLAG} \
+#        LDR_MODE=${ldr_mode} PREVENT_INIT=${prevent_init}"
     
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         # Silent mode with progress
         echo "Building bootloader..."
+    
         eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
             if echo "$line" | grep -qE "(Compiling|Processing|Linking|Building)"; then
@@ -90,6 +107,16 @@ make_with_progress() {
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
         log_success "Build completed successfully (Exit Code: $exit_code)"
+
+        if  [ -f /home/tc/custom-module/redpill.ko ]; then
+            echo "Removing redpill.ko ..."
+            sudo rm -rf /home/tc/custom-module/redpill.ko
+        fi      
+st "finishloader" "Loader build status" "Finished building the loader"  
+        msgnormal "The loader was created successfully!!!"
+        echo "press any key to continue..."
+        read answer
+        rm -f /home/tc/buildstatus  
     else
         log_error "Build failed with exit code: $exit_code"
         show_backup_error_info
