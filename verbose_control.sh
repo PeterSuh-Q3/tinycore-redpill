@@ -66,8 +66,8 @@ log_backup_step() {
 # Build with Progress Bar
 #################################################################################
 make_with_progress() {
-    local ldr_mode="${1:}"
-    local prevent_init="${2:}"
+    local ldr_mode="${1}"
+    local prevent_init="${2}"
     local build_cmd=""
 
     checkUserConfig 
@@ -90,13 +90,14 @@ make_with_progress() {
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         # Silent mode with progress
         echo "Building bootloader..."
-    
+        set -o pipefail  
         eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
             if echo "$line" | grep -qE "(Compiling|Processing|Linking|Building)"; then
                 echo "$line"
             fi
         done
+        set +o pipefail
     else
         # Full verbose output
         eval "$build_cmd"
