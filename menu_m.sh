@@ -2284,14 +2284,6 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
-
-        clear
-        
-        eval "echo \\\"┌─────────────────────────────────────────────────┐\\\""
-        eval "echo \\\"│  Synology RedPill Mshell Bootloader Builder     │\\\""
-        eval "echo \\\"└─────────────────────────────────────────────────┘\\\""
-        echo ""
-
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
@@ -2318,7 +2310,7 @@ while true; do
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \\\"v \\\\\\\"🔧 Verbose Mode (${VERBOSE_MODE})\\\\\\\"\\\""
+  eval "echo \"v \\\"\Verbose Mode (${VERBOSE_MODE})\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
     --menu "${result}" 0 0 0 --file "${TMP_PATH}/menu" \
@@ -2366,7 +2358,7 @@ while true; do
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
-    b) backup_loader NEXT="r" ;;
+    b) backup_loader;   NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
   esac
