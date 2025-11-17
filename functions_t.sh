@@ -3290,6 +3290,9 @@ function buildloader() {
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
 
+log_build_step "Preparing build environment" 1 5
+# preparation commands...
+
 checkmachine
 
     [ "$1" == "junmod" ] && JUNLOADER="YES" || JUNLOADER="NO"
@@ -3318,6 +3321,8 @@ checkmachine
     [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
     cd /home/tc/redpill-load
 
+log_build_step "Downloading modules" 2 5
+# download commands...
     if [ ${TARGET_REVISION} -gt 42218 ]; then
         echo "Found build request for revision greater than 42218"
         downloadextractor
@@ -3329,8 +3334,13 @@ checkmachine
     [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
 
     [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
+log_build_step "Compiling kernel modules" 3 5
+# compilation commands...       
 st "extensions" "Extensions collection" "Extensions collection..."
     addrequiredexts
+
+log_build_step "Creating bootloader image" 4 5
+# image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
@@ -3687,7 +3697,8 @@ EOF
     fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
-
+log_build_step "Finalizing build" 5 5
+# finalization commands...
     [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
