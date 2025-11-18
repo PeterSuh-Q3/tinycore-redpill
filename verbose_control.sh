@@ -107,11 +107,9 @@ make_with_progress() {
         log_success "Build completed successfully (Exit Code: $exit_code)"
 
         if  [ -f /home/tc/custom-module/redpill.ko ]; then
-            echo "Removing redpill.ko ..."
             sudo rm -rf /home/tc/custom-module/redpill.ko
         fi      
 st "finishloader" "Loader build status" "Finished building the loader"  
-        msgnormal "The loader was created successfully!!!"
         echo "press any key to continue..."
         read answer
         rm -f /home/tc/buildstatus  
