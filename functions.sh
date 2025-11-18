@@ -5339,8 +5339,7 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-
-  if [ "$TARGET_VERSION" = "7.3" ] || [ "$TARGET_VERSION" = "7.3.1" ]; then
+  if [[ "$TARGET_VERSION" == "7.3"* ]]; then
       msgalert "The DSM 7.3 or 7.3.1 loader build feature is a temporary experimental feature available until the official release of LKM.\n"
       msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
       msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
