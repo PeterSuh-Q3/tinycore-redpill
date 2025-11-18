@@ -83,16 +83,14 @@ make_with_progress() {
     else
         build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
     fi 
-#    build_cmd="make -C /home/tc/redpill-load ${VERBOSE_FLAG} \
-#        LDR_MODE=${ldr_mode} PREVENT_INIT=${prevent_init}"
-    
+  
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         # Silent mode with progress
         echo "Building bootloader..."
         set -o pipefail  
         eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
-            if echo "$line" | grep -qE "(Preparing|Downloading|Compiling|Creating|Finalizing)"; then
+            if echo "$line" | grep -qE "(Preparing build environment|Downloading modules|Compiling kernel modules|Creating bootloader image|Finalizing build)"; then
                 echo "$line"
             fi
         done
