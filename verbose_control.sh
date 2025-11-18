@@ -15,6 +15,8 @@ VERBOSE_FLAG=""
 show_progress_bar() {
     local current=$1
     local total=$2
+    local step_name="$3"
+    
     local width=40
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
@@ -22,7 +24,7 @@ show_progress_bar() {
     printf "[" > /dev/tty
     printf "%${filled}s" | tr ' ' '=' > /dev/tty
     printf "%$((width - filled))s" | tr ' ' '-' > /dev/tty
-    printf "] %d%% (%d/%d)\n" "$percentage" "$current" "$total" > /dev/tty
+    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > /dev/tty
 }
 
 #################################################################################
@@ -32,12 +34,13 @@ log_build_step() {
     local step_name="$1"
     local step_num="${2:-}"
     local total_steps="${3:-}"
-    
-    echo "[$(date '+%H:%M:%S')] ✓ $step_name"    
+            
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         if [ -n "$step_num" ] && [ -n "$total_steps" ]; then
-            show_progress_bar "$step_num" "$total_steps"
+            show_progress_bar "$step_num" "$total_steps" "$step_name"
         fi
+    else
+        echo "[$(date '+%H:%M:%S')] ✓ $step_name"    
     fi
 }
 
