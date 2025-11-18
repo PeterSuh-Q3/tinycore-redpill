@@ -5347,7 +5347,10 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-  
+
+  if [ "$TARGET_VERSION" = "7.3" ] || [ "$TARGET_VERSION" = "7.3.1" ]; then
+      chkDsmversion
+  fi
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/drivedatabase
