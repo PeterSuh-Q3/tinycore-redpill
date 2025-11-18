@@ -125,24 +125,6 @@ st "finishloader" "Loader build status" "Finished building the loader"
 }
 
 #################################################################################
-# Backup with Always-Visible Progress
-#################################################################################
-backup_loader() {
-    local backup_steps=5
-    
-    log_backup_step "Starting backup process..."
-    
-    for i in $(seq 1 $backup_steps); do
-        log_backup_step "Backing up config ($i/$backup_steps)"
-        # Actual backup command here
-        sleep 1
-        show_progress_bar "$i" "$backup_steps"
-    done
-    
-    log_backup_step "Backup completed successfully"
-}
-
-#################################################################################
 # Show Error Information
 #################################################################################
 show_backup_error_info() {
