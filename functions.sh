@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.5"
+rploaderver="1.2.6.6"
 build="master"
 redpillmake="prod"
 
@@ -205,6 +205,8 @@ function history() {
     1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
     1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
     1.2.6.5 Added Format System Partition(md0) menu for new install
+    1.2.6.6 Added default processing of Verbose OFF when building a loader
+            Added warning message when building 7.3 or 7.3.1 loader
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -604,6 +606,9 @@ EOF
 # Add Support DSM 6.2.4-25556 Official Version
 # 2025.11.07 v1.2.6.5 
 # Added Format System Partition(md0) menu for new install
+# 2025.11.18 v1.2.6.6 
+# Added default processing of Verbose OFF when building a loader
+# Added warning message when building 7.3 or 7.3.1 loader
     
 function showlastupdate() {
     cat <<EOF
@@ -683,6 +688,10 @@ function showlastupdate() {
 
 # 2025.11.07 v1.2.6.5 
 # Added Format System Partition(md0) menu for new install
+
+# 2025.11.18 v1.2.6.6 
+# Added default processing of Verbose OFF when building a loader
+# Added warning message when building 7.3 or 7.3.1 loader
 
 EOF
 }
@@ -1502,6 +1511,26 @@ fi
 
 }
 
+###############################################################################
+# Check DSM version of md0
+function chkDsmversion() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    return 1
+  fi
+
+  open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+    . "${TMP_PATH}/mdX/etc/VERSION"
+    close_md0 || true
+    [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
+  else
+    close_md0 || true
+    return 1
+  fi
+}
+
 function getlatestmshell() {
 
     echo -n "Checking if a newer mshell version exists on the repo -> "
@@ -1565,7 +1594,7 @@ function get_tinycore9() {
       new_default=$((entry_count - 1))
       sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
       
-      echo 'Y'|rploader backup
+      echo 'Y'|backuploader
       restart
     else
       return 1
@@ -1601,7 +1630,7 @@ function update_tinycore() {
       if [ $? -eq 0 ]; then
         sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
-        echo 'Y'|rploader backup
+        echo 'Y'|backuploader
         restart
       fi
   fi
@@ -1684,7 +1713,8 @@ function generateSerial() {
 }
 
 function msgalert() {
-    echo -e "\033[1;31m$1\033[0m"
+    printf "\033[1;31m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    #echo -e "\033[1;31m$1\033[0m"
 }
 function msgwarning() {
     echo -e "\033[1;33m$1\033[0m"
@@ -2926,6 +2956,7 @@ function backuploader() {
 
         cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        backup_loader
         sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
         if [ $? -ne 0 ]; then
             echo "Error: Couldn't backup files"
@@ -3290,6 +3321,9 @@ function buildloader() {
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
 
+log_build_step "Preparing build environment" 1 5
+# preparation commands...
+
 checkmachine
 
     [ "$1" == "junmod" ] && JUNLOADER="YES" || JUNLOADER="NO"
@@ -3318,6 +3352,8 @@ checkmachine
     [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
     cd /home/tc/redpill-load
 
+log_build_step "Handling DSM pat files" 2 5
+# download commands...
     if [ ${TARGET_REVISION} -gt 42218 ]; then
         echo "Found build request for revision greater than 42218"
         downloadextractor
@@ -3329,8 +3365,13 @@ checkmachine
     [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
 
     [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
+log_build_step "Collecting extensions" 3 5
+# compilation commands...       
 st "extensions" "Extensions collection" "Extensions collection..."
     addrequiredexts
+
+log_build_step "Creating bootloader image" 4 5
+# image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
@@ -3687,7 +3728,8 @@ EOF
     fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
-
+log_build_step "Finalizing build" 5 5
+# finalization commands...
     [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
@@ -5126,25 +5168,25 @@ function my() {
   if [ "$ZPADKVER" -le 4004059 ]; then
     if [ -d /sys/firmware/efi ]; then
       msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
-      msgwarning "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
+      msgalert "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
       echo "press any key to continue..."      
       read answer 
       exit 0
     fi  
     if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
-      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!"
+      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
     fi  
     if [ "${DMPM}" != "DDSML" ]; then    
-      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!"
+      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
     fi
     if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
-      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!"
+      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
@@ -5300,7 +5342,29 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-  
+
+  if [ "$TARGET_VERSION" = "7.3" ] || [ "$TARGET_VERSION" = "7.3.1" ]; then
+      msgalert "The DSM 7.3 or 7.3.1 loader build feature is a temporary experimental feature available until the official release of LKM.\n"
+      msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
+      msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
+      msgalert "DSM 7.3 또는 7.3.1 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
+      msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
+      msgalert "이 임시기능은 네트워크 무반응, 시노디스크 사라짐 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+      
+      msgalert "(Warning) Do you want to continue building this version? [yY/nN] : "
+      readanswer
+      if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
+          exit 0
+      fi
+     
+      if chkDsmversion; then
+          echo "[OK] DSM version matched. Proceeding."
+      else
+          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+          msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다."
+          exit 0
+      fi    
+  fi
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/drivedatabase
