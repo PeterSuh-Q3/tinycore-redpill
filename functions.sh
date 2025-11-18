@@ -205,8 +205,7 @@ function history() {
     1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
     1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
     1.2.6.5 Added Format System Partition(md0) menu for new install
-    1.2.6.6 Added default processing of Verbose OFF when building a loader
-            Added warning message when building 7.3 or 7.3.1 loader
+    1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -607,8 +606,7 @@ EOF
 # 2025.11.07 v1.2.6.5 
 # Added Format System Partition(md0) menu for new install
 # 2025.11.18 v1.2.6.6 
-# Added default processing of Verbose OFF when building a loader
-# Added warning message when building 7.3 or 7.3.1 loader
+# Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
     
 function showlastupdate() {
     cat <<EOF
@@ -690,8 +688,7 @@ function showlastupdate() {
 # Added Format System Partition(md0) menu for new install
 
 # 2025.11.18 v1.2.6.6 
-# Added default processing of Verbose OFF when building a loader
-# Added warning message when building 7.3 or 7.3.1 loader
+# Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
 
 EOF
 }
