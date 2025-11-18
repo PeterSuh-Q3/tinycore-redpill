@@ -33,12 +33,11 @@ log_build_step() {
     local step_num="${2:-}"
     local total_steps="${3:-}"
     
+    echo "[$(date '+%H:%M:%S')] ✓ $step_name"    
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         if [ -n "$step_num" ] && [ -n "$total_steps" ]; then
             show_progress_bar "$step_num" "$total_steps"
         fi
-    else
-        echo "[$(date '+%H:%M:%S')] ✓ $step_name"
     fi
 }
 
@@ -93,7 +92,7 @@ make_with_progress() {
         set -o pipefail  
         eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
-            if echo "$line" | grep -qE "(Compiling|Processing|Linking|Building)"; then
+            if echo "$line" | grep -qE "(Preparing|Downloading|Compiling|Creating|Finalizing)"; then
                 echo "$line"
             fi
         done
