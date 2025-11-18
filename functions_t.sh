@@ -1511,6 +1511,32 @@ fi
 
 }
 
+###############################################################################
+# Check DSM version of md0
+function chkDsmversion() {
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    return
+  fi
+
+  # assemble and mount md0
+  open_md0
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed (Maybe there's no synodisk) . Stop processing!!! " && return
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+      . ${TMP_PATH}/mdX/etc/VERSION
+      cat ${TMP_PATH}/mdX/etc/VERSION
+
+      echo "press any key to continue..."
+      read answer
+  fi
+
+  close_md0
+
+}
+
 function getlatestmshell() {
 
     echo -n "Checking if a newer mshell version exists on the repo -> "
