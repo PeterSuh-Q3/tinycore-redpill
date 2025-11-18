@@ -1684,7 +1684,7 @@ function generateSerial() {
 }
 
 function msgalert() {
-    printf "\033[1;31m%s\033[0m" "$1" > /dev/tty
+    printf "\033[1;31m%s\033[0m" "${1//$'\n'/$'\r\n'}" > /dev/tty
     #echo -e "\033[1;31m$1\033[0m"
 }
 function msgwarning() {
@@ -5144,19 +5144,19 @@ function my() {
       exit 0
     fi  
     if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
-      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!"
+      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
     fi  
     if [ "${DMPM}" != "DDSML" ]; then    
-      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!"
+      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
     fi
     if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
-      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!"
+      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 0
