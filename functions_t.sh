@@ -3321,7 +3321,7 @@ checkmachine
     [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
     cd /home/tc/redpill-load
 
-log_build_step "Downloading modules" 2 5
+log_build_step "Handling DSM pat files" 2 5
 # download commands...
     if [ ${TARGET_REVISION} -gt 42218 ]; then
         echo "Found build request for revision greater than 42218"
@@ -3334,7 +3334,7 @@ log_build_step "Downloading modules" 2 5
     [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
 
     [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
-log_build_step "Compiling kernel modules" 3 5
+log_build_step "Collecting extensions" 3 5
 # compilation commands...       
 st "extensions" "Extensions collection" "Extensions collection..."
     addrequiredexts
