@@ -2302,6 +2302,7 @@ while true; do
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
+  eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
   [ "$FRKRNL" = "YES" ] && 
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
@@ -2310,7 +2311,6 @@ while true; do
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
     --menu "${result}" 0 0 0 --file "${TMP_PATH}/menu" \
@@ -2337,11 +2337,6 @@ while true; do
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
-    v)
-        # Verbose Mode Toggle
-        toggle_verbose_menu
-        NEXT="p"
-        ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
        else  
@@ -2353,6 +2348,11 @@ while true; do
          NEXT="r"
        fi  
        ;;
+    v)
+        # Verbose Mode Toggle
+        toggle_verbose_menu
+        NEXT="p"
+        ;;           
     y) sudo /root/boot.sh normal ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
