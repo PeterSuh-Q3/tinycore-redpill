@@ -90,7 +90,7 @@ make_with_progress() {
         set -o pipefail  
         eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
-            if echo "$line" | grep -qE "(Preparing build environment|Downloading modules|Compiling kernel modules|Creating bootloader image|Finalizing build)"; then
+            if echo "$line" | grep -qE "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"; then
                 echo "$line"
             fi
         done
