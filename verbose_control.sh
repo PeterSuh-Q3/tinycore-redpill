@@ -19,10 +19,10 @@ show_progress_bar() {
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
     
-    printf "["
-    printf "%${filled}s" | tr ' ' '='
-    printf "%$((width - filled))s" | tr ' ' '-'
-    printf "] %d%% (%d/%d)\n" "$percentage" "$current" "$total"
+    printf "[" > /dev/tty
+    printf "%${filled}s" | tr ' ' '=' > /dev/tty
+    printf "%$((width - filled))s" | tr ' ' '-' > /dev/tty
+    printf "] %d%% (%d/%d)\n" "$percentage" "$current" "$total" > /dev/tty
 }
 
 #################################################################################
