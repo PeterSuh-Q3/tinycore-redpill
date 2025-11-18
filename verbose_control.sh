@@ -136,7 +136,7 @@ backup_loader() {
         log_backup_step "Backing up config ($i/$backup_steps)"
         # Actual backup command here
         sleep 1
-        show_progress_bar "$i" "$backup_steps" ""
+        show_progress_bar "$i" "$backup_steps" "Backup in progress..."
     done
     
     log_backup_step "Backup completed successfully"
