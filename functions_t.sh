@@ -1684,7 +1684,8 @@ function generateSerial() {
 }
 
 function msgalert() {
-    echo -e "\033[1;31m$1\033[0m"
+    printf "\033[1;31m%s\033[0m" "$1" > /dev/tty
+    #echo -e "\033[1;31m$1\033[0m"
 }
 function msgwarning() {
     echo -e "\033[1;33m$1\033[0m"
