@@ -80,34 +80,31 @@ make_with_progress() {
     clear
 
     if [ "${prevent_init}" = "OFF" ]; then
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} | tee /home/tc/zlastbuild.log"
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     else
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init}"
     fi 
-#    build_cmd="make -C /home/tc/redpill-load ${VERBOSE_FLAG} \
-#        LDR_MODE=${ldr_mode} PREVENT_INIT=${prevent_init}"
     
     if [ "$VERBOSE_MODE" = "OFF" ]; then
-        # Silent mode with progress
+        # Silent 모드 + 진행률 필터링
         echo "Building bootloader..."
-        set -o pipefail  
-        eval "$build_cmd" 2>&1 | while IFS= read -r line; do
-            # Filter progress indicators only
+        set -o pipefail
+        eval "$build_cmd" | tee /home/tc/zlastbuild.log | while IFS= read -r line; do
             if echo "$line" | grep -qE "(Compiling|Processing|Linking|Building)"; then
                 echo "$line"
             fi
         done
+        EXIT_CODE=${PIPESTATUS[0]}  # eval 명령의 종료코드를 가져오기
         set +o pipefail
     else
-        # Full verbose output
-        eval "$build_cmd"
+        # 전체 로그 출력 (verbose ON)
+        eval "$build_cmd" | tee /home/tc/zlastbuild.log
+        EXIT_CODE=$?
     fi
-    
-    local exit_code=$?
-    
+   
     # Always show exit code
-    if [ $exit_code -eq 0 ]; then
-        log_success "Build completed successfully (Exit Code: $exit_code)"
+    if [ $EXIT_CODE -eq 0 ]; then
+        log_success "Build completed successfully (Exit Code: $EXIT_CODE)"
 
         if  [ -f /home/tc/custom-module/redpill.ko ]; then
             echo "Removing redpill.ko ..."
@@ -119,11 +116,11 @@ st "finishloader" "Loader build status" "Finished building the loader"
         read answer
         rm -f /home/tc/buildstatus  
     else
-        log_error "Build failed with exit code: $exit_code"
+        log_error "Build failed with exit code: $EXIT_CODE"
         show_backup_error_info
     fi
     
-    return $exit_code
+    return $EXIT_CODE
 }
 
 #################################################################################
