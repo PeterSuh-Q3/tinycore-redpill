@@ -1514,27 +1514,21 @@ fi
 ###############################################################################
 # Check DSM version of md0
 function chkDsmversion() {
-
   DSMROOTS="$(findDSMRoot)"
   if [ -z "${DSMROOTS}" ]; then
-    return
+    return 1
   fi
 
-  # assemble and mount md0
-  open_md0
-
-  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed (Maybe there's no synodisk) . Stop processing!!! " && return
+  open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
 
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
-      . ${TMP_PATH}/mdX/etc/VERSION
-      cat ${TMP_PATH}/mdX/etc/VERSION
-
-      echo "press any key to continue..."
-      read answer
+    . "${TMP_PATH}/mdX/etc/VERSION"
+    close_md0 || true
+    [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
+  else
+    close_md0 || true
+    return 1
   fi
-
-  close_md0
-
 }
 
 function getlatestmshell() {
@@ -5356,7 +5350,13 @@ function my() {
       msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
       msgalert "이 임시기능은 네트워크 무반응, 시노디스크 사라짐 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
      
-      chkDsmversion
+      if chkDsmversion; then
+          echo "[OK] DSM version matched. Proceeding."
+      else
+          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+          msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다."
+          exit 0
+      fi    
   fi
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
