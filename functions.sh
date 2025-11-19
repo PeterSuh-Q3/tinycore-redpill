@@ -1521,6 +1521,8 @@ function chkDsmversion() {
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
     close_md0 || true
+    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
+    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
     [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
   else
     close_md0 || true
@@ -5355,10 +5357,10 @@ function my() {
       fi
      
       if chkDsmversion; then
-          echo "[OK] DSM version matched. Proceeding."
+          printf "[OK] DSM version matched. Proceeding." > /dev/tty
       else
           msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
-          msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다."
+          [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
           exit 0
       fi    
   fi
