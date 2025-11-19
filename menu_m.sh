@@ -1999,7 +1999,7 @@ set -o allexport
 tz="ZZ"
 load_zz
 
-if [ "${ucode}" != "${config_ucode}" ]; then
+if [ "$FRKRNL" = "NO" ] && [ "${ucode}" != "${config_ucode}" ]; then
   urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh
 fi
 
