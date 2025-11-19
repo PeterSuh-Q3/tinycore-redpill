@@ -1521,8 +1521,8 @@ function chkDsmversion() {
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
     close_md0 || true
-    printf "${productversion:-}" > /dev/tty
-    printf "${TARGET_VERSION}" > /dev/tty
+    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
+    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
     [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
   else
     close_md0 || true
