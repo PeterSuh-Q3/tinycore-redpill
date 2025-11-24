@@ -103,7 +103,7 @@ make_with_progress() {
         eval "$build_cmd"
     fi
     
-    local exit_code=$?
+    local exit_code=${PIPESTATUS[0]}
     
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
