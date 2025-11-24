@@ -5353,7 +5353,7 @@ function my() {
       msgalert "(Warning) Do you want to continue building this version? [yY/nN] : "
       readanswer
       if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
-          exit 0
+          exit 99
       fi
      
       if chkDsmversion; then
@@ -5361,7 +5361,7 @@ function my() {
       else
           msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
           [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
-          exit 0
+          exit 99
       fi    
   fi
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
