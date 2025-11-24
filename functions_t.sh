@@ -5114,7 +5114,7 @@ function my() {
   
           *)
               echo "Syntax error, not valid arguments or not enough options"
-              exit 0
+              exit 99
               ;;
   
           esac
@@ -5170,25 +5170,25 @@ function my() {
       msgalert "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
       echo "press any key to continue..."      
       read answer 
-      exit 0
+      exit 99
     fi  
     if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
       msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
-      exit 0
+      exit 99
     fi  
     if [ "${DMPM}" != "DDSML" ]; then    
       msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
-      exit 0
+      exit 99
     fi
     if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
       msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!\n"
       echo "Aborting the loader build, press any key to continue..."
       read answer
-      exit 0
+      exit 99
     fi
   fi
     
@@ -5233,7 +5233,7 @@ function my() {
       cecho p "It uses both ddsml and eudev from /home/tc/redpill-load/bundled-exts.json file"
   else
       cecho p "Device Module Processing Method is Undefined, Program Exit!!!!!!!!"
-      exit 0
+      exit 99
   fi
 
   #if [ "$MACHINE" = "VIRTUAL" ]; then
