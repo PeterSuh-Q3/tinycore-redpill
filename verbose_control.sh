@@ -110,13 +110,14 @@ make_with_progress() {
             sudo rm -rf /home/tc/custom-module/redpill.ko
         fi      
 st "finishloader" "Loader build status" "Finished building the loader"  
-        echo "press any key to continue..."
-        read answer
         rm -f /home/tc/buildstatus  
     else
         log_error "Build failed with exit code: $exit_code"
         show_backup_error_info
     fi
+    
+    echo "press any key to continue..."
+    read answer
     
     return $exit_code
 }
