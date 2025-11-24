@@ -82,16 +82,19 @@ make_with_progress() {
     clear
 
     if [ "${prevent_init}" = "OFF" ]; then
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} | tee /home/tc/zlastbuild.log"
+        #build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} | tee /home/tc/zlastbuild.log"
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     else
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
+        #build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     fi 
   
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         # Silent mode with progress
         echo "Building bootloader..."
         set -o pipefail  
-        eval "$build_cmd" 2>&1 | while IFS= read -r line; do
+        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log | while IFS= read -r line; do
+        #eval "$build_cmd" 2>&1 | while IFS= read -r line; do
             # Filter progress indicators only
             if echo "$line" | grep -qE "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"; then
                 echo "$line"
@@ -100,7 +103,7 @@ make_with_progress() {
         set +o pipefail
     else
         # Full verbose output
-        eval "$build_cmd"
+        eval "$build_cmd" | tee /home/tc/zlastbuild.log
     fi
     
     local exit_code=${PIPESTATUS[0]}
