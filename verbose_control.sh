@@ -90,23 +90,20 @@ make_with_progress() {
     fi 
   
     if [ "$VERBOSE_MODE" = "OFF" ]; then
-        # Silent mode with progress
         echo "Building bootloader..."
-        set -o pipefail  
-        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log | while IFS= read -r line; do
-        #eval "$build_cmd" 2>&1 | while IFS= read -r line; do
-            # Filter progress indicators only
-            if echo "$line" | grep -qE "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"; then
-                echo "$line"
-            fi
-        done
+        set -o pipefail
+        output=$(eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log)
+        exit_code=$?
         set +o pipefail
-    else
-        # Full verbose output
-        eval "$build_cmd" | tee /home/tc/zlastbuild.log
-    fi
     
-    local exit_code=${PIPESTATUS[0]}
+        # 출력에서 필요한 줄만 필터링해 화면 표시
+        echo "$output" | grep -E "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"
+    else
+        set -o pipefail
+        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log
+        exit_code=${PIPESTATUS[0]}
+        set +o pipefail
+    fi
     
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
