@@ -88,23 +88,19 @@ make_with_progress() {
         #build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init} | tee /home/tc/zlastbuild.log"
         build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     fi 
-  
+
+    set -o pipefail  
     if [ "$VERBOSE_MODE" = "OFF" ]; then
         echo "Building bootloader..."
-        #set -o pipefail
-        #output=$(eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log)
-        #exit_code=$?
-        #set +o pipefail
-    
+        output=$(eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log)
+        exit_code=$?
         # 출력에서 필요한 줄만 필터링해 화면 표시
         #echo "$output" | grep -E "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"
-    #else
+    else
+        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log
+        exit_code=${PIPESTATUS[0]}
     fi
-    
-    set -o pipefail
-    eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log
-    exit_code=${PIPESTATUS[0]}
-    set +o pipefail
+    set +o pipefail    
     
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
