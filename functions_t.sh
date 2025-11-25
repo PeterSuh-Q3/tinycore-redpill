@@ -2212,7 +2212,8 @@ function copyextractor() {
 
 function downloadextractor() {
 
-st "extractor" "Extraction tools" "Extraction Tools downloaded"        
+st "extractor" "Extraction tools" "Extraction Tools downloaded"
+log_build_step "Extraction tools" 3 12
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
@@ -2404,7 +2405,8 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
         fi
 
         cd /home/tc/redpill-load/cache
-st "patextraction" "Pat file extracted" "VERSION:${BUILD}"        
+st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
+log_build_step "Pat file extracted" 5 12
         sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
         os_md5=$(md5sum /home/tc/redpill-load/cache/${SYNOMODEL}.pat | awk '{print $1}')
         msgnormal "Pat file md5sum is : $os_md5"
@@ -3320,9 +3322,6 @@ function buildloader() {
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
 
-log_build_step "Preparing build environment" 1 5
-# preparation commands...
-
 checkmachine
 
     [ "$1" == "junmod" ] && JUNLOADER="YES" || JUNLOADER="NO"
@@ -3351,7 +3350,6 @@ checkmachine
     [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
     cd /home/tc/redpill-load
 
-log_build_step "Handling DSM pat files" 2 5
 # download commands...
     if [ ${TARGET_REVISION} -gt 42218 ]; then
         echo "Found build request for revision greater than 42218"
@@ -3364,12 +3362,12 @@ log_build_step "Handling DSM pat files" 2 5
     [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
 
     [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
-log_build_step "Collecting extensions" 3 5
+
 # compilation commands...       
 st "extensions" "Extensions collection" "Extensions collection..."
+log_build_step "Collecting extensions" 6 12
     addrequiredexts
 
-log_build_step "Creating bootloader image" 4 5
 # image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
@@ -3727,7 +3725,7 @@ EOF
     fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
-log_build_step "Finalizing build" 5 5
+
 # finalization commands...
     [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
@@ -3770,6 +3768,7 @@ log_build_step "Finalizing build" 5 5
                 fi
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
+log_build_step "Caching pat file" 4 12
         fi    
     fi    
 }
@@ -5193,6 +5192,7 @@ function my() {
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
+  log_build_step "Building started" 1 12
   
   #fullupgrade="Y"
   
@@ -5378,7 +5378,7 @@ function my() {
   else
   
   st "download pat" "Downloading pat  " "${SYNOMODEL}.pat"        
-  
+  log_build_step "Download pat" 2 12
       #if [ 1 = 0 ]; then
       #  STATUS=`curl --insecure -w "%{http_code}" -L "${URL}" -o ${patfile} --progress-bar`
       #  if [ $? -ne 0 -o ${STATUS} -ne 200 ]; then
