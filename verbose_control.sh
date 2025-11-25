@@ -106,7 +106,8 @@ make_with_progress() {
         if  [ -f /home/tc/custom-module/redpill.ko ]; then
             sudo rm -rf /home/tc/custom-module/redpill.ko
         fi      
-st "finishloader" "Loader build status" "Finished building the loader"  
+st "finishloader" "Finished building" "Finished building the loader"  
+log_build_step "Finished building" 12 12
     else
         log_error "Build failed with exit code: $exit_code"
         show_backup_error_info
