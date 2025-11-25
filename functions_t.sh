@@ -2362,6 +2362,7 @@ function processpat() {
 
         msgnormal "Found locally cached pat file ${patfile}"
 st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
+log_build_step "Caching pat file" 4 12
         testarchive "${patfile}"
         if [ ${isencrypted} = "no" ]; then
             echo "File ${patfile} is already decrypted"
@@ -5379,10 +5380,11 @@ function my() {
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
       cecho b "Downloadng Skipped!!!"
   st "download pat" "Found pat    " "Found ${SYNOMODEL}.pat"
+  log_build_step "Found pat file" 2 12
   else
   
   st "download pat" "Downloading pat  " "${SYNOMODEL}.pat"        
-  log_build_step "Download pat" 2 12
+  log_build_step "Download pat file" 2 12
       #if [ 1 = 0 ]; then
       #  STATUS=`curl --insecure -w "%{http_code}" -L "${URL}" -o ${patfile} --progress-bar`
       #  if [ $? -ne 0 -o ${STATUS} -ne 200 ]; then
