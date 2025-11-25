@@ -3370,7 +3370,9 @@ log_build_step "Collecting extensions" 6 12
 
 # image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
+log_build_step "Creation boot loader" 7 12
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
+log_build_step "Copying files to P1,P2" 8 12
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
 
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
@@ -3446,7 +3448,8 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
 
     # Share RD of friend kernel with JOT 2023.05.01
     if [ ! -f /home/tc/friend/initrd-friend ] && [ ! -f /home/tc/friend/bzImage-friend ]; then
-st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"        
+st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"
+log_build_step "Friend downloading" 9 12
         bringoverfriend
         #upgrademan v0.1.3m
     fi
@@ -3725,6 +3728,7 @@ EOF
     fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
+log_build_step "Gen GRUB entries" 10 12
 
 # finalization commands...
     [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
@@ -3768,7 +3772,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 fi
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
-log_build_step "Caching pat file" 4 12
+log_build_step "Caching pat file" 11 12
         fi    
     fi    
 }
