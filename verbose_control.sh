@@ -17,7 +17,7 @@ show_progress_bar() {
     local total=$2
     local step_name="$3"
     
-    local width=30
+    local width=24
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
     
