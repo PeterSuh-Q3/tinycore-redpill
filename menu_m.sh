@@ -319,11 +319,7 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
 
-  if echo ${kver5explatforms} | grep -qw ${platform}; then
-    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
-  else  
-    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, rr-modules" "l" "${MSG29}, rr-modules")
-  fi
+  menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   
   while true; do
     dialog --clear --backtitle "`backtitle`" \
@@ -340,14 +336,6 @@ function selectldrmode() {
     elif [ "${resp}" = "j" ]; then
       LDRMODE="JOT"
       MDLNAME="all-modules"      
-      break
-    elif [ "${resp}" = "k" ]; then
-      LDRMODE="FRIEND"
-      MDLNAME="rr-modules"
-      break
-    elif [ "${resp}" = "l" ]; then
-      LDRMODE="JOT"
-      MDLNAME="rr-modules"
       break
     fi
   done
