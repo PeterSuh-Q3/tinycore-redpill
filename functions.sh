@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.6"
+rploaderver="1.2.6.7"
 build="master"
 redpillmake="prod"
 
@@ -206,6 +206,7 @@ function history() {
     1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
     1.2.6.5 Added Format System Partition(md0) menu for new install
     1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+    1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -607,6 +608,8 @@ EOF
 # Added Format System Partition(md0) menu for new install
 # 2025.11.18 v1.2.6.6 
 # Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+# 2025.12.04 v1.2.6.7 
+# Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
     
 function showlastupdate() {
     cat <<EOF
@@ -689,6 +692,9 @@ function showlastupdate() {
 
 # 2025.11.18 v1.2.6.6 
 # Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+
+# 2025.12.04 v1.2.6.7 
+# Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
 
 EOF
 }
@@ -901,6 +907,9 @@ function getvarsmshell()
         KVER="4.4.302"
         SUVP=""
     elif [ "$TARGET_REVISION" == "86003" ]; then
+        KVER="4.4.302"
+        SUVP=""         
+    elif [ "$TARGET_REVISION" == "86009" ]; then
         KVER="4.4.302"
         SUVP=""         
     else
