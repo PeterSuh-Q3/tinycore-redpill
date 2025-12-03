@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 set -u # Unbound variable errors are not allowed
+##### INCLUDES ######################################################################################
+. /home/tc/verbose_control.sh
+#####################################################################################################
 
 rploaderver="1.2.6.7"
 build="master"
