@@ -1530,11 +1530,13 @@ function chkDsmversion() {
 
   open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
 
+  local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
     close_md0 || true
-    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
-    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
+    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > "$output_target"
+    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > "$output_target"
     [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
   else
     close_md0 || true
@@ -1724,7 +1726,8 @@ function generateSerial() {
 }
 
 function msgalert() {
-    printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+    printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > "$output_target"
     #echo -e "\033[1;31m$1\033[0m"
 }
 function msgwarning() {
@@ -5372,9 +5375,10 @@ function my() {
       if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
           exit 99
       fi
-     
+
+      local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
       if chkDsmversion; then
-          printf "[OK] DSM version matched. Proceeding." > /dev/tty
+          printf "[OK] DSM version matched. Proceeding." > "$output_target"
       else
           msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
           [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
