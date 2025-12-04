@@ -1530,7 +1530,7 @@ function chkDsmversion() {
 
   open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
 
-  local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+  local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
 
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
@@ -1726,7 +1726,7 @@ function generateSerial() {
 }
 
 function msgalert() {
-    local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+    local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
     printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > "$output_target"
     #echo -e "\033[1;31m$1\033[0m"
 }
@@ -5377,7 +5377,7 @@ function my() {
           exit 99
       fi
 
-      local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+      local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
       if chkDsmversion; then
           printf "[OK] DSM version matched. Proceeding." > "$output_target"
       else
