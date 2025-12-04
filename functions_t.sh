@@ -5646,14 +5646,16 @@ function my() {
       #  fi
       #else
       echo  "download original pats.json file..."
+      pats_url="https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json"
+      pats_t_url="https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json"
       if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
-        curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
+        curl -skL# $pats_t_url -o $configfile
       else  
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"        
-            curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
+            curl -skL# $pats_t_url -o $configfile
         else
-            curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json -o $configfile
+            [ "${BUS}" == "block" ] && curl -skL# $pats_t_url -o $configfile || curl -skL# $pats_url -o $configfile
         fi    
       fi  
       echo "offline = ${offline}"
