@@ -1522,7 +1522,8 @@ fi
 function chkDsmversion() {
   DSMROOTS="$(findDSMRoot)"
   if [ -z "${DSMROOTS}" ]; then
-    return 1
+    echo "There is no DSM"
+    return 0
   fi
 
   open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
