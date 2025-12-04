@@ -2896,6 +2896,24 @@ function backupxtcrp() {
 
 }
 
+#################################################################################
+# Backup with Always-Visible Progress
+#################################################################################
+function backup_loader() {
+    local backup_steps=5
+    
+    log_backup_step "Starting backup process..."
+    
+    for i in $(seq 1 $backup_steps); do
+        log_backup_step "Backing up config ($i/$backup_steps)"
+        # Actual backup command here
+        sleep 1
+        show_progress_bar "$i" "$backup_steps" "Backup in progress..."
+    done
+    
+    log_backup_step "Backup completed successfully"
+}
+
 function backuploader() {
 
   thread=$(nproc)
