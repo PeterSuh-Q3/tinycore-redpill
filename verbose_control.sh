@@ -122,24 +122,6 @@ log_build_step "Finished building" 12 12
 }
 
 #################################################################################
-# Backup with Always-Visible Progress
-#################################################################################
-backup_loader() {
-    local backup_steps=5
-    
-    log_backup_step "Starting backup process..."
-    
-    for i in $(seq 1 $backup_steps); do
-        log_backup_step "Backing up config ($i/$backup_steps)"
-        # Actual backup command here
-        sleep 1
-        show_progress_bar "$i" "$backup_steps" "Backup in progress..."
-    done
-    
-    log_backup_step "Backup completed successfully"
-}
-
-#################################################################################
 # Show Error Information
 #################################################################################
 show_backup_error_info() {
@@ -241,7 +223,6 @@ export -f log_warning
 export -f log_success
 export -f log_backup_step
 export -f make_with_progress
-export -f backup_loader
 export -f show_progress_bar
 export -f toggle_verbose_menu
 export -f get_verbose_status
