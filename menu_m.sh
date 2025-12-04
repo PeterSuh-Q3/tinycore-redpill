@@ -5,7 +5,6 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES #####################################################################################################
 . /home/tc/functions.sh
 . /home/tc/i18n.h
-. /home/tc/verbose_control.sh
 #####################################################################################################
 
 kver3explatforms="bromolow braswell cedarview grantley"
