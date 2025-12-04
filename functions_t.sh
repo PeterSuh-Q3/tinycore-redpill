@@ -5380,7 +5380,7 @@ function my() {
       fi
      
       if chkDsmversion; then
-          printf "[OK] The DSM versions match. Or, there is no DSM. Continue..." > /dev/tty
+          printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
       else
           msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
           [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
