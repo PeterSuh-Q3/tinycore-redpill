@@ -21,10 +21,12 @@ show_progress_bar() {
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
     
-    printf "[" > /dev/tty
-    printf "%${filled}s" | tr ' ' '=' > /dev/tty
-    printf "%$((width - filled))s" | tr ' ' '-' > /dev/tty
-    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > /dev/tty
+    local output_target=$( [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout )
+    
+    printf "[" > "$output_target"
+    printf "%${filled}s" | tr ' ' '=' > "$output_target"
+    printf "%$((width - filled))s" | tr ' ' '-' > "$output_target"
+    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > "$output_target"
 }
 
 #################################################################################
