@@ -1530,8 +1530,13 @@ function chkDsmversion() {
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
     close_md0 || true
-    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
-    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
+    if [ "${BUS}" == "block" ]; then
+        echo "Preinstalled version on your DSM      : ${productversion:-}"
+        echo "Version you are attempting to install : ${TARGET_VERSION}"
+    else
+        printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
+        printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
+    fi    
     [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
   else
     close_md0 || true
@@ -1721,8 +1726,11 @@ function generateSerial() {
 }
 
 function msgalert() {
-    printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
-    #echo -e "\033[1;31m$1\033[0m"
+    if [ "${BUS}" == "block" ]; then
+        echo -e "\033[1;31m$1\033[0m"
+    else    
+        printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    fi
 }
 function msgwarning() {
     echo -e "\033[1;33m$1\033[0m"
@@ -2222,7 +2230,7 @@ function copyextractor() {
 function downloadextractor() {
 
 st "extractor" "Extraction tools" "Extraction Tools downloaded"
-log_build_step "Extraction tools" 3 12
+[ "${BUS}" != "block" ] && log_build_step "Extraction tools" 3 12
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
@@ -2371,7 +2379,7 @@ function processpat() {
 
         msgnormal "Found locally cached pat file ${patfile}"
 st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
-log_build_step "Caching pat file" 4 12
+[ "${BUS}" != "block" ] && log_build_step "Caching pat file" 4 12
         testarchive "${patfile}"
         if [ ${isencrypted} = "no" ]; then
             echo "File ${patfile} is already decrypted"
@@ -2416,7 +2424,7 @@ log_build_step "Caching pat file" 4 12
 
         cd /home/tc/redpill-load/cache
 st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
-log_build_step "Pat file extracted" 5 12
+[ "${BUS}" != "block" ] && log_build_step "Pat file extracted" 5 12
         sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
         os_md5=$(md5sum /home/tc/redpill-load/cache/${SYNOMODEL}.pat | awk '{print $1}')
         msgnormal "Pat file md5sum is : $os_md5"
@@ -3375,14 +3383,14 @@ checkmachine
 
 # compilation commands...       
 st "extensions" "Extensions collection" "Extensions collection..."
-log_build_step "Collecting extensions" 6 12
+[ "${BUS}" != "block" ] && log_build_step "Collecting extensions" 6 12
     addrequiredexts
 
 # image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
-log_build_step "Creation boot loader" 7 12
+[ "${BUS}" != "block" ] && log_build_step "Creation boot loader" 7 12
 st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
-log_build_step "Copying files to P1,P2" 8 12
+[ "${BUS}" != "block" ] && log_build_step "Copying files to P1,P2" 8 12
     UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
 
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
@@ -3459,7 +3467,7 @@ log_build_step "Copying files to P1,P2" 8 12
     # Share RD of friend kernel with JOT 2023.05.01
     if [ ! -f /home/tc/friend/initrd-friend ] && [ ! -f /home/tc/friend/bzImage-friend ]; then
 st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"
-log_build_step "Friend downloading" 9 12
+[ "${BUS}" != "block" ] && log_build_step "Friend downloading" 9 12
         bringoverfriend
         #upgrademan v0.1.3m
     fi
@@ -3738,7 +3746,7 @@ EOF
     fi
     sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
 st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
-log_build_step "Gen GRUB entries" 10 12
+[ "${BUS}" != "block" ] && log_build_step "Gen GRUB entries" 10 12
 
 # finalization commands...
     [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
@@ -3782,7 +3790,7 @@ log_build_step "Gen GRUB entries" 10 12
                 fi
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
-log_build_step "Caching pat file" 11 12
+[ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
         fi    
     fi    
 }
@@ -5206,7 +5214,7 @@ function my() {
   fi
     
   st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
-  log_build_step "Building started" 1 12
+  [ "${BUS}" != "block" ] && log_build_step "Building started" 1 12
   
   #fullupgrade="Y"
   
@@ -5355,7 +5363,7 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-  if [[ "$TARGET_VERSION" == "7.3"* ]]; then
+  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
       msgalert "The DSM 7.3 or 7.3.1 loader build feature is a temporary experimental feature available until the official release of LKM.\n"
       msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
       msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
@@ -5389,11 +5397,11 @@ function my() {
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
       cecho b "Downloadng Skipped!!!"
   st "download pat" "Found pat    " "Found ${SYNOMODEL}.pat"
-  log_build_step "Found pat file" 2 12
+  [ "${BUS}" != "block" ] && log_build_step "Found pat file" 2 12
   else
   
   st "download pat" "Downloading pat  " "${SYNOMODEL}.pat"        
-  log_build_step "Download pat file" 2 12
+  [ "${BUS}" != "block" ] && log_build_step "Download pat file" 2 12
       #if [ 1 = 0 ]; then
       #  STATUS=`curl --insecure -w "%{http_code}" -L "${URL}" -o ${patfile} --progress-bar`
       #  if [ $? -ne 0 -o ${STATUS} -ne 200 ]; then
