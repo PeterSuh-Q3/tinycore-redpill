@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
 set -u # Unbound variable errors are not allowed
-##### INCLUDES ######################################################################################
-. /home/tc/verbose_control.sh
-#####################################################################################################
 
 rploaderver="1.2.6.7"
 build="master"
@@ -1530,13 +1527,11 @@ function chkDsmversion() {
 
   open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
 
-  local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
-
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
     . "${TMP_PATH}/mdX/etc/VERSION"
     close_md0 || true
-    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > "$output_target"
-    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > "$output_target"
+    printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
+    printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
     [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
   else
     close_md0 || true
@@ -1726,8 +1721,7 @@ function generateSerial() {
 }
 
 function msgalert() {
-    local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
-    printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > "$output_target"
+    printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
     #echo -e "\033[1;31m$1\033[0m"
 }
 function msgwarning() {
@@ -5365,7 +5359,6 @@ function my() {
       msgalert "The DSM 7.3 or 7.3.1 loader build feature is a temporary experimental feature available until the official release of LKM.\n"
       msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
       msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
-      ucode="${ucode:-}"
       if [ "${ucode}" == "ko_KR" ]; then
           msgalert "DSM 7.3 또는 7.3.1 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
           msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
@@ -5376,10 +5369,9 @@ function my() {
       if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
           exit 99
       fi
-
-      local output_target=$([ -t 1 ] && [ -e /dev/tty ] && echo /dev/tty || echo /dev/stdout)
+     
       if chkDsmversion; then
-          printf "[OK] DSM version matched. Proceeding." > "$output_target"
+          printf "[OK] DSM version matched. Proceeding." > /dev/tty
       else
           msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
           [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
