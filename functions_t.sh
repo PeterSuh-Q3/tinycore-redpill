@@ -5365,6 +5365,7 @@ function my() {
       msgalert "The DSM 7.3 or 7.3.1 loader build feature is a temporary experimental feature available until the official release of LKM.\n"
       msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
       msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
+      ucode="${ucode:-}"
       if [ "${ucode}" == "ko_KR" ]; then
           msgalert "DSM 7.3 또는 7.3.1 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
           msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
