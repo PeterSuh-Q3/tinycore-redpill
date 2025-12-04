@@ -903,8 +903,8 @@ show_backup_error_info() {
     echo -e "\033[1;31m╚════════════════════════════════════════════╝\033[0m"
     
     if [ -f /home/tc/zlastbuild.log ]; then
-        echo -e "\n\033[1;33mLast 20 lines of build log:\033[0m"
-        tail -20 /home/tc/zlastbuild.log | sed 's/^/  /'
+        echo -e "\n\033[1;33mLast 10 lines of build log:\033[0m"
+        tail -10 /home/tc/zlastbuild.log | sed 's/^/  /'
     fi
     
     echo -e "\n\033[1;33mBackup status:\033[0m"
