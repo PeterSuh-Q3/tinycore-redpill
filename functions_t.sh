@@ -1005,9 +1005,6 @@ get_verbose_status() {
     echo "$VERBOSE_MODE"
 }
 
-echo "Verbose Control Module Loaded"
-echo "Current Mode: $VERBOSE_MODE"
-
 function getloaderdisk() {
 
     loaderdisk=""
@@ -3039,6 +3036,7 @@ function getvars() {
     [ -z "$threads" ] && threads="1"
 
     #echo "Platform : $platform_selected"
+    echo "Verbose Mode      : $VERBOSE_MODE"
     echo "Rploader Version  : ${rploaderver}"
     echo "Extensions        : $EXTENSIONS "
     echo "Extensions URL    : $EXTENSIONS_SOURCE_URL"
