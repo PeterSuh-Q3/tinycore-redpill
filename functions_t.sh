@@ -5696,7 +5696,7 @@ function my() {
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
 
-  errorcode = $?  
+  errorcode=$?  
   echo "errorcode = $errorcode"
   
   if [ "$errorcode" != "0" ]; then
