@@ -5701,9 +5701,7 @@ function my() {
   
   if [ "$errorcode" != "0" ]; then
       cecho r "An error occurred while building the loader!!! Clean the redpill-load directory!!! "
-      readanswer
-      echo "OK, keep going..."
-      rploader clean
+      echo "y"|rploader clean
   else
       [ "${BUS}" = "block" ] && exit 0
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
