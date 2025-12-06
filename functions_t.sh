@@ -5695,8 +5695,11 @@ function my() {
   else
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
-echo "errorcode = $?"
-  if [ $? -ne 0 ]; then
+
+  errorcode = $?  
+  echo "errorcode = $errorcode"
+  
+  if [ "$errorcode" != "0" ]; then
       cecho r "An error occurred while building the loader!!! Clean the redpill-load directory!!! "
       readanswer
       echo "OK, keep going..."
@@ -5706,6 +5709,7 @@ echo "errorcode = $?"
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
       echo "y"|rploader backup
   fi
+  return $errorcode
 #[ "$FRKRNL" = "YES" ] && readanswer  
 }
 
