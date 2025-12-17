@@ -3182,8 +3182,8 @@ function backuploader() {
     
     # xtcrp 압축 (ramdisk에서 수행하여 속도 향상)
     if [ "${BUS}" != "block" ]; then
-        # BIOSCNT가 1이고 FRKRNL이 YES인 경우 특별 처리
-        if [ ${BIOSCNT} -eq 1 ] && [ "${FRKRNL}" = "YES" ]; then
+        # BIOS_CNT가 1이고 FRKRNL이 YES인 경우 특별 처리
+        if [ ${BIOS_CNT} -eq 1 ] && [ "${FRKRNL}" = "YES" ]; then
             backupxtcrp "${backup_path}"
             return $?
         else
