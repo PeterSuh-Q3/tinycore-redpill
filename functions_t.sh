@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.7"
+rploaderver="1.2.6.8"
 build="master"
 redpillmake="prod"
 
@@ -207,6 +207,7 @@ function history() {
     1.2.6.5 Added Format System Partition(md0) menu for new install
     1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
     1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+    1.2.6.8 Improved backuploader() function [reflects free space check before backup]
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -610,6 +611,8 @@ EOF
 # Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
 # 2025.12.04 v1.2.6.7 
 # Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
     
 function showlastupdate() {
     cat <<EOF
@@ -695,6 +698,9 @@ function showlastupdate() {
 
 # 2025.12.04 v1.2.6.7 
 # Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
 
 EOF
 }
@@ -1770,7 +1776,24 @@ function chkDsmversion() {
         printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
         printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
     fi    
-    [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
+    if [ "${productversion:-}" == "${TARGET_VERSION}" ]; then
+        return 0
+    else
+        if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION:-}" == "7.3.2" ]
+            msgalert "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
+            if [ "${ucode}" == "ko_KR" ]; then
+              msgalert "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
+            fi
+            readanswer
+            if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+              return 0
+            else
+              return 1
+            fi
+        else
+            return 1
+        fi
+    fi  
   else
     close_md0 || true
     return 1
