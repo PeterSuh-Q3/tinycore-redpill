@@ -3352,7 +3352,7 @@ function backuploader() {
     # STEP 5: /dev/shm에서 최종 목적지로 파일 이동
     # ========================================================================
     echo "${log_prefix} Moving backup files to ${backup_path}..."
-    
+    backup_loader
     # xtcrp.tgz 이동
     if [ -f "${xtcrp_shm}" ]; then
         if sudo dd if="${xtcrp_shm}" of="${xtcrp_dest}" conv=fsync status=progress 2>/dev/null; then
