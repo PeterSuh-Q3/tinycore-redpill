@@ -3140,7 +3140,6 @@ function backupxtcrp() {
 # ============================================================================
 function backuploader() {
     local thread=$(nproc)
-    local tcrppart="tcrpdisk3"
     local backup_path="/mnt/${tcrppart}"
     local auxfiles_path="${backup_path}/auxfiles"
     local shm_path="/dev/shm"
