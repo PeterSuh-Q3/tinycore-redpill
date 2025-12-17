@@ -43,7 +43,7 @@ function chk_filetime_n_backup() {
     echo "$file1 and $file2 are differnt!, need to backup!"
     # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
     sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
-    echo 'Y'|backuploader
+    backuploader
   fi  
 }
  
@@ -1018,7 +1018,7 @@ function writexsession() {
     echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
     echo "The system needs to reboot. Press any key to continue..."
 
-    echo 'Y'|backuploader
+    backuploader
     restart
   else
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
@@ -1111,7 +1111,7 @@ function keymapMenu() {
   writeConfigKey "general" "keymap" "${KEYMAP}"
   sed -i "/loadkmap/d" /opt/bootsync.sh
   echo "loadkmap < /usr/share/kmap/${LAYOUT}/${KEYMAP}.kmap &" >> /opt/bootsync.sh
-  echo 'Y'|backuploader
+  backuploader
   
   echo
   echo "Since the keymap has been changed,"
@@ -1328,7 +1328,7 @@ function packing_loader() {
 function satadom_edit() {
     sed -i "s/synoboot_satadom=[^ ]*/synoboot_satadom=${1}/g" /home/tc/user_config.json
     sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json
-    echo 'Y'|backuploader
+    backuploader
 }
 
 function i915_edit() {
@@ -1346,7 +1346,7 @@ function i915_edit() {
   
   writeConfigKey "general" "i915mode" "${I915MODE}"
   sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json  
-  echo 'Y'|backuploader
+  backuploader
 }
 
 function defaultchange() {
@@ -1895,7 +1895,7 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep gettext 
         sudo echo "" >> /mnt/${tcrppart}/cde/onboot.lst
         sudo echo "gettext.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
         sudo echo "ncursesw.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-        echo 'Y'|backuploader
+        backuploader
         echo "You have finished installing TC gettext package."
         restart
      fi
@@ -1910,7 +1910,7 @@ fi
 #        sudo echo "dejavu-fonts-ttf.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 #        sudo echo "notosansdevanagari-fonts-ttf.tcz" >> /mnt/${tcrppart}/cde/onboot.lst     
 #        sudo echo "setfont.tcz" >> /mnt/${tcrppart}/cde/onboot.lst     
-#        echo 'Y'|backuploader
+#        backuploader
 #        echo "You have finished installing TC dejavu-fonts-ttf package."
 #        restart
 #     fi
@@ -1926,7 +1926,7 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | w
         sudo echo "glibc_i18n_locale.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
         sudo echo "unifont.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
         sudo echo "rxvt.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-        echo 'Y'|backuploader
+        backuploader
 
         echo
         echo "You have finished installing TC Unicode package and urxvt."
@@ -2004,7 +2004,7 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep "kmaps.t
     sudo sed -i "/kmaps.tczglibc_apps.tcz/d" /mnt/${tcrppart}/cde/onboot.lst    
     sudo echo "glibc_apps.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
     sudo echo "kmaps.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-    echo 'Y'|backuploader
+    backuploader
     
     echo
     echo "We have finished bug fix for /mnt/${tcrppart}/cde/onboot.lst."
@@ -2189,7 +2189,7 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/pigz
     chmod 700 pigz
     sudo mv -vf pigz /usr/local/bin/
-    echo 'Y'|backuploader
+    backuploader
 fi
 
 #if [ "$FRKRNL" = "YES" ]; then
@@ -2231,7 +2231,7 @@ fi
 if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware-broadcom_bnx2x | wc -w) -eq 0 ]; then
     installtcz "firmware-broadcom_bnx2x.tcz"
     echo "Install firmware-broadcom_bnx2x OK !!!"
-    echo 'Y'|backuploader
+    backuploader
 fi
 
 # Download btrfs-progs
@@ -2251,7 +2251,7 @@ fi
 # copy tinycore pack and backup, except scsi-6.1.2-tinycore64.tcz
 if [ $(ls /tmp/tce/optional/ | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
-    echo 'Y'|backuploader
+    backuploader
 fi
 
 # Download scsi-6.1.2-tinycore64.tcz
@@ -2345,7 +2345,7 @@ while true; do
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
-    b) echo 'Y'|backuploader;   NEXT="r" ;;
+    b) backuploader;   NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
   esac
