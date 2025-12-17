@@ -3139,6 +3139,33 @@ function backupxtcrp() {
 # 4. 기존 sudo 권한 삭제 로직 참조
 # ============================================================================
 function backuploader() {
+
+    # Define the path to the file
+    local FILE_PATH="/opt/.filetool.lst"
+
+    sudo ln -sf /home/tc/menu.sh /usr/bin/menu.sh
+    sudo ln -sf /home/tc/monitor.sh /usr/bin/monitor.sh
+    sudo ln -sf /home/tc/ntp.sh /usr/bin/ntp.sh
+
+    # Define the patterns to be added
+    PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
+    
+    # 파일이 존재하고 FILE_PATH에 없는 경우만 추가
+    for pattern in "${PATTERNS[@]}"; do
+        if [ -f "/$pattern" ]; then
+            # 중복 확인 후 추가
+            if [ -f "$FILE_PATH" ] && grep -qF "$pattern" "$FILE_PATH"; then
+                echo "Already exists in list: $pattern" >&2
+            else
+                echo "$pattern" >> "$FILE_PATH"
+                echo "Added to backup list: $pattern" >&2
+            fi
+        else
+            echo "File not found, skipping: /$pattern" >&2
+        fi
+    done 2>/dev/null  # 전체 오류 출력 억제
+
+
     local thread=$(nproc)
     local backup_path="/mnt/${tcrppart}"
     local auxfiles_path="${backup_path}/auxfiles"
@@ -3246,6 +3273,8 @@ function backuploader() {
                 return 1
             fi
         fi
+    else
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
     fi
     
     echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
