@@ -1779,7 +1779,7 @@ function chkDsmversion() {
     if [ "${productversion:-}" == "${TARGET_VERSION}" ]; then
         return 0
     else
-        if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION}" == "7.3.2" ]
+        if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION}" == "7.3.2" ]; then
             msgalert "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
             if [ "${ucode}" == "ko_KR" ]; then
               msgalert "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
