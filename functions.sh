@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.7"
+rploaderver="1.2.6.8"
 build="master"
 redpillmake="prod"
 
@@ -207,6 +207,7 @@ function history() {
     1.2.6.5 Added Format System Partition(md0) menu for new install
     1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
     1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+    1.2.6.8 Improved backuploader() function [reflects free space check before backup]
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -610,6 +611,8 @@ EOF
 # Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
 # 2025.12.04 v1.2.6.7 
 # Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
     
 function showlastupdate() {
     cat <<EOF
@@ -695,6 +698,9 @@ function showlastupdate() {
 
 # 2025.12.04 v1.2.6.7 
 # Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
 
 EOF
 }
@@ -1770,7 +1776,24 @@ function chkDsmversion() {
         printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
         printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
     fi    
-    [[ "${productversion:-}" == "${TARGET_VERSION}" ]] && return 0 || return 1
+    if [ "${productversion:-}" == "${TARGET_VERSION}" ]; then
+        return 0
+    else
+        if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION}" == "7.3.2" ]; then
+            msgalert "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
+            if [ "${ucode}" == "ko_KR" ]; then
+              msgalert "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
+            fi
+            readanswer
+            if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+              return 0
+            else
+              return 1
+            fi
+        else
+            return 1
+        fi
+    fi  
   else
     close_md0 || true
     return 1
@@ -1840,7 +1863,7 @@ function get_tinycore9() {
       new_default=$((entry_count - 1))
       sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
       
-      echo 'Y'|backuploader
+      backuploader
       restart
     else
       return 1
@@ -1876,7 +1899,7 @@ function update_tinycore() {
       if [ $? -eq 0 ]; then
         sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
-        echo 'Y'|backuploader
+        backuploader
         restart
       fi
   fi
@@ -3129,7 +3152,271 @@ function backupxtcrp() {
 
 }
 
+# ============================================================================
+# 개선된 backuploader() 함수
+# 
+# 기능 개선사항:
+# 1. /mnt/${tcrppart} 여유공간 사전 계산
+# 2. xtcrp.tgz 및 mydata.tgz를 /dev/shm/ 에서 압축
+# 3. 용량 초과 시 /mnt/${tcrppart}/auxfiles/*.pat 파일 임의 1개 삭제
+# 4. 기존 sudo 권한 삭제 로직 참조
+# ============================================================================
 function backuploader() {
+
+    # Define the path to the file
+    local FILE_PATH="/opt/.filetool.lst"
+
+    sudo ln -sf /home/tc/menu.sh /usr/bin/menu.sh
+    sudo ln -sf /home/tc/monitor.sh /usr/bin/monitor.sh
+    sudo ln -sf /home/tc/ntp.sh /usr/bin/ntp.sh
+
+    # Define the patterns to be added
+    PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
+    
+    # 파일이 존재하고 FILE_PATH에 없는 경우만 추가
+    for pattern in "${PATTERNS[@]}"; do
+        if [ -f "/$pattern" ]; then
+            # 중복 확인 후 추가
+            if [ -f "$FILE_PATH" ] && grep -qF "$pattern" "$FILE_PATH"; then
+                echo "Already exists in list: $pattern" >&2
+            else
+                echo "$pattern" >> "$FILE_PATH"
+                echo "Added to backup list: $pattern" >&2
+            fi
+        else
+            echo "File not found, skipping: /$pattern" >&2
+        fi
+    done 2>/dev/null  # 전체 오류 출력 억제
+
+
+    local thread=$(nproc)
+    local backup_path="/mnt/${tcrppart}"
+    local auxfiles_path="${backup_path}/auxfiles"
+    local shm_path="/dev/shm"
+    
+    # 로깅 함수 (기존 코드와 호환)
+    local log_prefix="[BACKUP]"
+    
+    echo "${log_prefix} Backup loader process starting..."
+    
+    # ========================================================================
+    # STEP 1: /mnt/${tcrppart}의 여유공간 계산
+    # ========================================================================
+    echo "${log_prefix} Calculating available space on ${backup_path}..."
+    
+    local avail_space_kb=$(df "${backup_path}" | tail -1 | awk '{print $4}')
+    local avail_space_mb=$((avail_space_kb / 1024))
+    
+    echo "${log_prefix} Available space: ${avail_space_mb} MB"
+    
+    # 필요한 최소 여유공간 (버퍼: 100MB)
+    local min_required_space=$((150 + 100))  # xtcrp.tgz + mydata.tgz + 버퍼
+    
+    if [ ${avail_space_mb} -lt ${min_required_space} ]; then
+        echo "${log_prefix} WARNING: Low disk space (${avail_space_mb}MB < ${min_required_space}MB)"
+        echo "${log_prefix} Will attempt to free up space by removing old .pat files..."
+    fi
+    
+    # ========================================================================
+    # STEP 2: /dev/shm에서 xtcrp.tgz 압축
+    # ========================================================================
+    echo "${log_prefix} Compressing xtcrp to ${shm_path}/xtcrp.tgz..."
+    
+    local xtcrp_shm="${shm_path}/xtcrp.tgz"
+    local xtcrp_dest="${backup_path}/xtcrp.tgz"
+    
+    # 기존 /dev/shm 파일 정리
+    if [ -f "${xtcrp_shm}" ]; then
+        sudo rm -f "${xtcrp_shm}"
+    fi
+    
+    # xtcrp 압축 (ramdisk에서 수행하여 속도 향상)
+    if [ "${BUS}" != "block" ]; then
+        # BIOS_CNT가 1이고 FRKRNL이 YES인 경우 특별 처리
+        if [ ${BIOS_CNT} -eq 1 ] && [ "${FRKRNL}" = "YES" ]; then
+            backupxtcrp "${backup_path}"
+            return $?
+        else
+            # 표준 백업: tar + pigz 사용
+            if ! sudo sh -c "cd . && tar -cf - . | pigz -p ${thread}" > "${xtcrp_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create xtcrp.tgz in ${shm_path}!"
+                return 1
+            fi
+        fi
+    else
+        # BUS == block 인 경우
+        if ! sudo sh -c "cd . && tar -cf - . | pigz -p ${thread}" > "${xtcrp_shm}" 2>/dev/null; then
+            echo "${log_prefix} ERROR: Failed to create xtcrp.tgz in ${shm_path}!"
+            return 1
+        fi
+    fi
+    
+    echo "${log_prefix} xtcrp.tgz created successfully in ${shm_path}"
+    
+    # ========================================================================
+    # STEP 3: /dev/shm에서 mydata.tgz 압축
+    # ========================================================================
+    echo "${log_prefix} Compressing mydata to ${shm_path}/mydata.tgz..."
+    
+    local mydata_shm="${shm_path}/mydata.tgz"
+    local mydata_dest="${backup_path}/mydata.tgz"
+    
+    # 기존 /dev/shm 파일 정리
+    if [ -f "${mydata_shm}" ]; then
+        sudo rm -f "${mydata_shm}"
+    fi
+    
+    if [ "${FRKRNL}" = "YES" ]; then
+        # 기존 mydata.tgz가 있으면 먼저 처리
+        if [ -f "${mydata_dest}" ]; then
+            local home_size=$(du -sh /home/tc | awk '{print $1}')
+            echo "${log_prefix} Current /home/tc size: ${home_size}"
+            echo "${log_prefix} Please ensure using latest 1GB img before backup"
+            echo "${log_prefix} Note: Keep /home/tc size less than 1GB for image compatibility"
+            
+            # 기존 파일에 새로운 userconfig.json 추가
+            echo "${log_prefix} Adding updated userconfig.json to mydata.tgz..."
+            
+            # /dev/shm에서 압축 (속도 향상)
+            if ! sudo sh -c \
+                "cd /home/tc && \
+                 tar -cf - -T /opt.filetool.lst -X /opt.xfiletool.lst | \
+                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
+                return 1
+            fi
+        else
+            echo "${log_prefix} Creating new mydata.tgz..."
+            
+            if ! sudo sh -c \
+                "cd /home/tc && \
+                 tar -cf - -T /opt.filetool.lst -X /opt.xfiletool.lst | \
+                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
+                return 1
+            fi
+        fi
+    else
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+    fi
+    
+    echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
+    
+    # ========================================================================
+    # STEP 4: /dev/shm 파일 크기 확인 및 공간 부족 시 처리
+    # ========================================================================
+    echo "${log_prefix} Checking total backup size..."
+    
+    local xtcrp_size=0
+    local mydata_size=0
+    local total_backup_size=0
+    
+    if [ -f "${xtcrp_shm}" ]; then
+        xtcrp_size=$(stat -f%z "${xtcrp_shm}" 2>/dev/null || stat -c%s "${xtcrp_shm}" 2>/dev/null)
+        xtcrp_size=$((xtcrp_size / 1024 / 1024))  # Convert to MB
+    fi
+    
+    if [ -f "${mydata_shm}" ]; then
+        mydata_size=$(stat -f%z "${mydata_shm}" 2>/dev/null || stat -c%s "${mydata_shm}" 2>/dev/null)
+        mydata_size=$((mydata_size / 1024 / 1024))  # Convert to MB
+    fi
+    
+    total_backup_size=$((xtcrp_size + mydata_size))
+    
+    echo "${log_prefix} Backup sizes - xtcrp: ${xtcrp_size}MB, mydata: ${mydata_size}MB, total: ${total_backup_size}MB"
+    echo "${log_prefix} Available space: ${avail_space_mb}MB"
+    
+    # 여유공간이 부족한 경우 처리
+    if [ ${avail_space_mb} -lt $((total_backup_size + 50)) ]; then
+        echo "${log_prefix} WARNING: Insufficient space detected!"
+        echo "${log_prefix} Attempting to free space by removing old .pat files..."
+        
+        # 여유공간 충분할 때까지 .pat 파일 삭제
+        while [ ${avail_space_mb} -lt $((total_backup_size + 50)) ]; do
+            if [ ! -d "${auxfiles_path}" ]; then
+                echo "${log_prefix} ERROR: ${auxfiles_path} directory not found!"
+                return 1
+            fi
+            
+            # .pat 파일 목록 확인
+            local pat_files=($(find "${auxfiles_path}" -maxdepth 1 -name "*.pat" -type f 2>/dev/null))
+            
+            if [ ${#pat_files[@]} -eq 0 ]; then
+                echo "${log_prefix} ERROR: No .pat files found to delete!"
+                echo "${log_prefix} Backup aborted due to insufficient space!"
+                return 1
+            fi
+            
+            # 임의의 .pat 파일 선택 (RANDOM 사용)
+            local random_idx=$((RANDOM % ${#pat_files[@]}))
+            local pat_file_to_delete="${pat_files[${random_idx}]}"
+            local pat_filename=$(basename "${pat_file_to_delete}")
+            
+            echo "${log_prefix} Deleting ${pat_filename}..."
+            
+            # sudo 권한으로 파일 삭제 (기존 로직 참조)
+            if sudo rm -vf "${pat_file_to_delete}" 2>/dev/null; then
+                local pat_size=$(stat -f%z "${pat_file_to_delete}" 2>/dev/null || stat -c%s "${pat_file_to_delete}" 2>/dev/null)
+                pat_size=$((pat_size / 1024 / 1024))
+                echo "${log_prefix} Successfully deleted ${pat_filename} (${pat_size}MB recovered)"
+                
+                # 여유공간 재계산
+                avail_space_kb=$(df "${backup_path}" | tail -1 | awk '{print $4}')
+                avail_space_mb=$((avail_space_kb / 1024))
+                echo "${log_prefix} Available space after cleanup: ${avail_space_mb}MB"
+            else
+                echo "${log_prefix} ERROR: Failed to delete ${pat_filename}!"
+                return 1
+            fi
+        done
+    fi
+    
+    # ========================================================================
+    # STEP 5: /dev/shm에서 최종 목적지로 파일 이동
+    # ========================================================================
+    echo "${log_prefix} Moving backup files to ${backup_path}..."
+    backup_loader
+    # xtcrp.tgz 이동
+    if [ -f "${xtcrp_shm}" ]; then
+        if sudo dd if="${xtcrp_shm}" of="${xtcrp_dest}" conv=fsync status=progress 2>/dev/null; then
+            echo "${log_prefix} xtcrp.tgz moved successfully"
+        else
+            echo "${log_prefix} ERROR: Failed to move xtcrp.tgz!"
+            return 1
+        fi
+    fi
+    
+    # mydata.tgz 이동
+    if [ -f "${mydata_shm}" ]; then
+        if sudo dd if="${mydata_shm}" of="${mydata_dest}" conv=fsync status=progress 2>/dev/null; then
+            echo "${log_prefix} mydata.tgz moved successfully"
+        else
+            echo "${log_prefix} ERROR: Failed to move mydata.tgz!"
+            return 1
+        fi
+    fi
+    
+    # ========================================================================
+    # STEP 6: /dev/shm 정리 및 마무리
+    # ========================================================================
+    echo "${log_prefix} Cleaning up temporary files..."
+    
+    sudo rm -f "${xtcrp_shm}" "${mydata_shm}"
+    
+    # fsync로 디스크 동기화
+    sync
+    sudo sync
+    
+    if [ $? -eq 0 ]; then
+        echo "${log_prefix} Backup completed successfully!"
+        return 0
+    else
+        echo "${log_prefix} ERROR: Backup completed with errors!"
+        return 1
+    fi
+}
+
+function backuploader_old() {
 
   thread=$(nproc)
   if [ "${BUS}" != "block"  ]; then
