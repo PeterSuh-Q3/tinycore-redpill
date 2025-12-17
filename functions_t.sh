@@ -1840,7 +1840,7 @@ function get_tinycore9() {
       new_default=$((entry_count - 1))
       sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
       
-      echo 'Y'|backuploader
+      backuploader
       restart
     else
       return 1
@@ -1876,7 +1876,7 @@ function update_tinycore() {
       if [ $? -eq 0 ]; then
         sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
-        echo 'Y'|backuploader
+        backuploader
         restart
       fi
   fi
