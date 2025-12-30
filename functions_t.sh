@@ -1796,7 +1796,7 @@ function chkDsmversion() {
     fi  
   else
     close_md0 || true
-    return 1
+    return 0
   fi
 }
 
