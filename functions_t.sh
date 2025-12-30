@@ -1691,7 +1691,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
           read answer
       fi
   else
-      sudo rm -rf "${TMP_PATH}/mdX/*"
+      sudo rm -rf "${TMP_PATH}/mdX/"
       sudo sync      
       echo "true" >"${TMP_PATH}/isOk"        
       echo "press any key to continue..."
