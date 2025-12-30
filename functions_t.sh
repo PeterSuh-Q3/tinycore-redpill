@@ -4511,7 +4511,12 @@ function getredpillko() {
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
-        TAG="${LATESTURL##*/}"
+        if [ -f /tmp/test_mode ]; then
+            cecho g "###############################  This is Test Mode  ############################"        
+            TAG="25.12.30"
+        else        
+            TAG="${LATESTURL##*/}"
+        fi    
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
