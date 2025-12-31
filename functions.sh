@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.8"
+rploaderver="1.2.6.9"
 build="master"
 redpillmake="prod"
 
@@ -208,6 +208,7 @@ function history() {
     1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
     1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
     1.2.6.8 Improved backuploader() function [reflects free space check before backup]
+    1.2.6.9 Format System Partition(md0) menu stabilization
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -613,6 +614,8 @@ EOF
 # Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
 # 2025.12.17 v1.2.6.8 
 # Improved backuploader() function [reflects free space check before backup]
+# 2025.12.31 v1.2.6.9 
+# Stabilization of the system partition (md0) format menu
     
 function showlastupdate() {
     cat <<EOF
@@ -701,6 +704,9 @@ function showlastupdate() {
 
 # 2025.12.17 v1.2.6.8 
 # Improved backuploader() function [reflects free space check before backup]
+
+# 2025.12.31 v1.2.6.9 
+# Stabilization of the system partition (md0) format menu
 
 EOF
 }
@@ -4511,7 +4517,12 @@ function getredpillko() {
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
-        TAG="${LATESTURL##*/}"
+        if [ -f /tmp/test_mode ]; then
+            cecho g "###############################  This is Test Mode  ############################"        
+            TAG="25.12.30"
+        else        
+            TAG="${LATESTURL##*/}"
+        fi    
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
