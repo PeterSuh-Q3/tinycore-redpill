@@ -1,1 +1,1 @@
-        1.2.6.9 Format System Partition(md0) menu stabilization
+        1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
