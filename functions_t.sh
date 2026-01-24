@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.6.9"
+rploaderver="1.2.7.0"
 build="master"
 redpillmake="prod"
 
@@ -209,6 +209,7 @@ function history() {
     1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
     1.2.6.8 Improved backuploader() function [reflects free space check before backup]
     1.2.6.9 Format System Partition(md0) menu stabilization
+    1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -616,6 +617,8 @@ EOF
 # Improved backuploader() function [reflects free space check before backup]
 # 2025.12.31 v1.2.6.9 
 # Stabilization of the system partition (md0) format menu
+# 2026.01.24 v1.2.7.0 
+# Skip backup and reboot after ttyd injection (to prevent infinite reboots)
     
 function showlastupdate() {
     cat <<EOF
@@ -707,6 +710,9 @@ function showlastupdate() {
 
 # 2025.12.31 v1.2.6.9 
 # Stabilization of the system partition (md0) format menu
+
+# 2026.01.24 v1.2.7.0 
+# Skip backup and reboot after ttyd injection (to prevent infinite reboots)
 
 EOF
 }
