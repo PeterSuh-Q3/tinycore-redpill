@@ -1016,10 +1016,10 @@ function writexsession() {
 
     # Notify the user about the changes and prompt for reboot
     echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
-    echo "The system needs to reboot. Press any key to continue..."
+    #echo "The system needs to reboot. Press any key to continue..."
 
-    backuploader
-    restart
+    #backuploader
+    #restart
   else
     echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
     sudo sed -i "/ttyd/d" /opt/bootlocal.sh
