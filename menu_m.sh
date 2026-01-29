@@ -591,6 +591,8 @@ function setSuggest() {
     RS814+)      platform="cedarview";bay="RACK_4_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RS814RP+)    platform="cedarview";bay="RACK_4_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS916+)      platform="braswell";bay="TOWER_4_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS716+)      platform="braswell";bay="TOWER_2_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
+    DS216+)      platform="braswell";bay="TOWER_2_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     FS3017)      platform="grantley";bay="RACK_24_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     DS3615xs)    platform="bromolow";bay="TOWER_12_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
     RC18015xs+)  platform="bromolow";bay="RACK_12_Bay";mcpu="KERNEL 3.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}22}\"";;
