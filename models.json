@@ -61,7 +61,10 @@
         "models": [
             "DS916+",
             "DS716+",
-            "DS216+"
+            "DS216+",
+            "DS216+II",
+            "DS716+II",
+            "DS416play"
         ],
         "add_extensions": [
             {
