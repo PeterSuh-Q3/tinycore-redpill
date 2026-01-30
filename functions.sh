@@ -1143,7 +1143,7 @@ function getvarsmshell()
         KVER="4.4.180"
         SUVP=""
     elif [ "$TARGET_REVISION" == "42661" ]; then
-        KVER="4.4.108"
+        KVER="4.4.180"
         SUVP="-1" 
     elif [ "$TARGET_REVISION" == "42962" ]; then
         KVER="4.4.180"
