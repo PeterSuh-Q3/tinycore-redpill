@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.0"
+rploaderver="1.2.7.1"
 build="master"
 redpillmake="prod"
 
@@ -210,6 +210,7 @@ function history() {
     1.2.6.8 Improved backuploader() function [reflects free space check before backup]
     1.2.6.9 Format System Partition(md0) menu stabilization
     1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+    1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -619,6 +620,8 @@ EOF
 # Stabilization of the system partition (md0) format menu
 # 2026.01.24 v1.2.7.0 
 # Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+# 2026.01.30 v1.2.7.1 
+# Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
     
 function showlastupdate() {
     cat <<EOF
@@ -713,6 +716,9 @@ function showlastupdate() {
 
 # 2026.01.24 v1.2.7.0 
 # Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+
+# 2026.01.30 v1.2.7.1 
+# Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
 
 EOF
 }
@@ -1136,6 +1142,9 @@ function getvarsmshell()
     elif [ "$TARGET_REVISION" == "42218" ]; then
         KVER="4.4.180"
         SUVP=""
+    elif [ "$TARGET_REVISION" == "42661" ]; then
+        KVER="4.4.108"
+        SUVP="-1" 
     elif [ "$TARGET_REVISION" == "42962" ]; then
         KVER="4.4.180"
         MODELS6="DS423+ DS723+ DS923+ DS1823xs+ RS3621xs+ RS4021xs+ RS3618xs SA6400"
