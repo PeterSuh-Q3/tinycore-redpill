@@ -211,7 +211,7 @@ function history() {
     1.2.6.9 Format System Partition(md0) menu stabilization
     1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
     1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
-    1.2.7.2 Remove warning message when building 7.3.X loader
+    1.2.7.2 Apply timeout when selecting locale
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -624,7 +624,7 @@ EOF
 # 2026.01.30 v1.2.7.1 
 # Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
 # 2026.02.05 v1.2.7.2 
-# Remove warning message when building 7.3.X loader
+# Apply timeout when selecting locale
     
 function showlastupdate() {
     cat <<EOF
@@ -724,7 +724,7 @@ function showlastupdate() {
 # Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
 
 # 2026.02.05 v1.2.7.2 
-# Remove warning message when building 7.3.X loader
+# Apply timeout when selecting locale
 
 EOF
 }
@@ -5931,29 +5931,29 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-#  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
-#      msgalert "The loader build feature for DSM 7.3 and later versions is a temporary experimental feature available until the official release of LKM.\n"
-#      msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
-#      msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
-#      if [ "${ucode}" == "ko_KR" ]; then
-#          msgalert "DSM 7.3 또는 그 이상의 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
-#          msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
-#          msgalert "이 임시기능은 네트워크 무반응, 시노디스크 사라짐 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
-#      fi      
-#      msgalert "(Warning) Do you want to continue building this version? [yY/nN] : "
-#      readanswer
-#      if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
-#          exit 99
-#      fi
-#     
-#      if chkDsmversion; then
-#          printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
-#      else
-#          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
-#          [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
-#          exit 99
-#      fi    
-#  fi
+  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
+      msgalert "The loader build feature for DSM 7.3 and later versions is a temporary experimental feature available until the official release of LKM.\n"
+      msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
+      msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
+      if [ "${ucode}" == "ko_KR" ]; then
+          msgalert "DSM 7.3 또는 그 이상의 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
+          msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
+          msgalert "이 임시기능은 네트워크 무반응, 시노디스크 사라짐 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+      fi      
+      msgalert "(Warning) Do you want to continue building this version? [yY/nN] : "
+      readanswer
+      if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
+          exit 99
+      fi
+     
+      if chkDsmversion; then
+          printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
+      else
+          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+          [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
+          exit 99
+      fi    
+  fi
 
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
