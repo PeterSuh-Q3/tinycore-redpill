@@ -511,12 +511,9 @@ function modelMenu() {
     DMPM="DDSML"
   fi
   getip
-  echo "R8168_YN=${R8168_YN}"
   if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
     DMPM="DDSML+EUDEV"
   fi
-  echo "DMPM=${DMPM}"
-  read
   writeConfigKey "general" "devmod" "${DMPM}"
   
 }
