@@ -216,6 +216,7 @@ function history() {
     1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
     1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
     1.2.7.2 Apply timeout when selecting locale
+            Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -629,6 +630,7 @@ EOF
 # Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
 # 2026.02.05 v1.2.7.2 
 # Apply timeout when selecting locale
+# Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
     
 function showlastupdate() {
     cat <<EOF
@@ -729,6 +731,7 @@ function showlastupdate() {
 
 # 2026.02.05 v1.2.7.2 
 # Apply timeout when selecting locale
+# Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
 
 EOF
 }
