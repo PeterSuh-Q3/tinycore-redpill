@@ -27,6 +27,22 @@ function readanswer() {
     done
 }
 
+function readanswer_with_timeout() {
+    # Background timeout monitor process
+    (sleep 10 && kill -TERM $$) &
+    TIMEOUT_PID=$!
+    
+    while true; do
+        read answ
+        case $answ in
+            [Yy]* ) answer="$answ"; kill $TIMEOUT_PID 2>/dev/null; return 0;;
+            [Nn]* ) answer="$answ"; kill $TIMEOUT_PID 2>/dev/null; return 0;;
+            * ) echo "Please answer yY/nN.";;
+        esac
+    done
+}
+
+
 function chk_filetime_n_backup() {
   file1="$userconfigfile"
   file2="/mnt/${tcrppart}/user_config.json"
@@ -1851,7 +1867,17 @@ if [ "${ucode}" == "null" ]; then
 else
   if [ "${lcode}" != "${country}" ]; then
     echo -n "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : "
-    readanswer    
+
+    # 10 second timeout + default N processing
+    if readanswer_with_timeout; then
+        # Function successfully received input
+        answer="${answer}"
+    else
+        # Timeout occurred
+        echo " (10 second timeout - N selected)"
+        answer="N"
+    fi
+
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
       lcode="${country}"
     fi
