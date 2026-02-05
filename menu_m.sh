@@ -37,7 +37,7 @@ function read_with_timeout() {
     echo -n "$prompt"
     
     # 한 문자만 읽고 바로 처리 (y/Y/n/N)
-    if read -t 10 -n 1 -r "$varname"; then
+    if read -t 7 -n 1 -r "$varname"; then
         local input
         input=$(eval echo \$$varname)
         case "$input" in
