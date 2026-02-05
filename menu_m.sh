@@ -32,12 +32,24 @@ function read_with_timeout() {
     local varname="$2"
     local default="$3"
     
-    echo -n "$prompt"
-    eval "read -t 10 -r \$$varname"
+    eval "$varname="
     
-    if [ $? -ne 0 ] || [ -z "$(eval echo \$$varname)" ]; then
+    echo -n "$prompt"
+    
+    # 한 문자만 읽고 바로 처리 (y/Y/n/N)
+    if read -t 10 -n 1 -r "$varname"; then
+        local input
+        input=$(eval echo \$$varname)
+        case "$input" in
+            [yY]) eval "$varname=Y"; echo "Y"; return 0 ;;
+            [nN]) eval "$varname=N"; echo "N"; return 0 ;;
+            *) echo ""; return 1 ;;  # 잘못된 입력
+        esac
+    else
+        # 타임아웃
         eval "$varname=$default"
-        echo " $default"
+        echo " $default (timeout)"
+        return 1
     fi
 }
 
