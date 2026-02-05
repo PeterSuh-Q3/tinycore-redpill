@@ -27,21 +27,19 @@ function readanswer() {
     done
 }
 
-function readanswer_with_timeout() {
-    # Background timeout monitor process
-    (sleep 10 && kill -TERM $$) &
-    TIMEOUT_PID=$!
+function read_with_timeout() {
+    local prompt="$1"
+    local varname="$2"
+    local default="$3"
     
-    while true; do
-        read answ
-        case $answ in
-            [Yy]* ) answer="$answ"; kill $TIMEOUT_PID 2>/dev/null; return 0;;
-            [Nn]* ) answer="$answ"; kill $TIMEOUT_PID 2>/dev/null; return 0;;
-            * ) echo "Please answer yY/nN.";;
-        esac
-    done
+    echo -n "$prompt"
+    eval "read -t 10 -r \$$varname"
+    
+    if [ $? -ne 0 ] || [ -z "$(eval echo \$$varname)" ]; then
+        eval "$varname=$default"
+        echo " $default"
+    fi
 }
-
 
 function chk_filetime_n_backup() {
   file1="$userconfigfile"
@@ -1866,18 +1864,7 @@ if [ "${ucode}" == "null" ]; then
   lcode="${country}"
 else
   if [ "${lcode}" != "${country}" ]; then
-    echo -n "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : "
-
-    # 10 second timeout + default N processing
-    if readanswer_with_timeout; then
-        # Function successfully received input
-        answer="${answer}"
-    else
-        # Timeout occurred
-        echo " (10 second timeout - N selected)"
-        answer="N"
-    fi
-
+    read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "N"
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
       lcode="${country}"
     fi
