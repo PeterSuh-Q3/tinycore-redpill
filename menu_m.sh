@@ -1864,6 +1864,7 @@ if [ "${ucode}" == "null" ]; then
   lcode="${country}"
 else
   if [ "${lcode}" != "${country}" ]; then
+    answer=""
     read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "N"
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
       lcode="${country}"
