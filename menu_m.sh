@@ -510,6 +510,9 @@ function modelMenu() {
   else
     DMPM="DDSML"
   fi
+  if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
+    DMPM="DDSML+EUDEV"
+  fi
   writeConfigKey "general" "devmod" "${DMPM}"
   
 }
