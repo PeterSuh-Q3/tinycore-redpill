@@ -25,6 +25,10 @@ kver3platforms="bromolow braswell avoton cedarview grantley"
 kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
 dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap grantley"
 
+# 전역 변수로 플래그 설정 (한번 Y면 영구 유지)
+R8168_YN="N"
+R8168_DETECTED="N"  # 한번만 체크하는 플래그
+
 #Check if FRIEND kernel exists
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
     FRKRNL="YES"
@@ -2325,6 +2329,15 @@ function setnetwork() {
 
 }
 
+function check_r8168_once() {
+    if [ "$R8168_DETECTED" != "Y" ] && [[ "$DRIVER" == r816* ]]; then
+        R8168_YN="Y"
+        R8168_DETECTED="Y"
+    elif [ "$R8168_DETECTED" != "Y" ]; then
+        R8168_YN="N"
+    fi
+}
+
 function getip() {
     ethdevs=$(ls /sys/class/net/ | grep eth || true)
     for eth in $ethdevs; do 
@@ -2348,6 +2361,7 @@ function getip() {
                 fi
             fi    
         fi    
+        check_r8168_once
         echo "IP Addr : $(msgnormal "${IP}"), ${HWADDR}, ${BUSID}, ${eth} (${DRIVER})"
     done
 }
