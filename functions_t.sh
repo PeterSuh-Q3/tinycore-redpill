@@ -5963,7 +5963,7 @@ function my() {
           exit 99
       fi
      
-      chkDsmversion
+      #chkDsmversion
   fi
 
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
