@@ -1,2 +1,1 @@
-    1.2.7.2 Apply timeout when selecting locale
-Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader        
