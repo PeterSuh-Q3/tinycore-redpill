@@ -1023,6 +1023,28 @@ toggle_verbose_menu() {
     done
 }
 
+function msgalert() {
+    if [ "${BUS}" == "block" ]; then
+        echo -e "\033[1;31m$1\033[0m"
+    else    
+        printf "\033[1;31m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    fi
+}
+function msgwarning() {
+    if [ "${BUS}" == "block" ]; then
+        echo -e "\033[1;33m$1\033[0m"
+    else
+        printf "\033[1;33m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    fi
+}
+function msgnormal() {
+    if [ "${BUS}" == "block" ]; then
+        echo -e "\033[1;32m$1\033[0m"
+    else
+        printf "\033[1;32m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+    fi
+} 
+
 #################################################################################
 # Backup with Always-Visible Progress
 #################################################################################
@@ -2020,20 +2042,6 @@ function generateSerial() {
     esac
     echo $serialnum
 }
-
-function msgalert() {
-    if [ "${BUS}" == "block" ]; then
-        echo -e "\033[1;31m$1\033[0m"
-    else    
-        printf "\033[1;35m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
-    fi
-}
-function msgwarning() {
-    echo -e "\033[1;33m$1\033[0m"
-}
-function msgnormal() {
-    echo -e "\033[1;32m$1\033[0m"
-} 
 
 function readanswer() {
     while true; do
