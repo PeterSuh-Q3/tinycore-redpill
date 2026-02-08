@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.2"
+rploaderver="1.2.7.3"
 build="master"
 redpillmake="prod"
 
@@ -217,6 +217,7 @@ function history() {
     1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
     1.2.7.2 Apply timeout when selecting locale
             Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader        
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -631,6 +632,8 @@ EOF
 # 2026.02.05 v1.2.7.2 
 # Apply timeout when selecting locale
 # Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+# 2026.02.08 v1.2.7.3 
+# Changes to warning messages and guides when building the DSM 7.3.X loader
     
 function showlastupdate() {
     cat <<EOF
@@ -732,6 +735,9 @@ function showlastupdate() {
 # 2026.02.05 v1.2.7.2 
 # Apply timeout when selecting locale
 # Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+
+# 2026.02.08 v1.2.7.3 
+# Changes to warning messages and guides when building the DSM 7.3.X loader
 
 EOF
 }
@@ -1814,9 +1820,9 @@ function chkDsmversion() {
         return 0
     else
         if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION}" == "7.3.2" ]; then
-            msgalert "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
+            msgwarning "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
             if [ "${ucode}" == "ko_KR" ]; then
-              msgalert "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
+              msgwarning "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
             fi
             readanswer
             if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
@@ -2039,6 +2045,19 @@ function readanswer() {
         esac
     done
 }        
+
+function readanswerwithskip() {
+    while true; do
+        read answ
+        case $answ in
+            [Yy]* ) answer="$answ"; break;;
+            [Nn]* ) answer="$answ"; break;;
+            [Ss]* ) answer="$answ"; break;;            
+            * ) msgwarning "Please answer yY/nN/Ss.";;
+        esac
+    done
+}        
+
 
 function sync_usb_line() {
     # 현재 usb_line 추출
@@ -5949,26 +5968,34 @@ function my() {
       TARGET_VERSION="7.2.0"
   fi
   if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
-      msgalert "The loader build feature for DSM 7.3 and later versions is a temporary experimental feature available until the official release of LKM.\n"
-      msgalert "It is only available if DSM 7.3 or later is already installed on your Synology Disk.\n"
-      msgalert "Please note that this temporary feature may result in network unresponsiveness and Synology Disk disappearance.\n"
+      msgnormal "We recommend using the Synology Control Panel update for DSM 7.2.2 and earlier, rather than the loader build for DSM 7.3.X.\n"
+      msgnormal "After this Control Panel update, FRIEND kernels v0.1.3w and later will automatically upgrade to DSM 7.3.2.\n"
+      msgnormal "If you still want this build, it will only be allowed if the corresponding version of DSM 7.3.X has been pre-installed on your Synology Disk.\n"
+      msgnormal "Please note that building the loader without prior updates may result in network unresponsiveness and system partition initialization.\n"
+      msgwarning "(Warning) If you build without checking the version, the system partition may be initialized.\n"
+      msgwarning "(Warning) Do you want to continue building this version? or Skip version checking? [yY/nN/sS] : "
+
       if [ "${ucode}" == "ko_KR" ]; then
-          msgalert "DSM 7.3 또는 그 이상의 로더빌드 기능은 정식 lkm 이 출시되기전까지 임시로 사용할 수 있는 시험적인 기능입니다.\n"
-          msgalert "이미 DSM 7.3 이상을 시노디스크에 미리 설치한 경우만 기능을 허용합니댜.\n"
-          msgalert "이 임시기능은 네트워크 무반응, 시노디스크 사라짐 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+          msgnormal "DSM 7.3.X 의 로더빌드 보다는 DSM 7.2.2 이하에서 시놀로지 제어판의 업데이트 사용을 권장합니다.\n"
+          msgnormal "이 제어판 업데이트 이후 FRIEND 커널 v0.1.3w 이상에서 DSM 7.3.2 로의 업그레이드가 자동진행됩니다.\n"
+          msgnormal "그래도 이 빌드를 원하신다면, 해당 버전의 DSM 7.3.X 를 시노디스크에 미리 설치한 경우만 빌드를 허용합니댜.\n"
+          msgnormal "사전 업데이트 없이 로더부터 빌드하면, 네트워크 무반응, 시스템 파티션 초기화 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+          msgwarning "(경고) 버전 확인 없이 빌드하면 시스템 파티션이 초기화될 수 있습니다.\n"
+          msgwarning "(경고) 이 버전을 계속 빌드하시겠습니까? 아니면 버전 확인을 건너뛰시겠습니까? [yY/nN/sS] : "
       fi      
-      msgalert "(Warning) Do you want to continue building this version? [yY/nN] : "
-      readanswer
-      if [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
+      readanswerwithskip
+      if [ "${answer}" = "S" ] || [ "${answer}" = "s" ]; then
+          printf "[OK] Now skip checking DSM version. Continue...\n" > /dev/tty
+      elif [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
           exit 99
-      fi
-     
-      if chkDsmversion; then
-          printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
-      else
-          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
-          [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
-          exit 99
+      elif [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+          if chkDsmversion; then
+              printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
+          else
+              msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+              [ "${ucode}" == "ko_KR" ] && msgwarning "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
+              exit 99
+          fi    
       fi    
   fi
 
