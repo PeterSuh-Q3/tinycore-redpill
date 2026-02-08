@@ -4557,7 +4557,7 @@ function getredpillko() {
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"        
-            TAG="26.1.29"
+            TAG="25.12.30"
         else        
             TAG="${LATESTURL##*/}"
         fi    
@@ -5963,7 +5963,13 @@ function my() {
           exit 99
       fi
      
-      #chkDsmversion
+      if chkDsmversion; then
+          printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
+      else
+          msgalert "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+          [ "${ucode}" == "ko_KR" ] && msgalert "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
+          exit 99
+      fi    
   fi
 
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
