@@ -1151,7 +1151,6 @@ function getvarsmshell()
       fi
     done
     
-    SUVP=""
     ORIGIN_PLATFORM=""
 
     tem="${1}"
@@ -1176,49 +1175,30 @@ function getvarsmshell()
 
     if [ "$TARGET_REVISION" == "25556" ]; then
         KVER="4.4.59"
-        SUVP=""
     elif [ "$TARGET_REVISION" == "42218" ]; then
         KVER="4.4.180"
-        SUVP=""
     elif [ "$TARGET_REVISION" == "42661" ]; then
         KVER="4.4.180"
-        SUVP="-1" 
     elif [ "$TARGET_REVISION" == "42962" ]; then
         KVER="4.4.180"
-        MODELS6="DS423+ DS723+ DS923+ DS1823xs+ RS3621xs+ RS4021xs+ RS3618xs SA6400"
-        if echo ${MODELS6}| grep -qw ${MODEL}; then
-           SUVP="-6"
-        else
-           SUVP="-1"
-        fi
     elif [ "$TARGET_REVISION" == "64570" ]; then
         KVER="4.4.302"
-        SUVP="-1" 
     elif [ "$TARGET_REVISION" == "69057" ]; then
         KVER="4.4.302"
-        SUVP="-1"
     elif [ "$TARGET_REVISION" == "72806" ]; then
         KVER="4.4.302"
-        SUVP="" 
     elif [ "$TARGET_REVISION" == "81180" ]; then
         KVER="4.4.302"
-        SUVP=""
     elif [ "$TARGET_REVISION" == "86003" ]; then
         KVER="4.4.302"
-        SUVP=""         
     elif [ "$TARGET_REVISION" == "86009" ]; then
         KVER="4.4.302"
-        SUVP=""
-        if echo "SA6400"| grep -qw ${MODEL}; then
-           SUVP="-1"
-        fi
     else
         echo "Synology model revision not supported by TCRP."
         exit 0
     fi
 
     zeropadingver ${KVER}
-    #SFVAL=${SUVP:--0}
 
     # Extract models for each platform and add them to the mdl file
     for platform in $platforms; do
@@ -5778,7 +5758,6 @@ function my() {
   cecho r "ORIGIN_PLATFORM is $ORIGIN_PLATFORM"
   cecho c "TARGET_VERSION is $TARGET_VERSION"
   cecho p "TARGET_REVISION is $TARGET_REVISION"
-  cecho y "SUVP is $SUVP"
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
 
