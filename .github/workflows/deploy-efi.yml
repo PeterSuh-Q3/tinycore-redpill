@@ -42,16 +42,18 @@ jobs:
       - name: Configure GRUB
         working-directory: grub-2.12
         run: |
-          ./configure --prefix=/usr        \
+          ./configure --prefix=/usr \
             --sysconfdir=/etc    \
             --disable-efiemu     \
             --enable-grub-mkfont \
             --with-platform=efi  \
-            --target=i386-pc --target=x86_64-efi  \
+            --target=x86_64      \
             --disable-werror     \
+            --enable-device-mapper \
+            --enable-cache-stats \
             --with-freetype &&
             unset TARGET_CC
-          
+  
       - name: Create extra_deps.lst
         working-directory: grub-2.12
         run: |
@@ -61,7 +63,9 @@ jobs:
         working-directory: grub-2.12
         run: | 
           make -j4
-          grub-mkimage -O x86_64-efi -p '(memdisk)/boot/grub' -o grubx64.efi linux ext2 fat normal chain efi_gop gfxterm part_gpt usb iso9660 linuxefi initrdefi
+          grub-mkimage -O x86_64-efi -p '(memdisk)/boot/grub' -o grubx64.efi \
+          linux ext2 fat normal chain efi_gop efi_uga gfxterm part_gpt \
+          usb iso9660 linuxefi initrdefi acpi all_video video
   
       #- name: Run tests
       #  working-directory: grub-2.12
