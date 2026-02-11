@@ -65,7 +65,7 @@ jobs:
           make -j4
           grub-mkimage -O x86_64-efi -p '(memdisk)/boot/grub' -o grubx64.efi \
           linux ext2 fat normal chain efi_gop efi_uga gfxterm part_gpt \
-          usb iso9660 linuxefi initrdefi acpi all_video video
+          usb iso9660 acpi all_video video
   
       #- name: Run tests
       #  working-directory: grub-2.12
