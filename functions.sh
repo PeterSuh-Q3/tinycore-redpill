@@ -3724,7 +3724,7 @@ EOF
 
 function tcrpjot_junior() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'Re-Install DSM of $MODEL ${BUILD} JOT Update 0 ${DMPM}' {    
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
