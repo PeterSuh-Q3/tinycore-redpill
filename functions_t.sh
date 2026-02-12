@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.3"
+rploaderver="1.2.7.4"
 build="master"
 redpillmake="prod"
 
@@ -217,7 +217,8 @@ function history() {
     1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
     1.2.7.2 Apply timeout when selecting locale
             Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
-    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader        
+    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
+    1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -634,6 +635,8 @@ EOF
 # Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
 # 2026.02.08 v1.2.7.3 
 # Changes to warning messages and guides when building the DSM 7.3.X loader
+# 2026.02.12 v1.2.7.4 
+# Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     
 function showlastupdate() {
     cat <<EOF
@@ -738,6 +741,9 @@ function showlastupdate() {
 
 # 2026.02.08 v1.2.7.3 
 # Changes to warning messages and guides when building the DSM 7.3.X loader
+
+# 2026.02.12 v1.2.7.4 
+# Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
 
 EOF
 }
@@ -3716,6 +3722,27 @@ menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
 EOF
 }
 
+function tcrpjot_junior() {
+    cat <<EOF
+menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading DSM Linux... ${DMPM}
+        linux /zImage-dsm ${CMD_LINE} force_junior
+        echo Loading DSM initramfs...
+        initrd /initrd-dsm
+        echo Starting kernel with USB/SATA boot
+        echo
+        echo "HTTP, Synology Web Assistant (BusyBox httpd) service may take 20 - 40 seconds."
+        echo "(Network access is not immediately available)"
+        echo "Kernel loading has started, nothing will be displayed here anymore ..."
+        echo -en "Enter the following address in your web browser :"
+        echo " http://${IP}:5000"
+}
+EOF
+}
+
+
 function showsyntax() {
     cat <<EOF
 $(basename ${0})
@@ -4108,9 +4135,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
     else
+        #Create Jot Information
         tinyjotfunc | sudo tee --append /tmp/grub.cfg    
-        echo "Creating tinycore Jot postupdate entry"
-        postupdateentry | sudo tee --append /tmp/grub.cfg
+        echo "Creating tinycore Jot entry"
+        tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
     if [ -f /mnt/${tcrppart}/corepure64.gz ] && [ -f /mnt/${tcrppart}/vmlinuz64 ] && [ -d /mnt/${tcrppart}/cde ]; then
@@ -4122,11 +4150,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
 
     if [ "$WITHFRIEND" = "YES" ]; then
-        echo "Creating tinycore Junior Boot entry"    
+        echo "Creating tinycore friend Junior Boot entry"    
         tcrpentry_junior | sudo tee --append /tmp/grub.cfg 
     else
-        echo "Creating tinycore Jot entry"
-        tcrpjotentry | sudo tee --append /tmp/grub.cfg
+        echo "Creating tinycore Jot Junior Boot entry"
+        tcrpjot_junior | sudo tee --append /tmp/grub.cfg
     fi
 
     cd /home/tc/redpill-load
@@ -4302,16 +4330,10 @@ EOF
 
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
-        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg
     else
-        echo
         msgnormal "Setting default boot entry to JOT ${BUS}"
-
-        #GRUB 부트엔트리 Default 값 조정 (Cover xTCRP)
-        entry_count=$(grep -c '^menuentry' /tmp/grub.cfg)
-        new_default=$((entry_count - 1))
-        sudo sed -i "/^set default=/cset default=\"${new_default}\"" /tmp/grub.cfg
     fi
+    sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
         sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
@@ -5955,37 +5977,41 @@ function my() {
   if [ "$TARGET_VERSION" = "7.2" ]; then
       TARGET_VERSION="7.2.0"
   fi
-  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
-      msgnormaltty "We recommend using the Synology Control Panel update for DSM 7.2.2 and earlier, rather than the loader build for DSM 7.3.X.\n"
-      msgnormaltty "After this Control Panel update, FRIEND kernels v0.1.3w and later will automatically upgrade to DSM 7.3.2.\n"
-      msgnormaltty "If you still want this build, it will only be allowed if the corresponding version of DSM 7.3.X has been pre-installed on your Synology Disk.\n"
-      msgnormaltty "Please note that building the loader without prior updates may result in network unresponsiveness and system partition initialization.\n"
-      msgwarningtty "(Warning) If you build without checking the version, the system partition may be initialized.\n"
-      msgwarningtty "(Warning) Do you want to continue building this version? or Skip version checking? [yY/nN/sS] : "
-
-      if [ "${ucode}" == "ko_KR" ]; then
-          msgnormaltty "DSM 7.3.X 의 로더빌드 보다는 DSM 7.2.2 이하에서 시놀로지 제어판의 업데이트 사용을 권장합니다.\n"
-          msgnormaltty "이 제어판 업데이트 이후 FRIEND 커널 v0.1.3w 이상에서 DSM 7.3.2 로의 업그레이드가 자동진행됩니다.\n"
-          msgnormaltty "그래도 이 빌드를 원하신다면, 해당 버전의 DSM 7.3.X 를 시노디스크에 미리 설치한 경우만 빌드를 허용합니댜.\n"
-          msgnormaltty "사전 업데이트 없이 로더부터 빌드하면, 네트워크 무반응, 시스템 파티션 초기화 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
-          msgwarningtty "(경고) 버전 확인 없이 빌드하면 시스템 파티션이 초기화될 수 있습니다.\n"
-          msgwarningtty "(경고) 이 버전을 계속 빌드하시겠습니까? 아니면 버전 확인을 건너뛰시겠습니까? [yY/nN/sS] : "
-      fi      
-      readanswerwithskip
-      if [ "${answer}" = "S" ] || [ "${answer}" = "s" ]; then
-          printf "[OK] Now skip checking DSM version. Continue...\n" > /dev/tty
-      elif [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
-          exit 99
-      elif [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-          if chkDsmversion; then
-              printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
-          else
-              msgalerttty "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
-              [ "${ucode}" == "ko_KR" ] && msgwarningtty "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
-              exit 99
-          fi    
-      fi    
+  if [ "$TARGET_VERSION" = "7.3" ]; then
+      TARGET_VERSION="7.3.0"
   fi
+  
+#  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
+#      msgnormaltty "We recommend using the Synology Control Panel update for DSM 7.2.2 and earlier, rather than the loader build for DSM 7.3.X.\n"
+#      msgnormaltty "After this Control Panel update, FRIEND kernels v0.1.3w and later will automatically upgrade to DSM 7.3.2.\n"
+#      msgnormaltty "If you still want this build, it will only be allowed if the corresponding version of DSM 7.3.X has been pre-installed on your Synology Disk.\n"
+#      msgnormaltty "Please note that building the loader without prior updates may result in network unresponsiveness and system partition initialization.\n"
+#      msgwarningtty "(Warning) If you build without checking the version, the system partition may be initialized.\n"
+#      msgwarningtty "(Warning) Do you want to continue building this version? or Skip version checking? [yY/nN/sS] : "
+#
+#      if [ "${ucode}" == "ko_KR" ]; then
+#          msgnormaltty "DSM 7.3.X 의 로더빌드 보다는 DSM 7.2.2 이하에서 시놀로지 제어판의 업데이트 사용을 권장합니다.\n"
+#          msgnormaltty "이 제어판 업데이트 이후 FRIEND 커널 v0.1.3w 이상에서 DSM 7.3.2 로의 업그레이드가 자동진행됩니다.\n"
+#          msgnormaltty "그래도 이 빌드를 원하신다면, 해당 버전의 DSM 7.3.X 를 시노디스크에 미리 설치한 경우만 빌드를 허용합니댜.\n"
+#          msgnormaltty "사전 업데이트 없이 로더부터 빌드하면, 네트워크 무반응, 시스템 파티션 초기화 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+#          msgwarningtty "(경고) 버전 확인 없이 빌드하면 시스템 파티션이 초기화될 수 있습니다.\n"
+#          msgwarningtty "(경고) 이 버전을 계속 빌드하시겠습니까? 아니면 버전 확인을 건너뛰시겠습니까? [yY/nN/sS] : "
+#      fi      
+#      readanswerwithskip
+#      if [ "${answer}" = "S" ] || [ "${answer}" = "s" ]; then
+#          printf "[OK] Now skip checking DSM version. Continue...\n" > /dev/tty
+#      elif [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
+#          exit 99
+#      elif [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+#          if chkDsmversion; then
+#              printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
+#          else
+#              msgalerttty "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+#              [ "${ucode}" == "ko_KR" ] && msgwarningtty "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
+#              exit 99
+#          fi    
+#      fi    
+#  fi
 
   #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
   #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
