@@ -1,1 +1,1 @@
-    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader        
+    1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
