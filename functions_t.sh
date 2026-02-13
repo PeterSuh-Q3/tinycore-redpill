@@ -3336,14 +3336,36 @@ function backuploader() {
         else
             echo "${log_prefix} Creating new mydata.tgz..."
         fi
-        # /dev/shm에서 압축 (속도 향상)
-        if ! sudo sh -c \
-            "cd /home/tc && \
-             tar -cf - /home/tc /opt | \
-             pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
-            echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
-            return 1
+
+        local existing_file="/mnt/tcrp/mydatab.tgz"
+        local extract_dir="${shm_path}/mydatab"
+        
+        # /mnt/tcrp/mydatab.tgz 존재 확인 및 처리
+        if [ -f "${existing_file}" ]; then
+            sudo rm -rf "${extract_dir}"
+            sudo mkdir -p "${extract_dir}"
+            if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
+                echo "${log_prefix} ERROR: Failed to extract ${existing_file} to ${extract_dir}!"
+                return 1
+            fi
+            
+            # /home/tc 내용을 /dev/shm/mydatab에 overwrite copy
+            if ! sudo rsync -a --delete /home/tc/ "${extract_dir}/"; then
+                echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
+                return 1
+            fi
+            
+            # /dev/shm/mydatab를 루트처럼 사용해 압축 (절대경로처럼 동작)
+            if ! sudo sh -c \
+                "cd ${extract_dir} && \\
+                 tar -cf - . | \\
+                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create mydata.tgz from ${extract_dir}!"
+                return 1
+            fi
+            sudo rm -rf "${extract_dir}"
         fi
+        
     else
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
     fi
