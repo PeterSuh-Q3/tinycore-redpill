@@ -3184,10 +3184,6 @@ function backupxtcrp() {
             sudo mv "$BACKUP_FILE" "$TGZ_FILE"
             exit 1
         fi
-
-        echo "Copy /opt/.filetool.lst, /opt/.xfiletool.lst to /dev/shm/xtcrp ..."
-        sudo cp -vf /opt/.filetool.lst /dev/shm/xtcrp/.filetool.lst
-        sudo cp -vf /opt/.xfiletool.lst /dev/shm/xtcrp/.xfiletool.lst
     
         # Add the file to the archive with relative path
         if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
@@ -3343,7 +3339,7 @@ function backuploader() {
         # /dev/shm에서 압축 (속도 향상)
         if ! sudo sh -c \
             "cd /home/tc && \
-             tar -cf - -T /home/tc/.filetool.lst -X /home/tc/.xfiletool.lst | \
+             tar -cf - /home/tc /opt | \
              pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
             echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
             return 1
