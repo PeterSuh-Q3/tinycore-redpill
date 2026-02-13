@@ -1,0 +1,11 @@
+cache
+.cache
+XUL.mfasl
+XPC.mfasl
+mnt
+.adobe/Flash_Player/AssetCache
+.macromedia/Flash_Player
+.opera/opcache
+.opera/cache4
+.Xauthority
+.wmx
