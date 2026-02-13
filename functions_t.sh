@@ -3346,12 +3346,14 @@ function backuploader() {
             sudo mkdir -p "${extract_dir}"
             if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
                 echo "${log_prefix} ERROR: Failed to extract ${existing_file} to ${extract_dir}!"
+                read
                 return 1
             fi
             
             # /home/tc 내용을 /dev/shm/mydatab에 overwrite copy
             if ! sudo rsync -a --delete /home/tc/ "${extract_dir}/"; then
                 echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
+                read
                 return 1
             fi
             
@@ -3361,6 +3363,7 @@ function backuploader() {
                  tar -cf - . | \\
                  pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
                 echo "${log_prefix} ERROR: Failed to create mydata.tgz from ${extract_dir}!"
+                read
                 return 1
             fi
             sudo rm -rf "${extract_dir}"
