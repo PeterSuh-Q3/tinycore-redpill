@@ -3184,9 +3184,9 @@ function backupxtcrp() {
             sudo mv "$BACKUP_FILE" "$TGZ_FILE"
             exit 1
         fi
-
+    
         # Add the file to the archive with relative path
-        if ! sudo tar -rf "$TAR_UNZIPPED" -C "$(dirname "$SOURCE_FILE")" "$(basename "$SOURCE_FILE")" -C /opt .; then
+        if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
             echo "Error: Failed to add ${SOURCE_FILE} to archive."
             sudo mv "$BACKUP_FILE" "$TGZ_FILE"
             exit 1
