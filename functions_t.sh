@@ -3351,7 +3351,7 @@ function backuploader() {
             fi
             
             # /home/tc 내용을 /dev/shm/mydatab에 overwrite copy
-            if ! sudo rsync -a --delete /home/tc/ "${extract_dir}/"; then
+            if ! sudo cp -a /home/tc/ "${extract_dir}/"; then
                 echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
                 read answer
                 return 1
