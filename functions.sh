@@ -3184,6 +3184,10 @@ function backupxtcrp() {
             sudo mv "$BACKUP_FILE" "$TGZ_FILE"
             exit 1
         fi
+
+        echo "Copy /opt/.filetool.lst, /opt/.xfiletool.lst to /dev/shm/xtcrp ..."
+        sudo cp -vf /opt/.filetool.lst /dev/shm/xtcrp/.filetool.lst
+        sudo cp -vf /opt/.xfiletool.lst /dev/shm/xtcrp/.xfiletool.lst
     
         # Add the file to the archive with relative path
         if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
@@ -3255,10 +3259,6 @@ function backuploader() {
     local log_prefix="[BACKUP]"
     
     echo "${log_prefix} Backup loader process starting..."
-
-    echo "${log_prefix} Copy /opt/.filetool.lst, /opt/.xfiletool.lst to ${backup_path}..."
-    sudo cp -vf /opt/.filetool.lst ${backup_path}/.filetool.lst
-    sudo cp -vf /opt/.xfiletool.lst ${backup_path}/.xfiletool.lst
     
     # ========================================================================
     # STEP 1: /mnt/${tcrppart}의 여유공간 계산
@@ -3343,7 +3343,7 @@ function backuploader() {
         # /dev/shm에서 압축 (속도 향상)
         if ! sudo sh -c \
             "cd /home/tc && \
-             tar -cf - -T ${backup_path}/.filetool.lst -X ${backup_path}/.xfiletool.lst | \
+             tar -cf - -T /home/tc/.filetool.lst -X /home/tc/.xfiletool.lst | \
              pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
             echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
             return 1
