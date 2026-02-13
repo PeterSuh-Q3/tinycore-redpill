@@ -3255,6 +3255,10 @@ function backuploader() {
     local log_prefix="[BACKUP]"
     
     echo "${log_prefix} Backup loader process starting..."
+
+    echo "${log_prefix} Copy /opt/.filetool.lst, /opt/.xfiletool.lst to ${backup_path}..."
+    sudo cp -vf /opt/.filetool.lst ${backup_path}/.filetool.lst
+    sudo cp -vf /opt/.xfiletool.lst ${backup_path}/.xfiletool.lst
     
     # ========================================================================
     # STEP 1: /mnt/${tcrppart}의 여유공간 계산
@@ -3333,25 +3337,16 @@ function backuploader() {
             
             # 기존 파일에 새로운 userconfig.json 추가
             echo "${log_prefix} Adding updated userconfig.json to mydata.tgz..."
-            
-            # /dev/shm에서 압축 (속도 향상)
-            if ! sudo sh -c \
-                "cd /home/tc && \
-                 tar -cf - -T /opt.filetool.lst -X /opt.xfiletool.lst | \
-                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
-                echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
-                return 1
-            fi
         else
             echo "${log_prefix} Creating new mydata.tgz..."
-            
-            if ! sudo sh -c \
-                "cd /home/tc && \
-                 tar -cf - -T /opt.filetool.lst -X /opt.xfiletool.lst | \
-                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
-                echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
-                return 1
-            fi
+        fi
+        # /dev/shm에서 압축 (속도 향상)
+        if ! sudo sh -c \
+            "cd /home/tc && \
+             tar -cf - -T ${backup_path}/.filetool.lst -X ${backup_path}/.xfiletool.lst | \
+             pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+            echo "${log_prefix} ERROR: Failed to create mydata.tgz in ${shm_path}!"
+            return 1
         fi
     else
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
