@@ -53,7 +53,6 @@ jobs:
           tar -zcvf mydata.tgz -C ./mydata/ .
           
           rm ./mydata/home/tc/custom-module
-          cp -vf .filetool.lst .xfiletool.lst ./mydata/home/tc/
           cd ./mydata/home/tc
           tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz
           
