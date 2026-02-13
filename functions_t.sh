@@ -3218,8 +3218,21 @@ function backupxtcrp() {
 # 3. 용량 초과 시 /mnt/${tcrppart}/auxfiles/*.pat 파일 임의 1개 삭제
 # 4. 기존 sudo 권한 삭제 로직 참조
 # ============================================================================
-function backuploader() {
+# trap으로 오류 시 상세 로그 출력 및 정리
+cleanup_on_error() {
+    local err_line=$1
+    local err_cmd=$2
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ${log_prefix} FATAL ERROR at line ${err_line}: Command failed: ${err_cmd}" | tee -a "${log_file}"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ${log_prefix} Full log saved to ${log_file}" | tee -a "${log_file}"
+    sudo rm -rf "${extract_dir}"  # 중간 정리
+    return 1
+}
 
+function backuploader() {
+    
+    set -euo pipefail  # e: 오류시 즉시 종료, u: 미정의 변수 오류, o pipefail: 파이프 전체 오류 감지[web:15][web:21]
+    local log_file="/tmp/mydata_backup.log"  # 로그 파일 경로
+    
     # Define the path to the file
     local FILE_PATH="/opt/.filetool.lst"
 
@@ -3341,30 +3354,74 @@ function backuploader() {
         local extract_dir="${shm_path}/mydatab"
         
         # /mnt/tcrp/mydatab.tgz 존재 확인 및 처리
-        if [ -f "${existing_file}" ]; then
-            sudo rm -rf "${extract_dir}"
-            sudo mkdir -p "${extract_dir}"
-            if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
-                echo "${log_prefix} ERROR: Failed to extract ${existing_file} to ${extract_dir}!"
-                return 1
-            fi
+        trap 'cleanup_on_error ${LINENO} "${BASH_COMMAND}"' ERR[web:13][web:19]
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ${log_prefix} Starting mydata backup..." | tee -a "${log_file}"
+
+# /mnt/tcrp/mydatab.tgz 존재 확인 및 처리
+if [ -f "${existing_file}" ]; then
+    echo "$(date) ${log_prefix} Found existing ${existing_file}, extracting..." | tee -a "${log_file}"
+    
+    sudo rm -rf "${extract_dir}"
+    sudo mkdir -p "${extract_dir}"
+    
+    if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
+        echo "${log_prefix} ERROR: tar extract failed. Check ${log_file}" >&2
+        return 1
+    fi
+    echo "$(date) ${log_prefix} Extracted to ${extract_dir}" | tee -a "${log_file}"
+    
+    # /home/tc 내용을 overwrite copy (rsync 로그 상세)
+    echo "$(date) ${log_prefix} Rsync /home/tc/ to ${extract_dir}/..." | tee -a "${log_file}"
+    if ! sudo rsync -a --delete --stats /home/tc/ "${extract_dir}/" | tee -a "${log_file}"; then
+        echo "${log_prefix} ERROR: rsync failed. See rsync stats above." >&2
+        return 1
+    fi
+    
+    # 압축 (pipefail로 tar|pigz 전체 오류 감지)
+    echo "$(date) ${log_prefix} Compressing ${extract_dir} to ${mydata_shm}..." | tee -a "${log_file}"
+    if ! sudo sh -c "cd ${extract_dir} && tar -cf - . | pigz -p ${thread}" > "${mydata_shm}" 2>&1 | tee -a "${log_file}"; then
+        echo "${log_prefix} ERROR: Compression failed. Check pipe output in ${log_file}" >&2
+        return 1
+    fi
+    
+    sudo rm -rf "${extract_dir}"
+    echo "$(date) ${log_prefix} SUCCESS: ${mydata_shm} created from existing file." | tee -a "${log_file}"
+else
+    echo "$(date) ${log_prefix} No existing file, using original /home/tc + /opt..." | tee -a "${log_file}"
+    # 기존 로직 (pipefail 적용)
+    if ! sudo sh -c "cd /home/tc && tar -cf - /home/tc /opt | pigz -p ${thread}" > "${mydata_shm}" 2>&1 | tee -a "${log_file}"; then
+        echo "${log_prefix} ERROR: Original compression failed." >&2
+        return 1
+    fi
+fi
+
+trap - ERR  # trap 해제
+echo "$(date) ${log_prefix} Backup completed successfully." | tee -a "${log_file}"[web:14][web:22]
+        
+#        if [ -f "${existing_file}" ]; then
+#            sudo rm -rf "${extract_dir}"
+#            sudo mkdir -p "${extract_dir}"
+#            if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
+#                echo "${log_prefix} ERROR: Failed to extract ${existing_file} to ${extract_dir}!"
+#                return 1
+#            fi
             
             # /home/tc 내용을 /dev/shm/mydatab에 overwrite copy
-            if ! sudo rsync -a --delete /home/tc/ "${extract_dir}/"; then
-                echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
-                return 1
-            fi
+#            if ! sudo rsync -a --delete /home/tc/ "${extract_dir}/"; then
+#                echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
+#                return 1
+#            fi
             
             # /dev/shm/mydatab를 루트처럼 사용해 압축 (절대경로처럼 동작)
-            if ! sudo sh -c \
-                "cd ${extract_dir} && \\
-                 tar -cf - . | \\
-                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
-                echo "${log_prefix} ERROR: Failed to create mydata.tgz from ${extract_dir}!"
-                return 1
-            fi
-            sudo rm -rf "${extract_dir}"
-        fi
+#            if ! sudo sh -c \
+#                "cd ${extract_dir} && \\
+#                 tar -cf - . | \\
+#                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+#                echo "${log_prefix} ERROR: Failed to create mydata.tgz from ${extract_dir}!"
+#                return 1
+#            fi
+#            sudo rm -rf "${extract_dir}"
+#        fi
         
     else
         sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
