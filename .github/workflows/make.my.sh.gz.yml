@@ -54,6 +54,7 @@ jobs:
           
           rm ./mydata/home/tc/custom-module
           cd ./mydata/home/tc
+          cp -vf .filetool.lst .xfiletool.lst ./mydata/home/tc/
           tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz
           
       - name: Commit changes
