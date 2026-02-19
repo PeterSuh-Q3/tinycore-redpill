@@ -982,14 +982,6 @@ function make() {
   usbidentify
   clear
 
-  getip
-  setSuggest $MODEL
-  echo "R8168_YN=${R8168_YN} : kver5explatforms=${kver5explatforms} : platform=${platform}" >> "/home/tc/temp.log"
-  if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
-    DMPM="DDSML+EUDEV"
-  fi
-  writeConfigKey "general" "devmod" "${DMPM}"
-
   if [ "${prevent_init}" = "OFF" ]; then
     my "${MODEL}"-"${BUILD}" noconfig "${1}" | tee "/home/tc/zlastbuild.log"
   else
