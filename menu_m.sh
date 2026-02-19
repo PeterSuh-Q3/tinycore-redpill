@@ -984,7 +984,7 @@ function make() {
 
   getip
   setSuggest $MODEL
-  echo "R8168_YN=${R8168_YN} : kver5explatforms=$kver5explatforms} : platform=${platform}" >> /home/tc/buildstatus
+  echo "R8168_YN=${R8168_YN} : kver5explatforms=$kver5explatforms} : platform=${platform}" >> "/home/tc/zlastbuild.log"
   if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
     DMPM="DDSML+EUDEV"
   fi
