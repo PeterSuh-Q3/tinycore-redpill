@@ -903,6 +903,13 @@ make_with_progress() {
     usbidentify
     clear
 
+    getip
+    setSuggest $MODEL
+    if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
+      DMPM="DDSML+EUDEV"
+    fi
+    writeConfigKey "general" "devmod" "${DMPM}"
+
     if [ "${prevent_init}" = "OFF" ]; then
         build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     else
