@@ -1,1 +1,1 @@
-    1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+    1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
