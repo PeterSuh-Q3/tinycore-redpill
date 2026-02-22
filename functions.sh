@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.4"
+rploaderver="1.2.7.5"
 build="master"
 redpillmake="prod"
 
@@ -219,6 +219,7 @@ function history() {
             Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
     1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+    1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -637,6 +638,8 @@ EOF
 # Changes to warning messages and guides when building the DSM 7.3.X loader
 # 2026.02.12 v1.2.7.4 
 # Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+# 2026.02.22 v1.2.7.5 
+# Remove the default internalportcfg value (0xffff) in user_config.json
     
 function showlastupdate() {
     cat <<EOF
@@ -744,6 +747,9 @@ function showlastupdate() {
 
 # 2026.02.12 v1.2.7.4 
 # Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+
+# 2026.02.22 v1.2.7.5 
+# Remove the default internalportcfg value (0xffff) in user_config.json
 
 EOF
 }
