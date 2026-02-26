@@ -2846,7 +2846,7 @@ function addrequiredexts() {
         echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
         # Add Use RR's custom kernel module
-        [[ "${extension}" = "all-modules" ] && [ "${MDLNAME}" = "custom-modules" ]] && platkver=${platkver}_custom
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
         echo "platkver = ${platkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
         if [ $? -ne 0 ]; then
