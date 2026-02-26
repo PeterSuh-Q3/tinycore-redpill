@@ -344,7 +344,11 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
 
-  menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
+  if [ "${platform}" != "epyc7002(DT)" ]; then
+    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
+  else
+    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")
+  fi
   
   while true; do
     dialog --clear --backtitle "`backtitle`" \
@@ -362,7 +366,15 @@ function selectldrmode() {
       LDRMODE="JOT"
       MDLNAME="all-modules"      
       break
-    fi
+    elif [ "${resp}" = "k" ]; then
+      LDRMODE="FRIEND"
+      MDLNAME="custom-modules"
+      break
+    elif [ "${resp}" = "l" ]; then
+      LDRMODE="JOT"
+      MDLNAME="custom-modules"
+      break
+    fi      
   done
 
   writeConfigKey "general" "loadermode" "${LDRMODE}"
