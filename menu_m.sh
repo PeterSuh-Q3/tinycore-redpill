@@ -1609,7 +1609,6 @@ function build-pre-option() {
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
-    eval "echo \"a \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   > "${TMP_PATH}/menud"
     eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                            >> "${TMP_PATH}/menud"
     eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
     eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
@@ -1622,7 +1621,6 @@ function build-pre-option() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/respd"` in
-    a) selectldrmode ;    NEXT="z" ;;
     b) remapsata     ;    NEXT="z" ;;
     c) storagepanel;      NEXT="z" ;;    
     d) 
@@ -2333,6 +2331,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
+    eval "echo \"k \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   > "${TMP_PATH}/menu"    
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
@@ -2370,6 +2369,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
+    k) selectldrmode ;    NEXT="p" ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
        else  
