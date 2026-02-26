@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.5"
+rploaderver="1.2.7.6"
 build="master"
 redpillmake="prod"
 
@@ -220,6 +220,7 @@ function history() {
     1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
+    1.2.7.6 Adds use of RR custom kernel modules for sa6400
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -640,6 +641,8 @@ EOF
 # Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
 # 2026.02.22 v1.2.7.5 
 # Remove the default internalportcfg value (0xffff) in user_config.json
+# 2026.02.26 v1.2.7.6 
+# Adds use of RR custom kernel modules for SA6400
     
 function showlastupdate() {
     cat <<EOF
@@ -750,6 +753,9 @@ function showlastupdate() {
 
 # 2026.02.22 v1.2.7.5 
 # Remove the default internalportcfg value (0xffff) in user_config.json
+
+# 2026.02.26 v1.2.7.6 
+# Adds use of RR custom kernel modules for SA6400
 
 EOF
 }
