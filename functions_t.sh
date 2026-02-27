@@ -6103,10 +6103,12 @@ function my() {
       cecho g "Remove Exts for SA6400 (thethorgroup.boot-wait) ..."
       jsonfile=$(jq 'del(.["thethorgroup.boot-wait"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
       sudo rm -rf /home/tc/redpill-load/custom/extensions/thethorgroup.boot-wait
-  
-      cecho g "Remove Exts for SA6400 (automount) ..."
-      jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
-      sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
+
+      if [ "${MDLNAME}" != "custom-modules" ]; then
+          cecho g "Remove Exts for SA6400 (automount) ..."
+          jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+          sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
+      fi
   fi
   
   if [ "$jot" = "N" ]; then
