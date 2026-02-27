@@ -4623,8 +4623,12 @@ function getredpillko() {
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
-            cecho g "###############################  This is Test Mode  ############################"        
-            TAG="26.2.3"
+            cecho g "###############################  This is Test Mode  ############################"
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+              TAG="rr-custom"
+            else
+              TAG="26.2.3"
+            fi  
         else        
             TAG="${LATESTURL##*/}"
         fi    
