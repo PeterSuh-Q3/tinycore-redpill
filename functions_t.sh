@@ -6099,16 +6099,14 @@ function my() {
   cecho g "Loader Building in progress..."
   echo
   
-  if [ "$MODEL" = "SA6400" ] && [ "${BUS}" = "usb" ]; then
+  if [ "$MODEL" = "SA6400" ] && [ "${BUS}" = "usb" ] && [ "${MDLNAME}" != "custom-modules" ]; then
       cecho g "Remove Exts for SA6400 (thethorgroup.boot-wait) ..."
       jsonfile=$(jq 'del(.["thethorgroup.boot-wait"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
       sudo rm -rf /home/tc/redpill-load/custom/extensions/thethorgroup.boot-wait
 
-      if [ "${MDLNAME}" != "custom-modules" ]; then
-          cecho g "Remove Exts for SA6400 (automount) ..."
-          jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
-          sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
-      fi
+      cecho g "Remove Exts for SA6400 (automount) ..."
+      jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+      sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
   fi
   
   if [ "$jot" = "N" ]; then
