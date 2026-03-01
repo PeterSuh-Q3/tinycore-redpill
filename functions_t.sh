@@ -220,7 +220,7 @@ function history() {
     1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
-    1.2.7.6 Adds use of RR custom kernel modules for sa6400
+    1.2.7.6 Expose modular selection menu as upper menu
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -642,7 +642,7 @@ EOF
 # 2026.02.22 v1.2.7.5 
 # Remove the default internalportcfg value (0xffff) in user_config.json
 # 2026.02.26 v1.2.7.6 
-# Adds use of RR custom kernel modules for SA6400
+# Expose modular selection menu as upper menu
     
 function showlastupdate() {
     cat <<EOF
@@ -755,7 +755,7 @@ function showlastupdate() {
 # Remove the default internalportcfg value (0xffff) in user_config.json
 
 # 2026.02.26 v1.2.7.6 
-# Adds use of RR custom kernel modules for SA6400
+# Expose modular selection menu as upper menu
 
 EOF
 }
