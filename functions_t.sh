@@ -4630,11 +4630,11 @@ function getredpillko() {
               TAG="26.2.3"
             fi  
         else        
-            if [ "${MDLNAME}" == "custom-modules" ]; then
-              TAG="custom-26.3.1"
-            else
+            #if [ "${MDLNAME}" == "custom-modules" ]; then
+            #  TAG="custom-26.3.1"
+            #else
               TAG="${LATESTURL##*/}"
-            fi  
+            #fi  
         fi    
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
