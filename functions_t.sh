@@ -2323,11 +2323,7 @@ function _pat_process() {
           if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
               # No disk space to download, change it to RAMDISK
               echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
-              if [ "$FRKRNL" = "NO" ]; then
-                  sudo sh -c "sudo rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
-              else
-                  sudo sh -c "rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
-              fi
+              sudo sh -c "$([ "$FRKRNL" = "NO" ] && echo "sudo ")rm -vf $(ls -t "${local_cache}"/*.pat | head -n 1)"
           fi
       fi
   fi    
@@ -2518,12 +2514,7 @@ function savesession() {
 
     echo -n "Saving current user_config.json "
 
-    if [ "$FRKRNL" = "NO" ]; then
-        cp /home/tc/user_config.json ${lastsessiondir}/user_config.json
-    else
-        sudo cp /home/tc/user_config.json ${lastsessiondir}/user_config.json
-    fi
-
+    $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp /home/tc/user_config.json "${lastsessiondir}/user_config.json"
     [ -f ${lastsessiondir}/user_config.json ] && echo " -> OK !"
 
 }
@@ -4043,17 +4034,9 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         echo "jun build option has been specified, so JUN MOD loader will be created"
         # jun's mod must patch using custom.gz from the first partition, so you need to fix the partition.
         sed -i "s/BRP_OUT_P2}\/\${BRP_CUSTOM_RD_NAME/BRP_OUT_P1}\/\${BRP_CUSTOM_RD_NAME/g" /home/tc/redpill-load/build-loader.sh
-        if [ "$FRKRNL" = "NO" ]; then
-            sudo BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
-        else
-            BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
-        fi
+        $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
     else
-        if [ "$FRKRNL" = "NO" ]; then
-            sudo ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
-        else
-            ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
-        fi    
+        $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
     fi
 
     [ $? -ne 0 ] && echo "FAILED : Loader creation failed check the output for any errors" && exit 99
@@ -4358,11 +4341,7 @@ EOF
         fi
     else
         echo "Ramdisk in compressed "
-        if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-        else
-            (cd $rdtemp && find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-        fi
+        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
@@ -4415,11 +4394,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
         
             if [ -f ${patfile} ]; then
                 echo "Found ${patfile}, moving to cache directory : ${local_cache} "
-                if [ "$FRKRNL" = "NO" ]; then
-                    cp -vf ${patfile} ${local_cache} && rm -vf /home/tc/redpill-load/cache/*.pat
-                else
-                    sudo cp -vf ${patfile} ${local_cache} && sudo rm -vf /home/tc/redpill-load/cache/*.pat
-                fi
+                $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache} && $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 [ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
