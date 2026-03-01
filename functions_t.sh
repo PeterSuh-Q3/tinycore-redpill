@@ -4625,12 +4625,16 @@ function getredpillko() {
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
             if [ "${MDLNAME}" == "custom-modules" ]; then
-              TAG="rr-custom"
+              TAG="custom-26.3.1"
             else
               TAG="26.2.3"
             fi  
         else        
-            TAG="${LATESTURL##*/}"
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+              TAG="custom-26.3.1"
+            else
+              TAG="${LATESTURL##*/}"
+            fi  
         fi    
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
