@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.5"
+rploaderver="1.2.7.6"
 build="master"
 redpillmake="prod"
 
@@ -220,6 +220,7 @@ function history() {
     1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
+    1.2.7.6 Expose modular selection menu as upper menu
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -640,6 +641,8 @@ EOF
 # Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
 # 2026.02.22 v1.2.7.5 
 # Remove the default internalportcfg value (0xffff) in user_config.json
+# 2026.02.26 v1.2.7.6 
+# Expose modular selection menu as upper menu
     
 function showlastupdate() {
     cat <<EOF
@@ -750,6 +753,9 @@ function showlastupdate() {
 
 # 2026.02.22 v1.2.7.5 
 # Remove the default internalportcfg value (0xffff) in user_config.json
+
+# 2026.02.26 v1.2.7.6 
+# Expose modular selection menu as upper menu
 
 EOF
 }
@@ -2839,6 +2845,8 @@ function addrequiredexts() {
     for extension in ${EXTENSIONS}; do
         echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
+        # Add Use RR's custom kernel module
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
         echo "platkver = ${platkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -4615,8 +4623,12 @@ function getredpillko() {
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
-            cecho g "###############################  This is Test Mode  ############################"        
-            TAG="26.01.29"
+            cecho g "###############################  This is Test Mode  ############################"
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+              TAG="rr-custom"
+            else
+              TAG="26.2.3"
+            fi  
         else        
             TAG="${LATESTURL##*/}"
         fi    
@@ -6087,11 +6099,11 @@ function my() {
   cecho g "Loader Building in progress..."
   echo
   
-  if [ "$MODEL" = "SA6400" ] && [ "${BUS}" = "usb" ]; then
+  if [ "$MODEL" = "SA6400" ] && [ "${BUS}" = "usb" ] && [ "${MDLNAME}" != "custom-modules" ]; then
       cecho g "Remove Exts for SA6400 (thethorgroup.boot-wait) ..."
       jsonfile=$(jq 'del(.["thethorgroup.boot-wait"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
       sudo rm -rf /home/tc/redpill-load/custom/extensions/thethorgroup.boot-wait
-  
+
       cecho g "Remove Exts for SA6400 (automount) ..."
       jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
       sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
