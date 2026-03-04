@@ -4123,7 +4123,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
             USB_LINE="${USB_LINE} disable_mtrr_trim=1"
-            [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} amd_iommu=off"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
@@ -4135,22 +4134,18 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
                 echo "Add configuration pci=nommconf for nvmesystem addon"
                 USB_LINE="${USB_LINE} pci=nommconf"
             fi
-            [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} intel_iommu=off"
         fi
     fi
+    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} pci=noaer"    
 
-    if [ "$WITHFRIEND" = "YES" ]; then
-        USB_LINE="${USB_LINE} syno_hw_version=${MODEL} "
-    fi    
+    [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
+
+    USB_LINE="${USB_LINE} "
 
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE=${USB_LINE}
     else
-        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-            CMD_LINE=${USB_LINE}+" "+${SATA_LINE}
-        else
-            CMD_LINE=${USB_LINE}
-        fi
+        [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
