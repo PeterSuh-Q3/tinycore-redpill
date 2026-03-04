@@ -5597,7 +5597,7 @@ echo "$3"
 
         manual)
 
-            echo "Using static compiled redpill extension"
+            echo "Using manual(static) compiled redpill extension"
             echo "Got $REDPILL_MOD_NAME "
             echo "Manual extension handling,skipping extension auto detection "
             echo "Starting loader creation "
@@ -5606,7 +5606,7 @@ echo "$3"
             ;;
 
         jun)
-            echo "Using static compiled redpill extension"
+            echo "Using jun compiled redpill extension"
             echo "Got $REDPILL_MOD_NAME "
             listmodules
             echo "Starting loader creation "
@@ -5744,7 +5744,11 @@ function my() {
           jot)
               jot="Y"
               ;;
-  
+
+          jun)
+              jot="X"
+              ;;
+
           fri)
               jot="N"
               ;;
@@ -5897,9 +5901,11 @@ function my() {
   
   echo
   if [ "$jot" = "N" ]; then    
-  cecho y "This is TCRP friend mode"
+      cecho y "This is TCRP friend mode"
+  elif [ "$jot" = "X" ]; then        
+      cecho y "This is TCRP jun mode"  
   else    
-  cecho y "This is TCRP original jot mode"
+      cecho y "This is TCRP original jot mode"
   fi
   
   if [ -f /home/tc/custom-module/${TARGET_PLATFORM}.dts ]; then
@@ -6090,6 +6096,8 @@ function my() {
   
   if [ "$jot" = "N" ]; then
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} withfriend
+  elif [ "$jot" = "X" ]; then    
+      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} jun  
   else
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
