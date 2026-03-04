@@ -367,7 +367,7 @@ function selectldrmode() {
       MDLNAME="all-modules"      
       break
     elif [ "${resp}" = "k" ]; then
-      LDRMODE="JUN"
+      LDRMODE="FRIEND"
       MDLNAME="custom-modules"
       break
     elif [ "${resp}" = "l" ]; then
@@ -2372,12 +2372,8 @@ while true; do
     k) selectldrmode ;    NEXT="p" ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
-       elif [ "${LDRMODE}" == "JUN" ]; then 
-         make_with_progress "jun" "${prevent_init}"        
-       elif [ "${LDRMODE}" == "JOT" ]; then 
+       else  
          make_with_progress "jot" "${prevent_init}"
-       else
-         echo "undefined LOADER MODE ${LDRMODE}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
          NEXT="y"
