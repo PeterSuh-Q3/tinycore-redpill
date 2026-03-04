@@ -2372,8 +2372,12 @@ while true; do
     k) selectldrmode ;    NEXT="p" ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
-       else  
+       elif [ "${LDRMODE}" == "JUN" ]; then 
+         make_with_progress "jun" "${prevent_init}"        
+       elif [ "${LDRMODE}" == "JOT" ]; then 
          make_with_progress "jot" "${prevent_init}"
+       else
+         echo "undefined LOADER MODE ${LDRMODE}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
          NEXT="y"
