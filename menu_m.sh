@@ -367,7 +367,7 @@ function selectldrmode() {
       MDLNAME="all-modules"      
       break
     elif [ "${resp}" = "k" ]; then
-      LDRMODE="FRIEND"
+      LDRMODE="JUN"
       MDLNAME="custom-modules"
       break
     elif [ "${resp}" = "l" ]; then
