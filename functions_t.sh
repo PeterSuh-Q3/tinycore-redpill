@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.7"
+rploaderver="1.2.7.6"
 build="master"
 redpillmake="prod"
 
@@ -221,7 +221,6 @@ function history() {
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     1.2.7.6 Expose modular selection menu as upper menu
-    1.2.7.7 Use jun patch when building a loader that applies custom modules
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -644,8 +643,6 @@ EOF
 # Remove the default internalportcfg value (0xffff) in user_config.json
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
-# 2026.03.04 v1.2.7.7 
-# Use jun patch when building a loader that applies custom modules
     
 function showlastupdate() {
     cat <<EOF
@@ -759,9 +756,6 @@ function showlastupdate() {
 
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
-
-# 2026.03.04 v1.2.7.7 
-# Use jun patch when building a loader that applies custom modules
 
 EOF
 }
@@ -5603,7 +5597,7 @@ echo "$3"
 
         manual)
 
-            echo "Using manual(static) compiled redpill extension"
+            echo "Using static compiled redpill extension"
             echo "Got $REDPILL_MOD_NAME "
             echo "Manual extension handling,skipping extension auto detection "
             echo "Starting loader creation "
@@ -5612,7 +5606,7 @@ echo "$3"
             ;;
 
         jun)
-            echo "Using jun compiled redpill extension"
+            echo "Using static compiled redpill extension"
             echo "Got $REDPILL_MOD_NAME "
             listmodules
             echo "Starting loader creation "
@@ -5750,11 +5744,7 @@ function my() {
           jot)
               jot="Y"
               ;;
-
-          jun)
-              jot="X"
-              ;;
-
+  
           fri)
               jot="N"
               ;;
@@ -5907,11 +5897,9 @@ function my() {
   
   echo
   if [ "$jot" = "N" ]; then    
-      cecho y "This is TCRP friend mode"
-  elif [ "$jot" = "X" ]; then        
-      cecho y "This is TCRP jun mode"  
+  cecho y "This is TCRP friend mode"
   else    
-      cecho y "This is TCRP original jot mode"
+  cecho y "This is TCRP original jot mode"
   fi
   
   if [ -f /home/tc/custom-module/${TARGET_PLATFORM}.dts ]; then
@@ -6102,8 +6090,6 @@ function my() {
   
   if [ "$jot" = "N" ]; then
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} withfriend
-  elif [ "$jot" = "X" ]; then    
-      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} jun  
   else
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
