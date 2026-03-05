@@ -4337,7 +4337,7 @@ EOF
     if [ "$TARGET_REVISION" = "64570" ] || [ "$TARGET_REVISION" -gt 64570 ]; then
         echo "DSM $TARGET_REVISION detected - Using zstd compression (supported)"
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . -print0 | sudo cpio -0 -o -H newc --owner root:root --group root:root | gzip -9 > ~/initrd-dsm >/dev/null        
+            (cd $rdtemp && sudo find . -print0 | sudo cpio -0 -o -H newc --owner root:root --group root:root | gzip -9 > ~/initrd-dsm) >/dev/null        
             #(cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
             (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/tmp/initrd-dsm)
