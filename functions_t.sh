@@ -4333,31 +4333,20 @@ EOF
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
 
-    # Reassembly ramdisk with conditional compression based on TARGET_REVISION
-    if [ "$TARGET_REVISION" = "64570" ] || [ "$TARGET_REVISION" -gt 64570 ]; then
-        echo "DSM $TARGET_REVISION detected - Using gzip compression (supported)"
+    # Reassembly ramdisk
+    echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"
+    #if [ "$RD_COMPRESSED" = "false" ]; then
+    #    echo "Ramdisk in not compressed "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . -xdev -print0 | sudo cpio --null -o --format=newc --owner=0:0 | gzip -9 > ~/initrd-dsm) >/dev/null
-            #(cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/tmp/initrd-dsm)
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
-    else
-        echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"
-        #if [ "$RD_COMPRESSED" = "false" ]; then
-        #    echo "Ramdisk in not compressed "
-            if [ "$FRKRNL" = "NO" ]; then
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-            else
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /tmp/initrd-dsm)
-                sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
-            fi
-        #else
-        #    echo "Ramdisk in compressed "
-        #    (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
-        #fi
-    fi
+    #else
+    #    echo "Ramdisk in compressed "
+    #    (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+    #fi
     
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
