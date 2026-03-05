@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.6"
+rploaderver="1.2.7.7"
 build="master"
 redpillmake="prod"
 
@@ -221,6 +221,7 @@ function history() {
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     1.2.7.6 Expose modular selection menu as upper menu
+    1.2.7.7 Use zstd when compressing initrd-dsm in DSM 7.2.X and later
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -643,6 +644,8 @@ EOF
 # Remove the default internalportcfg value (0xffff) in user_config.json
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
+# 2026.03.05 v1.2.7.7 
+# Use zstd when compressing initrd-dsm in DSM 7.2.X and later
     
 function showlastupdate() {
     cat <<EOF
@@ -756,6 +759,9 @@ function showlastupdate() {
 
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
+
+# 2026.03.05 v1.2.7.7 
+# Use zstd when compressing initrd-dsm in DSM 7.2.X and later
 
 EOF
 }
@@ -4136,7 +4142,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             fi
         fi
     fi
-    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} pci=noaer"    
+    #[ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} pci=noaer"    
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
 
