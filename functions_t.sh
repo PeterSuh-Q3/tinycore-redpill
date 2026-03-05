@@ -4337,25 +4337,25 @@ EOF
     if [ "$TARGET_REVISION" = "64570" ] || [ "$TARGET_REVISION" -gt 64570 ]; then
         echo "DSM $TARGET_REVISION detected - Using zstd compression (supported)"
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -19 -T0 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -19 -T0 >/tmp/initrd-dsm)
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -3 -T0 >/tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
         echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"
-        if [ "$RD_COMPRESSED" = "false" ]; then
-            echo "Ramdisk in not compressed "
+        #if [ "$RD_COMPRESSED" = "false" ]; then
+        #    echo "Ramdisk in not compressed "
             if [ "$FRKRNL" = "NO" ]; then
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
             else
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /tmp/initrd-dsm)
                 sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
             fi
-        else
-            echo "Ramdisk in compressed "
-            (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
-        fi
+        #else
+        #    echo "Ramdisk in compressed "
+        #    (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+        #fi
     fi
     
     if [ "$WITHFRIEND" = "YES" ]; then
