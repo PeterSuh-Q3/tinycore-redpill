@@ -2292,6 +2292,13 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which lvm)_" == "_" ]; then
     sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
+# Download zstd
+if [ "$FRKRNL" = "NO" ] && [ "$(which zstd)_" == "_" ]; then  
+    echo "zstd does not exist, install from tinycore"
+    tce-load -iw zstd 
+    sudo echo "zstd.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
+
 # copy tinycore pack and backup, except scsi-6.1.2-tinycore64.tcz
 if [ $(ls /tmp/tce/optional/ | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
