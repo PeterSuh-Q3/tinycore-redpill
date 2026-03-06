@@ -20,12 +20,13 @@ jobs:
         shell: python
         run: |
           # -*- coding: utf-8 -*-
-          import json, subprocess
+          import json, subprocess, sys
           def set_output(name, value):
             subprocess.call(["echo '{}={}' >> $GITHUB_ENV".format(name, value)], shell=True)
           issuetitle = ${{ toJSON(github.event.issue.title) }};
           issuebody = ${{ toJSON(github.event.issue.body) }};
-          
+
+          json_error_message = None
           iscustom = 'false'
           warinfo = 'false'
           model = ''
@@ -58,12 +59,30 @@ jobs:
                   sn = jsonbody.get('sn', '')
                   format = jsonbody.get('format', '')
                   language = jsonbody.get('language', '')
+          except json.JSONDecodeError as e:
+              # JSON 구문 오류 시 영문 에러 메시지 작성
+              iscustom = 'false'
+              json_error_message = (
+                  f"There is a syntax error in the submitted JSON body.\n"
+                  f"- Error Location: Line {e.lineno}, Column {e.colno}\n"
+                  f"- Error Reason: {e.msg}\n\n"
+                  f"Please check for missing commas (,) or mismatched quotes (\") and resubmit the issue."
+              )
+              # 1. 터미널이나 깃허브 액션 로그에 출력
+              print(json_error_message)
+              
+              # 2. 필요하다면 여기서 워크플로우를 강제로 실패(Fail) 처리
+              # sys.exit(1) 
+          
           except ValueError as e:
+              # JSONDecodeError 이외의 예상치 못한 값 에러 대비
               pass
-          if iscustom == 'false':
+          
+          # json 구문 오류가 없었고, custom 이슈가 아닌 경우에만 아래 로직 실행
+          if iscustom == 'false' and json_error_message is None:
               if issuebody.find('DMI') < 0 and issuebody.find('CPU') < 0 and issuebody.find('NIC') < 0:
-                  warinfo = 'true'
-    
+                  warinfo = 'true'    
+                  
           set_output("iscustom", iscustom)
           set_output("warinfo", warinfo)  
 
