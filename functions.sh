@@ -4300,8 +4300,8 @@ EOF
         if [ "${MDLNAME}" == "custom-modules" ]; then
             echo "Use static firmware and module loading methods when using custom modules"
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
-            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware        
+            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
             sudo rm -rf $rdtemp/exts/all-modules/
         fi    
     fi
@@ -4336,8 +4336,8 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                echo "Ramdisk in not compressed, use bsdcpio + gzip -c9"            
-                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | gzip -c9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"            
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
             else
                 echo "Ramdisk in not compressed, use cpio raw"            
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
