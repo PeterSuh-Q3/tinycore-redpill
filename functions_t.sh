@@ -4147,7 +4147,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             fi
         fi
     fi
-    #[ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} pci=noaer"    
+    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} fbcon=map:99 vga=keep"    
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
 
