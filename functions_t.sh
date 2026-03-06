@@ -4329,10 +4329,16 @@ EOF
 
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
-        echo "Ramdisk in not compressed, use bsdcpio + gzip "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | gzip -c9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+                echo "Ramdisk in not compressed, use bsdcpio + gzip -c9"            
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | gzip -c9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            else
+                echo "Ramdisk in not compressed, use cpio raw"            
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            fi
         else
+            echo "Ramdisk in not compressed, use cpio raw"                    
             (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
