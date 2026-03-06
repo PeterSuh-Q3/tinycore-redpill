@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.6"
+rploaderver="1.2.7.7"
 build="master"
 redpillmake="prod"
 
@@ -221,6 +221,7 @@ function history() {
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     1.2.7.6 Expose modular selection menu as upper menu
+    1.2.7.7 Use static firmware and module loading methods when using custom modules
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -643,6 +644,8 @@ EOF
 # Remove the default internalportcfg value (0xffff) in user_config.json
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
     
 function showlastupdate() {
     cat <<EOF
@@ -756,6 +759,9 @@ function showlastupdate() {
 
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
+
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
 
 EOF
 }
@@ -4136,19 +4142,16 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             fi
         fi
     fi
+    #[ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} pci=noaer"    
 
-    if [ "$WITHFRIEND" = "YES" ]; then
-        USB_LINE="${USB_LINE} syno_hw_version=${MODEL} "
-    fi    
+    [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
+
+    USB_LINE="${USB_LINE} "
 
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE=${USB_LINE}
     else
-        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-            CMD_LINE=${USB_LINE}+" "+${SATA_LINE}
-        else
-            CMD_LINE=${USB_LINE}
-        fi
+        [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
     fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
@@ -4289,19 +4292,13 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        #[ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.0.1.0/usr.tgz -o /tmp/usr.tgz
-        #sudo tar xvfz /tmp/usr.tgz -C $rdtemp
-
-        #sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
-        #sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware        
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/addons.tgz -o /tmp/addons.tgz
-        #sudo tar xvfz /tmp/addons.tgz -C $rdtemp
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/modules.tgz -o /tmp/modules.tgz
-        #sudo tar xvfz /tmp/modules.tgz -C $rdtemp/usr/lib/modules/
-        #sudo tar xvfz $rdtemp/exts/all-modules/sbin.tgz -C $rdtemp
-        #sudo cp -vf /home/tc/tools/dtc $rdtemp/usr/bin
-        #sudo curl -kL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/rr/linuxrc.syno.impl -o $rdtemp/linuxrc.syno.impl        
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            echo "Use static firmware and module loading methods when using custom modules"
+            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware        
+            sudo rm -rf $rdtemp/exts/all-modules/
+        fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
@@ -4330,20 +4327,26 @@ EOF
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
 
-    # Reassembly ramdisk
+    # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
-        echo "Ramdisk in not compressed "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+                echo "Ramdisk in not compressed, use bsdcpio + gzip -c9"            
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | gzip -c9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            else
+                echo "Ramdisk in not compressed, use cpio raw"            
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            fi
         else
+            echo "Ramdisk in not compressed, use cpio raw"                    
             (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
-        echo "Ramdisk in compressed "
+        echo "Ramdisk in compressed, use xz(lzma) "
         (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
     fi
-
+    
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
     else
