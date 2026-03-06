@@ -221,7 +221,7 @@ function history() {
     1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     1.2.7.6 Expose modular selection menu as upper menu
-    1.2.7.7 Use zstd when compressing initrd-dsm in DSM 7.2.X and later
+    1.2.7.7 Use static firmware and module loading methods when using custom modules
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -644,8 +644,8 @@ EOF
 # Remove the default internalportcfg value (0xffff) in user_config.json
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
-# 2026.03.05 v1.2.7.7 
-# Use zstd when compressing initrd-dsm in DSM 7.2.X and later
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
     
 function showlastupdate() {
     cat <<EOF
@@ -760,8 +760,8 @@ function showlastupdate() {
 # 2026.02.26 v1.2.7.6 
 # Expose modular selection menu as upper menu
 
-# 2026.03.05 v1.2.7.7 
-# Use zstd when compressing initrd-dsm in DSM 7.2.X and later
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
 
 EOF
 }
@@ -4292,19 +4292,13 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        #[ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/v1.0.1.0/usr.tgz -o /tmp/usr.tgz
-        #sudo tar xvfz /tmp/usr.tgz -C $rdtemp
-
-        #sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
-        #sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware        
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/addons.tgz -o /tmp/addons.tgz
-        #sudo tar xvfz /tmp/addons.tgz -C $rdtemp
-        #sudo curl -kL https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/rr/modules.tgz -o /tmp/modules.tgz
-        #sudo tar xvfz /tmp/modules.tgz -C $rdtemp/usr/lib/modules/
-        #sudo tar xvfz $rdtemp/exts/all-modules/sbin.tgz -C $rdtemp
-        #sudo cp -vf /home/tc/tools/dtc $rdtemp/usr/bin
-        #sudo curl -kL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/rr/linuxrc.syno.impl -o $rdtemp/linuxrc.syno.impl        
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            echo "Use static firmware and module loading methods when using custom modules"
+            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/        
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware        
+            sudo rm -rf $rdtemp/exts/all-modules/
+        fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
