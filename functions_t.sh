@@ -4335,7 +4335,7 @@ EOF
 
     # Reassembly ramdisk with conditional compression based on TARGET_REVISION
     if [ "$TARGET_REVISION" = "64570" ] || [ "$TARGET_REVISION" -gt 64570 ]; then
-        echo "DSM $TARGET_REVISION detected - Using gzip compression (supported)"
+        echo "DSM $TARGET_REVISION detected - Using gzip -9 compression (supported)"
         if [ "$FRKRNL" = "NO" ]; then
             (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
@@ -4343,8 +4343,8 @@ EOF
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
-        echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"
         if [ "$RD_COMPRESSED" = "false" ]; then
+            echo "DSM $TARGET_REVISION detected - Using legacy gzip -9 compression"                
             echo "Ramdisk in not compressed "
             if [ "$FRKRNL" = "NO" ]; then
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
@@ -4353,6 +4353,7 @@ EOF
                 sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
             fi
         else
+            echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"                
             echo "Ramdisk in compressed "
             (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
         fi
