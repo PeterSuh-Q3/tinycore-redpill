@@ -1,1 +1,1 @@
-    1.2.7.6 Expose modular selection menu as upper menu
+    1.2.7.7 Use static firmware and module loading methods when using custom modules
