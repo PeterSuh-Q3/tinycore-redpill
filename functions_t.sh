@@ -4336,8 +4336,8 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                echo "Ramdisk in not compressed, use bsdcpio + gzip -c9"            
-                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | gzip -c9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+                echo "Ramdisk in not compressed, use bsdcpio + xz(lzma) "            
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | xz -T0 -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
             else
                 echo "Ramdisk in not compressed, use cpio raw"            
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
@@ -4348,8 +4348,8 @@ EOF
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
-        echo "Ramdisk in compressed, use xz(lzma) "
-        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+        echo "Ramdisk in compressed, use bsdcpio + xz(lzma) "
+        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo bsdcpio -o -H newc -R root:root | xz -T0 -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
     fi
     
     if [ "$WITHFRIEND" = "YES" ]; then
