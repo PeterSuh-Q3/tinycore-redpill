@@ -4333,30 +4333,18 @@ EOF
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
 
-    # Reassembly ramdisk with conditional compression based on TARGET_REVISION
-    if [ "$TARGET_REVISION" = "64570" ] || [ "$TARGET_REVISION" -gt 64570 ]; then
-        echo "DSM $TARGET_REVISION detected - Using gzip -9 compression (supported)"
+    # Reassembly ramdisk ( no compress, use cpio raw type )
+    if [ "$RD_COMPRESSED" = "false" ]; then
+        echo "Ramdisk in not compressed, use cpio raw type "
         if [ "$FRKRNL" = "NO" ]; then
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 >/mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
         else
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 >/tmp/initrd-dsm)
+            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
         fi
     else
-        if [ "$RD_COMPRESSED" = "false" ]; then
-            echo "DSM $TARGET_REVISION detected - Using legacy gzip -9 compression"                
-            echo "Ramdisk in not compressed "
-            if [ "$FRKRNL" = "NO" ]; then
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-            else
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | gzip -9 > /tmp/initrd-dsm)
-                sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
-            fi
-        else
-            echo "DSM $TARGET_REVISION detected - Using legacy xz(lzma) compression"                
-            echo "Ramdisk in compressed "
-            (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
-        fi
+        echo "Ramdisk in compressed, use xz(lzma) "
+        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
     fi
     
     if [ "$WITHFRIEND" = "YES" ]; then
