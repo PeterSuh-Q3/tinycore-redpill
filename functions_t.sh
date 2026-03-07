@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.7"
+rploaderver="1.2.7.8"
 build="master"
 redpillmake="prod"
 
@@ -222,6 +222,7 @@ function history() {
     1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
     1.2.7.6 Expose modular selection menu as upper menu
     1.2.7.7 Use static firmware and module loading methods when using custom modules
+    1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -646,6 +647,8 @@ EOF
 # Expose modular selection menu as upper menu
 # 2026.03.06 v1.2.7.7 
 # Use static firmware and module loading methods when using custom modules
+# 2026.03.07 v1.2.7.8 
+# Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     
 function showlastupdate() {
     cat <<EOF
@@ -762,6 +765,9 @@ function showlastupdate() {
 
 # 2026.03.06 v1.2.7.7 
 # Use static firmware and module loading methods when using custom modules
+
+# 2026.03.07 v1.2.7.8 
+# Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
 
 EOF
 }
