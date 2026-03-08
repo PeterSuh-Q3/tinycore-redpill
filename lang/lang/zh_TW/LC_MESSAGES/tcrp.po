@@ -1,0 +1,259 @@
+# i18n translations for PACKAGE package.
+# Copyright (C) 2024 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Linux User <dante9000@gmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-04-08 13:16+0000\n"
+"PO-Revision-Date: 2024-04-08 14:17+0000\n"
+"Last-Translator: Peter Suh <dante9000@gmail.com>\n"
+"Language-Team: i18n <https://hosted.weblate.org/projects/tcrp-mshell/"
+"lang-tcrp/zh/>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.5-dev\n"
+#: MSGCN00 
+msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
+msgstr "設備樹[DT]基本型號和HBA不需要SataPortMap、DiskIdxMap. DT模型不支援HBA"
+
+#: MSGCN01 
+msgid "Choose a Dev Mod handling method, DDSML/EUDEV"
+msgstr "選擇Dev Mod處理方法，DDSML/EUDEV"
+
+#: MSGCN02 
+msgid "Choose a Synology Model"
+msgstr "選擇一個Synology型號"
+
+#: MSGCN03 
+msgid "Choose a Synology Serial Number"
+msgstr "選擇一個Synology序列號"
+
+#: MSGCN04 
+msgid "Choose a mac address"
+msgstr "選擇一個mac地址"
+
+#: MSGCN05 
+msgid "Choose a DSM VERSION, Current"
+msgstr "選擇當前的 DSM, 版本"
+
+#: MSGCN06 
+msgid "Choose a loader Mode, Current"
+msgstr "選擇加載器模式, 版本"
+
+#: MSGCN10 
+msgid "Edit user config file manually"
+msgstr "手動編輯使用者配置檔案"
+
+#: MSGCN11 
+msgid "Choose a keymap"
+msgstr "選擇一個鍵盤映射"
+
+#: MSGCN12 
+msgid "Format Disk(s) # Excluding Loader Disk"
+msgstr "磁碟格式 # 不包括加載器磁碟"
+
+#: MSGCN13 
+msgid "Backup TCRP"
+msgstr "備份TCRP"
+
+#: MSGCN14 
+msgid "Reboot"
+msgstr "重新啟動"
+
+#: MSGCN15 
+msgid "Power Off"
+msgstr "關閉電源"
+
+#: MSGCN16 
+msgid "Max 24 Threads, any x86-64"
+msgstr "最大24執行緒，任何x86-64"
+
+#: MSGCN17 
+msgid "Max 8 Threads, Haswell or later,iGPU Transcoding"
+msgstr "最大8執行緒，Haswell或更高版本，iGPU轉碼"
+
+#: MSGCN18 
+msgid "Build the loader"
+msgstr "構建加載器"
+
+#: MSGCN20 
+msgid "Max ? Threads, any x86-64"
+msgstr "最大？執行緒，任何x86-64"
+
+#: MSGCN21 
+msgid "Have a camera license"
+msgstr "擁有攝影機許可證"
+
+#: MSGCN22 
+msgid "Max 16 Threads, any x86-64"
+msgstr "最大16執行緒，任何x86-64"
+
+#: MSGCN23 
+msgid "Max 16 Threads, Haswell or later"
+msgstr "最大16執行緒，Haswell或更高版本"
+
+#: MSGCN24 
+msgid "Nvidia GTX1650"
+msgstr "Nvidia GTX1650"
+
+#: MSGCN25 
+msgid "Nvidia GTX1050Ti"
+msgstr "Nvidia GTX1050Ti"
+
+#: MSGCN26 
+msgid "EUDEV (enhanced user-space device)"
+msgstr "EUDEV（增強的使用者空間裝置）"
+
+#: MSGCN27 
+msgid "DDSML (Detected Device Static Module Loading)"
+msgstr "DDSML（檢測到的裝置靜態模組載入）"
+
+#: MSGCN28 
+msgid "FRIEND (most recently stabilized)"
+msgstr "FRIEND（最近穩定）"
+
+#: MSGCN29 
+msgid "JOT (The old way before friend)"
+msgstr "JOT（在friend之前的舊方式）"
+
+#: MSGCN30 
+msgid "Generate a random serial number"
+msgstr "生成一個隨機序列號"
+
+#: MSGCN31 
+msgid "Enter a serial number"
+msgstr "輸入序列號"
+
+#: MSGCN32 
+msgid "Get a real mac address"
+msgstr "取得真實的mac地址"
+
+#: MSGCN33 
+msgid "Generate a random mac address"
+msgstr "生成一個隨機的mac地址"
+
+#: MSGCN34 
+msgid "Enter a mac address"
+msgstr "輸入mac地址"
+
+#: MSGCN35 
+msgid "press any key to continue..."
+msgstr "按任意鍵繼續..."
+
+#: MSGCN36 
+msgid "Synology serial number not set. Check user_config.json again. Abort the loader build !!!"
+msgstr "未設定Synology序列號。請再次檢查user_config.json。終止加載器構建!!!!!!"
+
+#: MSGCN37 
+msgid "The first MAC address is not set. Check user_config.json again. Abort the loader build !!!"
+msgstr "未設定第一個MAC地址。請再次檢查user_config.json。終止加載器構建!!!!!!"
+
+#: MSGCN38 
+msgid "The netif_num and the number of mac addresses do not match. Check user_config.json again. Abort the loader build !!!"
+msgstr "netif_num和mac地址數量不匹配。請再次檢查user_config.json。終止加載器構建!!!!!!"
+
+#: MSGCN39 
+msgid "Choose a language"
+msgstr "選擇語言"
+
+#: MSGCN40 
+msgid "DDSML+EUDEV"
+msgstr "DDSML+EUDEV"
+
+#: MSGCN41 
+msgid "Choose a Storage Panel Size"
+msgstr "選擇儲存面板尺寸"
+
+#: MSGCN50 
+msgid "Mac-spoof Addon"
+msgstr "Mac 欺騙外掛"
+
+#: MSGCN51 
+msgid "Prevent SataPortMap,DiskIdxMap initialization"
+msgstr "防止 SataPortMap、DiskIdxMap 初始化"
+
+#: MSGCN52 
+msgid "Show SATA(s) ports and drives for SataPortMap"
+msgstr "顯示 SATAPortMap 的 SATA 連接埠和磁碟機"
+
+#: MSGCN53 
+msgid "Show error log of running loader"
+msgstr "顯示執行加載器的錯誤日誌"
+
+#: MSGCN54 
+msgid "Burn TCRP Bootloader Img to USB or SSD"
+msgstr "將另一個 TCRP 引導加載器燒錄到 USB 或 SSD"
+
+#: MSGCN55 
+msgid "Clone Current TCRP Bootloader to USB or SSD"
+msgstr "將 TCRP 引導加載器克隆到 USB 或 SSD"
+
+#: MSGCN56 
+msgid "sata_remap processing for SataPort reordering"
+msgstr "sata_remap 處理 SataPort 重新排序"
+
+#: MSGCN57 
+msgid "nvmesystem Addon(NVMe single volume use)"
+msgstr "nvmesystem 外掛(NVMe 單卷使用)"
+
+#: MSGCN58 
+msgid "Boot the loader"
+msgstr "啟動加載器"
+
+#: MSGCN59 
+msgid "Additional Functions"
+msgstr "附加功能"
+
+#: MSGCN60 
+msgid "Change GRUB boot entry default value"
+msgstr "更改GRUB啟動項預設值"
+
+#: MSGCN61 
+msgid "Inject Bootloader to Syno DISK"
+msgstr "向Syno磁碟注入引導程式"
+
+#: MSGCN62 
+msgid "Remove the injected bootloader partition"
+msgstr "刪除注入的引導程式分割區"
+
+#: MSGCN63 
+msgid "Packing loader file for remote update"
+msgstr "打包遠端更新的加載器檔案"
+
+#: MSGCN07
+msgid "Syno disk and partition handling"
+msgstr "Syno磁碟與分割區處理"
+
+#: MSGCN08
+msgid "Change DSM New Password"
+msgstr "更改DSM新密碼"
+
+#: MSGCN09
+msgid "Add New DSM User"
+msgstr "新增新DSM使用者"
+
+#: MSGCN19
+msgid "Clean System Partition(md0)"
+msgstr "清理系統分割區(md0)"
+
+#: MSGCN64
+msgid "Bootentry Update version correction"
+msgstr "啟動項更新版本修正"
+
+#: MSGCN65
+msgid "Mount Syno Disk Volume(Ext4 only)"
+msgstr "掛載Syno磁碟卷(僅限Ext4)"
+
+#: MSGCN66
+msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "為掛載Syno磁碟BTRFS卷新增Tinycore v9選單項"
+
+#: MSGCN67
+msgid "Select build pre-option (required or not required)"
+msgstr "選擇構建預設選項（必選或可選）"
