@@ -84,6 +84,11 @@ jobs:
           sudo ls -l "${ENV_PATH}/build_amdgpu_top.sh"
           sudo head -n 5 "${ENV_PATH}/build_amdgpu_top.sh"
 
+      - name: Update apt sources
+        run: |
+          sed -i 's|DSM7-2/72726/main|stable/main|g' /etc/apt/sources.list
+          apt-get update
+
       - name: Build amdgpu_top in chroot
         run: |
           set -euxo pipefail
