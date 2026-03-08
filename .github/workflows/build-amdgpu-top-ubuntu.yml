@@ -1,0 +1,47 @@
+name: Build amdgpu_top (Pure Ubuntu)
+
+on:
+  workflow_dispatch: # 수동 실행
+
+jobs:
+  build-ubuntu-binary:
+    # 범용적인 glibc 호환성을 확보하기 위해 22.04 환경에서 빌드
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          # amdgpu_top 빌드에 필요한 우분투 기본 의존성 설치
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libdrm-dev git curl
+
+      - name: Run PeterSuh-Q3 Build Script
+        run: |
+          echo "1. 스크립트 다운로드"
+          curl -O https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/amdgpu_top-build.sh
+          chmod +x amdgpu_top-build.sh
+          
+          echo "2. 빌드 스크립트 실행"
+          # 워크스페이스 내에서 스크립트를 실행하여 소스 클론 및 cargo build 수행
+          ./amdgpu_top-build.sh
+
+      - name: Prepare Artifact
+        run: |
+          echo "3. 결과물 바이너리 추출"
+          mkdir -p output_binary
+          
+          # 스크립트 실행 후 생성된 target/release 경로의 바이너리를 찾아 복사
+          # (스크립트가 소스를 클론한 디렉토리 이름과 무관하게 정확히 캡처)
+          find . -type f -name "amdgpu_top" -path "*/release/amdgpu_top" -exec cp {} ./output_binary/ \;
+          
+          # 정상적으로 복사되었는지 확인
+          ls -al ./output_binary/
+
+      - name: Upload amdgpu_top Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: amdgpu_top-ubuntu-22.04-binary
+          path: ./output_binary/amdgpu_top
