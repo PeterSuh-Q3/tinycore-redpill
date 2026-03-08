@@ -19,16 +19,13 @@ jobs:
         include:
           # AMD 기종 타겟으로만 구성 (기존 main.yml에서 발췌)
           - version: "7.2"
-            platform: apollolake
-            parm: "prod-v7"
-          - version: "7.2"
             platform: epyc7002
             parm: "prod-v7"
-          - version: "7.2"
-            platform: v1000
+          - version: "7.3"
+            platform: epyc7002
             parm: "prod-v7"
-          - version: "7.2"
-            platform: r1000
+          - version: "7.3"
+            platform: geminilakenk
             parm: "prod-v7"
 
     runs-on: ubuntu-latest
