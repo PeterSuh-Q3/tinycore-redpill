@@ -1,0 +1,68 @@
+name: Build amdgpu_top for Synology DSM
+
+on:
+  workflow_dispatch: # 수동 실행을 위해 추가
+  push:
+    branches: [ main ]
+
+jobs:
+  build-syno-binary:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # AMD GPU를 많이 활용하는 주요 x86_64 플랫폼 타겟
+        # v1000(DS1621+ 등), epyc7002(SA3600 등), apollolake(DS918+ 등)
+        platform: [v1000, epyc7002, apollolake]
+        dsm_version: ["7.2"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Synology Toolkit and Build
+        run: |
+          echo "1. Synology 공식 pkgscripts-ng 툴킷 클론"
+          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git
+          cd pkgscripts-ng
+          
+          echo "2. 툴킷 환경 배포 (EnvDeploy)"
+          ./EnvDeploy -v ${{ matrix.dsm_version }} -p ${{ matrix.platform }}
+          
+          # chroot 경로 설정
+          CHROOT_DIR="build_env/ds.${{ matrix.platform }}-${{ matrix.dsm_version }}"
+          
+          echo "3. chroot 내부에서 실행될 빌드 스크립트 작성"
+          cat << 'EOF' > "$CHROOT_DIR/build_amdgpu_top.sh"
+          #!/bin/bash
+          export DEBIAN_FRONTEND=noninteractive
+          
+          # 기존 우분투 스크립트처럼 패키지 업데이트 및 빌드 필수 패키지 설치
+          apt-get update
+          apt-get install -y curl git build-essential pkg-config libdrm-dev clang llvm
+          
+          # Rust 설치
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          export PATH="/root/.cargo/bin:$PATH"
+          
+          # amdgpu_top 소스 클론
+          git clone https://github.com/Umio-Yasuno/amdgpu_top.git /amdgpu_top_src
+          cd /amdgpu_top_src
+          
+          # [핵심] 시놀로지 환경(Headless)에 맞춰 GUI 의존성을 제외하고 TUI 전용으로 빌드
+          cargo build --release --locked --no-default-features --features="tui"
+          
+          # 호스트로 결과물을 빼내기 위해 /output 디렉토리로 바이너리 복사
+          mkdir -p /output
+          cp target/release/amdgpu_top /output/
+          EOF
+          
+          chmod +x "$CHROOT_DIR/build_amdgpu_top.sh"
+          
+          echo "4. chroot 환경 진입 및 빌드 스크립트 실행"
+          sudo chroot "$CHROOT_DIR" /build_amdgpu_top.sh
+          
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: amdgpu_top-DSM${{ matrix.dsm_version }}-${{ matrix.platform }}
+          path: pkgscripts-ng/build_env/ds.${{ matrix.platform }}-${{ matrix.dsm_version }}/output/amdgpu_top
