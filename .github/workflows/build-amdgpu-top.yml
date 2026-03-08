@@ -4,17 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'format: yyyy.mm.dd or auto'
+        description: "format: yyyy.mm.dd or auto"
         required: false
         type: string
       prerelease:
-        description: 'pre release'
+        description: "pre release"
         default: false
         type: boolean
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           # AMD 기종 타겟으로만 구성 (기존 main.yml에서 발췌)
@@ -29,98 +30,87 @@ jobs:
             parm: "prod-v7"
 
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Init Env
         run: |
+          set -euxo pipefail
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone Asia/Seoul
 
+      - name: Install host dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
       - name: Setup Synology EnvDeploy
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          VERSION=${{ matrix.version }}
-          PLATFORM=${{ matrix.platform }}
-          
-          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
-          cd ${ROOT_PATH}/pkgscripts-ng
-          # if version == 6.2, checkout 6.2.4
-          git checkout DSM$VERSION`[ "$VERSION" = "6.2" ] && echo ".4"`
-          sudo ./EnvDeploy -v $VERSION`[ "$VERSION" = "6.2" ] && echo ".4"` -l  # Get Available platforms
-          sudo ./EnvDeploy -q -v $VERSION -p $PLATFORM
-          
-          # 환경 변수 설정을 위한 ENV 디렉토리 준비 (main.yml 구조 차용)
-          ENV_PATH=${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}
-          
-          # Rust 빌드 중 /proc 등 마운트가 필요하므로 확실히 마운트
-          sudo mkdir -p ${ENV_PATH}/proc ${ENV_PATH}/sys ${ENV_PATH}/dev          
-          sudo mount -t proc /proc ${ENV_PATH}/proc || true
-          sudo mount -t sysfs /sys ${ENV_PATH}/sys || true
-          sudo mount -o bind /dev ${ENV_PATH}/dev || true
-          
-          sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
-          
-          # chroot 내부에서 실행될 스크립트 작성
-          cat << 'EOF' > ${ENV_PATH}/build_amdgpu_top.sh
-          #!/bin/bash
-          export DEBIAN_FRONTEND=noninteractive
-          export LC_ALL="C"
-          
-          # 패키지 업데이트 및 빌드 필수 패키지 설치
-          apt-get update
-          apt-get install -y curl git build-essential pkg-config libdrm-dev clang llvm cmake
-          
-          # Rust 설치 (강제 설치 플래그)
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          export PATH="/root/.cargo/bin:$PATH"
-          
-          # amdgpu_top 소스 클론 (필요시 특정 tag나 버전 지정 가능)
-          git clone https://github.com/Umio-Yasuno/amdgpu_top.git /amdgpu_top_src
-          cd /amdgpu_top_src
-          
-          echo "Building amdgpu_top with TUI mode..."
-          # TUI 기능만 활성화하여 X11/GUI 의존성 에러 차단
-          cargo build --release --locked --no-default-features --features="tui"
-          
-          mkdir -p /output
-          cp target/release/amdgpu_top /output/
-          EOF
+          set -euxo pipefail
 
-          echo "Permission before execution:"
-          ls -l ${ENV_PATH}/build_amdgpu_top.sh
-          sudo chmod +x ${ENV_PATH}/build_amdgpu_top.sh
-          echo "Permission after chmod:"
-          ls -l ${ENV_PATH}/build_amdgpu_top.sh
+          ROOT_PATH="${{ github.workspace }}"
+          VERSION="${{ matrix.version }}"
+          PLATFORM="${{ matrix.platform }}"
+
+          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git "${ROOT_PATH}/pkgscripts-ng"
+          cd "${ROOT_PATH}/pkgscripts-ng"
+
+          # if version == 6.2, checkout 6.2.4
+          git checkout "DSM${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")"
+
+          sudo ./EnvDeploy -v "${VERSION}$([ "${VERSION}" = "6.2" ] && echo ".4")" -l
+          sudo ./EnvDeploy -q -v "${VERSION}" -p "${PLATFORM}"
+
+          ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
+
+          # Rust 빌드 중 /proc 등 마운트가 필요하므로 확실히 마운트
+          sudo mkdir -p "${ENV_PATH}/proc" "${ENV_PATH}/sys" "${ENV_PATH}/dev"
+          sudo mount -t proc /proc "${ENV_PATH}/proc" || true
+          sudo mount -t sysfs /sys "${ENV_PATH}/sys" || true
+          sudo mount -o bind /dev "${ENV_PATH}/dev" || true
+
+          # (선택) pkgscripts-ng를 env 안에도 복사해야 하는 기존 흐름을 유지하되,
+          # cp -al 대신 rsync로 권한/링크 꼬임 가능성 최소화
+          sudo rsync -a --delete "${ROOT_PATH}/pkgscripts-ng/" "${ENV_PATH}/pkgscripts-ng/"
+
+          # chroot 내부 실행 스크립트를 리포지토리에서 가져와 배치
+          sudo install -m 0755 "${ROOT_PATH}/ci/build_amdgpu_top.sh" "${ENV_PATH}/build_amdgpu_top.sh"
+
+          echo "Script installed:"
+          sudo ls -l "${ENV_PATH}/build_amdgpu_top.sh"
+          sudo head -n 5 "${ENV_PATH}/build_amdgpu_top.sh"
 
       - name: Build amdgpu_top in chroot
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          VERSION=${{ matrix.version }}
-          PLATFORM=${{ matrix.platform }}
-          ENV_PATH=${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}
-          
-          # main.yml의 chroot 호출 방식 적용 (build_amdgpu_top.sh 스크립트 실행)
-          ls -l ${ENV_PATH}/build_amdgpu_top.sh
-          sudo chroot ${ENV_PATH} /build_amdgpu_top.sh
-          
-          # 결과물을 호스트로 복사 및 이름 변경
-          mkdir -p ${ROOT_PATH}/source_output
-          cp ${ENV_PATH}/output/amdgpu_top ${ROOT_PATH}/source_output/amdgpu_top-${PLATFORM}-${VERSION}
-          
-          # 마운트 해제
-          sudo umount ${ENV_PATH}/proc || true
-          sudo umount ${ENV_PATH}/sys || true
-          sudo umount ${ENV_PATH}/dev || true
+          set -euxo pipefail
+
+          ROOT_PATH="${{ github.workspace }}"
+          VERSION="${{ matrix.version }}"
+          PLATFORM="${{ matrix.platform }}"
+          ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
+
+          # 직접 실행 대신 bash로 실행 (Permission denied 케이스에 강함)
+          sudo chroot "${ENV_PATH}" /bin/bash /build_amdgpu_top.sh
+
+          mkdir -p "${ROOT_PATH}/source_output"
+          cp "${ENV_PATH}/output/amdgpu_top" "${ROOT_PATH}/source_output/amdgpu_top-${PLATFORM}-${VERSION}"
+
+          sudo umount "${ENV_PATH}/proc" || true
+          sudo umount "${ENV_PATH}/sys" || true
+          sudo umount "${ENV_PATH}/dev" || true
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: amdgpu_top-${{ matrix.platform }}-${{ matrix.version }}
           path: ${{ github.workspace }}/source_output/amdgpu_top-${{ matrix.platform }}-${{ matrix.version }}
-          
+
       - name: clean
+        if: always()
         run: |
-          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
+          set -euxo pipefail
+          sudo rm -rf "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}"
