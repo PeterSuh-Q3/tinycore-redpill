@@ -109,12 +109,3 @@ jobs:
           name: amdgpu_top-${{ matrix.platform }}-${{ matrix.version }}
           path: ${{ github.workspace }}/source_output/amdgpu_top-${{ matrix.platform }}-${{ matrix.version }}
 
-      - name: clean
-        if: always()
-        run: |
-          set -euxo pipefail
-          sudo find "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}" \
-          -mindepth 1 \
-          \( -path "*/proc" -o -path "*/proc/*" -o -path "*/sys" -o -path "*/sys/*" \) -prune -o \
-          -exec rm -rf -- {} +
-          #sudo rm -rf "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}"
