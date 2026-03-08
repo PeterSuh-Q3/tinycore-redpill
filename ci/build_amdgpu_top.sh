@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euxo pipefail
 
+sudo sed -i 's|http://apt.synology.inc|http://deb.debian.org/debian|g' /etc/apt/sources.list
+sudo apt-get update
+
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL="C"
 
