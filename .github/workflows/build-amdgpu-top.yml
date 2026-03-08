@@ -44,15 +44,16 @@ jobs:
 
       - name: Setup Synology EnvDeploy
         run: |
-          ROOTPATH="${{ github.workspace }}"
-          VERSION="${{ matrix.version }}"
-          PLATFORM="${{ matrix.platform }}"
+          ROOT_PATH=${{ github.workspace }}
+          VERSION=${{ matrix.version }}
+          PLATFORM=${{ matrix.platform }}
           
-          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOTPATH}/pkgscripts-ng
-          cd ${ROOTPATH}/pkgscripts-ng
-          
-          echo "Deploying Environment for ${PLATFORM} ${VERSION}..."
-          sudo ./EnvDeploy -v ${VERSION} -p ${PLATFORM}
+          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
+          cd ${ROOT_PATH}/pkgscripts-ng
+          # if version == 6.2, checkout 6.2.4
+          git checkout DSM$VERSION`[ "$VERSION" = "6.2" ] && echo ".4"`
+          sudo ./EnvDeploy -v $VERSION`[ "$VERSION" = "6.2" ] && echo ".4"` -l  # Get Available platforms
+          sudo ./EnvDeploy -q -v $VERSION -p $PLATFORM
           
           # 환경 변수 설정을 위한 ENV 디렉토리 준비 (main.yml 구조 차용)
           ENV_PATH="${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}"
