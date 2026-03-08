@@ -21,7 +21,7 @@ fi
 cd amdgpu_top
 
 echo "Building amdgpu_top with cargo..."
-sudo cargo build --release
+cargo build --release
 
 echo "Build complete. Binary located at ./target/release/amdgpu_top"
 echo "Copy Binary ./target/release/amdgpu_top to /usr/sbin"
