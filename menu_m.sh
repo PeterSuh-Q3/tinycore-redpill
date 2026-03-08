@@ -1083,7 +1083,7 @@ function writexsession() {
 function langMenu() {
 
   dialog --backtitle "`backtitle`" --default-item "${LAYOUT}" --no-items \
-    --menu "Choose a language" 0 0 0 "English" "한국어" "日本語" "中文" "Русский" \
+    --menu "Choose a language" 0 0 0 "English" "한국어" "日本語" "简体中文" "正體中文" "Русский" \
     "Français" "Deutsch" "Español" "Italiano" "brasileiro" \
     "Magyar" "bahasa_Indonesia" "Türkçe" "हिंदी" "عربي" \
     "አማርኛ" "ไทย" \
