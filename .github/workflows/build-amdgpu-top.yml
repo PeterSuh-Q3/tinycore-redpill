@@ -113,5 +113,8 @@ jobs:
         if: always()
         run: |
           set -euxo pipefail
-          sudo find "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}" -not -path "*/proc/*" -not -path "*/sys/*" -exec rm -rf {} +
+          sudo find "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}" \
+          -mindepth 1 \
+          \( -path "*/proc" -o -path "*/proc/*" -o -path "*/sys" -o -path "*/sys/*" \) -prune -o \
+          -exec rm -rf -- {} +
           #sudo rm -rf "${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}"
