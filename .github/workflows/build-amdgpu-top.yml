@@ -10,10 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        include:
+        - version: 7.2
+          platform: epyc7002
+          parm: 'prod-v7'      
         # AMD GPU를 많이 활용하는 주요 x86_64 플랫폼 타겟
         # v1000(DS1621+ 등), epyc7002(SA3600 등), apollolake(DS918+ 등)
-        platform: [v1000, epyc7002, apollolake]
-        dsm_version: ["7.2"]
 
     steps:
       - name: Checkout repository
