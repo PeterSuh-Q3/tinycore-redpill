@@ -86,8 +86,8 @@ jobs:
 
       - name: Update apt sources
         run: |
-          sed -i 's|DSM7-2/72726/main|stable/main|g' /etc/apt/sources.list
-          apt-get update
+          sudo sed -i 's|DSM7-2/72726/main|stable/main|g' /etc/apt/sources.list
+          sudo apt-get update
 
       - name: Build amdgpu_top in chroot
         run: |
