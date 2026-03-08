@@ -53,7 +53,7 @@ jobs:
           sudo ./EnvDeploy -q -v $VERSION -p $PLATFORM
           
           # 환경 변수 설정을 위한 ENV 디렉토리 준비 (main.yml 구조 차용)
-          ENV_PATH="${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}"
+          ENV_PATH="${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}"
           
           # Rust 빌드 중 /proc 등 마운트가 필요하므로 확실히 마운트
           sudo mkdir -p ${ENV_PATH}/proc ${ENV_PATH}/sys ${ENV_PATH}/dev          
@@ -61,7 +61,7 @@ jobs:
           sudo mount -t sysfs /sys ${ENV_PATH}/sys || true
           sudo mount -o bind /dev ${ENV_PATH}/dev || true
           
-          sudo cp -al ${ROOTPATH}/pkgscripts-ng ${ENV_PATH}/
+          sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
           
           # chroot 내부에서 실행될 스크립트 작성
           cat << 'EOF' > ${ENV_PATH}/build_amdgpu_top.sh
@@ -96,14 +96,14 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           VERSION=${{ matrix.version }}
           PLATFORM=${{ matrix.platform }}
-          ENV_PATH=${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}
+          ENV_PATH=${ROOT_PATH}/build_env/ds.${PLATFORM}-${VERSION}
           
           # main.yml의 chroot 호출 방식 적용 (build_amdgpu_top.sh 스크립트 실행)
           sudo chroot ${ENV_PATH} /build_amdgpu_top.sh
           
           # 결과물을 호스트로 복사 및 이름 변경
-          mkdir -p ${ROOTPATH}/source_output
-          cp ${ENV_PATH}/output/amdgpu_top ${ROOTPATH}/source_output/amdgpu_top-${PLATFORM}-${VERSION}
+          mkdir -p ${ROOT_PATH}/source_output
+          cp ${ENV_PATH}/output/amdgpu_top ${ROOT_PATH}/source_output/amdgpu_top-${PLATFORM}-${VERSION}
           
           # 마운트 해제
           sudo umount ${ENV_PATH}/proc || true
