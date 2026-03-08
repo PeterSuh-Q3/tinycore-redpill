@@ -1,12 +1,10 @@
 #!/bin/bash
 set -euxo pipefail
 
-sudo sed -i 's|http://apt.synology.inc|http://deb.debian.org/debian|g' /etc/apt/sources.list
-sudo apt-get update
-
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL="C"
 
+sed -i 's|http://apt.synology.inc|http://deb.debian.org/debian|g' /etc/apt/sources.list
 apt-get update
 apt-get install -y curl git build-essential pkg-config libdrm-dev clang llvm cmake libdrm-amdgpu1
 
