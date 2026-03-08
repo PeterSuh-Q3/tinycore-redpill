@@ -95,10 +95,10 @@ jobs:
 
       - name: Build amdgpu_top in chroot
         run: |
-          ROOTPATH="${{ github.workspace }}"
-          VERSION="${{ matrix.version }}"
-          PLATFORM="${{ matrix.platform }}"
-          ENV_PATH="${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}"
+          ROOT_PATH=${{ github.workspace }}
+          VERSION=${{ matrix.version }}
+          PLATFORM=${{ matrix.platform }}
+          ENV_PATH=${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}
           
           # main.yml의 chroot 호출 방식 적용 (build_amdgpu_top.sh 스크립트 실행)
           sudo chroot ${ENV_PATH} /build_amdgpu_top.sh
