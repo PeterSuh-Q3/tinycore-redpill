@@ -56,6 +56,7 @@ jobs:
           ENV_PATH="${ROOTPATH}/build_env/ds.${PLATFORM}-${VERSION}"
           
           # Rust 빌드 중 /proc 등 마운트가 필요하므로 확실히 마운트
+          mkdir -p ${ENV_PATH}/proc ${ENV_PATH}/sys ${ENV_PATH}/dev          
           sudo mount -t proc /proc ${ENV_PATH}/proc || true
           sudo mount -t sysfs /sys ${ENV_PATH}/sys || true
           sudo mount -o bind /dev ${ENV_PATH}/dev || true
