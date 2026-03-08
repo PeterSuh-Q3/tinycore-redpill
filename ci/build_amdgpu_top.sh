@@ -5,7 +5,7 @@ export DEBIAN_FRONTEND=noninteractive
 export LC_ALL="C"
 
 apt-get update
-apt-get install -y curl git build-essential pkg-config libdrm-dev clang llvm cmake
+apt-get install -y curl git build-essential pkg-config libdrm-dev clang llvm cmake libdrm-amdgpu1
 
 # Rust 설치
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
