@@ -89,7 +89,10 @@ jobs:
           cp target/release/amdgpu_top /output/
           EOF
 
+          echo "Permission before execution:"
+          ls -l ${ENV_PATH}/build_amdgpu_top.sh
           sudo chmod +x ${ENV_PATH}/build_amdgpu_top.sh
+          echo "Permission after chmod:"
           ls -l ${ENV_PATH}/build_amdgpu_top.sh
 
       - name: Build amdgpu_top in chroot
