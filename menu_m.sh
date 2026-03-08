@@ -1609,7 +1609,7 @@ function build-pre-option() {
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
-    eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                            >> "${TMP_PATH}/menud"
+    eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                            > "${TMP_PATH}/menud"
     eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
     eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
     eval "echo \"e \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
