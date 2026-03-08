@@ -1097,7 +1097,8 @@ function langMenu() {
     English) tz="US"; ucode="en_US";;
     한국어) tz="KR"; ucode="ko_KR";;
     日本語) tz="JP"; ucode="ja_JP";;
-    中文) tz="CN"; ucode="zh_CN";;
+    简体中文) tz="CN"; ucode="zh_CN";;
+    正體中文) tz="TW"; ucode="zh_TW";;
     Русский) tz="RU"; ucode="ru_RU";;
     Français) tz="FR"; ucode="fr_FR";;
     Deutsch) tz="DE"; ucode="de_DE";;
@@ -1905,6 +1906,7 @@ US) ucode="en_US";;
 KR) ucode="ko_KR";;
 JP) ucode="ja_JP";;
 CN) ucode="zh_CN";;
+TW) ucode="zh_TW";;
 RU) ucode="ru_RU";;
 FR) ucode="fr_FR";;
 DE) ucode="de_DE";;
