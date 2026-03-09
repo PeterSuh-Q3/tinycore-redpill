@@ -4308,7 +4308,7 @@ EOF
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
             sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
             sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-            sudo rm -rf $rdtemp/exts/all-modules/
+            #sudo rm -rf $rdtemp/exts/all-modules/
         fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
