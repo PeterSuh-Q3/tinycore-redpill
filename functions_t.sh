@@ -4140,6 +4140,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
             USB_LINE="${USB_LINE} disable_mtrr_trim=1"
+            [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
