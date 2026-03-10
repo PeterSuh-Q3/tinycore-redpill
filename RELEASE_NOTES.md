@@ -1,1 +1,1 @@
-    1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+    1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
