@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.8"
+rploaderver="1.2.7.9"
 build="master"
 redpillmake="prod"
 
@@ -223,6 +223,7 @@ function history() {
     1.2.7.6 Expose modular selection menu as upper menu
     1.2.7.7 Use static firmware and module loading methods when using custom modules
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+    1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -649,6 +650,8 @@ EOF
 # Use static firmware and module loading methods when using custom modules
 # 2026.03.07 v1.2.7.8 
 # Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+# 2026.03.10 v1.2.7.9 
+# Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     
 function showlastupdate() {
     cat <<EOF
@@ -768,6 +771,9 @@ function showlastupdate() {
 
 # 2026.03.07 v1.2.7.8 
 # Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+
+# 2026.03.10 v1.2.7.9 
+# Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 
 EOF
 }
