@@ -4349,8 +4349,12 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                echo "Ramdisk in not compressed, use cpio + xz -9 --format=lzma"
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+                if [ "$FRKRNL" = "NO" ] && [ "$(which zstd)_" == "_" ]; then  
+                    echo "zstd does not exist, install from tinycore"
+                    tce-load -iw zstd 
+                fi            
+                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"            
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
             else
                 echo "Ramdisk in not compressed, use cpio raw"            
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
