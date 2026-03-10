@@ -4349,8 +4349,8 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                echo "Ramdisk in not compressed, use cpio + xz -9 -T0 --check=crc32"
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 -T0 --check=crc32 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+                echo "Ramdisk in not compressed, use cpio + xz -9 --format=lzma"
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
             else
                 echo "Ramdisk in not compressed, use cpio raw"            
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
