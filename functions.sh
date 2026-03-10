@@ -4349,20 +4349,25 @@ EOF
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                if [ "$FRKRNL" = "NO" ] && [ "$(which zstd)_" == "_" ]; then  
+                if [ "$(which zstd)_" == "_" ]; then  
                     echo "zstd does not exist, install from tinycore"
                     tce-load -iw zstd 
                 fi            
-                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"            
+                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
                 (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
             else
                 echo "Ramdisk in not compressed, use cpio raw"            
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
             fi
         else
-            echo "Ramdisk in not compressed, use cpio raw"                    
-            (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
-            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress
+            if [ "$(which zstd)_" == "_" ]; then  
+                echo "Ramdisk in not compressed, use cpio raw"                    
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
+            else
+                echo "Ramdisk in not compressed, use cpio + zstd -T0 -19"
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
+            fi
+            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
         fi
     else
         echo "Ramdisk in compressed, use xz(lzma) "
