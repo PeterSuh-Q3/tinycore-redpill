@@ -1457,6 +1457,21 @@ function getvarsmshell()
         serialstart="1660"
         suffix="alpha"
         ;;
+    DS425+)
+        permanent="YGR"
+        serialstart="2550"
+        suffix="alpha"
+        ;;
+    DS1525+)
+        permanent="YJR"
+        serialstart="2540"
+        suffix="alpha"
+        ;;
+    DS1825+)
+        permanent="WDR"
+        serialstart="2540"
+        suffix="alpha"
+        ;;
     *)
         permanent="XXX"
         serialstart="0000"
