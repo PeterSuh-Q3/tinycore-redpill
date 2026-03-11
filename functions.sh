@@ -4161,7 +4161,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
             USB_LINE="${USB_LINE} disable_mtrr_trim=1"
-            [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
@@ -4175,6 +4174,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             fi
         fi
     fi
+
+    if lspci -nn | grep -qi 'VGA.*\[1002:'; then
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
+        fi
+    fi
+    
     [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} fbcon=map:99 vga=keep"    
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
