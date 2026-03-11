@@ -2184,6 +2184,7 @@ checkmachine
 checkcpu
 
 echo  "download original pats.json file..."
+[ -f /tmp/test_mode ] && VERBOSE_MODE=ON
 if { [[ "$MACHINE" = "VIRTUAL" && "$HYPERVISOR" = "KVM" ]] || [ -f /tmp/test_mode ]; }; then
   curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
 else  
