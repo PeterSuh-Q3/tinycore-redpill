@@ -149,6 +149,9 @@ if [ "${offline}" = "NO" ]; then
     else
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
     fi
+
+    # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
+    . /home/tc/functions.sh    
 fi
 
 /home/tc/menu_m.sh
