@@ -4385,8 +4385,8 @@ EOF
                 echo "Ramdisk in not compressed, use cpio raw"                    
                 (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
             else
-                echo "Ramdisk in not compressed, use cpio + zstd -T0 -19"
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
+                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
+                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
             fi
             sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
         fi
