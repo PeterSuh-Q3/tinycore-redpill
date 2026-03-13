@@ -4272,7 +4272,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     echo "${TARGET_VERSION}"
     if [[ "${MDLNAME}" == "custom-modules" && "${ORIGIN_PLATFORM}" == "epyc7002" && "${TARGET_VERSION}" == "7.3.2" ]]; then
       echo "Download the pre-packed initrd-dsm"
-      
+      curlinitrd
     else
       rdtemp="/home/tc/rd.temp"
       
@@ -4478,6 +4478,45 @@ st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
         fi    
     fi    
 }
+
+function curlinitrd() {
+    REPO="PeterSuh-Q3/redpill-load"
+    LOADTAG=""
+
+    if [ -z "$LOADTAG" ]; then
+        LATESTURL=$(curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest")
+        LOADTAG="${LATESTURL##*/}"
+    fi
+
+    echo "REDPILL-LOAD TAG is ${LOADTAG}"
+
+    # 해당 태그의 릴리즈 정보에서 initrd-dsm. 으로 시작하는 파일들의 다운로드 URL 추출
+    DOWNLOAD_URLS=$(curl -s "https://api.github.com/repos/$REPO/releases/tags/$LOADTAG" | \
+      jq -r '.assets[] | select(.name | startswith("initrd-dsm.")) | .browser_download_url')
+
+    if [ -z "$DOWNLOAD_URLS" ]; then
+        msgalert "No initrd-dsm.* files found in release $LOADTAG !!!!!!!!"
+        return 1
+    fi
+
+    DOWNLOAD_ERR=0
+    
+    # 추출한 URL들을 순회하며 개별 다운로드 실행
+    for URL in $DOWNLOAD_URLS; do
+        echo "Downloading ${URL##*/} ..."
+        curl -kLO# "$URL" 
+        if [ $? -ne 0 ]; then
+            DOWNLOAD_ERR=1
+        fi
+    done
+
+    if [ $DOWNLOAD_ERR -ne 0 ]; then
+        msgalert "Download failed from github.com redpill-load... !!!!!!!!"
+    else
+        msgnormal "Bringing over redpill-load from github.com Done!!!!!!!!!!!!!!"
+    fi
+}
+
 
 function curlfriend() {
     REPO="PeterSuh-Q3/tcrpfriend"
