@@ -4427,8 +4427,13 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
     [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
 
-    sudo cp -vf $rdtemp/linuxrc.syno.impl /home/tc/linuxrc.syno.impl.${SYNOMODEL}
-    sudo rm -rf $rdtemp /home/tc/friend /home/tc/cache/*.pat
+    if [[ "${MDLNAME}" == "custom-modules" && "${ORIGIN_PLATFORM}" == "epyc7002" && "${TARGET_VERSION}" == "7.3.2" ]]; then
+      echo "pre-packed initrd-dsm don't use rdtemp"
+    else
+      sudo cp -vf $rdtemp/linuxrc.syno.impl /home/tc/linuxrc.syno.impl.${SYNOMODEL}
+      sudo rm -rf $rdtemp
+    fi
+    sudo rm -rf /home/tc/friend /home/tc/cache/*.pat
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
         msgnormal "Skip Caching files on xTCRP with Synoboot Injected."
