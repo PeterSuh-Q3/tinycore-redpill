@@ -4273,8 +4273,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if [[ "${MDLNAME}" == "custom-modules" && "${ORIGIN_PLATFORM}" == "epyc7002" && "${TARGET_VERSION}" == "7.3.2" ]]; then
       echo "Download the pre-packed initrd-dsm"
       curlinitrd
-      sudo mv -vf ./initrd-dsm.0 /mnt/${loaderdisk}3/initrd-dsm.0
-      sudo mv -vf ./initrd-dsm.1 /mnt/${loaderdisk}3/initrd-dsm.1
+      sudo cp -vf ./initrd-dsm.* /mnt/${loaderdisk}3/ && rm ./initrd-dsm.*
       sudo cp -vf /mnt/${loaderdisk}3/initrd-dsm.0 /mnt/${loaderdisk}3/initrd-dsm
     else
       rdtemp="/home/tc/rd.temp"
