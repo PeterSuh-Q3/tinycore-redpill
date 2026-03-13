@@ -4267,6 +4267,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     done < <(jq -r '.synoinfo | to_entries[] | "\(.key) \(.value)"' "${userconfigfile}")
 
     # repacking initrd-dsm
+    echo "${MDLNAME}"
+    echo "${ORIGIN_PLATFORM}"
+    echo "${TARGET_VERSION}"
     if [[ "${MDLNAME}" == "custom-modules" && "${ORIGIN_PLATFORM}" == "epyc7002" && "${TARGET_VERSION}" == "7.3.2" ]]; then
       echo "Download the pre-packed initrd-dsm"
       
