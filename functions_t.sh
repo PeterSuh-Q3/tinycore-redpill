@@ -4450,8 +4450,13 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
             fi
         
             if [ -f ${patfile} ]; then
-                echo "Found ${patfile}, moving to cache directory : ${local_cache} "
-                $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache} && $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
+                if [ "${MDLNAME}" == "custom-modules" ]; then
+                    echo "custom-modules skips DSM .pat file caching !!!!!!!!!! "
+                    $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
+                else
+                    echo "Found ${patfile}, moving to cache directory : ${local_cache} "
+                    $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache} && $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
+                fi    
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 [ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
