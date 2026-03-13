@@ -4274,7 +4274,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       echo "Download the pre-packed initrd-dsm"
       curlinitrd
       sudo cp -vf ./initrd-dsm.* /mnt/${loaderdisk}3/ && rm ./initrd-dsm.*
-      sudo cp -vf /mnt/${loaderdisk}3/initrd-dsm.0 /mnt/${loaderdisk}3/initrd-dsm
+      sudo cp -vf /mnt/${loaderdisk}3/initrd-dsm.1 /mnt/${loaderdisk}3/initrd-dsm
     else
       rdtemp="/home/tc/rd.temp"
       
