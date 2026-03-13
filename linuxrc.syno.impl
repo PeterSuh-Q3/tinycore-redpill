@@ -1,0 +1,1049 @@
+#!/bin/sh
+# Copyright (c) 2000-2014 Synology Inc. All rights reserved.
+
+echo "START /linuxrc.syno.impl"
+
+. /etc.defaults/rc.subr
+. /usr/syno/share/environments.sh
+. /usr/syno/share/util.sh
+. /usr/syno/share/synorbd.sh
+
+if [ -f /proc/sys/kernel/random/syno_gen_entropy ]; then
+       echo 1 > /proc/sys/kernel/random/syno_gen_entropy
+fi
+
+Mnt="/tmpRoot"
+
+SAS2Driver="/lib/modules/mpt2sas.ko"
+SAS3Driver="/lib/modules/mpt3sas.ko"
+SAS3Driver_v2="/lib/modules/mpt3sas_v2.ko"
+ETRONDriver="/lib/modules/etxhci-hcd.ko"
+
+/bin/mkdir ${Mnt}
+KERNEL_VCODE=`KernelVersionCode "$(KernelVersion)"`
+if [ $KERNEL_VCODE -ge "$(KernelVersionCode "3.6")" ]; then
+	# Need to enable the two kernel config, CONFIG_DEVTMPFS and CONFIG_DEBUG_FS, CONFIG_SYNO_ENABLE_USBFS_ENTRY
+	/bin/mount -t debugfs none /sys/kernel/debug
+fi
+
+. /usr/syno/share/rootdevice.sh
+
+if [ -n "$(grep 'support_sed=usb' /proc/cmdline)" ];then
+	# TODO: This provides a way to enable SED function without additional patch.
+	# If all new models have already supported SED, this code can be removed.
+	echo "support_sed=\"yes\"" >> /etc.defaults/synoinfo.conf
+	echo "sed_key_manager_type=\"usb\"" >> /etc.defaults/synoinfo.conf
+fi
+
+# get hw revision first
+HW_REVISION=`cat /proc/sys/kernel/syno_hw_revision`
+
+MaxDisks=$(GetKV "${SYNOINFO_DEF}" maxdisks)
+MaxSysDisks=$(GetKV "${SYNOINFO_DEF}" max_sys_raid_disks)
+NoDiskSystem=$(GetKV "${SYNOINFO_DEF}" no_disk_system)
+EnableEtronSSC=$(GetKV "${SYNOINFO_DEF}" enable_etron_ssc)
+SupportSAS=$(GetKV "${SYNOINFO_DEF}" supportsas)
+SupportSED=$(GetKV "${SYNOINFO_DEF}" support_sed)
+SupportOobCtl=$(GetKV "${SYNOINFO_DEF}" support_oob_ctl)
+SupportMultipath=$(GetKV "${SYNOINFO_DEF}" support_multipath)
+SupportHyperConverged=$(GetKV "${SYNOINFO_DEF}" support_hyper_converged)
+SupportUASP=$(GetKV "${SYNOINFO_DEF}" support_uasp)
+SupportCrypto=$(GetKV "${SYNOINFO_DEF}" support_crypto)
+
+# get SupportSAS_v2 key with hw revision
+if [ -n "${HW_REVISION}" ]; then
+	SupportSAS_v2=$(GetKV "${SYNOINFO_DEF}" supportsas_v2_"${HW_REVISION}")
+else
+	SupportSAS_v2=$(GetKV "${SYNOINFO_DEF}" supportsas_v2)
+fi
+
+USB_MODULES="phy-stih407-usb usb-common phy-st-usb3 phy-rtk-rle0599 phy-rtk-usb2 phy-rtk-usb3 phy-rtk-rle0599_1619 phy-rtk-usb2_1619 phy-rtk-usb3_1619 usbcore dwc3 rtk-usb-manager dwc3-rtk-type_c_1619 dwc3-rtk_1619 hiusb-otg hiusb-ehci-hi3536 hiusb-xhci-hi3536 ehci-hcd ehci-pci ehci-platform ohci-hcd uhci-hcd xhci-hcd xhci-plat-hcd xhci-pci st-hcd dwc3-st dwc3-rtk dwc3_rtk ehci-orion"
+
+UnknownSynoPartitionMigrationFlag="/.unknown_syno_partition_migrate"
+IncompatibleRootDevice="/.incompatible_root_device"
+
+(/bin/sh /exts/exec.sh on_early_scripts && echo "early processed") || Exit 99 "early init exec failure"
+
+UmountRoot()
+{
+	grep "^${RootDevice}" /proc/mounts && /bin/umount -f ${Mnt}
+	grep "/sys/kernel/debug" /proc/mounts && /bin/umount /sys/kernel/debug
+}
+
+AddDeviceBackToSwapRaid()
+{
+	local target_dev_serial="$1"; shift
+
+	local target_dev_path=""
+	local dev_serial
+	for dev in $(/usr/syno/bin/synodiskport -installable_disk_list); do
+		dev_serial=$(/usr/syno/bin/synodiskdeviceserial "/dev/$dev")
+		if [ "$target_dev_serial" = "$dev_serial" ]; then
+			target_dev_path="/dev/$(/usr/syno/bin/synodiskport -part_name_get 2 "$dev")" # md1 is on partition 2
+			break
+		fi
+	done
+
+	if [ "$target_dev_path" = "" ]; then
+		/bin/echo "unable to find disk device with serial $target_dev_serial"
+		return 0
+	fi
+
+	/bin/echo "try adding $target_dev_path back to swap raid"
+
+	if /sbin/mdadm --manage "/dev/md1" --add "$target_dev_path"; then
+		/bin/echo "Added $target_dev_path($target_dev_serial) back to md1"
+	else
+		/bin/echo "Can't add $target_dev_path($target_dev_serial) back to md1"
+	fi
+}
+
+TryRestoringDeviceBackToSwapRaid()
+{
+	local deviceFile="$Mnt/.synoinstall-borrowed-swap-raid-device"
+
+	if ! [ -f "$deviceFile" ]; then
+		return 0
+	fi
+
+	/bin/echo "$deviceFile exists, try adding it to swap raid"
+	/bin/echo "Borrowed devices: "
+	/bin/cat "$deviceFile"
+
+	/bin/grep -q -w "^md1" /proc/mdstat
+	md1IsOn=$?
+	if [ "$md1IsOn" -ne '0' ]; then
+		/usr/syno/bin/syno_swap_ctl --start
+	fi
+
+	/bin/cat "$deviceFile" | while IFS= read -r target_dev_serial; do
+		AddDeviceBackToSwapRaid "$target_dev_serial"
+	done
+
+	if [ "$md1IsOn" -ne '0' ]; then
+		/usr/syno/bin/syno_swap_ctl --stop
+	fi
+
+	/bin/rm "$deviceFile"
+}
+
+Exit()
+{
+	if [ -n "$2" ]; then
+		echo "Exit on error [$1] $2..."
+		echo "Exit on error [$1] $2..." >/var/log/junior_reason
+	fi
+
+	# show date for login info
+	date
+
+	(/bin/sh /exts/exec.sh load_kmods && /bin/sh /exts/exec.sh on_jrExit_scripts && echo "Extensions processed") || Exit 99 "jrExit ext init exec failure"
+	if [ "$1" -eq 0 ]; then
+		TryRestoringDeviceBackToSwapRaid
+	fi
+
+	UmountRoot
+
+	exit $1
+}
+
+if [ "$SupportPortMappingV2" = "yes" ]; then
+	if [ -n "${HW_REVISION}" ]; then
+		DTBFILE="model_${HW_REVISION}.dtb"
+	else
+		DTBFILE="model.dtb"
+	fi
+
+	if [ -e /etc.defaults/${DTBFILE} ]; then
+		cp -vf /etc.defaults/${DTBFILE} /var/run/model.dtb
+	else
+		cp -vf /etc.defaults/model.dtb /var/run/
+	fi
+fi
+
+SYNOLoadNTB()
+{
+	echo "Insert IOATDMA driver"
+	if [ -e /lib/modules/dca.ko ]; then
+		insmod /lib/modules/dca.ko
+	fi
+
+	if [ -e /lib/modules/ioatdma.ko ]; then
+		insmod /lib/modules/ioatdma.ko
+	fi
+
+	echo "Insert NTB driver"
+	if [ -e /lib/modules/ntb.ko ]; then
+	       insmod /lib/modules/ntb.ko
+	fi
+	if [ -e /lib/modules/ntb_hw_intel.ko ]; then
+	       insmod /lib/modules/ntb_hw_intel.ko
+	fi
+	if [ -e /lib/modules/ntb_transport.ko ]; then
+	       insmod /lib/modules/ntb_transport.ko use_dma=1
+	fi
+	if [ -e /lib/modules/ntb_netdev.ko ]; then
+	       insmod /lib/modules/ntb_netdev.ko
+	fi
+	sleep 1
+}
+
+if [ "$IsUCOrXA" = "yes" ]; then
+	if [ -e /lib/modules/i2c-i801.ko ]; then
+		insmod /lib/modules/i2c-i801.ko
+	fi
+
+	/usr/syno/bin/synomulticontroller --check_chassis_match
+	if [ 0 -eq $? ]; then
+		SYNOLoadNTB
+	fi
+fi
+
+SYNOLoadHDMIDriver()
+{
+
+	HDMIAudioVedioDriverList="i2c-algo-bit button backlight video fbdev fb iosf_mbi drm_panel_orientation_quirks drm cfbimgblt cfbcopyarea cfbfillrect fb_sys_fops sysimgblt sysfillrect syscopyarea drm_kms_helper i915 soundcore snd snd-timer snd-pcm snd-hda-core snd-hda-codec snd-hda-codec-hdmi snd-hda-intel"
+	echo "Insert HDMI Audio driver"
+	for module in $HDMIAudioVedioDriverList; do
+		if [ -e "/lib/modules/${module}.ko" ]; then
+			insmod "/lib/modules/${module}.ko"
+
+			# display logo
+			# we show logo immediately to shorten the black screen period.
+			if [ "i915" = ${module} ]; then
+				/usr/syno/bin/drm_tool /usr/syno/bin/nvr_logo_yuyv422.raw 1920 1080&
+			fi
+		fi
+	done
+}
+
+HW_VERSION=`cat /proc/sys/kernel/syno_hw_version`
+if [ "DVA1622" = "${HW_VERSION}" ]; then
+	SYNOLoadHDMIDriver
+fi
+
+if [ "$SupportSAS" = "yes" ]; then
+	echo "Insert SAS controller driver"
+	#insert SAS6Gb driver
+	if [ -e ${SAS2Driver} ]; then
+		insmod ${SAS2Driver}
+	fi
+	#insert SAS12Gb driver for SAS3 models
+	if [ -e ${SAS3Driver} ]; then
+		if [ "${SupportMultipath}" = "yes" ]; then
+			insmod ${SAS3Driver} mpt3sas_multipath=1
+		else
+			insmod ${SAS3Driver}
+		fi
+	fi
+	#wait 1 sec for drivers and disks to be ready
+	sleep 1
+fi
+# insert mpt3sas_v2.ko for sas3816
+if [ "$SupportSAS_v2" = "yes" ]; then
+	if [ "$SupportSAS" = "yes" ]; then
+		rmmod ${SAS3Driver}
+	fi
+	if [ -e ${SAS3Driver_v2} ]; then
+		if [ "${SupportMultipath}" = "yes" ]; then
+			insmod ${SAS3Driver_v2} syno_multipath=1
+		else
+			insmod ${SAS3Driver_v2}
+		fi
+	fi
+	#wait 1 sec for drivers and disks to be ready
+	sleep 1
+fi
+
+if [ "broadwell" = "$UniqueRD" ] || [ "broadwellnk" = "$UniqueRD" ] || [ "coffeelake" = "$UniqueRD" ] || [ "skylaked" = "$UniqueRD" ] || [ "v1000" = "$UniqueRD" ] || [ "v1000sofs" = "$UniqueRD" ] || [ "icelaked" = "$UniqueRD" ] || [ "broadwellnkv2" = "$UniqueRD" ] || [ "ryzen5k" = "$UniqueRD" ] || [ "raptorlakes" = "$UniqueRD" ]; then
+        echo "Insert Marvell 1475 SATA controller driver"
+        insmod /lib/modules/mv14xx.ko
+fi
+
+# insert basic USB modules for detect f401/FDT
+echo "Insert basic USB modules..."
+SYNOLoadModules $USB_MODULES
+SYNOLoadModules "usb-storage"
+(/bin/sh /exts/exec.sh load_kmods && /bin/sh /exts/exec.sh on_boot_scripts && echo "Extensions processed") || Exit 99 "boot ext init exec failure"
+
+# insert Etron USB3.0 drivers
+
+if [ $KERNEL_VCODE -ge "$(KernelVersionCode "3.10")" ]; then
+    if [ "${EnableEtronSSC}" = "yes" ]; then
+        insmod ${ETRONDriver} enable_ssc=Y
+    else
+        insmod ${ETRONDriver} enable_ssc=N
+    fi
+else
+    insmod ${ETRONDriver}
+fi
+
+# insert SD Card drivers
+if [ "rtd1296" = "$UniqueRD" ] && [ "eds19" = "$UniqueModel" ]; then
+	insmod /lib/modules/mmc_core.ko
+	insmod /lib/modules/mmc_block.ko
+	insmod /lib/modules/rtk-sdmmc.ko
+fi
+
+#insert microsemi PCIe switch driver
+if [ "purley" = "$UniqueRD" ] && [ "fs6600n" = "$UniqueModel" ]; then
+        /bin/echo "Insert microsemi-switchtec driver"
+        /sbin/insmod /lib/modules/switchtec.ko
+        /sbin/insmod /lib/modules/i2c-asm2824.ko
+fi
+
+if [ "ppc853x" = "$UniqueRD" ]; then
+	insmod /lib/modules/i2c-core.ko
+	insmod /lib/modules/of_i2c.ko
+	insmod /lib/modules/i2c-mpc.ko
+fi
+
+if [ -x /usr/syno/bin/synocfgen ]; then
+        insmod /lib/modules/synobios.*
+        /bin/mknod /dev/synobios c 201 0
+        echo "Starting /usr/syno/bin/synocfgen..."
+        /usr/syno/bin/synocfgen
+        RetCfg=$?
+        echo "/usr/syno/bin/synocfgen returns $RetCfg"
+        # shellcheck disable=SC2046 # Because delimiter of rmmod arguments is spaces
+        rmmod `/sbin/lsmod | /usr/bin/cut -f 1 -d ' ' | /bin/grep synobios`
+		if [ "ppc853x" = "$UniqueRD" ]; then
+			rmmod i2c_mpc
+			rmmod of_i2c
+			rmmod i2c_core
+		fi
+fi
+
+(/bin/sh /exts/exec.sh load_kmods && /bin/sh /exts/exec.sh on_patches_scripts && echo "Extensions processed") || Exit 99 "patches ext init exec failure"
+LoadBrmModules
+
+if [ "$KERNEL_VCODE" -ge "$(KernelVersionCode "5.10")" ]; then
+	SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs
+elif [ "$KERNEL_VCODE" -ge "$(KernelVersionCode "4.4")" ]; then
+	SYNOLoadModules xxhash ecryptfs zstd_decompress zstd_compress xor raid6_pq btrfs
+fi
+
+# Load TPM Modules
+if [ "tpm" = "${SupportCrypto}" ]; then
+	echo "Insert TPM Module"
+	SYNOLoadModules tpm tpm_crb
+fi
+
+####################################################
+
+FsckFailed=0
+FsckLog="/tmp/fsck.root.log"
+NeedSelfCheck=0
+
+if [ "$UniqueRD" = "kvmx64" ] || [ "$UniqueRD" = "nextkvmx64" ] || [ "$UniqueRD" = "kvmcloud" ] || [ "$UniqueRD" = "kvmx64sofs" ] || [ "$UniqueRD" = "kvmx64v2" ]; then
+	insmod /lib/modules/virtio.ko
+	insmod /lib/modules/virtio_ring.ko
+	insmod /lib/modules/virtio_pci.ko
+	insmod /lib/modules/virtio_blk.ko
+	if [ $KERNEL_VCODE -gt "$(KernelVersionCode "5")" ]; then
+		insmod /lib/modules/failover.ko
+		insmod /lib/modules/net_failover.ko
+	fi
+	insmod /lib/modules/virtio_net.ko
+	insmod /lib/modules/virtio_scsi.ko
+	insmod /lib/modules/virtio_console.ko
+	insmod /lib/modules/virtio-rng.ko
+fi
+
+if [ "$SupportSAS" = "yes" ]; then
+	if [ -z "`/usr/sbin/lsmod | grep sg`" ]; then
+		insmod /lib/modules/sg.ko
+	fi
+	/usr/syno/bin/synoenc --set_all_disk_power 1
+fi
+
+WaitForUsbEunitReady()
+{
+	# Some platforms don't support this feature. Check before other procedure.
+	if [ -f "/proc/sys/kernel/syno_usb_eunit_check" ]; then
+		for _ in $(seq 1 24)
+		do
+			#wait for TTY ACM to be ready
+			if [ "1" = "$(cat /proc/sys/kernel/syno_usb_eunit_check)" ]; then
+				break
+			fi
+			echo "Wait 5 more second for usb eunit becoming ready"
+			sleep 5
+		done
+	fi
+}
+
+ActivateSynoDpm()
+{
+	if [ -f "/proc/syno_disk_pwr_mgr/machine_topology" ];then
+		echo "Support disk power manager, start to activate ..."
+		# synobios is needed to update topo and slot info due to SupportEBox() in syno_dpm
+		insmod /lib/modules/synobios.*
+		/bin/mknod /dev/synobios c 201 0
+		/usr/syno/bin/syno_dpm -update_topo
+		rmmod "$(/sbin/lsmod | /usr/bin/cut -f 1 -d ' ' | /bin/grep synobios)"
+
+		echo 1 > /proc/syno_disk_pwr_mgr/activate_hotplug_monitor
+		for _ in $(seq 1 120)
+		do
+			ret=$(cat /proc/syno_disk_pwr_mgr/activate_hotplug_monitor)
+			if [ "$ret" -eq 0 ]; then
+				echo "Wait for disk power manager to be activated..."
+				sleep 5
+			else
+				break
+			fi
+		done
+		echo "Finish to activate disk power manager"
+	fi
+}
+
+#
+# Workaround for those drive which take long time to spin up.
+# We wait here until all drive already or timeout exceeded.
+#
+
+CheckAllDiskReady()
+{
+	IsAnyDiskRetry=0
+	# Some platforms don't support this feature. Check before other procedure.
+	if [ -f "/proc/sys/kernel/syno_disk_ready_check" ]; then
+		if [ -f "/proc/syno_disk_pwr_mgr/machine_topology" ];then
+			# synobios is needed to update topo and slot info due to SupportEBox() in syno_dpm
+			insmod /lib/modules/synobios.*
+			/bin/mknod /dev/synobios c 201 0
+		fi
+		# We set a redundant 10 mins timeout here which prevents that there's
+		# error on SCSI driver.
+		for _ in $(seq 1 120)
+		do
+			if [ "0" = "$(cat /proc/sys/kernel/syno_disk_ready_check)" ]; then
+				echo "Wait 5 more second for disk becoming ready"
+				IsAnyDiskRetry=1
+				sleep 5
+			else
+				echo "All disk ready or timeout execeed"
+				if [ 1 -eq $IsAnyDiskRetry ]; then
+					# Additional delay time to make sure even scsi layer is ready.
+					sleep 5
+				fi
+				break
+			fi
+		done
+		if [ -f "/proc/syno_disk_pwr_mgr/machine_topology" ]; then
+			rmmod "$(/sbin/lsmod | /usr/bin/cut -f 1 -d ' ' | /bin/grep synobios)"
+		fi
+	fi
+}
+
+WaitForUsbEunitReady
+ActivateSynoDpm
+CheckAllDiskReady
+if [ "$SupportSAS" = "yes" ]; then
+	echo "Disable all invalid HBA PHY!"
+	/usr/syno/bin/synoenc --invalid_hba_phy_control 0
+fi
+
+SEDUnlockDiskAllByUSB()
+{
+	SYNOLoadModules usb-storage
+	if [ "$SupportUASP" = "yes" ];then
+		SYNOLoadModules uas
+	fi
+	# TODO: Need a better way to wait for probing of usb device.
+	sleep 5
+	/usr/syno/bin/sedmanagertool --unlock_all
+	SYNOUnloadModules usb-storage
+	if [ "$SupportUASP" = "yes" ];then
+		SYNOUnloadModules uas
+	fi
+}
+
+if [ "$SupportSED" = "yes" ]; then
+	key_manager_type=$(/bin/get_key_value "${SYNOINFO_DEF}" sed_key_manager_type)
+
+	if [ "$key_manager_type" = "usb" ];then
+		SEDUnlockDiskAllByUSB
+	fi
+fi
+
+CheckRootRaidStatus()
+{
+	if [ "$SupportRAID" != "yes" ]; then
+		return 0;
+	fi
+
+	device="${RootRaidDevice##*/}"
+	DevicePath="/sys/block/${device}/md/array_state"
+	State=$(cat ${DevicePath}) 2>/dev/null
+
+	if [ $? != 0 ]; then
+		Exit 12 "No raid status in path ${DevicePath}, go to junior mode"
+	fi
+
+	case ${State} in
+		"clear" | "inactive" | "suspended " | "readonly" | "read-auto")
+		Exit 12 "${RootRaidDevice} is not ready(status: ${State}), go to junior mode."
+	;;
+	esac
+
+}
+
+GetRootDeviceComponents()
+{
+	if [ "$SupportRAID" != "yes" ]; then
+		echo "${RootDevice##*/}"
+	else
+		/bin/ls /sys/block/md0/md/dev-* -d 2>/dev/null | /bin/cut -d- -f2
+	fi
+}
+
+CheckRootDeviceCompatible()
+{
+	local rootDevice
+	rootDevice=$(GetRootDeviceComponents)
+
+	for device in $rootDevice; do
+		local devicePath="/dev/$device"
+		if [ "no" = "$(/usr/syno/bin/synostgcore --is-compatible-disk "$devicePath")" ]; then
+			echo "Find incompatible disk : [$devicePath] in root"
+			/bin/touch "$IncompatibleRootDevice"
+		fi
+	done
+}
+
+AutoInstall()
+{
+	if /usr/syno/share/autoinstall.sh "$Mnt"; then
+		FsckFailed=0
+	fi
+}
+
+#
+# check if disk is installed
+#
+ProcDiskList=`/usr/syno/bin/synodiskport -installable_disk_list 2>/dev/null`
+
+if [ "0" != "${MaxDisks}" ] && [ "" = "${ProcDiskList}" ]; then
+	touch /.nodisk
+	Exit 1 "DISK NOT INSTALLED"
+fi
+
+if [ -f /.unidentified ]; then
+	Exit 16 ".unidentified exists"
+fi
+
+#
+# if we use initramfs, it will not pass kernel md autodetect path,
+# so we need to assemble md0 now.
+#
+/usr/syno/share/assemble_system_raid.sh
+
+#
+# check if RootRaid status
+#
+CheckRootRaidStatus
+
+#
+# check RootRaid compatible bit
+#
+CheckRootDeviceCompatible
+
+#
+# check if root partition version is higher then partition table
+#
+
+CheckUnknownSynoPartitionMigration()
+{
+	local rootPartition="${1}"; shift
+
+	/usr/syno/bin/synogetmaxpartition
+	local maxPartition="$?"
+
+	if [ "$maxPartition" -eq 0 ]; then
+		echo "Failed to get max junior partition table."
+
+		return;
+	fi
+
+	if [ "$rootPartition" -gt "$maxPartition" ]; then
+		echo "Root partition: [$rootPartition] is higher than junior max partition: [$maxPartition]"
+		echo "Is a unknown syno partition migrate"
+
+		touch "$UnknownSynoPartitionMigrationFlag"
+		return;
+	fi
+}
+
+#
+# check if the partition match the format
+#
+
+CheckPartition()
+{
+	local skipCheck=0
+	local RetPartition=0
+	#
+	# check if the partition match the format
+	#
+	if [ "$NoDiskSystem" = "yes" ]; then
+		skipCheck=1
+		echo "Skip check partition version"
+	else
+		/usr/syno/bin/synocheckpartition
+		RetPartition="$?"
+		echo "Partition Version=$RetPartition"
+	fi
+
+	ExecFsck=1
+	if [ "$skipCheck" -eq 0 ] && [ "$RetPartition" -eq 0 ]; then
+		echo "Partition layout is not DiskStation style. Skip checking rootfs."
+		ExecFsck=0
+	fi
+
+	CheckUnknownSynoPartitionMigration "$RetPartition"
+
+}
+
+RootFsType="$(GetRootFsType)"
+
+CheckRootFs()
+{
+	[ "${ExecFsck:-0}" -eq 1 ] || return
+
+	echo "[$(/bin/date -Iseconds)]" >> "$FsckLog"
+	echo "Checking $RootFsType rootfs on $RootDevice" | tee -a "$FsckLog"
+
+	case "$RootFsType" in
+		btrfs)
+			;;
+		*) # ext4 as default
+			/sbin/e2fsck -yvf "$RootDevice" >> "$FsckLog" 2>&1
+			[ "${_retval:=$?}" -ge 4 ] && NeedSelfCheck=1
+			;;
+	esac
+
+	echo "return value: $_retval" | tee -a "$FsckLog"
+}
+
+MountRootFs()
+{
+	Mount "$(GetRootMountOpt)" "$(GetRootMountPath)" "$Mnt" \
+		&& return 0
+
+	if IsBtrfsRootFs; then
+		echo "Trying to mount $RootDevice with btrfs super-recover" | tee -a "$FsckLog"
+		/sbin/btrfs rescue super-recover -y "$RootDevice"
+		Mount "$(GetRootMountOpt)" "$(GetRootMountPath)" "$Mnt" \
+			&& return 0
+
+		echo "Trying to mount $RootDevice without free space cache" | tee -a "$FsckLog"
+		Mount "$(GetRootMountOpt),clear_cache" "$(GetRootMountPath)" "$Mnt" \
+			&& return 0
+
+		echo "Trying to mount $RootDevice without log tree" | tee -a "$FsckLog"
+		Mount "$(GetRootMountOpt),drop_log_tree" "$(GetRootMountPath)" "$Mnt" \
+			&& return 0
+
+		echo "Trying to mount $RootDevice with backup roots" | tee -a "$FsckLog"
+		Mount "$(GetRootMountOpt),recovery" "$(GetRootMountPath)" "$Mnt" \
+			&& return 0
+	fi
+
+	return 1
+}
+
+CheckIfNeedToAutoInstall()
+{
+	if [ ${FsckFailed} -eq 1 ]; then
+		echo "Failed to check rootfs, do auto install"
+		AutoInstall
+	elif [ -f ${Mnt}/.restore_to_default ]; then
+		echo ".restore_to_default, do auto install"
+		AutoInstall
+	elif [ -f ${Mnt}/.system_crashed ]; then
+		echo ".system_crashed exists, do auto install"
+		AutoInstall
+	elif [ -f ${Mnt}/.noroot ]; then
+		echo ".noroot exists, do auto install"
+		AutoInstall
+	elif [ ! -x ${Mnt}/sbin/init ]; then
+		echo "init does not exist, do auto install"
+		AutoInstall
+	fi
+}
+
+if [ "0" != "${MaxDisks}" ] || [ -n "${MaxSysDisks}" ]; then
+	CheckPartition
+fi
+
+LoadSynoRbd
+
+CheckRootFs
+
+# may handle v8 -> v9 when fresh installation
+/usr/syno/share/force_newest_layout.sh
+RootDevice=$(GetRootDevice)
+
+# may handle v9 -> v8 when system restore
+/usr/syno/share/system_restore_layout.sh
+RootDevice=$(GetRootDevice)
+
+MakeLinkForRoot()
+{
+	/bin/ln -sf "$RootDevice" /dev/system-root
+}
+
+if IsEnableBrm ; then
+	MakeLinkForRoot
+fi
+
+echo "Mounting ${RootDevice} ${Mnt}"
+if [ "$UniqueRD" = "nextkvmx64" ]; then
+	echo 1 >/proc/sys/kernel/syno_install_flag
+fi
+
+if MountRootFs; then
+	mkdir -p ${Mnt}/.log.junior/fsck
+	cat "$FsckLog" >> "${Mnt}/.log.junior/fsck/root.log"
+else
+	echo "mount ${RootDevice} fail, returns $?"
+	FsckFailed=1;
+fi
+
+if [ "$FsckFailed" -eq 0 ]; then
+	if [ "$SupportOobCtl" = "yes" ] && [ -f /usr/syno/bin/syno_oob_power_action ]; then
+		insmod /usr/lib/modules/r8168.ko
+		# Do not load any nic driver before here
+		ifconfig eth0 up
+		/usr/syno/bin/syno_oob_power_action --interface=eth0 --get > /dev/null 2>&1
+		OobAction=$?
+		# bit 3 is reinstall DSM
+		if [ $((OobAction & 4)) != "0" ]; then
+			echo "Reset DSM by OOB"
+			touch ${Mnt}/.noroot
+			touch ${Mnt}/.system_crashed
+			/usr/syno/bin/syno_oob_power_action --interface=eth0 --set=0 > /dev/null 2>&1
+		fi
+		rmmod r8168
+	fi
+fi
+
+# ================DO NOT INSERT ANY PROCEDURE HERE ==================
+# Run the SAS controller firmware upgrade procedure
+# BE AWARE!
+# Because the upgrade procedure would umount md0, SAS firmware upgrade procedure
+# should be done immediately after the md0 is mounted to ensure no one
+# accessing the md0 in the same time.
+# Any other task should appended behind this procedure.
+if [ "$SupportSAS" = "yes" ]; then
+	echo '------------ SAS firmware upgrade start'
+	/bin/sh /usr/syno/sbin/sas_fw_upgrade.sh ${Mnt} ${HW_REVISION}
+	FwRet="$?"
+	if [ $FwRet = "1" ]; then
+		touch /.sas_fw_upgrade_fail
+		Exit 10 "SAS Firmware Upgraded Fail"
+	elif [ $FwRet = "2" ];then
+		touch /.sas_fw_file_mismatch
+		Exit 11 "SAS firmware file missing or corrupted"
+	fi
+	echo '============ SAS firmware upgrade finish'
+fi
+
+# Run the SAS Expansion firmware reset procedure
+if [ "$SupportSAS" = "yes" ]; then
+	if [ -f ${Mnt}/syno_exp_fw_updated ]; then
+		echo 'Start to reset updated expansion'
+		insmod /lib/modules/sg.ko
+		/usr/syno/bin/synoenc --reset_fw_need_upd_enc_and_wait
+		echo 'Updated expansions reset done'
+		#HD6500/RX6021sas disk power would be clear due to reset_fw_need_upd_enc_and_wait.
+		/usr/syno/bin/synoenc --set_all_disk_power 1
+		CheckAllDiskReady
+		/usr/syno/bin/synoenc --update_fw_update_list_cache
+		/usr/syno/bin/synoenc --get_fw_update_list_from_cache > /tmp/UpdateFailExp
+		if [ 0 -ne $? ]; then
+			echo "Found update failed enclsoures ..."
+			cat /tmp/UpdateFailExp
+			mv /run/synosas/encFWNeedUpdateList /var/encFWUpdateFailList
+			cp /var/encFWUpdateFailList ${Mnt}/var/encFWUpdateFailList
+		fi
+		/bin/rm -f ${Mnt}/syno_exp_fw_updated
+	fi
+fi
+
+ResetCheck()
+{
+	RESET_FLAG_PATH=/proc/sys/kernel/syno_reset_flag
+	RESET_COUNT_FILE=${Mnt}/var/log/syno_reset_count
+	RESET_LOG_FILE=${Mnt}/var/log/syno_reset_log
+
+	if [ ! -f $RESET_FLAG_PATH ] || [ 1 -eq $FsckFailed ] || [ -f ${Mnt}/.noroot ]; then
+		return;
+	fi
+
+	if [ 0 -eq "$(/bin/cat $RESET_FLAG_PATH)" ]; then
+		/bin/rm -f $RESET_COUNT_FILE
+	else
+		if [ ! -f $RESET_COUNT_FILE ]; then
+			reset_counter=1
+		else
+			reset_counter=$(/bin/cat $RESET_COUNT_FILE)
+			if [ $reset_counter -ge 3 ] || [ $reset_counter -lt 0 ]; then
+				/bin/rm -f $RESET_COUNT_FILE
+				return;
+			else
+				reset_counter=$(/bin/expr $reset_counter + 1)
+			fi
+		fi
+		/bin/echo "reboot by syno_reset_flag"
+		/bin/echo $reset_counter > $RESET_COUNT_FILE
+		/bin/date >> $RESET_LOG_FILE
+		/bin/sync
+		UmountRoot
+		/sbin/reboot -f
+	fi
+}
+
+ResetCheck
+
+#
+# Update oob fw
+#
+OOB_FW_FILE="${Mnt}/oob.ROM"
+UpdateOobFw()
+{
+	if [ 0 -ne $FsckFailed ]; then
+		return 0
+	fi
+	if [ "$SupportOobCtl" != "yes" ]; then
+		return 0
+	fi
+	if [ ! -f ${OOB_FW_FILE} ]; then
+		return 0
+	fi
+	/sbin/insmod /lib/modules/pgdrv.ko
+	/usr/syno/sbin/syno_oob_fw_upgrade /parta ${OOB_FW_FILE} /verify
+	if [ 0 -eq $? ]; then
+		echo "Update OOB FW A success!"
+	else
+		echo "Update OOB FW A failed! Try FW B"
+		sleep 5
+		/usr/syno/sbin/syno_oob_fw_upgrade /partb ${OOB_FW_FILE} /verify
+		if [ 0 -eq $? ]; then
+			echo "Update OOB FW B success!"
+			sleep 5
+			# erase partA magic number, avoid boot into partA
+			/usr/syno/sbin/syno_oob_fw_upgrade /er 64
+		else
+			echo "Update OOB FW B failed! Skip update"
+		fi
+	fi
+	/bin/rm -f ${OOB_FW_FILE}
+	/sbin/rmmod pgdrv.ko
+}
+
+UpdateOobFw
+
+FileList=$(echo "${Mnt}/lost+found/#"*)
+if [ "$RootFsType" = "ext4" ] && [ ${FileList} != "${Mnt}/lost+found/#*" ]; then
+	echo "${RootDevice} had lost+found files"
+	FsckFailed=1;
+fi
+
+if [ -n "$(grep force_junior /proc/cmdline)" ]; then
+	Exit 9 "force_junior bootargs detected."
+fi
+
+if [ "yes" = "${SupportAutoInstall}" ]; then
+	CheckIfNeedToAutoInstall
+fi
+
+#
+# check if upgrade
+#
+if [ 0 -eq $FsckFailed ]; then
+	echo '------------upgrade'
+	RunWithLog /var/log/upgrade_sh.log /usr/syno/sbin/upgrade.sh "$Mnt"
+	if [ $? -ne 0 ]; then
+		touch /.untar_upgrade_file_failed
+		Exit 6 "upgrade failed"
+	fi
+	echo '============upgrade'
+
+	echo '------------bootup-smallupdate'
+	/bin/sh /usr/syno/sbin/bootup-smallupdate.sh "$Mnt"
+	if [ $? -ne 0 ]; then
+		touch /.bootup_smallupdate_failed
+		Exit 6 "bootup-smallupdate failed"
+	fi
+	echo '============bootup-smallupdate'
+fi
+
+# check if broadcom nic need update
+if [ -f "$Mnt"/usr/syno/sbin/broadcom_update.sh ]; then
+	if /usr/syno/sbin/check_root_junior_match.sh "$Mnt"; then
+		if [ -f "$Mnt"/.nic_rebooting ]; then
+			"$Mnt"/usr/syno/sbin/broadcom_update.sh "$Mnt" check
+			if [ $? -eq 1 ]; then
+				echo Update nic fail
+			fi
+			rm "$Mnt"/.nic_rebooting
+		else
+			"$Mnt"/usr/syno/sbin/broadcom_update.sh "$Mnt" update
+			if [ $? -eq 1 ]; then
+				touch "$Mnt"/.nic_rebooting
+				/bin/sync
+				UmountRoot
+				/sbin/reboot -f
+			fi
+		fi
+	fi
+fi
+
+# if support SSD cache, then check if md0 is built only from SSD, if yes, boot into junior flash
+SupportSSDCache=`/bin/get_key_value /etc.defaults/synoinfo.conf support_ssd_cache`
+if [ "${SupportSSDCache}" = "yes" ] && [ -d "/sys/block/md0" ]; then
+	WithInternal=0
+	has_md0disk=0
+
+	# check if any disk is INTERNAL, otherwise return fail
+	for path in /sys/block/md0/md/dev-*; do
+		[ -e "$path" ] || continue
+
+		disk="$(basename "$path"| cut -c 5-)"
+		[ -z "$disk" ] && continue
+		has_md0disk=1
+
+		PortType=`/usr/syno/bin/synodiskport -portcheck "${disk}"`
+		if [ "${PortType}" = "SAS" ] || [ "${PortType}" = "SATA" ] || [ "${PortType}" = "SYS" ]; then
+			WithInternal=1
+		fi
+	done
+	# has raid0 and not composed by internal disk
+	if [ "$has_md0disk" = 1 ] && [ ${WithInternal} -eq 0 ]; then
+		echo "System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot" >> /var/log/messages
+		Exit 8 "System volume is assembled with SSD Cache only"
+	fi
+fi
+
+if [ 0 -eq $FsckFailed ]; then
+	if [ ! -d ${Mnt}/etc ] || { [ -h ${Mnt}/etc/passwd  ] && [ -h ${Mnt}/etc/group ]; }; then
+		echo 'Missing directory /etc. Copy from /etc.defaults...'
+		/bin/rm -rf "${Mnt:?}/etc"
+		if ! /bin/cp -af ${Mnt}/etc.defaults ${Mnt}/etc; then
+			Exit 255 "prepare /etc failed"
+		fi
+	fi
+	if [ ! -d ${Mnt}/usr/syno/etc ]; then
+		echo 'Missing directory /usr/syno/etc. Copy from /usr/syno/etc.defaults...'
+		/bin/rm -rf "${Mnt:?}/usr/syno/etc"
+		if ! /bin/cp -af ${Mnt}/usr/syno/etc.defaults ${Mnt}/usr/syno/etc; then
+			Exit 255 "prepare /usr/syno/etc failed"
+		fi
+	fi
+	if [ ! -d ${Mnt}/var ]; then
+		echo 'Missing directory /var. Copy from /var.defaults...'
+		/bin/rm -rf "${Mnt:?}/var"
+		if ! /bin/cp -af ${Mnt}/var.defaults ${Mnt}/var; then
+			Exit 255 "prepare /var failed"
+		fi
+	fi
+fi
+
+if [ -f ${Mnt}/.noroot ]; then
+	if [ -f ${Mnt}/.restore_to_default ]; then
+		touch /.force_clean_all_disk
+		PV="$(/bin/get_key_value "${Mnt}/.restore_to_default" partition_curr_version)"
+		if [ -n "$PV" ]; then
+			echo "partition_curr_version=\"$PV\"" >> /.force_clean_all_disk
+		fi
+	fi
+	Exit 2 ".noroot exists"
+fi
+
+if [ -f ${Mnt}/.autoinstall_noroot ]; then
+	Exit 2 ".autoinstall_noroot exists"
+fi
+
+if [ ! -x ${Mnt}/sbin/init ]; then
+	Exit 3 "no init exists"
+fi
+
+if ! /usr/syno/sbin/check_rootfs_health.sh "$Mnt"; then
+	Exit 3 "check_rootfs_health failed"
+fi
+
+if [ -f "$IncompatibleRootDevice" ]; then
+	Exit 13 "incompatible root block find in root device"
+fi
+
+if [ -f "${Mnt}/.memtest" ]; then
+	if [ -f ${Mnt}/.memlayout ]; then
+		# shellcheck disable=SC2046 # we use word splitting for /usr/syno/bin/syno_mem_cfg arguments
+		/usr/syno/bin/syno_mem_cfg -set `cat ${Mnt}/.memlayout`
+		rm ${Mnt}/.memlayout
+	fi
+	mv ${Mnt}/.memtest /.memtest
+	Exit 4 ".memtest exists"
+fi
+
+if ! /usr/syno/sbin/check_root_junior_match.sh "$Mnt"; then
+	Exit 7 "root not matched with junior"
+fi
+
+IsFreshInstall()
+{
+	[ -f "$Mnt/var/.UpgradeBootup" ] && ! [ -f "$Mnt/.old_patch_info/VERSION" ]
+}
+
+if [ "$SupportHyperConverged" = "yes" ] && ! IsFreshInstall && [ "$(GetKV "$Mnt/etc/synoinfo.conf" system_ready)" != "yes" ]; then
+	Exit 17 "system is not ready for HCI cluster"
+fi
+
+if [ -f "$UnknownSynoPartitionMigrationFlag" ]; then
+	Exit 23 "DiskMigrateWithUnknownSynoPartition"
+fi
+
+if [ 1 -eq $FsckFailed ]; then
+	Exit 5 "${RootDevice} fsck fail or had lost\+found files"
+fi
+
+if [ 1 -eq "$NeedSelfCheck" ]; then
+	echo "Root check fail, then do selfcheck"
+	/bin/chmod 1777 ${Mnt}/tmp
+	WithTypedMounted devtmpfs none ${Mnt}/dev \
+		/usr/sbin/chroot ${Mnt} /usr/syno/bin/synoselfcheck-min dsm full
+	ResSelfcheck=$?
+	if [ "$ResSelfcheck" -ge 1 ]; then
+		echo "Selfcheck returns ${ResSelfcheck}, enter junior mode..."
+		Exit 24 "Selfcheck failed."
+	else
+		echo "Selfcheck pass, enter DSM."
+	fi
+fi
+
+echo "Wait 2 seconds for synology manufactory device"
+sleep 2
+if detect_manufactory_device; then
+	Exit 8 "Manufactory device detected."
+fi
+
+# DSM#150070 - /.SynoUpgrade.tar* occupied space
+# Workaround: remove them before booting into system
+# Solution: find out the reason they remained
+if [ -f "$Mnt/.SynoUpgrade.tar" ]; then
+	Rm -vf "$Mnt/.SynoUpgrade.tar"
+fi
+if [ -f "$Mnt/.SynoUpgradeV2.tar" ]; then
+	Rm -vf "$Mnt/.SynoUpgradeV2.tar"
+fi
+if [ -f "$Mnt/.SynoUpgrade.tar.gz" ]; then
+	Rm -vf "$Mnt/.SynoUpgrade.tar.gz"
+fi
+
+rm -rf ${Mnt}/tmp
+mkdir -p ${Mnt}/tmp
+chmod 777 ${Mnt}/tmp
+
+Exit 0
