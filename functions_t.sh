@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.9"
+rploaderver="1.2.8.0"
 build="master"
 redpillmake="prod"
 
@@ -224,6 +224,7 @@ function history() {
     1.2.7.7 Use static firmware and module loading methods when using custom modules
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+    1.2.8.0 SA6400 custom-module, use a statically generated copy instead of repacking the initrd-dsm (ramdisk) file.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -652,6 +653,8 @@ EOF
 # Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
 # 2026.03.10 v1.2.7.9 
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+# 2026.03.13 v1.2.8.0 
+# SA6400 custom-module, use a statically generated copy instead of repacking the initrd-dsm (ramdisk) file.
     
 function showlastupdate() {
     cat <<EOF
@@ -774,6 +777,9 @@ function showlastupdate() {
 
 # 2026.03.10 v1.2.7.9 
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+
+# 2026.03.13 v1.2.8.0 
+# SA6400 custom-module, use a statically generated copy instead of repacking the initrd-dsm (ramdisk) file.
 
 EOF
 }
