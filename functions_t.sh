@@ -4266,49 +4266,54 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       SYNOINFO["$KEY"]="$VALUE"
     done < <(jq -r '.synoinfo | to_entries[] | "\(.key) \(.value)"' "${userconfigfile}")
 
-    rdtemp="/home/tc/rd.temp"
-    
-    [ ! -d $rdtemp ] && mkdir $rdtemp
-    [ -d $rdtemp ] && cd $rdtemp
-    RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${BUILD}/config.json | jq -r -e ' .extra .compress_rd')
-
-    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
-        gzs_path="/dev/shm"  
+    # repacking initrd-dsm
+    if [[ "${MDLNAME}" == "custom-modules" && "${ORIGIN_PLATFORM}" == "epyc7002" && "${TARGET_VERSION}" == "7.3.2" ]]; then
+      echo "Download the pre-packed initrd-dsm"
+      
     else
-        gzs_path="/mnt/${loaderdisk}3"
-    fi
-
-    if [ "$RD_COMPRESSED" = "false" ]; then
-        echo "Ramdisk in not compressed "
-        cat ${gzs_path}/rd.gz | sudo cpio -idm
-    else    
-        echo "Ramdisk in compressed " 
-        unlzma -dc ${gzs_path}/rd.gz | sudo cpio -idm
-    fi
-
-    # 1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
-    if [ -f ${gzs_path}/custom.gz ]; then
-        echo "Found custom.gz, so extract from custom.gz " 
-        cat ${gzs_path}/custom.gz | sudo cpio -idm  >/dev/null 2>&1
-    else
-        echo "Not found custom.gz, extract /exts from initrd-dsm" 
-        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
-        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
-        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
-    fi
-
-    # Network card configuration file
-    for N in $(seq 0 7); do
-      echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
-    done
-    sudo cp -vf /home/tc/ifcfg-eth* $rdtemp/etc/sysconfig/network-scripts/
-
-    # SA6400 patches for JOT Mode
-    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-        echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
-        sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
-        if [ "$TARGET_REVISION" == "81180" ]; then
-
+      rdtemp="/home/tc/rd.temp"
+      
+      [ ! -d $rdtemp ] && mkdir $rdtemp
+      [ -d $rdtemp ] && cd $rdtemp
+      RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${BUILD}/config.json | jq -r -e ' .extra .compress_rd')
+  
+      if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+          gzs_path="/dev/shm"  
+      else
+          gzs_path="/mnt/${loaderdisk}3"
+      fi
+  
+      if [ "$RD_COMPRESSED" = "false" ]; then
+          echo "Ramdisk in not compressed "
+          cat ${gzs_path}/rd.gz | sudo cpio -idm
+      else    
+          echo "Ramdisk in compressed " 
+          unlzma -dc ${gzs_path}/rd.gz | sudo cpio -idm
+      fi
+  
+      # 1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
+      if [ -f ${gzs_path}/custom.gz ]; then
+          echo "Found custom.gz, so extract from custom.gz " 
+          cat ${gzs_path}/custom.gz | sudo cpio -idm  >/dev/null 2>&1
+      else
+          echo "Not found custom.gz, extract /exts from initrd-dsm" 
+          cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
+          cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
+          cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
+      fi
+  
+      # Network card configuration file
+      for N in $(seq 0 7); do
+        echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
+      done
+      sudo cp -vf /home/tc/ifcfg-eth* $rdtemp/etc/sysconfig/network-scripts/
+  
+      # SA6400 patches for JOT Mode
+      if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+          echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
+          sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
+          if [ "$TARGET_REVISION" == "81180" ]; then
+  
 cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
 echo "[INIT] Waiting up to 190 seconds for eth0 NIC (addr_assign_type=0)..."
 MAX_WAIT=190
@@ -4330,76 +4335,78 @@ if [ $MAX_WAIT -le 0 ]; then
   echo "[INIT] Warning: eth0 NIC did not become ready within timeout."
 fi
 EOF
-            chmod +x $rdtemp/nic-wait-snippet.sh
-            #ls -l $rdtemp/nic-wait-snippet.sh
-            #cat $rdtemp/nic-wait-snippet.sh
-        fi
-        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
-        sudo cat $rdtemp/linuxrc.syno  
-
-        if [ "${MDLNAME}" == "custom-modules" ]; then
-            echo "Use static firmware and module loading methods when using custom modules"
-            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
-            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-            #sudo rm -rf $rdtemp/exts/all-modules/
-        fi    
-    fi
-    if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
-        sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
-    fi
-    sudo chmod +x $rdtemp/usr/sbin/modprobe    
-
-    # add dummy loop0 test
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/boot-image-dummy-sda.img.gz -o $rdtemp/root/boot-image-dummy-sda.img.gz
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/load-sda-first.sh -o $rdtemp/root/load-sda-first.sh
-    #sudo chmod +x $rdtemp/root/load-sda-first.sh 
-    #sudo mkdir -p $rdtemp/etc/udev/rules.d
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/etc/udev/rules.d/99-custom.rules -o $rdtemp/etc/udev/rules.d/99-custom.rules
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o $rdtemp/usr/lib/libsmartcols.so.1
-    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o $rdtemp/usr/sbin/losetup
-    #sudo chmod +x $rdtemp/usr/sbin/losetup
-
-    RAMDISK_PATH="$rdtemp"
-    # Patch synoinfo.conf
-    mkdir -p "${RAMDISK_PATH}/addons"    
-    echo -n "."
-    echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
-    for KEY in "${!SYNOINFO[@]}"; do
-      echo "Set synoinfo ${KEY}"
-      echo "${KEY}=\"${SYNOINFO[${KEY}]}\"" >>"${RAMDISK_PATH}/addons/synoinfo.conf"
-      _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
-      _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
-    done
-
-    # Reassembly ramdisk ( no compress, use cpio raw type )
-    if [ "$RD_COMPRESSED" = "false" ]; then
-        if [ "$FRKRNL" = "NO" ]; then
-            if [ "${MDLNAME}" == "custom-modules" ]; then
-                if [ "$(which zstd)_" == "_" ]; then  
-                    echo "zstd does not exist, install from tinycore"
-                    tce-load -iw zstd 
-                fi            
-                echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
-                (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
-            else
-                echo "Ramdisk in not compressed, use cpio raw"            
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-            fi
-        else
-            #if [ "$(which zstd)_" == "_" ]; then  
-                echo "Ramdisk in not compressed, use cpio raw"                    
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
-            #else
-            #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
-            #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
-            #fi
-            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
-        fi
-    else
-        echo "Ramdisk in compressed, use xz(lzma) "
-        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
-    fi
+              chmod +x $rdtemp/nic-wait-snippet.sh
+              #ls -l $rdtemp/nic-wait-snippet.sh
+              #cat $rdtemp/nic-wait-snippet.sh
+          fi
+          sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
+          sudo cat $rdtemp/linuxrc.syno  
+  
+          if [ "${MDLNAME}" == "custom-modules" ]; then
+              echo "Use static firmware and module loading methods when using custom modules"
+              [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+              sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+              sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+              #sudo rm -rf $rdtemp/exts/all-modules/
+          fi    
+      fi
+      if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
+          sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
+      fi
+      sudo chmod +x $rdtemp/usr/sbin/modprobe    
+  
+      # add dummy loop0 test
+      #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/boot-image-dummy-sda.img.gz -o $rdtemp/root/boot-image-dummy-sda.img.gz
+      #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/load-sda-first.sh -o $rdtemp/root/load-sda-first.sh
+      #sudo chmod +x $rdtemp/root/load-sda-first.sh 
+      #sudo mkdir -p $rdtemp/etc/udev/rules.d
+      #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/etc/udev/rules.d/99-custom.rules -o $rdtemp/etc/udev/rules.d/99-custom.rules
+      #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o $rdtemp/usr/lib/libsmartcols.so.1
+      #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o $rdtemp/usr/sbin/losetup
+      #sudo chmod +x $rdtemp/usr/sbin/losetup
+  
+      RAMDISK_PATH="$rdtemp"
+      # Patch synoinfo.conf
+      mkdir -p "${RAMDISK_PATH}/addons"    
+      echo -n "."
+      echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
+      for KEY in "${!SYNOINFO[@]}"; do
+        echo "Set synoinfo ${KEY}"
+        echo "${KEY}=\"${SYNOINFO[${KEY}]}\"" >>"${RAMDISK_PATH}/addons/synoinfo.conf"
+        _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+        _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+      done
+  
+      # Reassembly ramdisk ( no compress, use cpio raw type )
+      if [ "$RD_COMPRESSED" = "false" ]; then
+          if [ "$FRKRNL" = "NO" ]; then
+              if [ "${MDLNAME}" == "custom-modules" ]; then
+                  if [ "$(which zstd)_" == "_" ]; then  
+                      echo "zstd does not exist, install from tinycore"
+                      tce-load -iw zstd 
+                  fi            
+                  echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
+                  (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
+              else
+                  echo "Ramdisk in not compressed, use cpio raw"            
+                  (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+              fi
+          else
+              #if [ "$(which zstd)_" == "_" ]; then  
+                  echo "Ramdisk in not compressed, use cpio raw"                    
+                  (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
+              #else
+              #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
+              #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
+              #fi
+              sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
+          fi
+      else
+          echo "Ramdisk in compressed, use xz(lzma) "
+          (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+      fi
+    fi  
+    # End Repacking initrd-dsm
     
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
