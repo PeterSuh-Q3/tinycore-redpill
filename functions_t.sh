@@ -5860,13 +5860,15 @@ function my() {
   cecho c "KERNEL VERSION is $KVER"  
 
   if [ "$ZPADKVER" -le 4004059 ]; then
-    if [ -d /sys/firmware/efi ]; then
-      msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
-      msgalert "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
-      echo "press any key to continue..."      
-      read answer 
-      exit 99
-    fi  
+    if [ "${BUS}" != "block" ]; then
+        if [ -d /sys/firmware/efi ]; then
+          msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
+          msgalert "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
+          echo "press any key to continue..."      
+          read answer 
+          exit 99
+        fi  
+    fi    
     if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
       msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!\n"
       echo "Aborting the loader build, press any key to continue..."
