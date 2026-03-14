@@ -5874,13 +5874,15 @@ function my() {
       echo "Aborting the loader build, press any key to continue..."
       read answer
       exit 99
-    fi  
-    if [ "${DMPM}" != "DDSML" ]; then    
-      msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
-      echo "Aborting the loader build, press any key to continue..."
-      read answer
-      exit 99
     fi
+    if [ "${BUS}" != "block" ]; then
+        if [ "${DMPM}" != "DDSML" ]; then    
+          msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
+          echo "Aborting the loader build, press any key to continue..."
+          read answer
+          exit 99
+        fi
+    fi    
     if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
       msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!\n"
       echo "Aborting the loader build, press any key to continue..."
