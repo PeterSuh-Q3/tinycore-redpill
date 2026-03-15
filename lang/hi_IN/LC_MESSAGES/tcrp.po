@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "मित्र (हाल ही में स्थिर)"
 
 #: MSGIN29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT (दोस्त से पहले का पुराना तरीका)"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot (दोस्त से पहले का पुराना तरीका)"
 
 #: MSGIN30 
 msgid "Generate a random serial number"
