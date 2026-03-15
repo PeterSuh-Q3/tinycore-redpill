@@ -3753,7 +3753,7 @@ function savedefault {
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
     set color_normal=green/black    
-    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
+    echo "TCRP-MSHELL Direct-Boot Version : ${rploaderver}"
     echo "BUS Type:   ${BUS}"
     echo -n "Boot Time: "; date
     echo ""
@@ -3776,7 +3776,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3796,7 +3796,7 @@ EOF
 
 function tcrpjot_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} JOT Update 0 ${DMPM}' {    
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM}' {    
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
