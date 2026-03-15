@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.7.9"
+rploaderver="1.2.8.0"
 build="master"
 redpillmake="prod"
 
@@ -224,6 +224,7 @@ function history() {
     1.2.7.7 Use static firmware and module loading methods when using custom modules
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+    1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -652,6 +653,8 @@ EOF
 # Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
 # 2026.03.10 v1.2.7.9 
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+# 2026.03.15 v1.2.8.0 
+# Discontinued the use of the term Jot and standardized to Direct-Boot
     
 function showlastupdate() {
     cat <<EOF
@@ -774,6 +777,9 @@ function showlastupdate() {
 
 # 2026.03.10 v1.2.7.9 
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+
+# 2026.03.15 v1.2.8.0 
+# Discontinued the use of the term Jot and standardized to Direct-Boot
 
 EOF
 }
@@ -3747,7 +3753,7 @@ function savedefault {
     save_env --file \$prefix/grubenv saved_entry
     set gfxpayload=keep
     set color_normal=green/black    
-    echo "TCRP-MSHELL JOT Version : ${rploaderver}"
+    echo "TCRP-MSHELL Direct-Boot Version : ${rploaderver}"
     echo "BUS Type:   ${BUS}"
     echo -n "Boot Time: "; date
     echo ""
@@ -3770,7 +3776,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} JOT (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3790,7 +3796,7 @@ EOF
 
 function tcrpjot_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} JOT Update 0 ${DMPM}' {    
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM}' {    
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
