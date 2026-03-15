@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "BARÁT (legutóbb stabilizált)"
 
 #: MSGHU29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT (a régi út barát előtt)"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot (a régi út barát előtt)"
 
 #: MSGHU30 
 msgid "Generate a random serial number"
