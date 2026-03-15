@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "เพื่อน (ล่าสุดมีเสถียรภาพ)"
 
 #: MSGTH29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT (ทางเก่าก่อนเพื่อน)"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot (ทางเก่าก่อนเพื่อน)"
 
 #: MSGTH30 
 msgid "Generate a random serial number"
