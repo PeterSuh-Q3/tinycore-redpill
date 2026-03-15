@@ -1,13 +1,13 @@
 {
   "general": {
     "model": "SA6400",
-    "version": "7.2.2-72806",
+    "version": "7.3.2-86009",
     "smallfixnumber": "0",
     "zimghash": "",
     "rdhash": "",
     "usb_line": "",
     "sata_line": "",
-    "redpillmake": "prod-24.9.8",
+    "redpillmake": "prod-26.2.3",
     "friendautoupd": "true",
     "hidesensitive": "false",
     "layout": "qwerty",
@@ -15,8 +15,8 @@
     "devmod": "EUDEV",
     "ucode": "en_US",
     "loadermode": "FRIEND",
-    "bay": "TOWER_4_Bay",
-    "kver": "4.4.302"
+    "bay": "RACK_12_Bay",
+    "kver": "5.10.55"
   }, 
   "ipsettings": {
     "ipset": "",
