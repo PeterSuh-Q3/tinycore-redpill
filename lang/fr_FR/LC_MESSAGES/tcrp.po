@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND (le plus récemment stabilisé)"
 
 #: MSGFR29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT (l'ancienne méthode avant friend)"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot (l'ancienne méthode avant friend)"
 
 #: MSGFR30 
 msgid "Generate a random serial number"
