@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "ARKADAŞ (en son stabil hale getirildi)"
 
 #: MSGTR29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT (Arkadaştan önceki eski yol)"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot (Arkadaştan önceki eski yol)"
 
 #: MSGTR30 
 msgid "Generate a random serial number"
