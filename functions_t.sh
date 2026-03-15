@@ -224,7 +224,7 @@ function history() {
     1.2.7.7 Use static firmware and module loading methods when using custom modules
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
-    1.2.8.0 Add menu to use postupdate() function when using GPL custom modules
+    1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -654,7 +654,7 @@ EOF
 # 2026.03.10 v1.2.7.9 
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 # 2026.03.15 v1.2.8.0 
-# Add menu to use postupdate() function when using GPL custom modules
+# Discontinued the use of the term Jot and standardized to Direct-Boot
     
 function showlastupdate() {
     cat <<EOF
@@ -779,7 +779,7 @@ function showlastupdate() {
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 
 # 2026.03.15 v1.2.8.0 
-# Add menu to use postupdate() function when using GPL custom modules
+# Discontinued the use of the term Jot and standardized to Direct-Boot
 
 EOF
 }
