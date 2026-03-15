@@ -119,8 +119,8 @@ msgid "FRIEND (most recently stabilized)"
 msgstr "FRIEND（最近安定化されました）"
 
 #: MSGJP29 
-msgid "JOT (The old way before friend)"
-msgstr "JOT（フレンドよりも古い方法）"
+msgid "Direct-Boot (The old way before friend)"
+msgstr "Direct-Boot（フレンドよりも古い方法）"
 
 #: MSGJP30 
 msgid "Generate a random serial number"
