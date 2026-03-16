@@ -4650,23 +4650,24 @@ function getredpillko() {
     echo "KERNEL VERSION of getredpillko() is ${KVER}, DSMVER is ${DSMVER}"
     v=""
 
+    REPO="PeterSuh-Q3/redpill-lkm"
     TAG=""
     if [ "${offline}" = "NO" ]; then
-        echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."    
+        echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
-            #if [ "${MDLNAME}" == "custom-modules" ]; then
-            #  TAG="custom-26.3.1"
-            #else
-              TAG="26.2.3"
-            #fi  
+            LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+              jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+            if [ -n "$LKM_PRERELEASE_TAG" ]; then
+                echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
+                TAG="$LKM_PRERELEASE_TAG"
+            else
+                echo "Pre-release tag not found, use latest 26.2.3"
+                TAG="${LATESTURL##*/}"
+            fi            
         else        
-            #if [ "${MDLNAME}" == "custom-modules" ]; then
-            #  TAG="custom-26.3.1"
-            #else
-              TAG="${LATESTURL##*/}"
-            #fi  
+            TAG="${LATESTURL##*/}"
         fi    
         echo "TAG is ${TAG}"
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
@@ -6104,7 +6105,21 @@ function my() {
   #   jsonfile=$(jq 'del(.reboottotcrp)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/reboottotcrp
   #fi   
-  [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat          
+
+  if [ "${MDLNAME}" == "custom-modules" ]; then
+      echo "Discover left space for custom-modules initrd-dsm ... "        
+      SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
+      SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+      SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+      echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+  
+      SPACELEFT_MB=$(df -BM --output=avail /dev/"${loaderdisk}"3 | tail -1 | sed 's/M//')
+      if [ "${SPACELEFT_MB%.*}" -le 800 ]; then  # 800MB 기준
+          echo "Insufficient space (${SPACELEFT_MB}MB), cleaning up... Space has been freed up. Now, please rebuild."
+          sudo rm -rf /mnt/${tcrppart}/auxfiles/*.pat
+          exit 99
+      fi    
+  fi    
   
   if [ -f ${patfile} ]; then
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
