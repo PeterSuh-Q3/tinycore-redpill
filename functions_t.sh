@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.0"
+rploaderver="1.2.8.1"
 build="master"
 redpillmake="prod"
 
@@ -225,6 +225,7 @@ function history() {
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
+    1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -655,6 +656,8 @@ EOF
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
+# 2026.03.17 v1.2.8.1 
+# Official epyc7002(sa6400) 7.3.2 amdgpu module support
     
 function showlastupdate() {
     cat <<EOF
@@ -780,6 +783,9 @@ function showlastupdate() {
 
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
+
+# 2026.03.17 v1.2.8.1 
+# Official epyc7002(sa6400) 7.3.2 amdgpu module support
 
 EOF
 }
