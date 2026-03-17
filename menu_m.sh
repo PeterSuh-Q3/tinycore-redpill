@@ -346,7 +346,7 @@ function selectldrmode() {
 
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
-    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
+    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules" "m" "AMD GPU DRM Support, amdgpu-modules")  
   else
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   fi
@@ -374,6 +374,10 @@ function selectldrmode() {
     elif [ "${resp}" = "l" ]; then
       LDRMODE="JOT"
       MDLNAME="custom-modules"
+      break
+    elif [ "${resp}" = "m" ]; then
+      LDRMODE="FRIEND"
+      MDLNAME="amdgpu-modules"
       break
     fi      
   done
