@@ -2888,6 +2888,7 @@ function addrequiredexts() {
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
         # Add Use RR's custom kernel module
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && platkver="${platkver}_amdgpu"
         echo "platkver = ${platkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -4188,7 +4189,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
-        if [ "${MDLNAME}" == "custom-modules" ]; then
+        if [[ "${MDLNAME}" == "custom-modules" || "${MDLNAME}" == "amdgpu-modules" ]]; then
             USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         fi
     fi
