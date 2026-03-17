@@ -349,7 +349,7 @@ function selectldrmode() {
     if [ "${platform}" == "epyc7002(DT)"]; then  
       menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules" "m" "AMD GPU DRM Support, amdgpu-modules")  
     else
-      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules"")  
+      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
     fi
   else
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
