@@ -106,18 +106,6 @@ _build_ata_port() {
 
 
 # =============================================================================
-# SAS port index 추출
-# DEVPATH: .../host5/port-5:0/end_device-5:0/... → port index 0
-# port-HOST:IDX の IDX をそのまま使用 (0-based)
-# =============================================================================
-_build_sas_port() {
-  local DEVPATH="${1}"
-  local PORT_IDX
-  PORT_IDX=$(echo "${DEVPATH}" | grep -oE '/port-[0-9]+:[0-9]+/' | head -1 | grep -oE ':[0-9]+/' | tr -d ':/')
-  [ -z "${PORT_IDX}" ] && return 1
-  echo "${PORT_IDX}"
-}
-# =============================================================================
 # driver 추출
 # DEVPATH 패턴으로 컨트롤러 종류 판별:
 #   /ata[0-9]  → SATA (ahci)
@@ -261,7 +249,8 @@ detect_sata() {
     if [ "${PROTO}" = "sata" ]; then
       PORT=$(_build_ata_port "${DEVPATH}")
     else
-      PORT=$(_build_sas_port "${DEVPATH}")
+      # SAS: port-HOST:IDX の IDX を ata_port と同様に使用
+      PORT=$(echo "${DEVPATH}" | grep -oE '/port-[0-9]+:[0-9]+/' | head -1 | grep -oE ':[0-9]+/' | tr -d ':/')
     fi
 
     # 부트 디스크 판별
@@ -346,7 +335,7 @@ show_devices() {
         PREV_PCI="${PCI}"
       fi
       local PORT_LABEL
-      [ "${PROTO}" = "sas" ] && PORT_LABEL="port${PORT}" || PORT_LABEL="ata${PORT}"
+      PORT_LABEL="ata${PORT}"
       if [ "${FLAG}" = "loader" ]; then
         MSG+="\Z3${DEV}(${PORT_LABEL}:LOADER)\Zn "
       else
@@ -427,12 +416,12 @@ map_sata_nodes() {
   local SLOT_IDX=1
   while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
     local PORT_LABEL
-    [ "${PROTO}" = "sas" ] && PORT_LABEL="sas_port (0-based):" || PORT_LABEL="ata_port (0-based):"
+    PORT_LABEL="ata_port (0-based):"
 
     local FORM_OUT
     FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "${PROTO} -> internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nport: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
+      --title "SATA/SAS -> internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
+      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nata_port: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
       17 72 5 \
       "slot index (N):"  1 1 "${SLOT_IDX}"   1 22 4  0 \
       "pcie_root:"       2 1 "${PCIEPATH}"   2 22 46 0 \
@@ -458,25 +447,14 @@ map_sata_nodes() {
     local NODE
     NODE="    internal_slot@${SIDX} {\n"
     NODE+="        reg = <${REG_HEX} 0x00>;\n"
-    if [ "${PROTO}" = "sas" ]; then
-      NODE+="        protocol_type = \"sas\";\n"
-      NODE+="        ${DRV} {\n"
-      NODE+="            pcie_root = \"${PCI}\";\n"
-      [ -n "${PORT}" ] && \
-      NODE+="            sas_port = <$(printf '0x%02X' "${PORT}")>;\n"
-      [ "${IMODE}" = "y" ] && \
-      NODE+="            internal_mode;\n"
-      NODE+="        };\n"
-    else
-      NODE+="        protocol_type = \"sata\";\n"
-      NODE+="        ${DRV} {\n"
-      NODE+="            pcie_root = \"${PCI}\";\n"
-      [ -n "${PORT}" ] && \
-      NODE+="            ata_port = <$(printf '0x%02X' "${PORT}")>;\n"
-      [ "${IMODE}" = "y" ] && \
-      NODE+="            internal_mode;\n"
-      NODE+="        };\n"
-    fi
+    NODE+="        protocol_type = \"sata\";\n"
+    NODE+="        ${DRV} {\n"
+    NODE+="            pcie_root = \"${PCI}\";\n"
+    [ -n "${PORT}" ] && \
+    NODE+="            ata_port = <$(printf '0x%02X' "${PORT}")>;\n"
+    [ "${IMODE}" = "y" ] && \
+    NODE+="            internal_mode;\n"
+    NODE+="        };\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
