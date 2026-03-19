@@ -1,1 +1,1 @@
-    1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
+    1.2.8.3 Added user DTS file mapping feature
