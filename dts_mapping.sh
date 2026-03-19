@@ -21,7 +21,7 @@ DTS_NODES=()
 REG_COUNTER=1
 
 COMPATIBLE="Synology"
-MODEL=""
+DTSMODEL=""
 POWER_LIMIT="0"
 
 backtitle() { echo "Synology DTS Mapping Generator"; }
@@ -369,12 +369,12 @@ get_dts_header() {
     --title "DTS Header" \
     --form "Enter global .dts header values:" 11 62 3 \
     "compatible:"   1 1 "${COMPATIBLE}"   1 16 35 0 \
-    "model:"        2 1 "${MODEL}"        2 16 50 0 \
+    "model:"        2 1 "${DTSMODEL}"        2 16 50 0 \
     "power_limit:"  3 1 "${POWER_LIMIT}"  3 16 10 0 \
     3>&1 1>&2 2>&3) || return 1
 
   COMPATIBLE=$(printf '%s' "${FORM_OUT}" | sed -n '1p' | xargs)
-  MODEL=$(printf '%s'       "${FORM_OUT}" | sed -n '2p' | xargs)
+  DTSMODEL=$(printf '%s'       "${FORM_OUT}" | sed -n '2p' | xargs)
   POWER_LIMIT=$(printf '%s' "${FORM_OUT}" | sed -n '3p' | xargs)
 }
 
@@ -570,7 +570,7 @@ write_dts() {
     echo "    #address-cells = <1>;"
     echo "    #size-cells = <1>;"
     echo "    compatible = \"${COMPATIBLE}\";"
-    echo "    model = \"${MODEL}\";"
+    echo "    model = \"${DTSMODEL}\";"
     echo "    version = <0x01>;"
     echo "    power_limit = \"${POWER_LIMIT}\";"
     for NODE in "${DTS_NODES[@]}"; do
@@ -608,7 +608,7 @@ reset_nodes() {
 show_result() {
   dialog --backtitle "$(backtitle)" --title "Done" \
     --msgbox "$(printf '.dts file generated\n\nFile: %s\ncompatible: %s\nmodel: %s\nTotal nodes: %d' \
-      "${OUTPUT_DTS}" "${COMPATIBLE}" "${MODEL}" "${#DTS_NODES[@]}")" 12 52
+      "${OUTPUT_DTS}" "${COMPATIBLE}" "${DTSMODEL}" "${#DTS_NODES[@]}")" 12 52
 }
 
 # =============================================================================
@@ -697,7 +697,7 @@ dts_init() {
   REG_COUNTER=1
   OUTPUT_DTS="./model.dts"
   COMPATIBLE="Synology"
-  MODEL=""
+  DTSMODEL=""
   POWER_LIMIT="0"
 }
 
