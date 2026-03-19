@@ -16,7 +16,7 @@
 #   NVMe 판별 : DEVPATH에 "/nvme" 포함 여부
 # =============================================================================
 
-OUTPUT_DTS="model.dts"
+OUTPUT_DTS="./model.dts"
 DTS_NODES=()
 REG_COUNTER=1
 
@@ -605,13 +605,6 @@ reset_nodes() {
     --msgbox $'All nodes cleared. reg counter reset to 0x01.' 6 52
 }
 
-get_output_path() {
-  OUTPUT_DTS=$(dialog --backtitle "$(backtitle)" \
-    --title "Output File" \
-    --inputbox "Save .dts file as:" 8 55 "${OUTPUT_DTS}" \
-    3>&1 1>&2 2>&3) || true
-}
-
 show_result() {
   dialog --backtitle "$(backtitle)" --title "Done" \
     --msgbox "$(printf '.dts file generated\n\nFile: %s\ncompatible: %s\nmodel: %s\nTotal nodes: %d' \
@@ -631,7 +624,7 @@ _next_item() {
     4) echo "5" ;;
     5) echo "6" ;;
     6) echo "7" ;;
-    7) echo "8" ;;
+    7) echo "7" ;;
     *) echo "${1}" ;;   # 8/9/0 은 그대로 유지
   esac
 }
@@ -651,10 +644,9 @@ main_menu() {
       "4" "Map NVMe  ->  nvme_slot@N" \
       "5" "Map USB   ->  usb_slot@N" \
       "6" "Preview .dts output" \
-      "7" "Set output file path" \
-      "8" "Generate .dts file" \
-      "9" "Reset all nodes" \
-      "0" "Exit" \
+      "7" "Generate .dts file" \
+      "8" "Reset all nodes" \
+      "9" "Exit" \
       3>&1 1>&2 2>&3) || break
 
     case "${CHOICE}" in
@@ -664,19 +656,17 @@ main_menu() {
       4) map_nvme_nodes ;;
       5) map_usb_nodes ;;
       6) preview_dts ;;
-      7) get_output_path ;;
-      8)
+      7)
         if [ ${#DTS_NODES[@]} -eq 0 ]; then
           dialog --backtitle "$(backtitle)" --title "Warning" \
             --msgbox $'No nodes mapped yet.\nPlease run steps 3-5 first.' 7 45
         else
-          get_output_path
           write_dts "${OUTPUT_DTS}"
           show_result
         fi
         ;;
-      9) reset_nodes ;;
-      0) break ;;
+      8) reset_nodes ;;
+      9) break ;;
     esac
 
     DEFAULT_ITEM=$(_next_item "${CHOICE}")
@@ -705,7 +695,7 @@ dts_init() {
   command -v udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
   DTS_NODES=()
   REG_COUNTER=1
-  OUTPUT_DTS="model.dts"
+  OUTPUT_DTS="./model.dts"
   COMPATIBLE="Synology"
   MODEL=""
   POWER_LIMIT="0"
