@@ -104,31 +104,49 @@ _build_ata_port() {
   echo $(( ATA_NUM - 1 ))
 }
 
+
+# =============================================================================
+# SAS port index 추출
+# DEVPATH: .../host5/port-5:0/end_device-5:0/... → port index 0
+# port-HOST:IDX の IDX をそのまま使用 (0-based)
+# =============================================================================
+_build_sas_port() {
+  local DEVPATH="${1}"
+  local PORT_IDX
+  PORT_IDX=$(echo "${DEVPATH}" | grep -oE '/port-[0-9]+:[0-9]+/' | head -1 | grep -oE ':[0-9]+/' | tr -d ':/')
+  [ -z "${PORT_IDX}" ] && return 1
+  echo "${PORT_IDX}"
+}
 # =============================================================================
 # driver 추출
-# ID_PATH: "pci-0000:02:03.0-scsi-0:0:0:0" → PCI addr → lspci로 driver 조회
-# lspci 없으면 ahci 기본값
+# DEVPATH 패턴으로 컨트롤러 종류 판별:
+#   /ata[0-9]  → SATA (ahci)
+#   /host/port → SAS  (mpt3sas / megaraid_sas)
+# lspci가 있으면 PCI class로 정확하게 확인
 # =============================================================================
 _build_driver() {
   local DEVPATH="${1}"
 
-  # DEVPATH에서 드라이버 힌트 추출
-  # ahci 컨트롤러: devpath에 ata 포함
-  # mpt / megaraid: iscsi or scsi without ata
+  local PCI_ADDR
+  PCI_ADDR=$(echo "${DEVPATH}" | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]' | tail -1)
+
+  # lspci로 PCI class 확인 (가능한 경우)
+  if [ -n "${PCI_ADDR}" ] && command -v lspci &>/dev/null; then
+    local PCI_CLASS
+    PCI_CLASS=$(lspci -s "${PCI_ADDR}" -n 2>/dev/null | awk '{print $2}')
+    case "${PCI_CLASS}" in
+      0106) echo "ahci"        ; return ;; # SATA controller
+      0104) echo "ahci"        ; return ;; # RAID bus controller
+      0107) echo "mpt3sas"     ; return ;; # SAS controller
+      0100) echo "mpt3sas"     ; return ;; # SCSI storage controller
+    esac
+  fi
+
+  # DEVPATH 패턴으로 폴백 판별
   if echo "${DEVPATH}" | grep -q '/ata[0-9]'; then
-    # ahci가 가장 일반적; lspci로 확인 가능하면 더 정확하게
-    local PCI_ADDR
-    PCI_ADDR=$(echo "${DEVPATH}" | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]' | tail -1)
-    if [ -n "${PCI_ADDR}" ] && command -v lspci &>/dev/null; then
-      local PCI_CLASS
-      PCI_CLASS=$(lspci -s "${PCI_ADDR}" -n 2>/dev/null | awk '{print $2}')
-      case "${PCI_CLASS}" in
-        0106) echo "ahci" ; return ;;    # SATA controller
-        0104) echo "ahci" ; return ;;    # RAID bus controller
-        0107) echo "mpt3sas" ; return ;; # SAS controller
-      esac
-    fi
     echo "ahci"
+  elif echo "${DEVPATH}" | grep -qE '/host[0-9]+/port-'; then
+    echo "mpt3sas"
   else
     echo "ahci"
   fi
@@ -195,20 +213,24 @@ _get_usb_ports() {
 }
 
 # =============================================================================
-# SATA 감지
-# /dev/sd* 순회 → udevadm → DEVPATH에 /ata 포함이면 SATA
+# SATA / SAS 감지
+# /dev/sd* 순회 → udevadm → DEVPATH 패턴으로 SATA/SAS 판별
 #
-# MODE: "show" → 부트 디스크 포함, FLAG=loader 로 표기
+#   SATA: DEVPATH에 /ata[0-9] 포함  → protocol_type = sata, port = ata_port
+#   SAS : DEVPATH에 /host/port-    포함  → protocol_type = sas,  port = port index
+#
+# MODE: "show" → 부트 디스크 포함, FLAG=loader 표기
 #        "map" → 부트 디스크 제외 (기본값)
 #
-# 출력: PCIEPATH|ATAPORT|DRIVER|DEVNAME|FLAG
-#   FLAG: active | loader
+# 출력: PCIEPATH|PORT|DRIVER|DEVNAME|FLAG|PROTO
+#   FLAG  : active | loader
+#   PROTO : sata | sas
 # =============================================================================
 detect_sata() {
   local MODE="${1:-map}"
   _get_bootdisk_pci
 
-  for DEV in $(ls /dev/sd? 2>/dev/null | sort -V); do
+  for DEV in $(ls /dev/sd? /dev/sd?? 2>/dev/null | sort -V); do
     local DEVNAME
     DEVNAME=$(basename "${DEV}")
 
@@ -220,36 +242,42 @@ detect_sata() {
     DEVPATH=$(echo "${UDEV_OUT}" | awk '/^P:/{print $2}')
     [ -z "${DEVPATH}" ] && continue
 
-    # SATA 판별: DEVPATH에 /ata 포함
-    echo "${DEVPATH}" | grep -q '/ata[0-9]' || continue
+    # SATA / SAS 판별
+    local PROTO=""
+    echo "${DEVPATH}" | grep -q '/ata[0-9]' && PROTO="sata"
+    [ -z "${PROTO}" ] && echo "${DEVPATH}" | grep -qE '/host[0-9]+/port-' && PROTO="sas"
+    [ -z "${PROTO}" ] && continue   # USB 등 해당 없는 장치 제외
 
     # 사이즈 0 제외 (빈 슬롯)
     local SIZE
     SIZE=$(cat "/sys/block/${DEVNAME}/size" 2>/dev/null)
     [ "${SIZE:-0}" -eq 0 ] && continue
 
-    local PCIEPATH ATA DRIVER
+    local PCIEPATH PORT DRIVER
     PCIEPATH=$(_build_pcie_root "${DEVPATH}")
-    ATA=$(_build_ata_port "${DEVPATH}")
+    [ -z "${PCIEPATH}" ] && continue
     DRIVER=$(_build_driver "${DEVPATH}")
 
-    [ -z "${PCIEPATH}" ] && continue
+    if [ "${PROTO}" = "sata" ]; then
+      PORT=$(_build_ata_port "${DEVPATH}")
+    else
+      PORT=$(_build_sas_port "${DEVPATH}")
+    fi
 
     # 부트 디스크 판별
     local IS_LOADER=0
     if [ -n "${BOOTDISK_PCIEPATH}" ] && [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ]; then
-      if [ -z "${BOOTDISK_ATA}" ] || [ "${BOOTDISK_ATA}" = "${ATA}" ]; then
+      if [ -z "${BOOTDISK_ATA}" ] || [ "${BOOTDISK_ATA}" = "${PORT}" ]; then
         IS_LOADER=1
       fi
     fi
 
     if [ "${IS_LOADER}" -eq 1 ]; then
-      # show 모드: loader 태그로 포함 / map 모드: 제외
-      [ "${MODE}" = "show" ] && echo "${PCIEPATH}|${ATA}|${DRIVER}|${DEVNAME}|loader"
+      [ "${MODE}" = "show" ] && echo "${PCIEPATH}|${PORT}|${DRIVER}|${DEVNAME}|loader|${PROTO}"
       continue
     fi
 
-    echo "${PCIEPATH}|${ATA}|${DRIVER}|${DEVNAME}|active"
+    echo "${PCIEPATH}|${PORT}|${DRIVER}|${DEVNAME}|active|${PROTO}"
   done
 }
 
@@ -309,20 +337,20 @@ show_devices() {
   local SATA_LIST LOADER_ATA LOADER_DEV
   SATA_LIST=$(detect_sata show)
   if [ -n "${SATA_LIST}" ]; then
-    MSG+="\n\Z4=== SATA ===\Zn\n"
+    MSG+="\n\Z4=== SATA / SAS ===\Zn\n"
     local PREV_PCI=""
-    while IFS='|' read -r PCI ATA DRV DEV FLAG; do
+    while IFS='|' read -r PCI PORT DRV DEV FLAG PROTO; do
       if [ "${PCI}" != "${PREV_PCI}" ]; then
         [ -n "${PREV_PCI}" ] && MSG+="\n"
-        MSG+="\Zb${DRV}\Zn  ${PCI}\nDisks: "
+        MSG+="\Zb${DRV}\Zn [${PROTO}]  ${PCI}\nDisks: "
         PREV_PCI="${PCI}"
       fi
+      local PORT_LABEL
+      [ "${PROTO}" = "sas" ] && PORT_LABEL="port${PORT}" || PORT_LABEL="ata${PORT}"
       if [ "${FLAG}" = "loader" ]; then
-        MSG+="\Z3${DEV}(ata${ATA}:LOADER)\Zn "
-        LOADER_ATA="${ATA}"
-        LOADER_DEV="${DEV}"
+        MSG+="\Z3${DEV}(${PORT_LABEL}:LOADER)\Zn "
       else
-        MSG+="\Z2${DEV}\Zn(ata${ATA}) "
+        MSG+="\Z2${DEV}\Zn(${PORT_LABEL}) "
         COUNT=$((COUNT+1))
       fi
     done <<< "${SATA_LIST}"
@@ -387,33 +415,36 @@ map_sata_nodes() {
 
   if [ -z "${SATA_LIST}" ]; then
     dialog --backtitle "$(backtitle)" --title "Info" \
-      --msgbox $'No SATA disks detected.\n(Boot disk and empty slots are excluded)' 7 52
+      --msgbox $'No SATA/SAS disks detected.\n(Boot disk and empty slots are excluded)' 7 55
     return
   fi
 
   local DISK_COUNT
   DISK_COUNT=$(printf '%s\n' "${SATA_LIST}" | wc -l)
-  dialog --backtitle "$(backtitle)" --title "SATA Mapping" \
-    --msgbox $'Detected SATA disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nLeave pcie_root empty to skip a slot.' 9 58 || return
+  dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
+    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nLeave pcie_root empty to skip a slot.' 9 60 || return
 
   local SLOT_IDX=1
-  while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG; do
+  while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
+    local PORT_LABEL
+    [ "${PROTO}" = "sas" ] && PORT_LABEL="sas_port (0-based):" || PORT_LABEL="ata_port (0-based):"
+
     local FORM_OUT
     FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "SATA → internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'\Zb'"${DRIVER}"$'\Zn  pcie_root: '"${PCIEPATH}"$'\nata_port: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
+      --title "${PROTO} -> internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
+      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nport: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
       17 72 5 \
-      "slot index (N):"       1 1 "${SLOT_IDX}"   1 22 4  0 \
-      "pcie_root:"            2 1 "${PCIEPATH}"   2 22 46 0 \
-      "ata_port (0-based):"   3 1 "${ATAPORT}"    3 22 5  0 \
-      "driver node name:"     4 1 "${DRIVER}"     4 22 20 0 \
-      "internal_mode (y/n):"  5 1 "y"             5 22 3  0 \
+      "slot index (N):"  1 1 "${SLOT_IDX}"   1 22 4  0 \
+      "pcie_root:"       2 1 "${PCIEPATH}"   2 22 46 0 \
+      "${PORT_LABEL}"    3 1 "${ATAPORT}"    3 22 5  0 \
+      "driver node:"     4 1 "${DRIVER}"     4 22 20 0 \
+      "internal_mode:"   5 1 "y"             5 22 3  0 \
       3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
 
-    local SIDX PCI ATA DRV IMODE
+    local SIDX PCI PORT DRV IMODE
     SIDX=$(printf '%s'  "${FORM_OUT}" | sed -n '1p' | xargs)
     PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '2p' | xargs)
-    ATA=$(printf '%s'   "${FORM_OUT}" | sed -n '3p' | xargs)
+    PORT=$(printf '%s'  "${FORM_OUT}" | sed -n '3p' | xargs)
     DRV=$(printf '%s'   "${FORM_OUT}" | sed -n '4p' | xargs)
     IMODE=$(printf '%s' "${FORM_OUT}" | sed -n '5p' | xargs | tr '[:upper:]' '[:lower:]')
 
@@ -427,14 +458,25 @@ map_sata_nodes() {
     local NODE
     NODE="    internal_slot@${SIDX} {\n"
     NODE+="        reg = <${REG_HEX} 0x00>;\n"
-    NODE+="        protocol_type = \"sata\";\n"
-    NODE+="        ${DRV} {\n"
-    NODE+="            pcie_root = \"${PCI}\";\n"
-    [ -n "${ATA}" ] && \
-    NODE+="            ata_port = <$(printf '0x%02X' "${ATA}")>;\n"
-    [ "${IMODE}" = "y" ] && \
-    NODE+="            internal_mode;\n"
-    NODE+="        };\n"
+    if [ "${PROTO}" = "sas" ]; then
+      NODE+="        protocol_type = \"sas\";\n"
+      NODE+="        ${DRV} {\n"
+      NODE+="            pcie_root = \"${PCI}\";\n"
+      [ -n "${PORT}" ] && \
+      NODE+="            sas_port = <$(printf '0x%02X' "${PORT}")>;\n"
+      [ "${IMODE}" = "y" ] && \
+      NODE+="            internal_mode;\n"
+      NODE+="        };\n"
+    else
+      NODE+="        protocol_type = \"sata\";\n"
+      NODE+="        ${DRV} {\n"
+      NODE+="            pcie_root = \"${PCI}\";\n"
+      [ -n "${PORT}" ] && \
+      NODE+="            ata_port = <$(printf '0x%02X' "${PORT}")>;\n"
+      [ "${IMODE}" = "y" ] && \
+      NODE+="            internal_mode;\n"
+      NODE+="        };\n"
+    fi
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
@@ -640,7 +682,7 @@ main_menu() {
       --menu "Mapped nodes: \Z2${NODE_COUNT}\Zn   Output: ${OUTPUT_DTS}" 20 65 10 \
       "1" "Show detected storage devices" \
       "2" "Set DTS header (compatible / model)" \
-      "3" "Map SATA  ->  internal_slot@N" \
+      "3" "Map SATA/SAS  ->  internal_slot@N" \
       "4" "Map NVMe  ->  nvme_slot@N" \
       "5" "Map USB   ->  usb_slot@N" \
       "6" "Preview .dts output" \
