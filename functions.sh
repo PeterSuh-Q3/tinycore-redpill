@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.0"
+rploaderver="1.2.8.2"
 build="master"
 redpillmake="prod"
 
@@ -225,6 +225,8 @@ function history() {
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
+    1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
+    1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -655,6 +657,10 @@ EOF
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
+# 2026.03.17 v1.2.8.1 
+# Official epyc7002(sa6400) 7.3.2 amdgpu module support
+# 2026.03.19 v1.2.8.2 
+# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     
 function showlastupdate() {
     cat <<EOF
@@ -780,6 +786,12 @@ function showlastupdate() {
 
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
+
+# 2026.03.17 v1.2.8.1 
+# Official epyc7002(sa6400) 7.3.2 amdgpu module support
+
+# 2026.03.19 v1.2.8.2 
+# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
 
 EOF
 }
@@ -2882,6 +2894,7 @@ function addrequiredexts() {
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
         # Add Use RR's custom kernel module
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && platkver="${platkver}_amdgpu"
         echo "platkver = ${platkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -4182,7 +4195,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
-        if [ "${MDLNAME}" == "custom-modules" ]; then
+        if [[ "${MDLNAME}" == "custom-modules" || "${MDLNAME}" == "amdgpu-modules" ]]; then
             USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         fi
     fi
@@ -4337,13 +4350,11 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        if [ "${MDLNAME}" == "custom-modules" ]; then
-            echo "Use static firmware and module loading methods when using custom modules"
-            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
-            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-            #sudo rm -rf $rdtemp/exts/all-modules/
-        fi    
+        echo "Use static firmware and module loading methods when using modules (RR'S EUDEV Method )"
+        [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+        sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+        sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
