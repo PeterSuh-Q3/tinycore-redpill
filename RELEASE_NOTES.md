@@ -1,1 +1,1 @@
-    1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
+    1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
