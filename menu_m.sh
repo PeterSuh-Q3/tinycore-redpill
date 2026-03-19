@@ -1669,7 +1669,7 @@ function build-pre-option() {
 function dtsmapping() {
   dts_init
   platform_fix="${platform%(DT)}"
-  MODEL="synology_${platform_fix}_${MODEL}"
+  DTSMODEL="synology_${platform_fix}_${MODEL}"
   COMPATIBLE="Synology"
   OUTPUT_DTS="/home/tc/model.dts"
   main_menu
