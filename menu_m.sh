@@ -5,6 +5,7 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES #####################################################################################################
 . /home/tc/functions.sh
 . /home/tc/i18n.h
+. /home/tc/dts_mapping.sh
 #####################################################################################################
 
 kver3explatforms="bromolow braswell cedarview grantley"
@@ -1510,13 +1511,13 @@ function additional() {
   default_resp="l"
 
   while true; do
-    eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
+    eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"  
+    eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"c \\\"${MSG52}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1530,6 +1531,7 @@ function additional() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
+    c) dtsmapping; default_resp="c";;    
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
@@ -1548,7 +1550,6 @@ function additional() {
       default_resp="z"
       ;;
     b) prevent; default_resp="b";;
-    c) showsata; default_resp="c";;
     d) viewerrorlog; default_resp="d";;
     e) burnloader; default_resp="e";;
     f) cloneloader; default_resp="f";;
@@ -1663,6 +1664,14 @@ function build-pre-option() {
     
   done
 
+}
+
+function dtsmapping() {
+  dts_init
+  MODEL="synology_epyc7002_sa6400"
+  COMPATIBLE="Synology"
+  OUTPUT_DTS="/home/tc/model.dts"
+  main_menu
 }
 
 function sortnetif() {
