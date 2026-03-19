@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.1"
+rploaderver="1.2.8.2"
 build="master"
 redpillmake="prod"
 
@@ -226,6 +226,7 @@ function history() {
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
     1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
+    1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -658,6 +659,8 @@ EOF
 # Discontinued the use of the term Jot and standardized to Direct-Boot
 # 2026.03.17 v1.2.8.1 
 # Official epyc7002(sa6400) 7.3.2 amdgpu module support
+# 2026.03.19 v1.2.8.2 
+# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     
 function showlastupdate() {
     cat <<EOF
@@ -786,6 +789,9 @@ function showlastupdate() {
 
 # 2026.03.17 v1.2.8.1 
 # Official epyc7002(sa6400) 7.3.2 amdgpu module support
+
+# 2026.03.19 v1.2.8.2 
+# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
 
 EOF
 }
