@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.2"
+rploaderver="1.2.8.3"
 build="master"
 redpillmake="prod"
 
@@ -227,6 +227,7 @@ function history() {
     1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
     1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
     1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
+    1.2.8.3 Added user DTS file mapping feature
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -661,6 +662,8 @@ EOF
 # Official epyc7002(sa6400) 7.3.2 amdgpu module support
 # 2026.03.19 v1.2.8.2 
 # Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
+# 2026.03.19 v1.2.8.3 
+# Added user DTS file mapping feature
     
 function showlastupdate() {
     cat <<EOF
@@ -792,6 +795,9 @@ function showlastupdate() {
 
 # 2026.03.19 v1.2.8.2 
 # Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
+
+# 2026.03.20 v1.2.8.3 
+# Added user DTS file mapping feature
 
 EOF
 }
@@ -4383,6 +4389,9 @@ EOF
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
 
+    #copy user dts file.
+    [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
+    
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
