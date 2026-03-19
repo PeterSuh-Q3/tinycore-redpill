@@ -1668,7 +1668,8 @@ function build-pre-option() {
 
 function dtsmapping() {
   dts_init
-  MODEL="synology_epyc7002_sa6400"
+  platform_fix="${platform%(DT)}"
+  MODEL="synology_${platform_fix}_${MODEL}"
   COMPATIBLE="Synology"
   OUTPUT_DTS="/home/tc/model.dts"
   main_menu
