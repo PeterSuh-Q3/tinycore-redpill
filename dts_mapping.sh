@@ -369,6 +369,39 @@ get_dts_header() {
 }
 
 # =============================================================================
+# _pick_slot TOTAL USED INFO
+#
+# TOTAL : 전체 슬롯 수 (1..TOTAL 범위)
+# USED  : 이미 선택된 슬롯 번호 목록 (공백 구분 문자열)
+# INFO  : dialog 상단에 표시할 디바이스 정보
+#
+# 사용 가능한 슬롯만 menu 항목으로 표시.
+# 선택한 번호를 stdout으로 출력. Cancel 시 return 1.
+# =============================================================================
+_pick_slot() {
+  local TOTAL="${1}"
+  local USED="${2}"
+  local INFO="${3}"
+
+  local MENU_ARGS=()
+  local N
+  for N in $(seq 1 "${TOTAL}"); do
+    echo "${USED}" | grep -qw "${N}" && continue
+    MENU_ARGS+=("${N}" "internal_slot@${N}")
+  done
+
+  if [ ${#MENU_ARGS[@]} -eq 0 ]; then
+    dialog --backtitle "$(backtitle)" --title "Warning"       --msgbox $'All slots are already assigned.' 6 42
+    return 1
+  fi
+
+  local PICKED
+  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Select Bay Slot"     --menu "${INFO}" 18 52 10     "${MENU_ARGS[@]}"     3>&1 1>&2 2>&3) || return 1
+
+  echo "${PICKED}"
+}
+
+# =============================================================================
 # SATA → internal_slot@N
 # =============================================================================
 map_sata_nodes() {
