@@ -348,15 +348,21 @@ function selectldrmode() {
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
     if [ "${platform}" == "epyc7002(DT)" ]; then  
-      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules" "m" "AMD GPU DRM Support, amdgpu-modules")  
+      menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amdgpu-modules(Persistent:PML)")
     else
-      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
+      menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)" "k" "${MSG28}, custom-modules(Persistent:PML)" )  
     fi
   else
-    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
+    menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)")
   fi
+  menu_options+=("m" "${MSG29} : false")
   
   while true; do
+    # m 레이블만 교체
+    [ "${LDRMODE}" = "JOT" ] \
+      && menu_options[-1]="${MSG29} : true" \
+      || menu_options[-1]="${MSG29} : false"
+  
     dialog --clear --backtitle "`backtitle`" \
       --menu "Choose a option" 0 0 0 \
       "${menu_options[@]}" \
@@ -367,28 +373,32 @@ function selectldrmode() {
     if [ "${resp}" = "f" ]; then
       LDRMODE="FRIEND"
       MDLNAME="all-modules"
+      MLMETHOD="PML"
       break
     elif [ "${resp}" = "j" ]; then
-      LDRMODE="JOT"
-      MDLNAME="all-modules"      
+      LDRMODE="FRIEND"
+      MDLNAME="all-modules"
+      MLMETHOD="IML"
       break
     elif [ "${resp}" = "k" ]; then
       LDRMODE="FRIEND"
       MDLNAME="custom-modules"
+      MLMETHOD="PML"
       break
     elif [ "${resp}" = "l" ]; then
-      LDRMODE="JOT"
-      MDLNAME="custom-modules"
-      break
-    elif [ "${resp}" = "m" ]; then
       LDRMODE="FRIEND"
       MDLNAME="amdgpu-modules"
+      MLMETHOD="PML"
       break
+    elif [ "${resp}" = "m" ]; then
+      LDRMODE="JOT"
+      continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
 
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
+  writeConfigKey "general" "mlmethod" "${MLMETHOD}"
 
 }
 
@@ -2118,6 +2128,11 @@ fi
 if [ "${MDLNAME}" = "null" ]; then
     MDLNAME="all-modules"
     writeConfigKey "general" "modulename" "${MDLNAME}"          
+fi
+
+if [ "${MLMETHOD}" = "null" ]; then
+    MLMETHOD="PML"
+    writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
 fi
 
 # Get actual IP
