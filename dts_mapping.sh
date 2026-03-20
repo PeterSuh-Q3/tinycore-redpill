@@ -447,31 +447,54 @@ map_sata_nodes() {
   local DISK_COUNT
   DISK_COUNT=$(printf '%s\n' "${SATA_LIST}" | wc -l)
   dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
-    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nSelect bay slot for each disk.' 9 58 || return
+    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nStep 1: select slot type  Step 2: select bay number.' 9 62 || return
 
-  # internal / esata 각자 독립 슬롯 풀
-  local USED_INTERNAL="" USED_ESATA=""
+  # ==========================================================================
+  # 1패스: 각 디스크의 슬롯 타입을 먼저 수집
+  # → 타입별 실제 개수를 파악해 슬롯 번호 풀 상한 결정
+  # ==========================================================================
+  local TYPE_LIST=""   # "internal|sata|sda" 형식으로 누적
   while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
     local SLOT_INFO
     SLOT_INFO=$(printf '[%s] /dev/%s\npcie_root: %s\nata_port : %s' \
       "${PROTO}" "${DEVNAME}" "${PCIEPATH}" "${ATAPORT:-?}")
-
-    # 1단계: 타입 선택 (internal / esata)
     local SLOT_TYPE
-    SLOT_TYPE=$(_pick_slot_type "?" "${SLOT_INFO}") || continue
+    SLOT_TYPE=$(_pick_slot_type "?" "${SLOT_INFO}") || {
+      TYPE_LIST="${TYPE_LIST}skip|${PCIEPATH}|${ATAPORT}|${DEVNAME}|${PROTO}\n"
+      continue
+    }
+    TYPE_LIST="${TYPE_LIST}${SLOT_TYPE}|${PCIEPATH}|${ATAPORT}|${DEVNAME}|${PROTO}\n"
+  done <<< "${SATA_LIST}"
 
-    # 2단계: 타입별 독립 슬롯 번호 선택
-    local SLOT_NAME USED_REF
+  # 타입별 개수 집계
+  local COUNT_INTERNAL COUNT_ESATA
+  COUNT_INTERNAL=$(printf "%b" "${TYPE_LIST}" | grep -c "^internal|" || true)
+  COUNT_ESATA=$(printf "%b" "${TYPE_LIST}"    | grep -c "^esata|"    || true)
+
+  # ==========================================================================
+  # 2패스: 타입별 상한으로 슬롯 번호 선택
+  # ==========================================================================
+  local USED_INTERNAL="" USED_ESATA=""
+  while IFS='|' read -r SLOT_TYPE PCIEPATH ATAPORT DEVNAME PROTO; do
+    [ "${SLOT_TYPE}" = "skip" ] && continue
+
+    local SLOT_INFO
+    SLOT_INFO=$(printf '[%s] /dev/%s\npcie_root: %s\nata_port : %s' \
+      "${PROTO}" "${DEVNAME}" "${PCIEPATH}" "${ATAPORT:-?}")
+
+    local SLOT_NAME USED_REF SLOT_TOTAL
     if [ "${SLOT_TYPE}" = "esata" ]; then
       SLOT_NAME="esata_port"
       USED_REF="${USED_ESATA}"
+      SLOT_TOTAL="${COUNT_ESATA}"
     else
       SLOT_NAME="internal_slot"
       USED_REF="${USED_INTERNAL}"
+      SLOT_TOTAL="${COUNT_INTERNAL}"
     fi
 
     local PICKED
-    PICKED=$(_pick_slot "${DISK_COUNT}" "${USED_REF}" "${SLOT_INFO}") || continue
+    PICKED=$(_pick_slot "${SLOT_TOTAL}" "${USED_REF}" "${SLOT_INFO}") || continue
 
     if [ "${SLOT_TYPE}" = "esata" ]; then
       USED_ESATA="${USED_ESATA} ${PICKED}"
@@ -494,7 +517,7 @@ map_sata_nodes() {
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
-  done <<< "${SATA_LIST}"
+  done <<< "$(printf "%b" "${TYPE_LIST}")"
 }
 
 # =============================================================================
