@@ -231,10 +231,10 @@ function backtitle() {
   [ -n "${BUILD}" ] && BACKTITLE+=" ${BUILD}" || BACKTITLE+=" (no build)"
   [ -n "${SN}" ] && BACKTITLE+=" ${SN}" || BACKTITLE+=" (no SN)"
   [ -n "${IP}" ] && BACKTITLE+=" ${IP}" || BACKTITLE+=" (no IP)"
-  
+
   for i in 1 2 3 4 5 6 7 8; do
     varname="MACADDR${i}"
-    [ -n "${!varname}" ] && BACKTITLE+=" ${!varname}"
+    [[ -n "${!varname}" && "${!varname}" != "null" ]] && BACKTITLE+=" ${!varname}"
   done
   
   [ -n "${KEYMAP}" ] && BACKTITLE+=" (${LAYOUT}/${KEYMAP})" || BACKTITLE+=" (qwerty/us)"
