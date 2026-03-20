@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.3"
+rploaderver="1.2.8.4"
 build="master"
 redpillmake="prod"
 
@@ -228,6 +228,7 @@ function history() {
     1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
     1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     1.2.8.3 Added user DTS file mapping feature
+    1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -664,6 +665,8 @@ EOF
 # Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
 # 2026.03.19 v1.2.8.3 
 # Added user DTS file mapping feature
+# 2026.03.20 v1.2.8.4 
+# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     
 function showlastupdate() {
     cat <<EOF
@@ -798,6 +801,9 @@ function showlastupdate() {
 
 # 2026.03.20 v1.2.8.3 
 # Added user DTS file mapping feature
+
+# 2026.03.20 v1.2.8.4
+# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
 
 EOF
 }
@@ -3702,7 +3708,7 @@ EOF
 
 function tcrpfriendentry() {
     cat <<EOF
-menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
+menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -3732,7 +3738,7 @@ EOF
 
 function tcrpentry_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM}' {
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM} ${MDLNAME}:${MLMETHOD}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -3752,7 +3758,7 @@ EOF
 
 function postupdateentry() {
     cat <<EOF
-menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
+menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -3779,6 +3785,7 @@ function savedefault {
     echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
     echo "Version : ${BUILD}"
     echo "Kernel  : ${KVER}"
+    echo "Module  : ${MDLNAME}-${MLMETHOD}
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
@@ -3795,7 +3802,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM})' {
+menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM} ${MDLNAME}-${MLMETHOD})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3815,7 +3822,7 @@ EOF
 
 function tcrpjot_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM}' {    
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM} ${MDLNAME}-${MLMETHOD}' {    
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -4356,11 +4363,12 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        echo "Use static firmware and module loading methods when using modules (RR'S EUDEV Method )"
-        [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-        sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
-        sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-
+        if [ "${MLMETHOD}" = "PML" ]; then
+            echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
+            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+            sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+        fi
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
@@ -4391,6 +4399,9 @@ EOF
 
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
+
+    #mark PML or not
+    [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
     
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
