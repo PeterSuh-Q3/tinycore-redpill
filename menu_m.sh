@@ -372,22 +372,18 @@ function selectldrmode() {
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
     if [ "${resp}" = "f" ]; then
-      LDRMODE="FRIEND"
       MDLNAME="all-modules"
       MLMETHOD="PML"
       break
     elif [ "${resp}" = "j" ]; then
-      LDRMODE="FRIEND"
       MDLNAME="all-modules"
       MLMETHOD="IML"
       break
     elif [ "${resp}" = "k" ]; then
-      LDRMODE="FRIEND"
       MDLNAME="custom-modules"
       MLMETHOD="PML"
       break
     elif [ "${resp}" = "l" ]; then
-      LDRMODE="FRIEND"
       MDLNAME="amdgpu-modules"
       MLMETHOD="PML"
       break
