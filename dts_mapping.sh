@@ -106,37 +106,11 @@ _build_ata_port() {
 
 # =============================================================================
 # driver 추출
-# DEVPATH 패턴으로 컨트롤러 종류 판별:
-#   /ata[0-9]  → SATA (ahci)
-#   /host/port → SAS  (mpt3sas / megaraid_sas)
-# lspci가 있으면 PCI class로 정확하게 확인
+# disks.sh와 동일하게 SATA/SAS/HBA 모두 "ahci" 고정
+# Synology DSM은 컨트롤러 종류에 무관하게 ahci 블록을 사용한다.
 # =============================================================================
 _build_driver() {
-  local DEVPATH="${1}"
-
-  local PCI_ADDR
-  PCI_ADDR=$(echo "${DEVPATH}" | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]' | tail -1)
-
-  # lspci로 PCI class 확인 (가능한 경우)
-  if [ -n "${PCI_ADDR}" ] && command -v lspci &>/dev/null; then
-    local PCI_CLASS
-    PCI_CLASS=$(lspci -s "${PCI_ADDR}" -n 2>/dev/null | awk '{print $2}')
-    case "${PCI_CLASS}" in
-      0106) echo "ahci"        ; return ;; # SATA controller
-      0104) echo "ahci"        ; return ;; # RAID bus controller
-      0107) echo "mpt3sas"     ; return ;; # SAS controller
-      0100) echo "mpt3sas"     ; return ;; # SCSI storage controller
-    esac
-  fi
-
-  # DEVPATH 패턴으로 폴백 판별
-  if echo "${DEVPATH}" | grep -q '/ata[0-9]'; then
-    echo "ahci"
-  elif echo "${DEVPATH}" | grep -qE '/host[0-9]+/port-'; then
-    echo "mpt3sas"
-  else
-    echo "ahci"
-  fi
+  echo "ahci"
 }
 
 # =============================================================================
@@ -410,49 +384,31 @@ map_sata_nodes() {
   local DISK_COUNT
   DISK_COUNT=$(printf '%s\n' "${SATA_LIST}" | wc -l)
   dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
-    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nLeave pcie_root empty to skip a slot.' 9 60 || return
+    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nSelect bay slot for each disk.' 9 58 || return
 
-  local SLOT_IDX=1
+  local USED_SLOTS=""
   while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
-    local PORT_LABEL
-    PORT_LABEL="ata_port (0-based):"
+    local SLOT_INFO
+    SLOT_INFO=$(printf '[%s] /dev/%s\npcie_root: %s\nata_port : %s' \
+      "${PROTO}" "${DEVNAME}" "${PCIEPATH}" "${ATAPORT:-?}")
+    local PICKED
+    PICKED=$(_pick_slot "${DISK_COUNT}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
-    local FORM_OUT
-    FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "SATA/SAS -> internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nata_port: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\nSlot: '"${SLOT_IDX}"$'  (Leave pcie_root empty to skip)' \
-      16 72 4 \
-      "pcie_root:"    1 1 "${PCIEPATH}"   1 16 46 0 \
-      "${PORT_LABEL}" 2 1 "${ATAPORT}"    2 16 5  0 \
-      "driver node:"  3 1 "${DRIVER}"     3 16 20 0 \
-      "internal_mode:" 4 1 "y"            4 16 3  0 \
-      3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
-
-    local PCI PORT DRV IMODE
-    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '1p' | xargs)
-    PORT=$(printf '%s'  "${FORM_OUT}" | sed -n '2p' | xargs)
-    DRV=$(printf '%s'   "${FORM_OUT}" | sed -n '3p' | xargs)
-    IMODE=$(printf '%s' "${FORM_OUT}" | sed -n '4p' | xargs | tr '[:upper:]' '[:lower:]')
-
-    if [ -z "${PCI}" ]; then
-      SLOT_IDX=$((SLOT_IDX+1)); continue
-    fi
+    USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    internal_slot@${SLOT_IDX} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
+    NODE="    internal_slot@${PICKED} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
     NODE+="        protocol_type = \"sata\";\n"
-    NODE+="        ${DRV} {\n"
-    NODE+="            pcie_root = \"${PCI}\";\n"
-    [ -n "${PORT}" ] && \
-    NODE+="            ata_port = <$(printf '0x%02X' "${PORT}")>;\n"
-    [ "${IMODE}" = "y" ] && \
+    NODE+="        ahci {\n"
+    NODE+="            pcie_root = \"${PCIEPATH}\";\n"
+    [ -n "${ATAPORT}" ] && \
+    NODE+="            ata_port = <$(printf '0x%02X' "${ATAPORT}")>;\n"
     NODE+="            internal_mode;\n"
     NODE+="        };\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${SATA_LIST}"
 }
 
@@ -472,37 +428,26 @@ map_nvme_nodes() {
   local DEV_COUNT
   DEV_COUNT=$(printf '%s\n' "${NVME_LIST}" | wc -l)
   dialog --backtitle "$(backtitle)" --title "NVMe Mapping" \
-    --msgbox $'Detected NVMe controllers: '"${DEV_COUNT}"$'\n(via udevadm DEVPATH, deduplicated per controller)' 8 58 || return
+    --msgbox $'Detected NVMe controllers: '"${DEV_COUNT}"$'\n(via udevadm DEVPATH, deduplicated per controller)\n\nSelect bay slot for each controller.' 9 60 || return
 
-  local SLOT_IDX=1
+  local USED_SLOTS=""
   while IFS='|' read -r PCIEPATH DEVNAME; do
-    local FORM_OUT
-    FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "NVMe -> nvme_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'pcie_root: '"${PCIEPATH}"$'  device: /dev/'"${DEVNAME}"$'\nSlot: '"${SLOT_IDX}"$'  (Leave pcie_root empty to skip)' \
-      12 70 2 \
-      "pcie_root:"  1 1 "${PCIEPATH}"  1 14 46 0 \
-      "port_type:"  2 1 "ssdcache"     2 14 20 0 \
-      3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
+    local SLOT_INFO
+    SLOT_INFO=$(printf '[nvme] /dev/%s\npcie_root: %s\nport_type: ssdcache' \
+      "${DEVNAME}" "${PCIEPATH}")
+    local PICKED
+    PICKED=$(_pick_slot "${DEV_COUNT}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
-    local PCI PTYPE
-    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '1p' | xargs)
-    PTYPE=$(printf '%s' "${FORM_OUT}" | sed -n '2p' | xargs)
-
-    if [ -z "${PCI}" ]; then
-      SLOT_IDX=$((SLOT_IDX+1)); continue
-    fi
+    USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    nvme_slot@${SLOT_IDX} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
-    NODE+="        pcie_root = \"${PCI}\";\n"
-    [ -n "${PTYPE}" ] && \
-    NODE+="        port_type = \"${PTYPE}\";\n"
+    NODE="    nvme_slot@${PICKED} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
+    NODE+="        pcie_root = \"${PCIEPATH}\";\n"
+    NODE+="        port_type = \"ssdcache\";\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${NVME_LIST}"
 }
 
@@ -522,40 +467,29 @@ map_usb_nodes() {
   local PORT_COUNT
   PORT_COUNT=$(printf '%s\n' "${USB_LIST}" | wc -l)
   dialog --backtitle "$(backtitle)" --title "USB Mapping" \
-    --msgbox $'Detected USB ports: '"${PORT_COUNT}"$'\n(via /sys/bus/usb/devices hub traversal)\n\nLeave usb2_port empty to skip a slot.' 9 52 || return
+    --msgbox $'Detected USB ports: '"${PORT_COUNT}"$'\n(via /sys/bus/usb/devices hub traversal)\n\nSelect bay slot for each USB port.' 9 55 || return
 
-  local SLOT_IDX=1
+  local USED_SLOTS=""
   while read -r USBPORT; do
-    local FORM_OUT
-    FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "USB -> usb_slot@${SLOT_IDX}  [${USBPORT}]" \
-      --form $'Detected USB port: '"${USBPORT}"$'\nSlot: '"${SLOT_IDX}"$'  (Leave usb2_port empty to skip)' \
-      11 60 2 \
-      "usb2_port:" 1 1 "${USBPORT}"  1 14 12 0 \
-      "usb3_port:" 2 1 "${USBPORT}"  2 14 12 0 \
-      3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
+    local SLOT_INFO
+    SLOT_INFO=$(printf '[usb] port: %s' "${USBPORT}")
+    local PICKED
+    PICKED=$(_pick_slot "${PORT_COUNT}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
-    local USB2 USB3
-    USB2=$(printf '%s' "${FORM_OUT}" | sed -n '1p' | xargs)
-    USB3=$(printf '%s' "${FORM_OUT}" | sed -n '2p' | xargs)
-
-    if [ -z "${USB2}" ]; then
-      SLOT_IDX=$((SLOT_IDX+1)); continue
-    fi
+    USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    usb_slot@${SLOT_IDX} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
+    NODE="    usb_slot@${PICKED} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
     NODE+="        usb2 {\n"
-    NODE+="            usb_port = \"${USB2}\";\n"
+    NODE+="            usb_port = \"${USBPORT}\";\n"
     NODE+="        };\n"
     NODE+="        usb3 {\n"
-    NODE+="            usb_port = \"${USB3}\";\n"
+    NODE+="            usb_port = \"${USBPORT}\";\n"
     NODE+="        };\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${USB_LIST}"
 }
 
