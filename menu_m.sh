@@ -392,7 +392,11 @@ function selectldrmode() {
       MLMETHOD="PML"
       break
     elif [ "${resp}" = "m" ]; then
-      LDRMODE="JOT"
+      if [ "${LDRMODE}" = "JOT" ]; then
+        LDRMODE="FRIEND"
+      else
+        LDRMODE="JOT"
+      fi    
       continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
@@ -2376,8 +2380,8 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME}(${MLMETHOD}) )\\\"\""   >> "${TMP_PATH}/menu"    
-    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME}(${MLMETHOD}))\\\"\""   >> "${TMP_PATH}/menu"      
+    eval "echo \"k \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"    
+    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
   [ "$FRKRNL" = "YES" ] && 
