@@ -359,11 +359,25 @@ function selectldrmode() {
   menu_options+=("m" "${MSG29} : false")
   
   while true; do
-    # m 레이블만 교체
-    [ "${LDRMODE}" = "JOT" ] \
-      && menu_options[-1]="${MSG29} : true" \
-      || menu_options[-1]="${MSG29} : false"
-  
+    # LDRMODE 상태에 따라 f/j/k 레이블 및 m 레이블 실시간 갱신
+    if [ "${LDRMODE}" = "JOT" ]; then
+      MSG_LDR="${MSG29}"
+      menu_options[-1]="${MSG29} : true"
+    else
+      MSG_LDR="${MSG28}"
+      menu_options[-1]="${MSG29} : false"
+    fi
+
+    # f, j, k 레이블 갱신 (키는 짝수, 레이블은 홀수 인덱스)
+    for key_idx in "${!menu_options[@]}"; do
+      [ $((key_idx % 2)) -eq 0 ] && continue          # 키 인덱스 스킵
+      case "${menu_options[$((key_idx - 1))]}" in
+        "f") menu_options[${key_idx}]="${MSG_LDR}, all-modules(Persistent:PML)" ;;
+        "j") menu_options[${key_idx}]="${MSG_LDR}, all-modules(In-Memory:IML)" ;;
+        "k") menu_options[${key_idx}]="${MSG_LDR}, custom-modules(Persistent:PML)" ;;
+      esac
+    done
+    
     dialog --clear --backtitle "`backtitle`" \
       --menu "Choose a option" 0 0 0 \
       "${menu_options[@]}" \
@@ -388,11 +402,7 @@ function selectldrmode() {
       MLMETHOD="PML"
       break
     elif [ "${resp}" = "m" ]; then
-      if [ "${LDRMODE}" = "JOT" ]; then
-        LDRMODE="FRIEND"
-      else
-        LDRMODE="JOT"
-      fi    
+      [ "${LDRMODE}" = "JOT" ] && LDRMODE="FRIEND" || LDRMODE="JOT"
       continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
