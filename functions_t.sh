@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.3"
+rploaderver="1.2.8.4"
 build="master"
 redpillmake="prod"
 
@@ -228,6 +228,7 @@ function history() {
     1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
     1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     1.2.8.3 Added user DTS file mapping feature
+    1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -664,6 +665,8 @@ EOF
 # Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
 # 2026.03.19 v1.2.8.3 
 # Added user DTS file mapping feature
+# 2026.03.20 v1.2.8.4 
+# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     
 function showlastupdate() {
     cat <<EOF
@@ -798,6 +801,9 @@ function showlastupdate() {
 
 # 2026.03.20 v1.2.8.3 
 # Added user DTS file mapping feature
+
+# 2026.03.20 v1.2.8.4
+# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
 
 EOF
 }
