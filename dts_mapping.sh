@@ -396,7 +396,11 @@ _pick_slot() {
   fi
 
   local PICKED
-  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Select Bay Slot"     --menu "${INFO}" 18 52 10     "${MENU_ARGS[@]}"     3>&1 1>&2 2>&3) || return 1
+  PICKED=$(dialog --backtitle "$(backtitle)" \
+    --title "Select Bay Slot" \
+    --menu "${INFO}" 18 52 10 \
+    "${MENU_ARGS[@]}" \
+    3>&1 1>&2 2>&3) || return 1
 
   echo "${PICKED}"
 }
@@ -411,11 +415,16 @@ _pick_slot() {
 # Cancel 시 return 1
 # =============================================================================
 _pick_slot_type() {
-  local SLOT_NUM="${1}"
+  local SLOT_NUM="${1}"   # 현재 미사용, 호환성 유지
   local INFO="${2}"
 
   local PICKED
-  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Slot Type  [slot@${SLOT_NUM}]"     --radiolist "${INFO}" 13 58 2     "internal" "internal_slot@${SLOT_NUM}  (default)" "on"     "esata"    "esata_port@${SLOT_NUM}     (eSATA)"   "off"     3>&1 1>&2 2>&3) || return 1
+  PICKED=$(dialog --backtitle "$(backtitle)" \
+    --title "Select Slot Type" \
+    --radiolist "${INFO}" 13 55 2 \
+    "internal" "internal_slot  (default)" "on" \
+    "esata"    "esata_port     (eSATA)"   "off" \
+    3>&1 1>&2 2>&3) || return 1
 
   # 아무것도 선택 안 한 경우 기본값
   [ -z "${PICKED}" ] && PICKED="internal"
@@ -440,28 +449,35 @@ map_sata_nodes() {
   dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
     --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nSelect bay slot for each disk.' 9 58 || return
 
-  local USED_SLOTS=""
+  # internal / esata 각자 독립 슬롯 풀
+  local USED_INTERNAL="" USED_ESATA=""
   while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
     local SLOT_INFO
     SLOT_INFO=$(printf '[%s] /dev/%s\npcie_root: %s\nata_port : %s' \
       "${PROTO}" "${DEVNAME}" "${PCIEPATH}" "${ATAPORT:-?}")
-    local PICKED
-    PICKED=$(_pick_slot "${DISK_COUNT}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
-    USED_SLOTS="${USED_SLOTS} ${PICKED}"
-
-    # 슬롯 타입 선택 (internal_slot / esata_port)
-    local TYPE_INFO
-    TYPE_INFO=$(printf '[%s] /dev/%s  ->  slot@%s\npcie_root: %s  ata_port: %s' \
-      "${PROTO}" "${DEVNAME}" "${PICKED}" "${PCIEPATH}" "${ATAPORT:-?}")
+    # 1단계: 타입 선택 (internal / esata)
     local SLOT_TYPE
-    SLOT_TYPE=$(_pick_slot_type "${PICKED}" "${TYPE_INFO}") || {
-      # Cancel 시 internal 기본값 사용
-      SLOT_TYPE="internal"
-    }
+    SLOT_TYPE=$(_pick_slot_type "?" "${SLOT_INFO}") || continue
 
-    local SLOT_NAME
-    [ "${SLOT_TYPE}" = "esata" ] && SLOT_NAME="esata_port" || SLOT_NAME="internal_slot"
+    # 2단계: 타입별 독립 슬롯 번호 선택
+    local SLOT_NAME USED_REF
+    if [ "${SLOT_TYPE}" = "esata" ]; then
+      SLOT_NAME="esata_port"
+      USED_REF="${USED_ESATA}"
+    else
+      SLOT_NAME="internal_slot"
+      USED_REF="${USED_INTERNAL}"
+    fi
+
+    local PICKED
+    PICKED=$(_pick_slot "${DISK_COUNT}" "${USED_REF}" "${SLOT_INFO}") || continue
+
+    if [ "${SLOT_TYPE}" = "esata" ]; then
+      USED_ESATA="${USED_ESATA} ${PICKED}"
+    else
+      USED_INTERNAL="${USED_INTERNAL} ${PICKED}"
+    fi
 
     local NODE
     NODE="    ${SLOT_NAME}@${PICKED} {\n"
@@ -510,7 +526,7 @@ map_nvme_nodes() {
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    nvme_slot@${PICKED} {\n"
+    NODE="    nvme_slot@${DTS_IDX_NVME} {\n"
     NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        pcie_root = \"${PCIEPATH}\";\n"
     NODE+="        port_type = \"ssdcache\";\n"
@@ -518,6 +534,7 @@ map_nvme_nodes() {
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
+    DTS_IDX_NVME=$((DTS_IDX_NVME+1))
   done <<< "${NVME_LIST}"
 }
 
@@ -549,7 +566,7 @@ map_usb_nodes() {
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    usb_slot@${PICKED} {\n"
+    NODE="    usb_slot@${DTS_IDX_USB} {\n"
     NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        usb2 {\n"
     NODE+="            usb_port = \"${USBPORT}\";\n"
@@ -561,6 +578,7 @@ map_usb_nodes() {
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
+    DTS_IDX_USB=$((DTS_IDX_USB+1))
   done <<< "${USB_LIST}"
 }
 
@@ -607,6 +625,10 @@ reset_nodes() {
     --yesno $'Clear all mapped nodes and reset reg counter?' 6 50 || return
   DTS_NODES=()
   DTS_REG_COUNTER=1
+  DTS_IDX_INTERNAL=1
+  DTS_IDX_ESATA=1
+  DTS_IDX_NVME=1
+  DTS_IDX_USB=1
   dialog --backtitle "$(backtitle)" --title "Reset" \
     --msgbox $'All nodes cleared. reg counter reset to 0x01.' 6 52
 }
@@ -701,6 +723,10 @@ dts_init() {
   command -v udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
   DTS_NODES=()
   DTS_REG_COUNTER=1
+  DTS_IDX_INTERNAL=1
+  DTS_IDX_ESATA=1
+  DTS_IDX_NVME=1
+  DTS_IDX_USB=1
   OUTPUT_DTS="./model.dts"
   COMPATIBLE="Synology"
   DTSMODEL=""
