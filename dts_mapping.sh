@@ -387,7 +387,7 @@ _pick_slot() {
   local N
   for N in $(seq 1 "${TOTAL}"); do
     echo "${USED}" | grep -qw "${N}" && continue
-    MENU_ARGS+=("${N}" "internal_slot@${N}")
+    MENU_ARGS+=("${N}" "slot@${N}")
   done
 
   if [ ${#MENU_ARGS[@]} -eq 0 ]; then
@@ -398,6 +398,27 @@ _pick_slot() {
   local PICKED
   PICKED=$(dialog --backtitle "$(backtitle)"     --title "Select Bay Slot"     --menu "${INFO}" 18 52 10     "${MENU_ARGS[@]}"     3>&1 1>&2 2>&3) || return 1
 
+  echo "${PICKED}"
+}
+# =============================================================================
+# _pick_slot_type SLOT_NUM INFO
+#
+# 슬롯 타입 선택 radiolist:
+#   internal  →  internal_slot@N   (기본값)
+#   esata     →  esata_slot@N
+#
+# stdout: "internal" 또는 "esata"
+# Cancel 시 return 1
+# =============================================================================
+_pick_slot_type() {
+  local SLOT_NUM="${1}"
+  local INFO="${2}"
+
+  local PICKED
+  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Slot Type  [slot@${SLOT_NUM}]"     --radiolist "${INFO}" 13 58 2     "internal" "internal_slot@${SLOT_NUM}  (default)" "on"     "esata"    "esata_slot@${SLOT_NUM}     (eSATA)"   "off"     3>&1 1>&2 2>&3) || return 1
+
+  # 아무것도 선택 안 한 경우 기본값
+  [ -z "${PICKED}" ] && PICKED="internal"
   echo "${PICKED}"
 }
 
@@ -429,14 +450,28 @@ map_sata_nodes() {
 
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
+    # 슬롯 타입 선택 (internal_slot / esata_slot)
+    local TYPE_INFO
+    TYPE_INFO=$(printf '[%s] /dev/%s  ->  slot@%s\npcie_root: %s  ata_port: %s' \
+      "${PROTO}" "${DEVNAME}" "${PICKED}" "${PCIEPATH}" "${ATAPORT:-?}")
+    local SLOT_TYPE
+    SLOT_TYPE=$(_pick_slot_type "${PICKED}" "${TYPE_INFO}") || {
+      # Cancel 시 internal 기본값 사용
+      SLOT_TYPE="internal"
+    }
+
+    local SLOT_NAME
+    [ "${SLOT_TYPE}" = "esata" ] && SLOT_NAME="esata_slot" || SLOT_NAME="internal_slot"
+
     local NODE
-    NODE="    internal_slot@${PICKED} {\n"
+    NODE="    ${SLOT_NAME}@${PICKED} {\n"
     NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
     NODE+="        protocol_type = \"sata\";\n"
     NODE+="        ahci {\n"
     NODE+="            pcie_root = \"${PCIEPATH}\";\n"
     [ -n "${ATAPORT}" ] && \
     NODE+="            ata_port = <$(printf '0x%02X' "${ATAPORT}")>;\n"
+    [ "${SLOT_TYPE}" = "internal" ] && \
     NODE+="            internal_mode;\n"
     NODE+="        };\n"
     NODE+="    };"
