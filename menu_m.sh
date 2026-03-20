@@ -202,6 +202,7 @@ NVMES=$(jq -r -e '.general.nvmesystem' "$USER_CONFIG_FILE")
 VMTOOLS=$(jq -r -e '.general.vmtools' "$USER_CONFIG_FILE")
 LDRMODE=$(jq -r -e '.general.loadermode' "$USER_CONFIG_FILE")
 MDLNAME=$(jq -r -e '.general.modulename' "$USER_CONFIG_FILE")
+MLMETHOD=$(jq -r -e '.general.mlmethod' "$USER_CONFIG_FILE")
 ucode=$(jq -r -e '.general.ucode' "$USER_CONFIG_FILE")
 
 lcode=$(echo $ucode | cut -c 4-)
@@ -224,18 +225,15 @@ function backtitle() {
   BACKTITLE+=" ${ucode}"
   BACKTITLE+=" ${LDRMODE}"
   BACKTITLE+=" ${MDLNAME}"
+  BACKTITLE+=" ${MLMETHOD"
   [ -n "${MODEL}" ] && BACKTITLE+=" ${MODEL}" || BACKTITLE+=" (no model)"
   [ -n "${BUILD}" ] && BACKTITLE+=" ${BUILD}" || BACKTITLE+=" (no build)"
   [ -n "${SN}" ] && BACKTITLE+=" ${SN}" || BACKTITLE+=" (no SN)"
   [ -n "${IP}" ] && BACKTITLE+=" ${IP}" || BACKTITLE+=" (no IP)"
-  [ ! -n "${MACADDR1}" ] && BACKTITLE+=" (no MAC1)" || BACKTITLE+=" ${MACADDR1}"
-  [ ! -n "${MACADDR2}" ] && BACKTITLE+=" (no MAC2)" || BACKTITLE+=" ${MACADDR2}"
-  [ ! -n "${MACADDR3}" ] && BACKTITLE+=" (no MAC3)" || BACKTITLE+=" ${MACADDR3}"
-  [ ! -n "${MACADDR4}" ] && BACKTITLE+=" (no MAC4)" || BACKTITLE+=" ${MACADDR4}"  
-  [ ! -n "${MACADDR5}" ] && BACKTITLE+=" (no MAC5)" || BACKTITLE+=" ${MACADDR5}"
-  [ ! -n "${MACADDR6}" ] && BACKTITLE+=" (no MAC6)" || BACKTITLE+=" ${MACADDR6}"
-  [ ! -n "${MACADDR7}" ] && BACKTITLE+=" (no MAC7)" || BACKTITLE+=" ${MACADDR7}"
-  [ ! -n "${MACADDR8}" ] && BACKTITLE+=" (no MAC8)" || BACKTITLE+=" ${MACADDR8}"  
+  for i in 1 2 3 4 5 6 7 8; do
+    eval "mac=\${MACADDR${i}}"
+    [ -n "${mac}" ] && BACKTITLE+=" ${mac}"
+  done
   [ -n "${KEYMAP}" ] && BACKTITLE+=" (${LAYOUT}/${KEYMAP})" || BACKTITLE+=" (qwerty/us)"
   echo ${BACKTITLE}
 }
