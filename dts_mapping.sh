@@ -405,7 +405,7 @@ _pick_slot() {
 #
 # 슬롯 타입 선택 radiolist:
 #   internal  →  internal_slot@N   (기본값)
-#   esata     →  esata_slot@N
+#   esata     →  esata_port@N
 #
 # stdout: "internal" 또는 "esata"
 # Cancel 시 return 1
@@ -415,7 +415,7 @@ _pick_slot_type() {
   local INFO="${2}"
 
   local PICKED
-  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Slot Type  [slot@${SLOT_NUM}]"     --radiolist "${INFO}" 13 58 2     "internal" "internal_slot@${SLOT_NUM}  (default)" "on"     "esata"    "esata_slot@${SLOT_NUM}     (eSATA)"   "off"     3>&1 1>&2 2>&3) || return 1
+  PICKED=$(dialog --backtitle "$(backtitle)"     --title "Slot Type  [slot@${SLOT_NUM}]"     --radiolist "${INFO}" 13 58 2     "internal" "internal_slot@${SLOT_NUM}  (default)" "on"     "esata"    "esata_port@${SLOT_NUM}     (eSATA)"   "off"     3>&1 1>&2 2>&3) || return 1
 
   # 아무것도 선택 안 한 경우 기본값
   [ -z "${PICKED}" ] && PICKED="internal"
@@ -450,7 +450,7 @@ map_sata_nodes() {
 
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
-    # 슬롯 타입 선택 (internal_slot / esata_slot)
+    # 슬롯 타입 선택 (internal_slot / esata_port)
     local TYPE_INFO
     TYPE_INFO=$(printf '[%s] /dev/%s  ->  slot@%s\npcie_root: %s  ata_port: %s' \
       "${PROTO}" "${DEVNAME}" "${PICKED}" "${PCIEPATH}" "${ATAPORT:-?}")
@@ -461,7 +461,7 @@ map_sata_nodes() {
     }
 
     local SLOT_NAME
-    [ "${SLOT_TYPE}" = "esata" ] && SLOT_NAME="esata_slot" || SLOT_NAME="internal_slot"
+    [ "${SLOT_TYPE}" = "esata" ] && SLOT_NAME="esata_port" || SLOT_NAME="internal_slot"
 
     local NODE
     NODE="    ${SLOT_NAME}@${PICKED} {\n"
