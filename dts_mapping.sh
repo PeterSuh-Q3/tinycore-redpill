@@ -465,7 +465,7 @@ map_sata_nodes() {
 
     local NODE
     NODE="    ${SLOT_NAME}@${PICKED} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
+    NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        protocol_type = \"sata\";\n"
     NODE+="        ahci {\n"
     NODE+="            pcie_root = \"${PCIEPATH}\";\n"
@@ -477,6 +477,7 @@ map_sata_nodes() {
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
+    DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
   done <<< "${SATA_LIST}"
 }
 
@@ -510,12 +511,13 @@ map_nvme_nodes() {
 
     local NODE
     NODE="    nvme_slot@${PICKED} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
+    NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        pcie_root = \"${PCIEPATH}\";\n"
     NODE+="        port_type = \"ssdcache\";\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
+    DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
   done <<< "${NVME_LIST}"
 }
 
@@ -548,7 +550,7 @@ map_usb_nodes() {
 
     local NODE
     NODE="    usb_slot@${PICKED} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${PICKED}") 0x00>;\n"
+    NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        usb2 {\n"
     NODE+="            usb_port = \"${USBPORT}\";\n"
     NODE+="        };\n"
@@ -558,6 +560,7 @@ map_usb_nodes() {
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
+    DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
   done <<< "${USB_LIST}"
 }
 
@@ -603,6 +606,7 @@ reset_nodes() {
   dialog --backtitle "$(backtitle)" --title "Confirm Reset" \
     --yesno $'Clear all mapped nodes and reset reg counter?' 6 50 || return
   DTS_NODES=()
+  DTS_REG_COUNTER=1
   dialog --backtitle "$(backtitle)" --title "Reset" \
     --msgbox $'All nodes cleared. reg counter reset to 0x01.' 6 52
 }
@@ -696,6 +700,7 @@ dts_init() {
   command -v dialog  &>/dev/null || { echo "Error: 'dialog' not installed.";  return 1; }
   command -v udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
   DTS_NODES=()
+  DTS_REG_COUNTER=1
   OUTPUT_DTS="./model.dts"
   COMPATIBLE="Synology"
   DTSMODEL=""
