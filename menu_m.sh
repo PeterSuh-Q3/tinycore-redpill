@@ -225,15 +225,18 @@ function backtitle() {
   BACKTITLE+=" ${ucode}"
   BACKTITLE+=" ${LDRMODE}"
   BACKTITLE+=" ${MDLNAME}"
-  BACKTITLE+=" ${MLMETHOD"
+  BACKTITLE+=" ${MLMETHOD}"
+  
   [ -n "${MODEL}" ] && BACKTITLE+=" ${MODEL}" || BACKTITLE+=" (no model)"
   [ -n "${BUILD}" ] && BACKTITLE+=" ${BUILD}" || BACKTITLE+=" (no build)"
   [ -n "${SN}" ] && BACKTITLE+=" ${SN}" || BACKTITLE+=" (no SN)"
   [ -n "${IP}" ] && BACKTITLE+=" ${IP}" || BACKTITLE+=" (no IP)"
+  
   for i in 1 2 3 4 5 6 7 8; do
-    eval "mac=\${MACADDR${i}}"
-    [ -n "${mac}" ] && BACKTITLE+=" ${mac}"
+    varname="MACADDR${i}"
+    [ -n "${!varname}" ] && BACKTITLE+=" ${!varname}"
   done
+  
   [ -n "${KEYMAP}" ] && BACKTITLE+=" (${LAYOUT}/${KEYMAP})" || BACKTITLE+=" (qwerty/us)"
   echo ${BACKTITLE}
 }
