@@ -6137,6 +6137,8 @@ function my() {
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/reboottotcrp
   #fi   
 
+  [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat
+
   if [ "${MDLNAME}" == "custom-modules" ]; then
       echo "Discover left space for custom-modules initrd-dsm ... "        
       SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
