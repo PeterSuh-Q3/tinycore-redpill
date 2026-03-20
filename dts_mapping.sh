@@ -18,7 +18,6 @@
 
 OUTPUT_DTS="./model.dts"
 DTS_NODES=()
-REG_COUNTER=1
 
 COMPATIBLE="Synology"
 DTSMODEL=""
@@ -421,32 +420,27 @@ map_sata_nodes() {
     local FORM_OUT
     FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
       --title "SATA/SAS -> internal_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nata_port: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
-      17 72 5 \
-      "slot index (N):"  1 1 "${SLOT_IDX}"   1 22 4  0 \
-      "pcie_root:"       2 1 "${PCIEPATH}"   2 22 46 0 \
-      "${PORT_LABEL}"    3 1 "${ATAPORT}"    3 22 5  0 \
-      "driver node:"     4 1 "${DRIVER}"     4 22 20 0 \
-      "internal_mode:"   5 1 "y"             5 22 3  0 \
+      --form $'\Zb'"${DRIVER}"$'\Zn ['"${PROTO}"$']  pcie_root: '"${PCIEPATH}"$'\nata_port: '"${ATAPORT:-?}"$'  device: /dev/'"${DEVNAME}"$'\n\nSlot: '"${SLOT_IDX}"$'  (Leave pcie_root empty to skip)' \
+      16 72 4 \
+      "pcie_root:"    1 1 "${PCIEPATH}"   1 16 46 0 \
+      "${PORT_LABEL}" 2 1 "${ATAPORT}"    2 16 5  0 \
+      "driver node:"  3 1 "${DRIVER}"     3 16 20 0 \
+      "internal_mode:" 4 1 "y"            4 16 3  0 \
       3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
 
-    local SIDX PCI PORT DRV IMODE
-    SIDX=$(printf '%s'  "${FORM_OUT}" | sed -n '1p' | xargs)
-    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '2p' | xargs)
-    PORT=$(printf '%s'  "${FORM_OUT}" | sed -n '3p' | xargs)
-    DRV=$(printf '%s'   "${FORM_OUT}" | sed -n '4p' | xargs)
-    IMODE=$(printf '%s' "${FORM_OUT}" | sed -n '5p' | xargs | tr '[:upper:]' '[:lower:]')
+    local PCI PORT DRV IMODE
+    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '1p' | xargs)
+    PORT=$(printf '%s'  "${FORM_OUT}" | sed -n '2p' | xargs)
+    DRV=$(printf '%s'   "${FORM_OUT}" | sed -n '3p' | xargs)
+    IMODE=$(printf '%s' "${FORM_OUT}" | sed -n '4p' | xargs | tr '[:upper:]' '[:lower:]')
 
     if [ -z "${PCI}" ]; then
       SLOT_IDX=$((SLOT_IDX+1)); continue
     fi
 
-    local REG_HEX
-    REG_HEX=$(printf '0x%02X' "${REG_COUNTER}")
-
     local NODE
-    NODE="    internal_slot@${SIDX} {\n"
-    NODE+="        reg = <${REG_HEX} 0x00>;\n"
+    NODE="    internal_slot@${SLOT_IDX} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
     NODE+="        protocol_type = \"sata\";\n"
     NODE+="        ${DRV} {\n"
     NODE+="            pcie_root = \"${PCI}\";\n"
@@ -458,7 +452,6 @@ map_sata_nodes() {
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    REG_COUNTER=$((REG_COUNTER+1))
     SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${SATA_LIST}"
 }
@@ -485,36 +478,30 @@ map_nvme_nodes() {
   while IFS='|' read -r PCIEPATH DEVNAME; do
     local FORM_OUT
     FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "NVMe → nvme_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
-      --form $'pcie_root: '"${PCIEPATH}"$'  device: /dev/'"${DEVNAME}"$'\n\n(Leave pcie_root empty to skip this slot)' \
-      13 70 3 \
-      "slot index (N):" 1 1 "${SLOT_IDX}"  1 18 4  0 \
-      "pcie_root:"      2 1 "${PCIEPATH}"  2 18 46 0 \
-      "port_type:"      3 1 "ssdcache"     3 18 20 0 \
+      --title "NVMe -> nvme_slot@${SLOT_IDX}  [/dev/${DEVNAME}]" \
+      --form $'pcie_root: '"${PCIEPATH}"$'  device: /dev/'"${DEVNAME}"$'\nSlot: '"${SLOT_IDX}"$'  (Leave pcie_root empty to skip)' \
+      12 70 2 \
+      "pcie_root:"  1 1 "${PCIEPATH}"  1 14 46 0 \
+      "port_type:"  2 1 "ssdcache"     2 14 20 0 \
       3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
 
-    local SIDX PCI PTYPE
-    SIDX=$(printf '%s'  "${FORM_OUT}" | sed -n '1p' | xargs)
-    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '2p' | xargs)
-    PTYPE=$(printf '%s' "${FORM_OUT}" | sed -n '3p' | xargs)
+    local PCI PTYPE
+    PCI=$(printf '%s'   "${FORM_OUT}" | sed -n '1p' | xargs)
+    PTYPE=$(printf '%s' "${FORM_OUT}" | sed -n '2p' | xargs)
 
     if [ -z "${PCI}" ]; then
       SLOT_IDX=$((SLOT_IDX+1)); continue
     fi
 
-    local REG_HEX
-    REG_HEX=$(printf '0x%02X' "${REG_COUNTER}")
-
     local NODE
-    NODE="    nvme_slot@${SIDX} {\n"
-    NODE+="        reg = <${REG_HEX} 0x00>;\n"
+    NODE="    nvme_slot@${SLOT_IDX} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
     NODE+="        pcie_root = \"${PCI}\";\n"
     [ -n "${PTYPE}" ] && \
     NODE+="        port_type = \"${PTYPE}\";\n"
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    REG_COUNTER=$((REG_COUNTER+1))
     SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${NVME_LIST}"
 }
@@ -541,29 +528,24 @@ map_usb_nodes() {
   while read -r USBPORT; do
     local FORM_OUT
     FORM_OUT=$(dialog --backtitle "$(backtitle)" --colors \
-      --title "USB → usb_slot@${SLOT_IDX}  [${USBPORT}]" \
-      --form $'Detected USB port: '"${USBPORT}"$'\n\n(Leave usb2_port empty to skip this slot)' \
-      12 60 3 \
-      "slot index (N):" 1 1 "${SLOT_IDX}" 1 18 4  0 \
-      "usb2_port:"      2 1 "${USBPORT}"  2 18 12 0 \
-      "usb3_port:"      3 1 "${USBPORT}"  3 18 12 0 \
+      --title "USB -> usb_slot@${SLOT_IDX}  [${USBPORT}]" \
+      --form $'Detected USB port: '"${USBPORT}"$'\nSlot: '"${SLOT_IDX}"$'  (Leave usb2_port empty to skip)' \
+      11 60 2 \
+      "usb2_port:" 1 1 "${USBPORT}"  1 14 12 0 \
+      "usb3_port:" 2 1 "${USBPORT}"  2 14 12 0 \
       3>&1 1>&2 2>&3) || { SLOT_IDX=$((SLOT_IDX+1)); continue; }
 
-    local SIDX USB2 USB3
-    SIDX=$(printf '%s' "${FORM_OUT}" | sed -n '1p' | xargs)
-    USB2=$(printf '%s' "${FORM_OUT}" | sed -n '2p' | xargs)
-    USB3=$(printf '%s' "${FORM_OUT}" | sed -n '3p' | xargs)
+    local USB2 USB3
+    USB2=$(printf '%s' "${FORM_OUT}" | sed -n '1p' | xargs)
+    USB3=$(printf '%s' "${FORM_OUT}" | sed -n '2p' | xargs)
 
     if [ -z "${USB2}" ]; then
       SLOT_IDX=$((SLOT_IDX+1)); continue
     fi
 
-    local REG_HEX
-    REG_HEX=$(printf '0x%02X' "${REG_COUNTER}")
-
     local NODE
-    NODE="    usb_slot@${SIDX} {\n"
-    NODE+="        reg = <${REG_HEX} 0x00>;\n"
+    NODE="    usb_slot@${SLOT_IDX} {\n"
+    NODE+="        reg = <$(printf '0x%02X' "${SLOT_IDX}") 0x00>;\n"
     NODE+="        usb2 {\n"
     NODE+="            usb_port = \"${USB2}\";\n"
     NODE+="        };\n"
@@ -573,7 +555,6 @@ map_usb_nodes() {
     NODE+="    };"
 
     DTS_NODES+=("${NODE}")
-    REG_COUNTER=$((REG_COUNTER+1))
     SLOT_IDX=$((SLOT_IDX+1))
   done <<< "${USB_LIST}"
 }
@@ -620,7 +601,6 @@ reset_nodes() {
   dialog --backtitle "$(backtitle)" --title "Confirm Reset" \
     --yesno $'Clear all mapped nodes and reset reg counter?' 6 50 || return
   DTS_NODES=()
-  REG_COUNTER=1
   dialog --backtitle "$(backtitle)" --title "Reset" \
     --msgbox $'All nodes cleared. reg counter reset to 0x01.' 6 52
 }
@@ -714,7 +694,6 @@ dts_init() {
   command -v dialog  &>/dev/null || { echo "Error: 'dialog' not installed.";  return 1; }
   command -v udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
   DTS_NODES=()
-  REG_COUNTER=1
   OUTPUT_DTS="./model.dts"
   COMPATIBLE="Synology"
   DTSMODEL=""
