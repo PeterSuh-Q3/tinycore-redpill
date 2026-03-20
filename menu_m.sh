@@ -2360,6 +2360,7 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
+  [ "${LDRMODE}" = "JOT" ] && ldrname="Direct-Boot" || ldrname="Friend"
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
@@ -2376,8 +2377,8 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"    
-    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"      
+    eval "echo \"k \\\"\${MSG${tz}06} (${ldrname}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"    
+    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${ldrname}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
   [ "$FRKRNL" = "YES" ] && 
