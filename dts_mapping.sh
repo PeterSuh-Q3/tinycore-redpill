@@ -174,97 +174,6 @@ _get_usb_ports() {
 }
 
 # =============================================================================
-# SATA 컨트롤러별 전체 가용 포트 감지 (showsata 테크닉)
-#
-# lspci -d ::106  → SATA 컨트롤러 PCI 주소 열거
-# /sys/class/scsi_host  → 컨트롤러별 활성 host(포트) 목록
-# ahci_port_cmd = "0"   → dummy 포트 (BIOS 비활성)
-# dmesg SATA link down  → 링크 단절 포트
-# lsscsi -b             → 실제 디스크 연결 여부
-#
-# 출력: PCIEPATH|PCIADDR|PORT|STATUS
-#   STATUS: active | empty | dummy | down | loader
-# =============================================================================
-detect_sata_ports() {
-  _get_bootdisk_pci
-
-  for PCIADDR in $(lspci -d ::106 2>/dev/null | awk '{print $1}'); do
-    local PCIEPATH
-    PCIEPATH=$(_build_pcie_root "/devices/pci0000:00/${PCIADDR}/ata1")
-    [ -z "${PCIEPATH}" ] && PCIEPATH="0000:${PCIADDR}"
-
-    local PORTS
-    PORTS=$(ls -l /sys/class/scsi_host 2>/dev/null | grep "${PCIADDR}" |             awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
-    [ -z "${PORTS}" ] && continue
-
-    for P in ${PORTS}; do
-      local STATUS
-      # 1. link down 체크 (dmesg)
-      if dmesg 2>/dev/null | grep -q "ata$((P+1)):.*SATA link down"; then
-        STATUS="down"
-      # 2. dummy 포트 (ahci_port_cmd = 0)
-      elif [ "$(cat /sys/class/scsi_host/host${P}/ahci_port_cmd 2>/dev/null)" = "0" ]; then
-        STATUS="dummy"
-      # 3. 실제 디스크 연결 여부 (lsscsi -b 로 host 번호 확인)
-      elif lsscsi -b 2>/dev/null | grep -v -- '-' | grep -q "^\[${P}:"; then
-        # 부트 디스크 판별: BOOTDISK_PCIEPATH + BOOTDISK_ATA 비교 (udevadm 기반)
-        local ATA_PORT
-        ATA_PORT=$(( P ))   # scsi host 번호 기반 ata port (0-based)
-        if [ -n "${BOOTDISK_PCIEPATH}" ] &&            [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] &&            { [ -z "${BOOTDISK_ATA}" ] || [ "${BOOTDISK_ATA}" = "${ATA_PORT}" ]; }; then
-          STATUS="loader"
-        else
-          STATUS="active"
-        fi
-      else
-        STATUS="empty"
-      fi
-
-      echo "${PCIEPATH}|${PCIADDR}|${P}|${STATUS}"
-    done
-  done
-}
-
-# =============================================================================
-# SAS HBA 컨트롤러별 전체 가용 포트 감지
-# lspci -d ::107 → SAS 컨트롤러
-# 출력: PCIEPATH|PCIADDR|PORT|STATUS
-# =============================================================================
-detect_sas_ports() {
-  _get_bootdisk_pci
-
-  for PCIADDR in $(lspci -d ::107 2>/dev/null | awk '{print $1}'); do
-    local PCIEPATH
-    PCIEPATH=$(_build_pcie_root "/devices/pci0000:00/${PCIADDR}/host0/port-0:0")
-    [ -z "${PCIEPATH}" ] && PCIEPATH="0000:${PCIADDR}"
-
-    # SAS: port-H:N 패턴으로 포트 열거
-    local HOSTS
-    HOSTS=$(ls -l /sys/class/scsi_host 2>/dev/null | grep "${PCIADDR}" |             awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
-    [ -z "${HOSTS}" ] && continue
-
-    for H in ${HOSTS}; do
-      # port-H:N 디렉토리 순회
-      local PORT_DIRS
-      PORT_DIRS=$(ls /sys/class/scsi_host/host${H}/../ 2>/dev/null | grep -E '^port-' | sort -V)
-      if [ -z "${PORT_DIRS}" ]; then
-        # port 정보 없으면 host 단위로 처리
-        local STATUS="empty"
-        lsscsi -b 2>/dev/null | grep -v -- '-' | grep -q "^\[${H}:" && STATUS="active"
-        echo "${PCIEPATH}|${PCIADDR}|${H}|${STATUS}"
-        continue
-      fi
-      for PDIR in ${PORT_DIRS}; do
-        local PIDX
-        PIDX=$(echo "${PDIR}" | grep -oE ':[0-9]+$' | tr -d ':')
-        local STATUS="empty"
-        lsscsi -b 2>/dev/null | grep -v -- '-' | grep -q "^\[${H}:" && STATUS="active"
-        echo "${PCIEPATH}|${PCIADDR}|${PIDX}|${STATUS}"
-      done
-    done
-  done
-}
-
-# =============================================================================
 # SATA / SAS 감지
 # /dev/sd* 순회 → udevadm → DEVPATH 패턴으로 SATA/SAS 판별
 #
@@ -382,85 +291,59 @@ detect_nvme() {
 }
 
 # =============================================================================
-# 감지된 장치 목록 표시 (showsata 테크닉 적용)
-# lspci 기반 전체 가용 포트 현황 + NVMe + USB
+# 감지된 장치 목록 표시
 # =============================================================================
 show_devices() {
-  local MSG="" MAPPABLE=0
+  local MSG="" COUNT=0
 
-  # ── SATA ──────────────────────────────────────────────────────────────────
-  local SATA_PORTS
-  SATA_PORTS=$(detect_sata_ports)
-  if [ -n "${SATA_PORTS}" ]; then
-    MSG+="\n\Z4=== SATA ===\Zn\n"
+  local SATA_LIST LOADER_ATA LOADER_DEV
+  SATA_LIST=$(detect_sata show)
+  if [ -n "${SATA_LIST}" ]; then
+    MSG+="\n\Z4=== SATA / SAS ===\Zn\n"
     local PREV_PCI=""
-    while IFS='|' read -r PCI PCIADDR PORT STATUS; do
+    while IFS='|' read -r PCI PORT DRV DEV FLAG PROTO; do
       if [ "${PCI}" != "${PREV_PCI}" ]; then
         [ -n "${PREV_PCI}" ] && MSG+="\n"
-        local CTRLNAME
-        CTRLNAME=$(lspci -s "${PCIADDR}" 2>/dev/null | sed "s/ .*://")
-        MSG+="\Zb${CTRLNAME}\Zn\nPorts: "
+        MSG+="\Zb${DRV}\Zn [${PROTO}]  ${PCI}\nDisks: "
         PREV_PCI="${PCI}"
       fi
-      case "${STATUS}" in
-        active) MSG+="\Z2$(printf "%02d" "${PORT}")\Zn " ; MAPPABLE=$((MAPPABLE+1)) ;;
-        loader) MSG+="\Z3$(printf "%02d" "${PORT}"):LOADER\Zn " ;;
-        dummy)  MSG+="\Z1$(printf "%02d" "${PORT}"):DUMMY\Zn " ;;
-        down)   MSG+="\Z1$(printf "%02d" "${PORT}"):DOWN\Zn " ;;
-        empty)  MSG+="$(printf "%02d" "${PORT}") " ;;
-      esac
-    done <<< "${SATA_PORTS}"
+      local PORT_LABEL
+      PORT_LABEL="ata${PORT}"
+      if [ "${FLAG}" = "loader" ]; then
+        MSG+="\Z3${DEV}(${PORT_LABEL}:LOADER)\Zn "
+      else
+        MSG+="\Z2${DEV}\Zn(${PORT_LABEL}) "
+        COUNT=$((COUNT+1))
+      fi
+    done <<< "${SATA_LIST}"
     MSG+="\n"
   fi
 
-  # ── SAS ───────────────────────────────────────────────────────────────────
-  local SAS_PORTS
-  SAS_PORTS=$(detect_sas_ports)
-  if [ -n "${SAS_PORTS}" ]; then
-    MSG+="\n\Z4=== SAS (HBA) ===\Zn\n"
-    local PREV_PCI=""
-    while IFS='|' read -r PCI PCIADDR PORT STATUS; do
-      if [ "${PCI}" != "${PREV_PCI}" ]; then
-        [ -n "${PREV_PCI}" ] && MSG+="\n"
-        local CTRLNAME
-        CTRLNAME=$(lspci -s "${PCIADDR}" 2>/dev/null | sed "s/ .*://")
-        MSG+="\Zb${CTRLNAME}\Zn\nPorts: "
-        PREV_PCI="${PCI}"
-      fi
-      case "${STATUS}" in
-        active) MSG+="\Z2$(printf "%02d" "${PORT}")\Zn " ; MAPPABLE=$((MAPPABLE+1)) ;;
-        *)      MSG+="$(printf "%02d" "${PORT}") " ;;
-      esac
-    done <<< "${SAS_PORTS}"
-    MSG+="\n"
-  fi
-
-  # ── NVMe ──────────────────────────────────────────────────────────────────
   local NVME_LIST
   NVME_LIST=$(detect_nvme)
   if [ -n "${NVME_LIST}" ]; then
     MSG+="\n\Z4=== NVMe ===\Zn\n"
     while IFS='|' read -r PCI DEV; do
       MSG+="\Z2${DEV}\Zn  ${PCI}\n"
-      MAPPABLE=$((MAPPABLE+1))
+      COUNT=$((COUNT+1))
     done <<< "${NVME_LIST}"
   fi
 
-  # ── USB ───────────────────────────────────────────────────────────────────
   local USB_LIST
   USB_LIST=$(_get_usb_ports)
   if [ -n "${USB_LIST}" ]; then
     MSG+="\n\Z4=== USB ===\Zn\n"
     while read -r PORT; do
       MSG+="port: \Z2${PORT}\Zn\n"
-      MAPPABLE=$((MAPPABLE+1))
+      COUNT=$((COUNT+1))
     done <<< "${USB_LIST}"
   fi
 
-  [ -z "${SATA_PORTS}" ] && [ -z "${SAS_PORTS}" ] && [ -z "${NVME_LIST}" ] && [ -z "${USB_LIST}" ] &&     MSG="\Z1No storage devices detected.\Zn"
+  [ -z "${SATA_LIST}" ] && [ -z "${NVME_LIST}" ] && [ -z "${USB_LIST}" ] && \
+    MSG="\Z1No storage devices detected.\Zn"
 
-  MSG+="\n$(printf 'Mappable: %d  (boot loader excluded)' "${MAPPABLE}")"
-  MSG+="\n\Z2Green\Zn=active  Gray=empty  \Z3Yellow\Zn=LOADER  \Z1Red\Zn=DUMMY/DOWN"
+  MSG+="\n$(printf 'Total: %d mappable device(s) detected' "${COUNT}")"
+  MSG+="\n\Z2Green\Zn = mappable   \Z3Yellow\Zn = boot loader disk (excluded)"
 
   dialog --backtitle "$(backtitle)" --colors \
     --title "Detected Storage Devices" \
@@ -563,17 +446,8 @@ map_sata_nodes() {
 
   local DISK_COUNT
   DISK_COUNT=$(printf '%s\n' "${SATA_LIST}" | wc -l)
-
-  # 가용 슬롯 상한: lspci 기반 전체 포트 수 (빈 포트 포함, dummy/down 제외)
-  local AVAIL_SATA AVAIL_SAS AVAIL_TOTAL
-  AVAIL_SATA=$(detect_sata_ports | grep -cv "|dummy\||down" || true)
-  AVAIL_SAS=$(detect_sas_ports   | grep -cv "|dummy\||down" || true)
-  AVAIL_TOTAL=$((AVAIL_SATA + AVAIL_SAS))
-  # 실제 디스크 수보다 작으면 디스크 수 사용
-  [ "${AVAIL_TOTAL}" -lt "${DISK_COUNT}" ] && AVAIL_TOTAL="${DISK_COUNT}"
-
   dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
-    --msgbox $'Detected disks: '"${DISK_COUNT}"$'  /  Available ports: '"${AVAIL_TOTAL}"$'\n(boot disk excluded)\n\nStep 1: select slot type  Step 2: select bay number.' 9 62 || return
+    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nStep 1: select slot type  Step 2: select bay number.' 9 62 || return
 
   # ==========================================================================
   # 1패스: 각 디스크의 슬롯 타입을 먼저 수집
