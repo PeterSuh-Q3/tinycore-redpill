@@ -1,21 +1,20 @@
 #!/bin/sh
 
 REAL_DEV=/dev/ttyUSB0
-ALIAS_DEV=/dev/ttyS0
+CONSOLE_DEV=/dev/ttyS0
 BAUD=115200
 
 case $1 in
     start)
-        # 1) 커널 모듈 로드 (FTDI 자동로드 확인 후 필요시만) (FTDI는 DSM 네이티브 내장)
+        # 1) 커널 모듈 로드 (FTDI 자동로드 확인 후 필요시만)
         if ! lsmod | grep -q ftdi_sio; then
             insmod /lib/modules/usbserial.ko 2>/dev/null
             insmod /lib/modules/ftdi_sio.ko  2>/dev/null
             sleep 2
         else
             echo "ftdi_sio already loaded" > /dev/kmsg
-        fi    
-        # pl2303.ko / cp210x.ko / ch341.ko 불필요
-        sleep 2  # FTDI는 인식 빠르므로 3→2초로 단축
+        fi
+        sleep 2
 
         # 2) ttyUSB0 인식 확인
         if [ ! -e ${REAL_DEV} ]; then
@@ -24,39 +23,50 @@ case $1 in
         fi
         chmod 666 ${REAL_DEV}
 
-        # 3) ttyS0 점유 여부 확인 후 처리
-        if fuser ${ALIAS_DEV} > /dev/null 2>&1; then
-            echo "ttyS0 busy, using socat PTY bridge" > /dev/kmsg
-            mv ${ALIAS_DEV} ${ALIAS_DEV}.orig 2>/dev/null
-            socat PTY,link=${ALIAS_DEV},raw,echo=0,mode=666 \
-                  ${REAL_DEV},b${BAUD},raw,echo=0 &
-            echo $! > /var/run/socat-serial.pid
-        else
-            echo "ttyS0 free, creating symlink" > /dev/kmsg
-            rm -f ${ALIAS_DEV}
-            ln -sf ${REAL_DEV} ${ALIAS_DEV}
+        # 3) 기존 socat 중복 실행 방지
+        if [ -f /var/run/socat-serial.pid ]; then
+            kill $(cat /var/run/socat-serial.pid) 2>/dev/null
+            rm -f /var/run/socat-serial.pid
         fi
 
-        # 4) stty 파라미터 적용 (FTDI는 stty 정상 동작)
-        stty -F ${REAL_DEV} ${BAUD} cs8 -cstopb -parenb -crtscts raw 2>/dev/null
-
-        echo "Serial bridge ready: ${ALIAS_DEV} -> ${REAL_DEV}" > /dev/kmsg
+        # 4) ttyS0 → ttyUSB0 socat 브릿지 실행
+        socat ${CONSOLE_DEV},b${BAUD},raw,echo=0 \
+              ${REAL_DEV},b${BAUD},raw,echo=0 &
+        echo $! > /var/run/socat-serial.pid
+        echo "socat bridge started: ${CONSOLE_DEV}(${BAUD}) -> ${REAL_DEV}(${BAUD}) PID:$(cat /var/run/socat-serial.pid)" > /dev/kmsg
 
         # 5) 상태 출력
         echo "=== Module ===" && lsmod | grep -E 'usbserial|ftdi_sio'
-        echo "=== Device ===" && ls -la /dev/ttyUSB0 /dev/ttyS0 2>/dev/null
-        echo "=== Kernel log ===" && dmesg | grep -E 'ftdi|ttyUSB|Serial bridge' | tail -5
+        echo "=== Device ===" && ls -la ${REAL_DEV} ${CONSOLE_DEV} 2>/dev/null
+        echo "=== Kernel log ===" && dmesg | grep -E 'ftdi|ttyUSB|socat' | tail -5
         echo "=== socat ===" && ps | grep socat | grep -v grep
         ;;
 
     stop)
+        # socat 종료
         if [ -f /var/run/socat-serial.pid ]; then
             kill $(cat /var/run/socat-serial.pid) 2>/dev/null
-            rm /var/run/socat-serial.pid
+            rm -f /var/run/socat-serial.pid
+        else
+            # PID 파일 없을 때 강제 탐색
+            kill $(ps | grep socat | grep -v grep | awk '{print $1}') 2>/dev/null
         fi
-        rm -f ${ALIAS_DEV}
-        mv ${ALIAS_DEV}.orig ${ALIAS_DEV} 2>/dev/null
+
+        # ttyUSB0 점유 프로세스 전체 정리
+        kill $(fuser ${REAL_DEV} 2>/dev/null) 2>/dev/null
+
         # FTDI 모듈 언로드
         rmmod ftdi_sio usbserial 2>/dev/null
+
+        echo "Serial bridge stopped" > /dev/kmsg
+        echo "=== socat ===" && ps | grep socat | grep -v grep
+        ;;
+
+    status)
+        echo "=== Module ===" && lsmod | grep -E 'usbserial|ftdi_sio'
+        echo "=== Device ===" && ls -la ${REAL_DEV} ${CONSOLE_DEV} 2>/dev/null
+        echo "=== socat PID ===" && cat /var/run/socat-serial.pid 2>/dev/null
+        echo "=== socat process ===" && ps | grep socat | grep -v grep
+        echo "=== ttyUSB0 users ===" && fuser ${REAL_DEV} 2>/dev/null
         ;;
 esac
