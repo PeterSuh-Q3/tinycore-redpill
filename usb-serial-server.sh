@@ -6,10 +6,14 @@ BAUD=115200
 
 case $1 in
     start)
-        # 1) 커널 모듈 로드 (FTDI는 DSM 네이티브 내장)
-        # insmod 불필요한 경우가 많으나 명시적으로 로드
-        insmod /lib/modules/usbserial.ko  2>/dev/null
-        insmod /lib/modules/ftdi_sio.ko   2>/dev/null
+        # 1) 커널 모듈 로드 (FTDI 자동로드 확인 후 필요시만) (FTDI는 DSM 네이티브 내장)
+        if ! lsmod | grep -q ftdi_sio; then
+            insmod /lib/modules/usbserial.ko 2>/dev/null
+            insmod /lib/modules/ftdi_sio.ko  2>/dev/null
+            sleep 2
+        else
+            echo "ftdi_sio already loaded" > /dev/kmsg
+        fi    
         # pl2303.ko / cp210x.ko / ch341.ko 불필요
         sleep 2  # FTDI는 인식 빠르므로 3→2초로 단축
 
