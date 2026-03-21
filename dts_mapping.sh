@@ -683,6 +683,47 @@ show_result() {
     --msgbox "$(printf '.dts file generated\n\nFile: %s\ncompatible: %s\nmodel: %s\nTotal nodes: %d' \
       "${OUTPUT_DTS}" "${COMPATIBLE}" "${DTSMODEL}" "${#DTS_NODES[@]}")" 12 52
 }
+# =============================================================================
+# edit_dts — /home/tc/model.dts 직접 편집 (editUserConfig 방식)
+# editbox로 편집 후 dtc 문법 검사 (dtc 없으면 저장만)
+# =============================================================================
+edit_dts() {
+  local DTS_FILE="/home/tc/model.dts"
+
+  if [ ! -f "${DTS_FILE}" ]; then
+    dialog --backtitle "$(backtitle)" --title "Warning"       --msgbox $'File not found:
+'"${DTS_FILE}"$'
+
+Generate .dts first (menu g).' 8 52
+    return
+  fi
+
+  local TMP_EDIT
+  TMP_EDIT=$(mktemp /tmp/dts_edit_XXXXXX.dts)
+
+  while true; do
+    dialog --backtitle "$(backtitle)"       --title "Edit DTS  [${DTS_FILE}]  (Tab=field, Enter=newline)"       --editbox "${DTS_FILE}" 0 0 2>"${TMP_EDIT}"
+
+    [ $? -ne 0 ] && { rm -f "${TMP_EDIT}"; return; }
+
+    # dtc가 있으면 문법 검사
+    if command -v dtc &>/dev/null; then
+      local ERR
+      ERR=$(dtc -I dts -O dtb -W no-unique_unit_address             "${TMP_EDIT}" -o /dev/null 2>&1)
+      if [ $? -ne 0 ]; then
+        dialog --backtitle "$(backtitle)" --title "DTS Syntax Error"           --msgbox "${ERR}" 0 0
+        continue
+      fi
+    fi
+
+    cp -f "${TMP_EDIT}" "${DTS_FILE}" &&       dialog --backtitle "$(backtitle)" --title "Saved"         --msgbox $'Saved successfully:
+'"${DTS_FILE}" 7 52
+    break
+  done
+  rm -f "${TMP_EDIT}"
+}
+
+
 
 # =============================================================================
 # Main menu
@@ -691,45 +732,46 @@ show_result() {
 # =============================================================================
 _next_item() {
   case "${1}" in
-    1) echo "2" ;;
-    2) echo "3" ;;
-    3) echo "4" ;;
-    4) echo "5" ;;
-    5) echo "6" ;;
-    6) echo "7" ;;
-    7) echo "7" ;;
-    *) echo "${1}" ;;   # 8/9/0 은 그대로 유지
+    a) echo "b" ;;
+    b) echo "c" ;;
+    c) echo "d" ;;
+    d) echo "e" ;;
+    e) echo "f" ;;
+    f) echo "g" ;;
+    g) echo "g" ;;
+    *) echo "${1}" ;;
   esac
 }
 
 main_menu() {
-  local DEFAULT_ITEM="1"
+  local DEFAULT_ITEM="a"
   while true; do
     local NODE_COUNT="${#DTS_NODES[@]}"
     local CHOICE
     CHOICE=$(dialog --backtitle "$(backtitle)" --colors \
       --title "Synology DTS Mapping Generator" \
       --default-item "${DEFAULT_ITEM}" \
-      --menu "Mapped nodes: \Z2${NODE_COUNT}\Zn   Output: ${OUTPUT_DTS}" 20 65 10 \
-      "1" "Show detected storage devices" \
-      "2" "Set DTS header (compatible / model)" \
-      "3" "Map SATA/SAS  ->  internal_slot@N" \
-      "4" "Map NVMe  ->  nvme_slot@N" \
-      "5" "Map USB   ->  usb_slot@N" \
-      "6" "Preview .dts output" \
-      "7" "Generate .dts file" \
-      "8" "Reset all nodes" \
-      "9" "Exit" \
+      --menu "Mapped nodes: \Z2${NODE_COUNT}\Zn   Output: ${OUTPUT_DTS}" 22 65 11 \
+      "a" "Show detected storage devices" \
+      "b" "Set DTS header (compatible / model)" \
+      "c" "Map SATA/SAS  ->  internal_slot@N" \
+      "d" "Map NVMe  ->  nvme_slot@N" \
+      "e" "Map USB   ->  usb_slot@N" \
+      "f" "Preview .dts output" \
+      "g" "Generate .dts file" \
+      "h" "Edit saved model.dts" \
+      "r" "Reset all nodes" \
+      "q" "Exit" \
       3>&1 1>&2 2>&3) || break
 
     case "${CHOICE}" in
-      1) show_devices ;;
-      2) get_dts_header ;;
-      3) map_sata_nodes ;;
-      4) map_nvme_nodes ;;
-      5) map_usb_nodes ;;
-      6) preview_dts ;;
-      7)
+      a) show_devices ;;
+      b) get_dts_header ;;
+      c) map_sata_nodes ;;
+      d) map_nvme_nodes ;;
+      e) map_usb_nodes ;;
+      f) preview_dts ;;
+      g)
         if [ ${#DTS_NODES[@]} -eq 0 ]; then
           dialog --backtitle "$(backtitle)" --title "Warning" \
             --msgbox $'No nodes mapped yet.\nPlease run steps 3-5 first.' 7 45
@@ -738,8 +780,9 @@ main_menu() {
           show_result
         fi
         ;;
-      8) reset_nodes ;;
-      9) break ;;
+      h) edit_dts ;;
+      r) reset_nodes ;;
+      q) break ;;
     esac
 
     DEFAULT_ITEM=$(_next_item "${CHOICE}")
