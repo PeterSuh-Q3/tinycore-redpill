@@ -702,9 +702,7 @@ Generate .dts first (menu g).' 8 52
   TMP_EDIT=$(mktemp /tmp/dts_edit_XXXXXX.dts)
 
   while true; do
-    dialog --backtitle "$(backtitle)" \
-      --title "Edit DTS  [${DTS_FILE}]  |  Ins=INSERT/OVERWRITE toggle  Ctrl-A=Home  Ctrl-E=End" \
-      --editbox "${DTS_FILE}" 0 0 2>"${TMP_EDIT}"
+    dialog --backtitle "$(backtitle)"       --title "Edit DTS  [${DTS_FILE}]  (Tab=field, Enter=newline)"       --editbox "${DTS_FILE}" 0 0 2>"${TMP_EDIT}"
 
     [ $? -ne 0 ] && { rm -f "${TMP_EDIT}"; return; }
 
