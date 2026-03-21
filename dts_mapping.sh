@@ -571,7 +571,7 @@ map_nvme_nodes() {
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    nvme_slot@${DTS_IDX_NVME} {\n"
+    NODE="    nvme_slot@${PICKED} {\n"
     NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        pcie_root = \"${PCIEPATH}\";\n"
     NODE+="        port_type = \"ssdcache\";\n"
@@ -579,7 +579,6 @@ map_nvme_nodes() {
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
-    DTS_IDX_NVME=$((DTS_IDX_NVME+1))
   done <<< "${NVME_LIST}"
 }
 
@@ -611,7 +610,7 @@ map_usb_nodes() {
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    usb_slot@${DTS_IDX_USB} {\n"
+    NODE="    usb_slot@${PICKED} {\n"
     NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
     NODE+="        usb2 {\n"
     NODE+="            usb_port = \"${USBPORT}\";\n"
@@ -623,7 +622,6 @@ map_usb_nodes() {
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
-    DTS_IDX_USB=$((DTS_IDX_USB+1))
   done <<< "${USB_LIST}"
 }
 
@@ -702,7 +700,9 @@ Generate .dts first (menu g).' 8 52
   TMP_EDIT=$(mktemp /tmp/dts_edit_XXXXXX.dts)
 
   while true; do
-    dialog --backtitle "$(backtitle)"       --title "Edit DTS  [${DTS_FILE}]  (Tab=field, Enter=newline)"       --editbox "${DTS_FILE}" 0 0 2>"${TMP_EDIT}"
+    dialog --backtitle "$(backtitle)" \
+      --title "Edit DTS  [${DTS_FILE}]" \
+      --editbox "${DTS_FILE}" 0 0 2>"${TMP_EDIT}"
 
     [ $? -ne 0 ] && { rm -f "${TMP_EDIT}"; return; }
 
