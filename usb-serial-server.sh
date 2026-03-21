@@ -37,6 +37,12 @@ case $1 in
         stty -F ${REAL_DEV} ${BAUD} cs8 -cstopb -parenb -crtscts raw 2>/dev/null
 
         echo "Serial bridge ready: ${ALIAS_DEV} -> ${REAL_DEV}" > /dev/kmsg
+
+        echo "=== Module ===" && lsmod | grep -E 'usbserial|cp210x|ch341'
+        echo "=== Device ===" && ls -la /dev/ttyUSB0 /dev/ttyS0 2>/dev/null
+        echo "=== Kernel log ===" && dmesg | grep -E 'Serial bridge|ttyUSB|ttyS0' | tail -5
+        echo "=== socat ===" && ps | grep socat | grep -v grep
+
         ;;
 
     stop)
