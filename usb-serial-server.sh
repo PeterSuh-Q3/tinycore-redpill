@@ -8,7 +8,7 @@ case $1 in
     start)
         # 1) 커널 모듈 로드
         insmod /lib/modules/usbserial.ko  2>/dev/null
-        insmod /lib/modules/cp210x.ko     2>/dev/null  # 또는 ch341.ko
+        insmod /lib/modules/pl2303.ko type=0  2>/dev/null  # 또는 cp210x.ko / ch341.ko
         sleep 3
 
         # 2) ttyUSB0 인식 확인
