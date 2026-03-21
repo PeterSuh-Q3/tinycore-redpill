@@ -205,13 +205,12 @@ detect_sata_ports() {
       # 2. dummy 포트 (ahci_port_cmd = 0)
       elif [ "$(cat /sys/class/scsi_host/host${P}/ahci_port_cmd 2>/dev/null)" = "0" ]; then
         STATUS="dummy"
-      # 3. 실제 디스크 연결 여부
+      # 3. 실제 디스크 연결 여부 (lsscsi -b 로 host 번호 확인)
       elif lsscsi -b 2>/dev/null | grep -v -- '-' | grep -q "^\[${P}:"; then
-        # 부트 디스크 여부 확인
-        local DISK_DEV
-        DISK_DEV=$(lsscsi 2>/dev/null | awk -v h="${P}" '$1 ~ "\["h":" {print $NF}' | head -1)
-        DISK_DEV=$(basename "${DISK_DEV}" 2>/dev/null)
-        if [ -n "${DISK_DEV}" ] && [ "${DISK_DEV}" = "${BOOTDISK_DEV}" ]; then
+        # 부트 디스크 판별: BOOTDISK_PCIEPATH + BOOTDISK_ATA 비교 (udevadm 기반)
+        local ATA_PORT
+        ATA_PORT=$(( P ))   # scsi host 번호 기반 ata port (0-based)
+        if [ -n "${BOOTDISK_PCIEPATH}" ] &&            [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] &&            { [ -z "${BOOTDISK_ATA}" ] || [ "${BOOTDISK_ATA}" = "${ATA_PORT}" ]; }; then
           STATUS="loader"
         else
           STATUS="active"
