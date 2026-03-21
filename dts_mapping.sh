@@ -26,6 +26,26 @@ POWER_LIMIT="0"
 backtitle() { echo "Synology DTS Mapping Generator"; }
 
 # =============================================================================
+# maxdisks 값 읽기
+# /home/tc/user_config.json 의 synoinfo.maxdisks 참조
+# 파일이 없거나 값이 없으면 폴백값 사용
+# =============================================================================
+_get_maxdisks() {
+  local CONFIG="/home/tc/user_config.json"
+  local VAL=""
+  if [ -f "${CONFIG}" ]; then
+    VAL=$(grep -o '"maxdisks"[[:space:]]*:[[:space:]]*"[0-9]*"' "${CONFIG}"           | grep -o '[0-9]*' | head -1)
+  fi
+  # 유효한 숫자인지 확인, 아니면 폴백
+  if echo "${VAL}" | grep -qE '^[0-9]+$' && [ "${VAL}" -gt 0 ]; then
+    echo "${VAL}"
+  else
+    echo "16"   # 기본 폴백값
+  fi
+}
+
+
+# =============================================================================
 # udevadm 출력에서 특정 키 값 추출
 # _udev_get KEY /dev/sdX
 # =============================================================================
@@ -391,7 +411,8 @@ _pick_slot() {
   done
 
   if [ ${#MENU_ARGS[@]} -eq 0 ]; then
-    dialog --backtitle "$(backtitle)" --title "Warning"       --msgbox $'All slots are already assigned.' 6 42
+    dialog --backtitle "$(backtitle)" --title "Warning" \
+      --msgbox $'All slots are already assigned.' 6 42
     return 1
   fi
 
@@ -444,16 +465,17 @@ map_sata_nodes() {
     return
   fi
 
-  local DISK_COUNT
+  local DISK_COUNT MAXDISKS
   DISK_COUNT=$(printf '%s\n' "${SATA_LIST}" | wc -l)
+  MAXDISKS=$(_get_maxdisks)
   dialog --backtitle "$(backtitle)" --title "SATA / SAS Mapping" \
-    --msgbox $'Detected SATA/SAS disks: '"${DISK_COUNT}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nStep 1: select slot type  Step 2: select bay number.' 9 62 || return
+    --msgbox $'Detected disks: '"${DISK_COUNT}"$'  /  Max slots (maxdisks): '"${MAXDISKS}"$'\n(via udevadm DEVPATH, boot disk excluded)\n\nStep 1: select slot type  Step 2: select bay number.' 9 66 || return
 
   # ==========================================================================
   # 1패스: 각 디스크의 슬롯 타입을 먼저 수집
   # → 타입별 실제 개수를 파악해 슬롯 번호 풀 상한 결정
   # ==========================================================================
-  local TYPE_LIST=""   # "internal|sata|sda" 형식으로 누적
+  local TYPE_LIST=""
   while IFS='|' read -r PCIEPATH ATAPORT DRIVER DEVNAME FLAG PROTO; do
     local SLOT_INFO
     SLOT_INFO=$(printf '[%s] /dev/%s\npcie_root: %s\nata_port : %s' \
@@ -486,11 +508,11 @@ map_sata_nodes() {
     if [ "${SLOT_TYPE}" = "esata" ]; then
       SLOT_NAME="esata_port"
       USED_REF="${USED_ESATA}"
-      SLOT_TOTAL="${COUNT_ESATA}"
+      SLOT_TOTAL="${MAXDISKS}"
     else
       SLOT_NAME="internal_slot"
       USED_REF="${USED_INTERNAL}"
-      SLOT_TOTAL="${COUNT_INTERNAL}"
+      SLOT_TOTAL="${MAXDISKS}"
     fi
 
     local PICKED
@@ -544,7 +566,7 @@ map_nvme_nodes() {
     SLOT_INFO=$(printf '[nvme] /dev/%s\npcie_root: %s\nport_type: ssdcache' \
       "${DEVNAME}" "${PCIEPATH}")
     local PICKED
-    PICKED=$(_pick_slot "${DEV_COUNT}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
+    PICKED=$(_pick_slot "8" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
