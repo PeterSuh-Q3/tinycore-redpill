@@ -18,8 +18,8 @@ jobs:
 
       - name: Download GNU coreutils source
         run: |
-          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.4.tar.xz
-          tar -xf coreutils-9.4.tar.xz
+          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.2.tar.xz
+          tar -xf coreutils-9.2.tar.xz        
 
       - name: Configure with musl (stty only)
         run: |
