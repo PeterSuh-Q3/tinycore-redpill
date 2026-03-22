@@ -32,16 +32,20 @@ jobs:
           # → 매크로/typedef만 순수하게 정의, 헤더 include 없음.
           # → S_IXUGO 등은 POSIX 표준 8진수 리터럴로 직접 정의.
           printf '%s\n' \
-            '/* stddef.h: ptrdiff_t 등 기본 타입 제공 (cdefs 충돌 없음) */' \
-            '#include <stddef.h>' \
+            '/* musl compat: 시스템 헤더 include 없이 순수 타입/매크로만 정의 */' \
+            '/* ptrdiff_t: stddef.h 없이 직접 정의 (stddef.h는 musl cdefs 체인 유발) */' \
+            '#ifndef _PTRDIFF_T_DEFINED' \
+            '# define _PTRDIFF_T_DEFINED' \
+            'typedef long ptrdiff_t;' \
+            '#endif' \
             '' \
-            '/* musl compat: timezone_t */' \
+            '/* timezone_t: musl에 없는 POSIX 타입 */' \
             '#ifndef _TIMEZONE_T_DEFINED' \
             '# define _TIMEZONE_T_DEFINED' \
             'typedef void* timezone_t;' \
             '#endif' \
             '' \
-            '/* musl compat: O_BINARY / O_TEXT (Windows 전용, musl에 없음) */' \
+            '/* O_BINARY / O_TEXT: Windows 전용 플래그, musl에 없음 */' \
             '#ifndef O_BINARY' \
             '# define O_BINARY 0' \
             '#endif' \
@@ -49,7 +53,7 @@ jobs:
             '# define O_TEXT 0' \
             '#endif' \
             '' \
-            '/* musl compat: S_IXUGO 등 - 시스템 헤더 include 없이 리터럴로 정의 */' \
+            '/* S_IXUGO 등: 시스템 헤더 없이 8진수 리터럴로 직접 정의 */' \
             '#ifndef S_IXUGO' \
             '# define S_IXUGO  0111' \
             '#endif' \
@@ -63,15 +67,6 @@ jobs:
             '# define S_IWUGO  0222' \
             '#endif' \
             > lib/musl_compat.h
-
-          # [에러2 수정] GNULIB_defined_F_DUPFD_CLOEXEC → config.h append
-          printf '%s\n' \
-            '' \
-            '/* musl compat: F_DUPFD_CLOEXEC runtime detection */' \
-            '#ifndef GNULIB_defined_F_DUPFD_CLOEXEC' \
-            '# define GNULIB_defined_F_DUPFD_CLOEXEC 1' \
-            '#endif' \
-            >> lib/config.h
 
           # xdectoint.c: INTMAX_MAX 등 보장
           sed -i '1s|^|#include <limits.h>\n#include <stdint.h>\n|' lib/xdectoint.c
@@ -91,7 +86,21 @@ jobs:
             --disable-acl \
             --disable-xattr
 
-      # ── 5. 빌드 ──────────────────────────────────────────────────
+      # ── 5. config.h 패치 (configure 이후) ─────────────────────
+      - name: Patch config.h
+        run: |
+          cd coreutils-8.32
+          # configure 실행 시 config.status가 lib/config.h를 새로 생성함.
+          # 따라서 config.h 패치는 반드시 configure 완료 이후에 해야 함.
+          printf '%s\n' \
+            '' \
+            '/* musl compat: F_DUPFD_CLOEXEC runtime detection */' \
+            '#ifndef GNULIB_defined_F_DUPFD_CLOEXEC' \
+            '# define GNULIB_defined_F_DUPFD_CLOEXEC 1' \
+            '#endif' \
+            >> lib/config.h
+
+      # ── 6. 빌드 ──────────────────────────────────────────────────
       - name: Build stty
         run: |
           cd coreutils-8.32
