@@ -31,7 +31,9 @@ jobs:
                     -Dtimezone_t=void* \
                     -DO_BINARY=0 \
                     -DFNM_EXTMATCH=0 \
-                    -DGNULIB_defined_FDUPFD_CLOEXEC=1" \
+                    -DGNULIB_defined_FDUPFD_CLOEXEC=1 \
+                    -DINTMAX=__INT64_MAX__ \
+                    -DINTMIN='(-__INT64_MAX__-1)'" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
