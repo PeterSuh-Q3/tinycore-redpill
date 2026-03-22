@@ -1,4 +1,4 @@
-name: Build static stty (Alpine + source build)
+name: Build static stty (uutils/coreutils)
 
 on:
   workflow_dispatch:
@@ -8,25 +8,21 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Build static stty inside Alpine container
+      - name: Install musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
+      - name: Checkout uutils/coreutils
+        uses: actions/checkout@v4
+        with:
+          repository: uutils/coreutils
+          tag: '0.7.0'
+
+      - name: Build stty only (static musl)
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}":/out \
-            alpine:3.21 \
-            sh -c "
-              apk add --no-cache gcc make musl-dev wget xz &&
-              wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.5.tar.xz &&
-              tar -xf coreutils-9.5.tar.xz &&
-              cd coreutils-9.5 &&
-              FORCE_UNSAFE_CONFIGURE=1 ./configure \
-                LDFLAGS='-static' \
-                --disable-nls \
-                --disable-acl \
-                --disable-xattr &&
-              make -j\$(nproc) src/stty &&
-              strip src/stty &&
-              cp src/stty /out/stty
-            "
+          cargo build -p uu_stty \
+            --release \
+            --target x86_64-unknown-linux-musl
+          cp target/x86_64-unknown-linux-musl/release/stty ./stty
 
       - name: Verify binary
         run: |
