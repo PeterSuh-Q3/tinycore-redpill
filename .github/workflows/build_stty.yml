@@ -12,7 +12,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${{ github.workspace }}":/out \
-            alpine:3.19 \
+            alpine:3.21 \
             sh -c "
               apk add --no-cache gcc make musl-dev wget xz &&
               wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.5.tar.xz &&
