@@ -20,29 +20,24 @@ jobs:
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
           tar -xf coreutils-8.32.tar.xz
 
-      # ── 3. configure ────────────────────────────────────────────
       - name: Configure coreutils with musl-gcc (static)
         run: |
           cd coreutils-8.32
+          export CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 -Dtimezone_t=void* -DO_BINARY=0 -DFNM_EXTMATCH=0 -DGNULIB_defined_FDUPFD_CLOEXEC=1"
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
-            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 \
-                    -Dtimezone_t=void* \
-                    -DO_BINARY=0 \
-                    -DFNM_EXTMATCH=0 \
-                    -DGNULIB_defined_FDUPFD_CLOEXEC=1 \
+            CFLAGS="$CFLAGS" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
             --disable-xattr
-
+      
       - name: Patch xdectoint.c for musl INTMAX/INTMIN
         run: |
           cd coreutils-8.32
           sed -i '1s|^|#include <limits.h>\n#ifndef INTMAX\n# define INTMAX 9223372036854775807LL\n#endif\n#ifndef INTMIN\n# define INTMIN (-9223372036854775807LL-1)\n#endif\n|' lib/xdectoint.c
-
-      # ── 4. stty 빌드 ────────────────────────────────────────────
+      
       - name: Build src/stty
         run: |
           cd coreutils-8.32
