@@ -7,36 +7,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: alpine:3.19
+      image: alpine:edge
 
     steps:
-      - name: Install build dependencies
+      - name: Install dependencies
         run: |
-          apk add --no-cache build-base musl-dev libc-dev wget xz-dev perl git
+          apk add --no-cache \
+            build-base \
+            musl-dev \
+            wget \
+            xz-dev \
+            perl
 
       - name: Download GNU coreutils source
         run: |
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.4.tar.xz
           tar -xf coreutils-9.4.tar.xz
 
-      - name: Configure (stty only, musl static)
+      - name: Configure and Build stty
         run: |
           cd coreutils-9.4
-          FORCE_UNSAFE_CONFIGURE=1 ./configure \
-            CC=gcc \
-            CFLAGS="-O2" \
+          ./configure \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
             --disable-xattr \
             --without-gmp
-
-      - name: Build stty only
-        run: |
-          cd coreutils-9.4
-          ./configure --disable-nls --disable-acl --disable-xattr --without-gmp
-          make -j$(nproc) -C src stty
+          make -j$(nproc) src/stty
 
       - name: Verify binary
         run: |
