@@ -1851,7 +1851,9 @@ function addon_gitdown()
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
   cd /dev/shm/tcrp-addons
   # https://github.com/PeterSuh-Q3/tcrp-addons/tree/b140fede84bbace815233936b78860d5c1feb22c
-  git reset --hard b140fede84bbace815233936b78860d5c1feb22c
+  git fetch origin b140fede84bbace815233936b78860d5c1feb22c
+  git checkout b140fede84bbace815233936b78860d5c1feb22c  
+  cd ~ 
   #if [ $? -ne 0 ]; then
   #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
   #  rm -rf /dev/shm/tcrp-modules
