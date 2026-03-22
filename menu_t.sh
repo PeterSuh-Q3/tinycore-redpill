@@ -100,7 +100,7 @@ else
     start_time=$(date +%s)
     while true; do
       if check_internet; then
-        getlatestmshell "noask"
+        #getlatestmshell "noask"
         break
       fi
       # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
@@ -147,8 +147,8 @@ if [ "${offline}" = "NO" ]; then
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
-    else
-      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+    #else
+    #  curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
