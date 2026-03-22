@@ -48,14 +48,14 @@ jobs:
           #   코드 전체의 "timezone_t" 토큰을 "void*"로 치환해서
           #   error.c의 함수 선언 파싱을 파괴함.
           #   → typedef 선언으로 타입을 올바르게 제공하는 compat 헤더 사용
-          cat > lib/timezone_compat.h << 'HEADER'
-          /* musl does not define timezone_t; provide a compatible stub */
-          #pragma once
-          #ifndef _TIMEZONE_T_DEFINED
-          # define _TIMEZONE_T_DEFINED
-          typedef void* timezone_t;
-          #endif
-          HEADER
+          printf '%s\n' \
+            '/* musl does not define timezone_t; provide a compatible stub */' \
+            '#pragma once' \
+            '#ifndef _TIMEZONE_T_DEFINED' \
+            '# define _TIMEZONE_T_DEFINED' \
+            'typedef void* timezone_t;' \
+            '#endif' \
+            > lib/timezone_compat.h
 
           # config.h 맨 앞에 삽입 (다른 헤더보다 먼저 읽혀야 함)
           echo '#include "timezone_compat.h"' | cat - lib/config.h > /tmp/config_patched.h
@@ -73,23 +73,23 @@ jobs:
           echo '#endif' >> lib/config.h
 
           # ── S_IXUGO 등: -D 플래그 대신 ifndef 가드 compat 헤더로 안전하게 제공
-          cat > lib/stat_compat.h << 'HEADER'
-          /* musl may not define these POSIX extensions */
-          #pragma once
-          #include <sys/stat.h>
-          #ifndef S_IXUGO
-          # define S_IXUGO  (S_IXUSR|S_IXGRP|S_IXOTH)
-          #endif
-          #ifndef S_IRWXUGO
-          # define S_IRWXUGO (S_IRWXU|S_IRWXG|S_IRWXO)
-          #endif
-          #ifndef S_IRUGO
-          # define S_IRUGO  (S_IRUSR|S_IRGRP|S_IROTH)
-          #endif
-          #ifndef S_IWUGO
-          # define S_IWUGO  (S_IWUSR|S_IWGRP|S_IWOTH)
-          #endif
-          HEADER
+          printf '%s\n' \
+            '/* musl may not define these POSIX extensions */' \
+            '#pragma once' \
+            '#include <sys/stat.h>' \
+            '#ifndef S_IXUGO' \
+            '# define S_IXUGO  (S_IXUSR|S_IXGRP|S_IXOTH)' \
+            '#endif' \
+            '#ifndef S_IRWXUGO' \
+            '# define S_IRWXUGO (S_IRWXU|S_IRWXG|S_IRWXO)' \
+            '#endif' \
+            '#ifndef S_IRUGO' \
+            '# define S_IRUGO  (S_IRUSR|S_IRGRP|S_IROTH)' \
+            '#endif' \
+            '#ifndef S_IWUGO' \
+            '# define S_IWUGO  (S_IWUSR|S_IWGRP|S_IWOTH)' \
+            '#endif' \
+            > lib/stat_compat.h
           echo '#include "stat_compat.h"' >> lib/config.h
 
           # ── xdectoint.c: INTMAX_MAX 등 보장
