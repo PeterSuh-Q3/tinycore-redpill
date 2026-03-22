@@ -3744,8 +3744,8 @@ menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM} ${MDLNAME}:${MLMET
         echo Loading Linux...
         set kernel_cmdline="${USB_LINE} force_junior"
         set bus_type="${BUS}"
-        if [ "\${bus_type}" != "usb" ]; then
-            set kernel_cmdline="\${kernel_cmdline} synoboot_satadom=1"
+        if [ "\\${bus_type}" != "usb" ]; then
+            set kernel_cmdline="${kernel_cmdline} synoboot_satadom=1"
         fi
         linux /zImage-dsm \${kernel_cmdline}
         echo Loading initramfs...
