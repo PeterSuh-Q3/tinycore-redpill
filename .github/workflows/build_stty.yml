@@ -12,13 +12,7 @@ jobs:
     steps:
       - name: Install build dependencies
         run: |
-          apk add --no-cache build-base \
-            build-base \
-            musl-dev \
-            wget \
-            xz-dev \
-            perl \
-            git
+          apk add --no-cache build-base musl-dev libc-dev wget xz-dev perl git
 
       - name: Download GNU coreutils source
         run: |
@@ -30,7 +24,7 @@ jobs:
           cd coreutils-9.4
           ./configure \
             CC=gcc \
-            CFLAGS="-02" \
+            CFLAGS="-O2" \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
