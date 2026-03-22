@@ -1,0 +1,6210 @@
+#!/usr/bin/env bash
+
+set -u # Unbound variable errors are not allowed
+
+rploaderver="1.2.8.0"
+build="master"
+redpillmake="prod"
+
+modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
+modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
+
+timezone="UTC"
+ntpserver="pool.ntp.org"
+userconfigfile="/home/tc/user_config.json"
+configfile="/home/tc/redpill-load/config/pats.json" 
+
+gitdomain="raw.githubusercontent.com"
+mshellgz="my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/my.sh.gz"
+
+#Defaults
+smallfixnumber="0"
+
+kver3platforms="bromolow braswell avoton cedarview grantley"
+kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
+dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap grantley"
+
+# 전역 변수로 플래그 설정 (한번 Y면 영구 유지)
+R8168_YN="N"
+R8168_DETECTED="N"  # 한번만 체크하는 플래그
+
+#Check if FRIEND kernel exists
+if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
+    FRKRNL="YES"
+else
+    FRKRNL="NO"
+fi
+
+BIOS_CNT="$(sudo fdisk -l | grep "BIOS" | wc -l )"
+[ $BIOS_CNT -eq 0 ] && BIOS_CNT="$(sudo fdisk -l | grep "EFI" | grep "127M" | wc -l )"
+[ $BIOS_CNT -eq 0 ] && BIOS_CNT="$(sudo fdisk -l | grep "*" | grep "83" | grep "127M" | wc -l )"
+
+ 
+function history() {
+    cat <<EOF
+    --------------------------------------------------------------------------------------
+    0.7.0.0 Added build for version greater than 42218
+    0.7.0.1 Added required extension parsing adding and downloading
+    0.7.0.2 Added usb patch in patchdtc
+    0.7.0.3 Added portnumber on patchdtc
+    0.7.0.4 Make sure that local cache folder is created early in the process
+    0.7.0.5 Enabled interactive
+    0.7.0.6 Added save/restore session functions
+    0.7.0.7 Added a check date function
+    0.7.0.8 Added the ability to use local dtb file
+    0.7.0.9 Added flyride satamap review
+    0.7.1.0 Added the history, version and enhanced patchdtc function
+    0.7.1.1 Added a syntaxcheck function
+    0.7.1.2 Added sync time with NTP server : pool.ntp.org (Set timezone and ntpserver variables accordingly )
+    0.7.1.3 Added the option to create JUN mod loader (By Jumkey)
+    0.7.1.4 Added the use of the additional custom_config_jun.json for JUN mod loader creation
+    0.7.1.5 Updated satamap function to support higher the 9 port counts per HBA.
+    0.7.1.6 Updated satamap function to fix the broken q35 KVM controller, and to stop scanning for CD-ROM's
+    0.7.1.7 Updated serialgen function to include the option for using the realmac
+    0.7.1.8 Updated satamap function to fine tune SATA port identification and identify SATABOOT
+    0.7.1.9 Updated patchdtc function to fix wrong port identification for VMware hosted systems
+    0.8.0.0 Stable version. All new features will be moved to develop repo
+    0.8.0.0 Stable version. All new features will be moved to develop repo
+    0.8.0.1 Updated postupdate to facilitate update to update2
+    0.8.0.2 Updated satamap to support DUMMY PORT detection 
+    0.8.0.3 Updated satamap to avoid the use of 0 in first controller that cause KP
+    0.9.0.0 Development version. Moving all new features to development build
+    0.9.0.1 Updated postupdate to facilitate update to update2
+    0.9.0.2 Added system monitor function 
+    0.9.0.3 Updated satamap to support DUMMY PORT detection 
+    0.9.0.4 More satamap fixes
+    0.9.0.5 Added the option to get grub variables into user_config.json
+    0.9.0.6 Experimental DVA1622 (geminilake) addition
+    0.9.0.7 Experimental DVA1622 serialgen
+    0.9.0.8 Experimental DVA1622 increase disk count to 16
+    0.9.0.9 Fixed missing bspatch
+    0.9.1.0 Added dtc depth patch
+    0.9.1.1 Default action for DTB system is to use the dtbpatch by fbelavenuto
+    0.9.1.2 Fixed a jq issue in listextension
+    0.9.1.3 Fixed bsdiff not found issue
+    0.9.1.4 Fixed overlaping downloadextractor processes
+    0.9.1.5 Enhanced postupdate process to update user_config.json to new format
+    0.9.1.6 Fixed compressed non-compressed RAMDISK issue 
+    0.9.1.7 Enhanced build process to update user_config.json during build process 
+    0.9.1.8 Enhanced build process to create friend files
+    0.9.1.9 Further enhanced build process 
+    0.9.2.0 Introducing TCRP Friend
+    0.9.2.1 If TCRP Friend is used then default option will be TCRP Friend
+    0.9.2.2 Upgrade your system by adding TCRP Friend with command bringfriend
+    0.9.2.3 Adding experimental DS2422+ support
+    0.9.2.4 Added the redpillmake variable to select between prod and dev modules
+    0.9.2.5 Adding experimental RS4021xs+ support
+    0.9.2.6 Added the downloadupgradepat action **experimental
+    0.9.2.7 Added setting the static network configuration for TCRP Friend
+    0.9.2.8 Changed all  calls to use the -k flag to avoid expired certificate issues
+    0.9.2.9 Added the smallfixnumber key in user_config.json and changed the platform ids to model ids
+    0.9.3.0 Changed set root entry to search for FS UUID
+    0.9.4.3-1 Multilingual menu support 
+    0.9.5.0 Add storage panel size selection menu
+    0.9.6.0 To prevent partition space shortage, rd.gz is no longer used in partition 1
+    0.9.7.0 Improved build processing speed (removed pat file download process)
+    0.9.7.1 Back to DSM Pat Handle Method
+    1.0.0.0 Kernel patch process improvements
+    1.0.0.1 Improved platform release ID identification method
+    1.0.0.2 Setplatform() function converted to custom_config.json reference method
+    1.0.0.3 To prevent partition space shortage, custom.gz is no longer used in partition 1
+    1.0.0.4 Prevents kernel panic from occurring due to rp-lkm.zip download failure 
+            when ramdisk patching occurs without internet.
+    1.0.0.5 Add offline loader build function
+    1.0.1.0 Upgrade from Tinycore version 12.0 (kernel 5.10.3) to 14.0 (kernel 6.1.2) to improve compatibility with the latest devices.
+    1.0.1.1 Fix monitor fuction about ethernet infomation
+    1.0.1.2 Fix for SA6400
+    1.0.2.0 Remove restrictions on use of DT-based models when using HBA (apply mpt3sas blacklist instead)
+    1.0.2.1 Changed extension file organization method
+    1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
+    1.0.2.3 Added RedPill bootloader hard disk porting function
+    1.0.2.4 Added NVMe bootloader support
+    1.0.2.5 Provides menu option to disable i915 module loading to prevent console blackout in ApolloLake (DS918+), GeminiLake (DS920+), and Epyc7002 (SA6400)
+    1.0.2.6 Added multilingual support languages (locales) (Arabic, Hindi, Hungarian, Indonesian, Turkish)
+    1.0.2.7 dbgutils Addon Add/Delete selection menu
+    1.0.2.8 Added multilingual support languages (locales) (Amharic-Ethiopian, Thai)
+    1.0.2.9 Release img image with gettext.tgz
+    1.0.3.0 Integrate my, rploader.sh, myfunc.h into functions.sh, optimize distribution
+    1.0.3.1 Added loader file packing menu for remote update
+    1.0.3.2 Added dom_szmax for jot mode
+    1.0.3.3 Boot entry order for jot mode synchronized with Friend's order, remove custom_config_jun.json
+    1.0.3.4 Maintain boot-wait addon when using satadom in SA6400
+    1.0.3.5 Remove getstaticmodule() and undefined PROXY variables (cause of lkm download failure in final release)
+    1.0.3.6 Use intel_iommu on the command line
+    1.0.3.7 Add command line native satadom support option change menu
+    1.0.3.8 Sort netif order by bus-id order (Synology netif sorting method)
+    1.0.3.9 NVMe-related function supplementation and error correction
+            Discontinue use of sortnetif addon, discontinue use of sortnetif if there is only 1 NIC
+    1.0.4.0 Added sata_remap processing menu for SataPort reordering.
+    1.0.4.1 Added a feature to check whether the pre-counted number of disks matches when booting Friend
+    1.0.4.2 Add Support DSM 7.2.2-72803 Official Version
+    1.0.4.3 No separation between USB/SATA menus in Jot Mod (boot menu merge)
+    1.0.4.4 Loader building is blocked when using Apollolake + proxmox(kvm)/qemu(kvm) (KP occurs in versions after lkm 24.8.29)
+    1.0.4.5 Solved the KP occurrence issue when using SATA-type bootloader in proxmox(kvm), 
+            SA6400(epyc7002) integration from lkm5 (lkm 24.9.8)
+    1.0.4.6 Rearrange menu order, automatically enter Gen value when S/N or mac is not selected
+    1.0.4.7 Fix from DSM 7.2.2-72803 to DSM 7.2.2-72806
+    1.0.4.8 Enable mmc (SD Card) bus type recognition for the bootloader
+    1.0.4.9 When mmc bus type is used, module processing method is applied with priority given to eudev instead of ddsml.
+    1.0.5.0 Improved internet check function in menu.sh
+    1.0.5.1 Added manual update feature to friend specified version, added disable/enable friend automatic update feature
+    1.0.5.2 Upgraded grub version from 2.06 to 2.12 ( improved uefi, legacy boot compatibility [especially in jot mode] )
+    1.0.6.0 Added the ability to choose between the integrated modules all-modules (tcrp) and rr-modules
+    1.0.6.1 Improved bootloader boot partition detection method
+    1.0.6.2 Changed to use only the first one when multiple bootloaders exist
+    1.0.6.3 Added ability to force loading mmc and sd modules when loading Tinycore Linux
+    1.0.6.4 Expanded MAC address support from 4 to 8.
+    1.0.6.5 Includes tinycore linux scsi module for scsi type bootloader support.
+    1.0.6.6 Discontinuing support for DS3615xs.
+    1.0.6.7 Applying REDPILL background image to grub boot
+    1.0.6.8 i915.modeset=0 menu processing improvement (FRIEND guidance console is activated when i915 transcoding is disabled)
+    1.1.0.0 Added features for distribution of xTCRP (Tinycore Linux stripped down version)
+    1.1.0.1 When using a single m.2 NVMe volume, the DDSML error issue has occurred, so menu usage has been excluded and related support has been strengthened.
+    1.2.0.0 Added new platforms purley, broadwellnkv2, broadwellntbap and started supporting all models for each platform
+    1.2.1.0 Create tinycore-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
+    1.2.1.1 Renewal of SynoDisk bootloader injection function
+    1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
+    1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
+    1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
+    1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
+    1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+    1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+    1.2.1.8 Modify the method of checking Internet connection in menu.sh
+    1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+    1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+    1.2.2.1 TTYD web console baremetal headless support fix
+    1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
+    1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+    1.2.2.4 SynoDisk with bootloader injection Support SHR 2TB or more
+    1.2.2.5 SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+    1.2.2.6 SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+    1.2.2.7 SynoDisk with bootloader injection Support xTCRP loader rebuild
+    1.2.2.8 Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+    1.2.2.9 Fixed the issue where the font of the menu focus would be broken 
+            when changing to a 2-byte Unicode language during the first execution of menu.sh.
+            Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+            (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+    1.2.3.0 avoton (DS1515+ kernel 3) support started
+    1.2.3.1 cedarview (DS713+ kernel 3) support started
+    1.2.3.2 More models supported for avoton and cedarview (including DS1815+)
+    1.2.3.3 v1000nk (DS925+ kernel 5) support started
+    1.2.3.4 Added Addon selection menu for vmtools, qemu-guest-agent
+    1.2.3.5 Added DSM password reset(change) and DSM user add menus
+    1.2.3.6 Added Clean System Partition(md0) menu
+    1.2.3.7 Added Bootentry Update version correction menu
+    1.2.3.8 r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
+    1.2.5.0 Added SYNO RAID (LVM) volume mount menu (for data recovery)
+    1.2.5.1 Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+            Requires Tinycore version 9 with kernel 4, like Synology.
+    1.2.5.2 Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+    1.2.5.3 Format Disk Menu Improvements
+    1.2.5.4 Apply separate patched buildroot to older AMD CPUs
+    1.2.5.5 Separate build pre-option selection menu
+    1.2.5.6 Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+    1.2.5.7 Dramatically improved USB backup speed
+    1.2.6.0 Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+    1.2.6.1 Loader image size is distributed in two sizes: 2GB and 4GB
+    1.2.6.2 When changing user_config.json, process cmd_line at once without loader build
+    1.2.6.3 Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+    1.2.6.4 Add Support DSM 6.2.4-25556 Official Version
+    1.2.6.5 Added Format System Partition(md0) menu for new install
+    1.2.6.6 Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+    1.2.6.7 Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+    1.2.6.8 Improved backuploader() function [reflects free space check before backup]
+    1.2.6.9 Format System Partition(md0) menu stabilization
+    1.2.7.0 Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+    1.2.7.1 Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
+    1.2.7.2 Apply timeout when selecting locale
+            Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+    1.2.7.3 Changes to warning messages and guides when building the DSM 7.3.X loader
+    1.2.7.4 Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+    1.2.7.5 Remove the default internalportcfg value (0xffff) in user_config.json
+    1.2.7.6 Expose modular selection menu as upper menu
+    1.2.7.7 Use static firmware and module loading methods when using custom modules
+    1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+    1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+    1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
+    --------------------------------------------------------------------------------------
+EOF
+}
+
+            
+# Made by Peter Suh
+# 2022.04.18                      
+# Update add 42661 U1 NanoPacked 
+# 2022.04.28
+# Update : add noconfig, noclean, manual options
+# 2022.04.30
+# Update : add noconfig, noclean, manual combinatione options
+# 2022.05.06   
+# Update : add pat file sha256 check                         
+# 2022.05.07      
+# Update : Added dtc compilation function for user custom.dts file
+# 2022.05.15
+# Update : add jumkey's jun mode
+# 2022.05.24
+# Update : apply jumkey's dyn dtc upx
+# 2022.05.25
+# Update : apply jumkey's dyn dtc upx for option
+# 2022.06.01
+# Update : add rd.gz patch for 42661 U2
+# 2022.06.03
+# Update : Fixed Jun mode build option incorrectly applied
+# 2022.06.06
+# Update : Add jumkey's Jun mode (use jumkey repo)
+# 2022.06.11
+# Update : Adjunst Option Operation
+# 2022.06.13
+# Update : Add manual option for jun mode
+# 2022.06.16
+# Update : Add dtc mode for known as non-dtc model
+# 2022.06.25
+# Update : Add dtc model DS2422+ (v1000) support
+# 2022.06.27
+# Update : remove jumkey, poco oprtions
+# 2022.06.30
+# Update : Add DS2422+ jot mode
+# 2022.07.02
+# Update : Add DVA1622 jun mode (Testing)
+# 2022.07.07
+# Update : Add DS1520+ jun mode
+# 2022.07.08
+# Update : Add FS2500 jun mode
+# 2022.07.10
+# Update : function headers for my.sh and myv.shUse common function headers for my.sh and myv.sh
+# 2022.07.11
+# Update : Add REALMAC Option
+# 2022.07.15
+# Update : Add DS1621xs+ jun mode
+# 2022.07.19
+# Update : Add DS1621xs+ jot mode, Add RS4021xs+
+# 2022.07.20
+# Update : Add DVA3219 jot mode (Release 22.07.25)
+# 2022.07.21
+# Update : Active rploader satamap for non dtc model
+# 2022.07.27
+# Update : Add Re-Install DSM menuentry
+# 2022.08.03
+# Update : Apply fabio's redpill.ko
+# 2022.08.04
+# Update : Add Userdts Options
+# 2022.08.06
+# Update : Release FS2500 Jot / Jun Mode
+# 2022.08.12
+# Update : Add RS3618xs Jot / Jun Mode
+# 2022.08.14
+# Update : Add RS3413xs+ Jot / Jun Mode
+# 2022.08.16
+# Update : Added support for DSM 7.1.1-42962
+# 2022.09.13
+# Update : Add DS1019+ Jot / Jun Mode
+# 2022.09.14
+# Update : Release DS1520+ jot mode
+# 2022.09.14
+# Update : Release DVA3219 jun mode
+# 2022.09.14
+# Update : Sataportmap,DiskIdxMap to blank for VM with noconfig option
+# 2022.09.14
+# Update : Release TCRP FRIEND mode
+# 2022.09.25
+# Update : Change to stable redpill kernel ( DS1621xs+, DVA3221, RS3618xs )
+# 2022.09.26
+# Update : Synchronization according to the TCRP Platform naming convention
+# 2022.10.22
+# Update : Dropped support for TCRP Jot's Mod /Jun's Mod.
+# 2022.11.11
+# Update : Deploy menu.sh
+# 2022.11.14
+# Update : Added autoupdate script, Added Keymap function to menu.sh for multilingual keybaord support
+# 2022.11.17
+# Update : Added dual mac address make function to menu.sh
+# 2022.11.18
+# Update : Added ds923+ (r1000)
+# 2022.11.25
+# Update : Added gitee conversion function when github connection is not possible
+# 2022.12.03
+# Update : Added quad mac address make function to menu.sh
+# 2022.12.04
+# Update : Added independent JOT mode build menu to menu.sh
+# 2022.12.06
+# Correct serial number for DS1520+,DS923+, by Orphee
+# 2022.12.13
+# Update : Added ds723+ (r1000)
+# 2023.01.15
+# Update : Add buildable model limit per CPU max threads to menu.sh, add description of features and restrictions for each model
+# 2023.01.28
+# Update : DT-based model restriction function added to ./menu.sh
+# 2023.01.30
+# Update : Separation and addition to menu_m.sh for real-time reflection after menu.sh update
+# 2023.01.30
+# Update : 7.0.1-42218 friend correspondence for DS918+,DS920+,DS1019+, DS1520+ transcoding
+# 2023.02.19
+# Update : Inspection of FMA3 command support (Haswell or higher) and model restriction function added to menu.sh
+# 2023.02.22
+# Update :  menu.sh Added new function DDSML / EUDEV selection
+#           DDSML ( Detected Device Static Module Loading with modprobe / insmod command )
+#           EUDEV (Enhanced Userspace Device with eudev deamon)
+# 2023.03.01
+# Update : Added erase data disk function to menu.sh
+# 2023.03.04
+# Update : Increased build processing speed by using RAMDISK & pigz(multithreaded compression) when processing encrypted DSM PAT file decryption
+# 2023.03.10
+# Update : Improved TCRP loader build process
+# 2023.03.14
+# Update : Automatic handling of grub.cfg disable_mtrr_trim=1 to unlock AMD Platform 3.5GB RAM limitation
+# 2023.03.17
+# Update : AMD CPU FRIEND mode menu usage restriction release (except HP N36L/N40L/N54L)
+# 2023.03.18
+# Update : TCRP FRIEND / JOT menu selection method improvement
+# 2023.03.21
+# Update : Multilingual menu support started (Korean, Chinese, Japanese, Russian, French, German, Spanish, Brazilian, Italian supported)
+# 2023.03.25
+# Update : Add language selection menu
+# 2023.03.29
+# Update : Merging DDSML and EUDEV into one, Improved nic recognition speed by improving realtek firmware omission
+# 2023.04.04
+# Update : DSM Smallupdateversion Path Management
+# 2023.04.15
+# Update : Keymap now actually works. (Thanks Orphée)
+# 2023.04.29
+# Update : Add Postupdate boot entry to Grub Boot for Jot Postupdate to utilize FRIEND's Ramdisk Update
+# 2023.05.01
+# Update : Add Support DSM 7.2-64551 RC
+# 2023.05.02
+# Update : Added sa6400 (epyc7002)
+# 2023.05.06
+# Update : Add 5 models DS720+,RS1221+,RS1619xs+,RS3621xs+,SA3400
+# 2023.05.08
+# Update : 7.0.1-42218 menu open for all models
+# 2023.05.12
+# Update : Add Support DSM 7.2-64561 Official Version
+# 2023.05.23
+# Update : Add Getty Console to DSM 7.2
+# 2023.05.26
+# Update : Added ds916+ (braswell), 7.2.0 Jot Menu Creation for HP PCs
+# 2023.06.03
+# Update : Add Support DSM 7.2-64570 Official Version
+# 2023.06.17
+# Update : Added ds1821+ (v1000)
+# 2023.06.18
+# Update : Added ds1823xs+ (v1000), ds620slim (apollokale), ds1819+ (denverton)
+# 2023.06.20
+# Update : Add Support DSM 7.2-64570-1 Official Version
+# 2023.07.07
+# Update : Fix Bug for userdts option
+# 2023.08.24 (M-SHELL for TCRP, v0.9.5.0 release)
+# Update : Add storage panel size selection menu
+# 2023.08.29
+# Update : Added a function to store loader.img for DSM 7.2 for 7.2 automatic loader build of 7.0.1, 7.1.1
+# 2023.09.26
+# Update : Add Support DSM 7.2.1-69057 Official Version
+# 2023.09.30
+# Update : Fixed locale selection issue, modified some menu guidance text
+# 2023.10.01
+# Update : Add "Show SATA(s) # ports and drives" menu
+# 2023.10.07
+# Update : Add "Burn Anither TCRP Bootloader to USB or SSD" menu
+# 2023.10.09
+# Update : Add "Clone TCRP Bootloader to USB or SSD" menu
+# 2023.10.17
+# Update : Add "Show error log of running loader" menu
+# 2023.10.18 v0.9.6.0
+# Update : Improved extension processing speed (local copy instead of remote curl download)
+# 2023.10.22 v0.9.7.0
+# Update : Improved build processing speed (removed pat file download process)
+# 2023.10.24 v0.9.7.1
+# Update : Back to DSM Pat Handle Method
+# 2023.10.27 v1.0.0.0
+# Update : Kernel patch process improvements    
+# 2023.11.04 
+# Update : Added DS1522+ (r1000), DS220+ (geminilake), DS2419+ (denverton), DS423+ (geminilake), DS718+ (apollolake), RS2423+ (v1000)
+# 2023.11.28
+# Update : Turn off thread limits when displaying models (Thanks alirz1)
+# 2023.12.01
+# Update : Separate tcrp-addons and tcrp-modules repo processing methods
+# 2023.12.02
+# Update : Add offline loader build function
+# 2023.12.18 v1.0.1.0
+# Update : Upgrade from Tinycore version 12.0 (kernel 5.10.3) to 14.0 (kernel 6.1.2) to improve compatibility with the latest devices.
+# 2023.12.31        
+# Added SataPortMap/DiskIdxMap prevent initialization menu for virtual machines  
+# 2024.02.03
+# Created a menu to select the mac-spoof add-on and a submenu for additional features.
+# 2024.02.06
+# update corepure64.gz for tc user ttyS0 serial console works
+# 2024.02.08
+# Add Apollolake DS218+
+# 2024.02.22 v1.0.2.0
+# Remove restrictions on use of DT-based models when using HBA (apply mpt3sas blacklist instead)
+# 2024.03.06 v1.0.2.2
+# Recycle initrd-dsm instead of custom.gz (extract /exts)
+# 2024.03.13 v1.0.2.3 
+# Added RedPill bootloader hard disk porting function
+# 2024.03.15
+# Added RedPill bootloader hard disk porting function supporting 1 SHR Type DISK
+# 2024.03.18
+# Added RedPill bootloader hard disk porting function supporting All SHR & RAID Type DISK
+# 2024.03.22 v1.0.2.4 
+# Added NVMe bootloader support
+# 2024.03.23
+# Fixed bug where both modules disappear when switching between ddsml and eudev (Causes NIC unresponsiveness)
+# 2024.03.24    
+# Added missing mmc partition search function
+# 2024.04.01 v1.0.2.5
+# Provides menu option to disable i915 module loading to prevent console blackout in ApolloLake (DS918+), GeminiLake (DS920+), and Epyc7002 (SA6400)
+# 2024.04.09 v1.0.2.6
+# Added multilingual support languages (locales) (Arabic, Hindi, Hungarian, Indonesian, Turkish)
+# 2024.04.09 v1.0.2.7
+# dbgutils Addon Add/Delete selection menu
+# 2024.04.14
+# sortnetif Addon Add/Delete selection menu
+# 2024.05.08 v1.0.2.8
+# Added multilingual support languages (locales) (Amharic-Ethiopian, Thai)
+# 2024.05.13
+# Menu configuration for adding nvmesystem addon
+# 2024.05.26 v1.0.3.0
+# Integrate my, rploader.sh, myfunc.h into functions.sh, optimize distribution
+# 2024.06.01 v1.0.3.1, 1.0.3.2
+# Added loader file packing menu for remote update, Added dom_szmax for jot mode
+# 2024.06.04 v1.0.3.3 
+# Boot entry order for jot mode synchronized with Friend's order
+# 2024.06.08 v1.0.3.4
+# Maintain boot-wait addon when using satadom in SA6400
+# 2024.06.09 v1.0.3.5 
+# Remove getstaticmodule() and undefined PROXY variables (cause of lkm download failure in final release)
+# 2024.06.10 v1.0.3.6 
+# Use intel_iommu on the command line
+# 2024.06.11 v1.0.3.7 
+# Add command line native satadom support option change menu
+# 2024.06.17 v1.0.3.8
+# Sort netif order by bus-id order (Synology netif sorting method)
+# 2024.07.06 v1.0.3.9 
+# NVMe-related function supplementation and error correction
+# Discontinue use of sortnetif addon, discontinue use of sortnetif if there is only 1 NIC
+# 2024.07.07 v1.0.4.0 
+# Added sata_remap processing menu for SataPort reordering.
+# 2024.08.23 v1.0.4.1 
+# Added a feature to check whether the pre-counted number of disks matches when booting Friend
+# 2024.08.26 v1.0.4.2
+# Update : Add Support DSM 7.2.2-72803 Official Version
+# 2024.08.31 v1.0.4.3 
+# No separation between USB/SATA menus in Jot Mod (boot menu merge)
+# 2024.09.05 v1.0.4.4 
+# Loader building is blocked when using Apollolake + proxmox(kvm)/qemu(kvm) (KP occurs in versions after lkm 24.8.29)
+# 2024.09.08 v1.0.4.5 
+# Solved the KP occurrence issue when using SATA-type bootloader in proxmox(kvm), 
+# SA6400(epyc7002) integration from lkm5 (lkm 24.9.8)
+# 2024.09.09 v1.0.4.6 
+# Rearrange menu order, automatically enter Gen value when S/N or mac is not selected
+# 2024.09.12 v1.0.4.7 
+# Fix from DSM 7.2.2-72803 to DSM 7.2.2-72806
+# 2024.10.14 v1.0.4.8 
+# Enable mmc (SD Card) bus type recognition for the bootloader
+# 2024.10.15 v1.0.4.9 
+# When mmc bus type is used, module processing method is applied with priority given to eudev instead of ddsml.
+# 2024.10.26 v1.0.5.0 
+# Improved internet check function in menu.sh
+# 2024.11.04 v1.0.5.1 
+# Added manual update feature to friend specified version, added disable/enable friend automatic update feature
+# 2024.11.05 v1.0.5.2 
+# Upgraded grub version from 2.06 to 2.12 ( improved uefi, legacy boot compatibility [especially in jot mode] )
+# 2024.11.14 v1.0.6.0 
+# Added the ability to choose between the integrated modules all-modules (tcrp) and rr-modules
+# 2024.11.16 v1.0.6.1 
+# Improved bootloader boot partition detection method
+# 2024.11.19 v1.0.6.2 
+# Changed to use only the first one when multiple bootloaders exist
+# 2024.11.27 v1.0.6.3
+# Added ability to force loading mmc and sd modules when loading Tinycore Linux
+# 2024.12.17 v1.0.6.4 
+# Expanded MAC address support from 4 to 8.
+# 2024.12.20 v1.0.6.5 
+# Includes tinycore linux scsi module for scsi type bootloader support.
+# 2024.12.22 v1.0.6.6 
+# Discontinuing support for DS3615xs.
+# 2024.12.23 v1.0.6.7
+# Applying REDPILL background image to grub boot
+# 2025.01.01 v1.0.6.8
+# i915.modeset=0 menu processing improvement (FRIEND guidance console is activated when i915 transcoding is disabled)
+# 2025.01.06 v1.1.0.0 
+# Added features for distribution of xTCRP (Tinycore Linux stripped down version)
+# 2025.01.12 v1.1.0.1 
+# When using a single m.2 NVMe volume, the DDSML error issue has occurred, 
+# so menu usage has been excluded and related support has been strengthened.
+# 2025.01.29 v1.2.0.0 
+# Added new platforms purley, broadwellnkv2, broadwellntbap and started supporting all models for each platform
+# 2025.02.02 v1.2.1.0 
+# Create tinycore-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
+# 2025.02.06 v1.2.1.1 
+# Renewal of SynoDisk bootloader injection function
+# 2025.02.07 v1.2.1.2 
+# SynoDisk with Bootloader Injection Supports NVMe DISK
+# 2025.02.09 v1.2.1.3 
+# SynoDisk with Bootloader Injection Supports Single SHR DISK
+# 2025.02.10 v1.2.1.4 
+# SynoDisk with bootloader injection feature discontinues support for BASIC or JBOD DISK
+# 2025.02.11 v1.2.1.5 
+# SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
+# 2025.02.17 v1.2.1.6 
+# DS3615xs(bromolow) support again, LEGACY boot mode must be used!
+# 2025.02.25 v1.2.1.7 
+# SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
+# 2025.03.01 v1.2.1.8 
+# Modify the method of checking Internet connection in menu.sh
+# 2025.03.06 v1.2.1.9 
+# Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
+# 2025.03.07 v1.2.2.0 
+# Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+# 2025.03.11 v1.2.2.1 
+# TTYD web console baremetal headless support fix
+# 2025.03.13 v1.2.2.2 
+# Added to change the default value of the Grub boot entry (in the submenu)
+# 2025.03.29 v1.2.2.3
+# Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+# 2025.04.09 v1.2.2.4 
+# SynoDisk with bootloader injection Support SHR 2TB or more
+# 2025.04.12 v1.2.2.5 
+# SynoDisk with bootloader injection Support UEFI ESP and two more SHR 2TB or more
+# 2025.04.12 v1.2.2.6 
+# SynoDisk with bootloader injection Support All Type GPT (BASIC, JBOD, SHR, RAID1,5,6)
+# 2025.04.13 v1.2.2.7 
+# SynoDisk with bootloader injection Support xTCRP loader rebuild
+# 2025.04.15 v1.2.2.8 
+# Fix DS920+ 3rd partition space shortage issue with SynoDisk with bootloader injection
+# 2025.04.18 v1.2.2.9 
+# Fixed the issue where the font of the menu focus would be broken 
+# when changing to a 2-byte Unicode language during the first execution of menu.sh.
+# Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+# (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+# 2025.04.22 v1.2.3.0 
+# avoton (DS1515+ kernel 3) support started
+# 2025.04.23 v1.2.3.1 
+# cedarview (DS713+ kernel 3) support started
+# 2025.04.24 v1.2.3.2 
+# More models supported for avoton and cedarview (including DS1815+)
+# 2025.04.24 v1.2.3.3 
+# v1000nk (DS925+ kernel 5) support started
+# 2025.05.14 v1.2.3.4 
+# Added Addon selection menu for vmtools, qemu-guest-agent
+# 2025.05.21 v1.2.3.5 
+# Added DSM password reset (change) and DSM user add menus
+# 2025.05.24 v1.2.3.6
+# Added Clean System Partition(md0) menu
+# 2025.05.26 v1.2.3.7 
+# Added Bootentry Update version correction menu
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
+# 2025.06.03 v1.2.5.0 
+# Added SYNO RAID (LVM) volume mount menu (for data recovery)
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+# 2025.06.28 v1.2.5.3 
+# Format Disk Menu Improvements
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
+# 2025.08.14 v1.2.5.5 
+# Separate build pre-option selection menu
+# 2025.09.01 v1.2.5.6 
+# Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
+# 2025.10.08 v1.2.6.0 
+# Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+# 2025.10.22 v1.2.6.1 
+# Loader image size is distributed in two sizes: 2GB and 4GB
+# 2025.10.24 v1.2.6.2 
+# When changing user_config.json, process cmd_line at once without loader build
+# 2025.10.29 v1.2.6.3
+# Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
+# 2025.11.07 v1.2.6.5 
+# Added Format System Partition(md0) menu for new install
+# 2025.11.18 v1.2.6.6 
+# Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+# 2025.12.04 v1.2.6.7 
+# Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
+# 2025.12.31 v1.2.6.9 
+# Stabilization of the system partition (md0) format menu
+# 2026.01.24 v1.2.7.0 
+# Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+# 2026.01.30 v1.2.7.1 
+# Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
+# 2026.02.05 v1.2.7.2 
+# Apply timeout when selecting locale
+# Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+# 2026.02.08 v1.2.7.3 
+# Changes to warning messages and guides when building the DSM 7.3.X loader
+# 2026.02.12 v1.2.7.4 
+# Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+# 2026.02.22 v1.2.7.5 
+# Remove the default internalportcfg value (0xffff) in user_config.json
+# 2026.02.26 v1.2.7.6 
+# Expose modular selection menu as upper menu
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
+# 2026.03.07 v1.2.7.8 
+# Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+# 2026.03.10 v1.2.7.9 
+# Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+# 2026.03.15 v1.2.8.0 
+# Discontinued the use of the term Jot and standardized to Direct-Boot
+    
+function showlastupdate() {
+    cat <<EOF
+
+# 2025.04.18 v1.2.2.9 
+# Fixed the issue where the font of the menu focus would be broken 
+# when changing to a 2-byte Unicode language during the first execution of menu.sh.
+# Apply i915-related firmware only to sa6400, reduce the size of the patched dsm kernel in other models 
+# (solve the issue of insufficient space for injection of large-capacity kernel bootloader such as ds920+/ds1621+)
+
+# 2025.04.22 v1.2.3.0 
+# avoton (DS1515+ kernel 3) support started
+
+# 2025.04.23 v1.2.3.1 
+# cedarview (DS713+ kernel 3) support started
+
+# 2025.04.24 v1.2.3.2 
+# More models supported for avoton and cedarview (including DS1815+)
+
+# 2025.04.24 v1.2.3.3 
+# v1000nk (DS925+ kernel 5) support started
+
+# 2025.05.14 v1.2.3.4 
+# Added Addon selection menu for vmtools, qemu-guest-agent
+
+# 2025.05.21 v1.2.3.5 
+# Added DSM password reset (change) and DSM user add menus
+
+# 2025.05.24 v1.2.3.6
+# Added Clean System Partition(md0) menu
+
+# 2025.05.26 v1.2.3.7 
+# Added Bootentry Update version correction menu
+
+# 2025.05.29 v1.2.3.8 
+# r1000nk, geminilakenk (DS725+, DS425+ kernel 5) support started
+
+# 2025.06.03 v1.2.5.0 
+# Added SYNO RAID (LVM) volume mount menu (for data recovery)
+
+# 2025.06.05 v1.2.5.1 
+# Added a dedicated menu for mounting SYNO BTRFS volumes (for data recovery)
+# Requires Tinycore version 9 with kernel 4, like Synology.
+
+# 2025.06.11 v1.2.5.2 
+# Resize 2nd partition of rd.gz when injecting Geminilake and v1000 bootloader
+
+# 2025.06.28 v1.2.5.3 
+# Format Disk Menu Improvements
+
+# 2025.07.02 v1.2.5.4 
+# Apply separate patched buildroot to older AMD CPUs
+
+# 2025.08.14 v1.2.5.5
+# Separate build pre-option selection menu
+
+# 2025.09.01 v1.2.5.6 
+# Added udma-crc-check Addon for Telegram alarm when S.M.A.R.T UDMA CRC Count (ID 199) increases
+
+# 2025.10.06 v1.2.5.7 
+# Dramatically improved USB backup speed
+
+# 2025.10.08 v1.2.6.0 
+# Add Support DSM 7.3.0-81180 Official Version (For kernel 4.4-based use only)
+
+# 2025.10.22 v1.2.6.1 
+# Loader image size is distributed in two sizes: 2GB and 4GB
+
+# 2025.10.24 v1.2.6.2 
+# When changing user_config.json, process cmd_line at once without loader build
+
+# 2025.10.29 v1.2.6.3
+# Add Support DSM 7.3.1-86003 Official Version (For kernel 4.4-based use only)
+
+# 2025.10.31 v1.2.6.4 
+# Add Support DSM 6.2.4-25556 Official Version
+
+# 2025.11.07 v1.2.6.5 
+# Added Format System Partition(md0) menu for new install
+
+# 2025.11.18 v1.2.6.6 
+# Added default processing of Verbose OFF when building a loader & warning message when building 7.3 or 7.3.1 loader
+
+# 2025.12.04 v1.2.6.7 
+# Add Support DSM 7.3.2-86009 Official Version (For kernel 4.4-based use only)
+
+# 2025.12.17 v1.2.6.8 
+# Improved backuploader() function [reflects free space check before backup]
+
+# 2025.12.31 v1.2.6.9 
+# Stabilization of the system partition (md0) format menu
+
+# 2026.01.24 v1.2.7.0 
+# Skip backup and reboot after ttyd injection (to prevent infinite reboots)
+
+# 2026.01.30 v1.2.7.1 
+# Added support for DSM 7.1.0, added support for Braswell (DS916+, DS716+)
+
+# 2026.02.05 v1.2.7.2 
+# Apply timeout when selecting locale
+# Added EUDEV+DDSML automatic conversion function after Kernel 5 model detects R8168
+
+# 2026.02.08 v1.2.7.3 
+# Changes to warning messages and guides when building the DSM 7.3.X loader
+
+# 2026.02.12 v1.2.7.4 
+# Removed warning message when building DSM 7.3.X loader, adjusted Jot Grub boot entry
+
+# 2026.02.22 v1.2.7.5 
+# Remove the default internalportcfg value (0xffff) in user_config.json
+
+# 2026.02.26 v1.2.7.6 
+# Expose modular selection menu as upper menu
+
+# 2026.03.06 v1.2.7.7 
+# Use static firmware and module loading methods when using custom modules
+
+# 2026.03.07 v1.2.7.8 
+# Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
+
+# 2026.03.10 v1.2.7.9 
+# Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
+
+# 2026.03.15 v1.2.8.0 
+# Discontinued the use of the term Jot and standardized to Direct-Boot
+
+EOF
+}
+
+function showhelp() {
+    cat <<EOF
+$(basename ${0})
+
+----------------------------------------------------------------------------------------
+Usage: ${0} <Synology Model Name> <Options>
+
+Options: update, postupdate, noconfig, noclean, manual, realmac, userdts
+
+- update : Option to handle updates to the m shell.
+
+- postupdate : Option to patch the restore loop after applying DSM 7.1.0-42661 after Update 2, no additional build required.
+
+- noconfig: SKIP automatic detection change processing such as SN/Mac/Vid/Pid/SataPortMap of user_config.json file.
+
+- noclean: SKIP the 💊   RedPill LKM/LOAD directory without clearing it with the Clean command. 
+           However, delete the Cache directory and loader.img.
+
+- manual: Options for manual extension processing and manual dtc processing in build action (skipping extension auto detection).
+
+- realmac : Option to use the NIC's real mac address instead of creating a virtual one.
+
+- userdts : Option to use the user-defined platform.dts file instead of auto-discovery mapping with dtcpatch.
+
+
+Please type Synology Model Name after ./$(basename ${0})
+
+- for friend mode
+
+./$(basename ${0}) DS918+-7.2.1-69057
+./$(basename ${0}) DS3617xs-7.2.1-69057
+./$(basename ${0}) DS3622xs+-7.2.1-69057
+./$(basename ${0}) DVA3221-7.2.1-69057
+./$(basename ${0}) DS920+-7.2.1-69057
+./$(basename ${0}) DS1621+-7.2.1-69057
+./$(basename ${0}) DS2422+-7.2.1-69057
+./$(basename ${0}) DVA1622-7.2.1-69057
+./$(basename ${0}) DS1520+-7.2.1-69057
+./$(basename ${0}) FS2500-7.2.1-69057
+./$(basename ${0}) DS1621xs+-7.2.1-69057
+./$(basename ${0}) RS4021xs+-7.2.1-69057 
+./$(basename ${0}) DVA3219-7.2.1-69057
+./$(basename ${0}) RS3618xs-7.2.1-69057
+./$(basename ${0}) DS1019+-7.2.1-69057
+./$(basename ${0}) DS923+-7.2.1-69057
+./$(basename ${0}) DS723+-7.2.1-69057
+./$(basename ${0}) SA6400-7.2.1-69057
+./$(basename ${0}) DS720+-7.2.1-69057
+./$(basename ${0}) RS1221+-7.2.1-69057
+./$(basename ${0}) RS2423+-7.2.1-69057
+./$(basename ${0}) RS1619xs+-7.2.1-69057
+./$(basename ${0}) RS3621xs+-7.2.1-69057
+./$(basename ${0}) SA6400-7.2.1-69057
+./$(basename ${0}) DS916+-7.2.1-69057
+./$(basename ${0}) DS1821+-7.2.1-69057
+./$(basename ${0}) DS1819+-7.2.1-69057
+./$(basename ${0}) DS1823xs+-7.2.1-69057
+./$(basename ${0}) DS620slim+-7.2.1-69057
+
+ex) Except for postupdate and userdts that must be used alone, the rest of the options can be used in combination. 
+
+- When you want to build the loader while maintaining the already set SN/Mac/Vid/Pid/SataPortMap
+./my DS3622xs+H noconfig
+
+- When you want to build the loader while maintaining the already set SN/Mac/Vid/Pid/SataPortMap and without deleting the downloaded DSM pat file.
+./my DS3622xs+H noconfig noclean
+
+- When you want to build the loader while using the real MAC address of the NIC, with extended auto-detection disabled
+./my DS3622xs+H realmac manual
+
+EOF
+
+}
+
+#################################################################################
+# Verbose Mode Control for RedPill Bootloader Build
+# Usage: source verbose_control.sh
+#################################################################################
+
+# Global Verbose Flag
+VERBOSE_MODE="OFF"
+VERBOSE_FLAG=""
+
+#################################################################################
+# Progress Bar Display
+#################################################################################
+show_progress_bar() {
+    local current=$1
+    local total=$2
+    local step_name="$3"
+    
+    local width=24
+    local percentage=$((current * 100 / total))
+    local filled=$((width * current / total))
+    
+    printf "[" > /dev/tty
+    printf "%${filled}s" | tr ' ' '=' > /dev/tty
+    printf "%$((width - filled))s" | tr ' ' '-' > /dev/tty
+    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > /dev/tty
+}
+
+#################################################################################
+# Logging Functions
+#################################################################################
+log_build_step() {
+    local step_name="$1"
+    local step_num="${2:-}"
+    local total_steps="${3:-}"
+            
+    if [ "$VERBOSE_MODE" = "OFF" ]; then
+        if [ -n "$step_num" ] && [ -n "$total_steps" ]; then
+            show_progress_bar "$step_num" "$total_steps" "$step_name"
+        fi
+    else
+        echo "[$(date '+%H:%M:%S')] ✓ $step_name"    
+    fi
+}
+
+log_error() {
+    # Error is ALWAYS shown
+    echo -e "\033[1;31m[ERROR] $(date '+%H:%M:%S'): $1\033[0m"
+}
+
+log_warning() {
+    # Warning is ALWAYS shown
+    echo -e "\033[1;33m[WARNING] $(date '+%H:%M:%S'): $1\033[0m"
+}
+
+log_success() {
+    # Success is ALWAYS shown
+    echo -e "\033[1;32m[SUCCESS] $(date '+%H:%M:%S'): $1\033[0m"
+}
+
+log_backup_step() {
+    # Backup process is ALWAYS shown
+    echo -e "\033[1;36m[BACKUP] $(date '+%H:%M:%S'): $1\033[0m"
+}
+
+#################################################################################
+# Build with Progress Bar
+#################################################################################
+make_with_progress() {
+    local ldr_mode="${1}"
+    local prevent_init="${2}"
+    local build_cmd=""
+
+    checkUserConfig 
+    if [ $? -ne 0 ]; then
+        dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0      
+        return 1  
+    fi
+    
+    usbidentify
+    clear
+
+    getip
+    setSuggest $MODEL
+    if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
+      DMPM="DDSML+EUDEV"
+    fi
+    writeConfigKey "general" "devmod" "${DMPM}"
+
+    if [ "${prevent_init}" = "OFF" ]; then
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
+    else
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init}"
+    fi 
+
+    set -o pipefail  
+    if [ "$VERBOSE_MODE" = "OFF" ]; then
+        echo "Building bootloader..."
+        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log > /dev/null
+        exit_code=${PIPESTATUS[0]}
+        #echo "$output" | grep -E "(Preparing build environment|Handling DSM pat files|Collecting extensions|Creating bootloader image|Finalizing build)"                
+    else
+        eval "$build_cmd" 2>&1 | tee /home/tc/zlastbuild.log
+        exit_code=${PIPESTATUS[0]}
+    fi
+    set +o pipefail    
+    
+    # Always show exit code
+    if [ $exit_code -eq 0 ]; then
+        log_success "Build completed successfully (Exit Code: $exit_code)"
+
+        if  [ -f /home/tc/custom-module/redpill.ko ]; then
+            sudo rm -rf /home/tc/custom-module/redpill.ko
+        fi      
+st "finishloader" "Finished building" "Finished building the loader"  
+log_build_step "Finished building" 12 12
+    else
+        log_error "Build failed with exit code: $exit_code"
+        show_backup_error_info
+    fi
+    
+    echo "press any key to continue..."
+    read answer
+
+    rm -f /home/tc/buildstatus  
+        
+    return $exit_code
+}
+
+#################################################################################
+# Show Error Information
+#################################################################################
+show_backup_error_info() {
+    echo -e "\n\033[1;31m╔════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;31m║         BUILD ERROR INFORMATION            ║\033[0m"
+    echo -e "\033[1;31m╚════════════════════════════════════════════╝\033[0m"
+    
+    if [ -f /home/tc/zlastbuild.log ]; then
+        echo -e "\n\033[1;33mLast 10 lines of build log:\033[0m"
+        tail -10 /home/tc/zlastbuild.log | sed 's/^/  /'
+    fi
+    
+    echo -e "\n\033[1;33mBackup status:\033[0m"
+    echo "  Checking for corrupted files..."
+    ls -lh /mnt/${tcrppart}/*.pat 2>/dev/null | tail -5
+}
+
+#################################################################################
+# Toggle Verbose Mode Menu
+#################################################################################
+toggle_verbose_menu() {
+    local TMP_PATH="${TMP_PATH:-.}"
+    local NEXT="r"
+    
+    while true; do
+        clear
+        
+        echo "╔═══════════════════════════════════════════════════════════════╗"
+        echo "║         VERBOSE MODE CONFIGURATION                           ║"
+        echo "╚═══════════════════════════════════════════════════════════════╝"
+        echo ""
+        echo "  Current Mode: $([ "$VERBOSE_MODE" = "ON" ] && echo -e '\033[1;32m[ON]\033[0m' || echo -e '\033[1;31m[OFF]\033[0m')"
+        echo ""
+        echo "┌─────────────────────────────────────────────────────────────┐"
+        echo "│  1. Enable Verbose Mode (Show all build output)             │"
+        echo "│  2. Disable Verbose Mode (Show only progress & errors)      │"
+        echo "│  3. Return to Main Menu                                     │"
+        echo "└─────────────────────────────────────────────────────────────┘"
+        echo ""
+        echo "  [Mode Description]"
+        echo ""
+        
+        if [ "$VERBOSE_MODE" = "ON" ]; then
+            echo "  ✓ VERBOSE ON - Current Setting"
+            echo "    • Displays all compilation steps"
+            echo "    • Shows detailed error messages"
+            echo "    • Displays backup process details"
+            echo "    • Slower console output (more I/O)"
+            echo ""
+        else
+            echo "  ✓ VERBOSE OFF - Current Setting"
+            echo "    • Progress bar display only"
+            echo "    • Displays errors and warnings"
+            echo "    • Displays backup process (always visible)"
+            echo "    • Fast, clean console output"
+            echo ""
+        fi
+        
+        read -p "Select option [1-3]: " choice
+        
+        case "$choice" in
+            1)
+                VERBOSE_MODE="ON"
+                VERBOSE_FLAG="-v"
+                echo -e "\n\033[1;32m✓ Verbose mode enabled\033[0m"
+                sleep 1.5
+                ;;
+            2)
+                VERBOSE_MODE="OFF"
+                VERBOSE_FLAG=""
+                echo -e "\n\033[1;32m✓ Verbose mode disabled\033[0m"
+                sleep 1.5
+                ;;
+            3)
+                NEXT="r"
+                return 0
+                ;;
+            *)
+                echo -e "\033[1;31m✗ Invalid selection\033[0m"
+                sleep 1.5
+                ;;
+        esac
+    done
+}
+
+function msgalert() {
+    echo -e "\033[1;31m$1\033[0m"
+}
+function msgwarning() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+function msgnormal() {
+    echo -e "\033[1;32m$1\033[0m"
+} 
+function msgalerttty() {
+    printf "\033[1;31m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+}
+function msgwarningtty() {
+    printf "\033[1;33m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+}
+function msgnormaltty() {
+    printf "\033[1;32m%b\033[0m" "${1//\\n/\\r\\n}" > /dev/tty
+} 
+
+#################################################################################
+# Backup with Always-Visible Progress
+#################################################################################
+function backup_loader() {
+    local backup_steps=5
+    
+    log_backup_step "Starting backup process..."
+    
+    for i in $(seq 1 $backup_steps); do
+        log_backup_step "Backing up config ($i/$backup_steps)"
+        # Actual backup command here
+        sleep 1
+        show_progress_bar "$i" "$backup_steps" "Backup in progress..."
+    done
+    
+    log_backup_step "Backup completed successfully"
+}
+
+#################################################################################
+# Get Current Verbose Status
+#################################################################################
+get_verbose_status() {
+    echo "$VERBOSE_MODE"
+}
+
+function getloaderdisk() {
+
+    loaderdisk=""
+    # Get the loader disk using the UUID "6234-C863"
+    loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+
+    # Get the loader disk using the UUID "6234-C863" ( injected bootloader )
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        [ -z "$loaderdisk" ] && loaderdisk=$(sudo /sbin/blkid | grep "8765-4321" | cut -d ':' -f1 | sed 's/p\?7//g' | awk -F/ '{print $NF}' | head -n 1)
+    fi
+    
+    # If the UUID "6234-C863" is not found, extract the disk name
+    if [ -z "$loaderdisk" ]; then
+        # Iterate through available disks to find a valid disk name
+        while read -r edisk; do
+            loaderdisk=$(echo ${edisk} | cut -c 1-12 | awk -F\/ '{print $3}')
+            # Break the loop if a valid disk name is found
+            [ -n "$loaderdisk" ] && break
+        done < <(lsblk -ndo NAME | grep -v '^loop' | grep -v '^zram' | sed 's/^/\/dev\//')
+    fi
+
+    # Output the loader disk
+    echo "LOADER DISK: $loaderdisk"
+}
+
+# ==============================================================================          
+# Color Function                                                                          
+# ==============================================================================          
+function cecho () {                                                                                
+#    if [ -n "$3" ]                                                                                                            
+#    then                                                                                  
+#        case "$3" in                                                                                 
+#            black  | bk) bgcolor="40";;                                                              
+#            red    |  r) bgcolor="41";;                                                              
+#            green  |  g) bgcolor="42";;                                                                 
+#            yellow |  y) bgcolor="43";;                                             
+#            blue   |  b) bgcolor="44";;                                             
+#            purple |  p) bgcolor="45";;                                                   
+#            cyan   |  c) bgcolor="46";;                                             
+#            gray   | gr) bgcolor="47";;                                             
+#        esac                                                                        
+#    else                                                                            
+        bgcolor="0"                                                                 
+#    fi                                                                              
+    code="\033["                                                                    
+    case "$1" in                                                                    
+        black  | bk) color="${code}${bgcolor};30m";;                                
+        red    |  r) color="${code}${bgcolor};31m";;                                
+        green  |  g) color="${code}${bgcolor};32m";;                                
+        yellow |  y) color="${code}${bgcolor};33m";;                                
+        blue   |  b) color="${code}${bgcolor};34m";;                                
+        purple |  p) color="${code}${bgcolor};35m";;                                
+        cyan   |  c) color="${code}${bgcolor};36m";;                                
+        gray   | gr) color="${code}${bgcolor};37m";;                                
+    esac                                                                            
+                                                                                                                                                                    
+    text="$color$2${code}0m"                                                                                                                                        
+    echo -e "$text"                                                                                                                                                 
+}   
+
+function zeropadingver() {
+  ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$1" | tr '.' ' '))
+}
+
+function getvarsmshell()
+{
+
+    # Set the path for the models.json file
+    MODELS_JSON="/home/tc/models.json"
+
+    # Define platform groups
+    platforms="epyc7002 v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
+
+    # Initialize MODELS array
+    MODELS=()
+
+    # Extract models for each platform and add them to the mdl file
+    for platform in $platforms; do
+      models=$(jq -r ".$platform.models[]" "$MODELS_JSON" 2>/dev/null)
+      if [ -n "$models" ]; then
+        MODELS+=($models)
+      fi
+    done
+    
+    ORIGIN_PLATFORM=""
+
+    tem="${1}"
+
+    MODEL="$(echo ${tem} |cut -d '-' -f 1)"
+    TARGET_REVISION="$(echo ${tem} |cut -d '-' -f 3)"    
+    if [ "$TARGET_REVISION" == "64570" ]; then
+      TARGET_VERSION="$(echo ${tem} |cut -d '-' -f 2 | cut -c 1-3)"
+    else
+      TARGET_VERSION="$(echo ${tem} |cut -d '-' -f 2)"
+    fi
+
+    #echo "MODEL is $MODEL"
+    TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/' | sed 's/RS/rs/' | sed 's/+/p/' | sed 's/DVA/dva/' | sed 's/FS/fs/' | sed 's/SA/sa/' )
+    SYNOMODEL="${TARGET_PLATFORM}_${TARGET_REVISION}"
+    
+    
+    if ! echo ${MODELS[@]} | grep -qw ${MODEL}; then
+        echo "This synology model not supported by TCRP."
+        exit 99
+    fi
+
+    if [ "$TARGET_REVISION" == "25556" ]; then
+        KVER="4.4.59"
+    elif [ "$TARGET_REVISION" == "42218" ]; then
+        KVER="4.4.180"
+    elif [ "$TARGET_REVISION" == "42661" ]; then
+        KVER="4.4.180"
+    elif [ "$TARGET_REVISION" == "42962" ]; then
+        KVER="4.4.180"
+    elif [ "$TARGET_REVISION" == "64570" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "69057" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "72806" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "81180" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "86003" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "86009" ]; then
+        KVER="4.4.302"
+    else
+        echo "Synology model revision not supported by TCRP."
+        exit 0
+    fi
+
+    zeropadingver ${KVER}
+
+    # Extract models for each platform and add them to the mdl file
+    for platform in $platforms; do
+      # Initialize MODELS array
+      MODELS=()
+      models=$(jq -r ".$platform.models[]" "$MODELS_JSON" 2>/dev/null)
+      if [ -n "$models" ]; then
+        MODELS=($models)
+      fi
+      if echo ${MODELS[@]} | grep -qw ${MODEL}; then
+        ORIGIN_PLATFORM="${platform}"
+        if [ ${ORIGIN_PLATFORM} == "broadwell" ]; then
+            if [ "$TARGET_REVISION" == "25556" ]; then
+                KVER="3.10.105"
+            fi
+        fi
+        if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+            if [ "$TARGET_REVISION" == "25556" ]; then
+                KVER="3.10.105"
+            else
+                KVER="3.10.108"
+            fi
+        fi    
+        if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+            KVER="5.10.55"
+        fi
+      fi
+    done    
+    
+    case ${MODEL} in
+    DS224+)
+        permanent="WBR"
+        serialstart="2350"
+        suffix="alpha"
+        ;;
+    DS423+)
+        permanent="VKR"
+        serialstart="22A0"
+        suffix="alpha"
+        ;;
+    DS718+)
+        permanent="PEN"
+        serialstart="1930"
+        suffix="numeric"
+        ;;
+    DS720+)
+        permanent="QWR"
+        serialstart="2010 2110"
+        suffix="alpha"
+        ;;
+    DS918+)
+        permanent="PDN"
+        serialstart="1910"
+        suffix="numeric"
+        ;;
+    DS920+)
+        permanent="SBR"
+        serialstart="2030 2040 20C0 2150"
+        suffix="alpha"
+        ;;
+    DS923+)
+        permanent="TQR"
+        serialstart="2270"
+        suffix="alpha"
+        ;;
+    DS925+)
+        permanent="YHR"
+        serialstart="2520"
+        suffix="alpha"
+        ;;
+    DS1019+)
+        permanent="QXR"
+        serialstart="1850 1880"
+        suffix="numeric"
+        ;;
+    DS1520+)
+        permanent="RYR"
+        serialstart="2060"
+        suffix="alpha"
+        ;;
+    DS1522+)
+        permanent="TRR"
+        serialstart="2270"
+        suffix="alpha"
+        ;;
+    DS1621+)
+        permanent="S7R"
+        serialstart="2080"
+        suffix="alpha"
+        ;;
+    DS1621xs+)
+        permanent="RVR"
+        serialstart="2070"
+        suffix="alpha"
+        ;;
+    DS1819+)
+        permanent="R5R"
+        serialstart="1890"
+        suffix="alpha"
+        ;;
+    DS1821+)
+        permanent="SKR"
+        serialstart="2110"
+        suffix="alpha"
+        ;;
+    DS1823xs+)
+        permanent="V5R"
+        serialstart="2280"
+        suffix="alpha"
+        ;;
+    DS2419+)
+        permanent="QZA"
+        serialstart="1880"
+        suffix="alpha"
+        ;;
+    DS2422+)
+        permanent="SLR"
+        serialstart="2140 2180"
+        suffix="alpha"
+        ;;
+    DS3615xs)
+        permanent="LWN"    
+        serialstart="1130 1230 1330 1430"
+        suffix="numeric"
+      ;;        
+    DS3617xs)
+        permanent="ODN"
+        serialstart="1130 1230 1330 1430"
+        suffix="numeric"
+        ;;
+    DS3622xs+)
+        permanent="SQR"
+        serialstart="2150"
+        suffix="alpha"
+        ;;
+    DVA1622)
+        permanent="UBR"
+        serialstart="2030 2040 20C0 2150"
+        suffix="alpha"
+        ;;
+    DVA3219)
+        permanent="RFR"
+        serialstart="1930 1940"
+        suffix="alpha"
+        ;;
+    DVA3221)
+        permanent="SJR"
+        serialstart="2030 2040 20C0 2150"
+        suffix="alpha"
+        ;;
+    FS2500)
+        permanent="PSN"
+        serialstart="1960"
+        suffix="numeric"
+        ;;
+    FS6400)
+        permanent="XXX"
+        serialstart="0000"
+        suffix="alpha"
+        ;;
+    HD6500)
+        permanent="RUR"
+        serialstart="20A0 21C0"
+        suffix="alpha"
+        ;;
+    RS1221+)
+        permanent="RWR"
+        serialstart="20B0"
+        suffix="alpha"
+        ;;
+    RS1619xs+)
+        permanent="QPR"
+        serialstart="1920"
+        suffix="alpha"
+        ;;
+    RS2423RP+)
+        permanent="V3R"
+        serialstart="22B0"
+        suffix="alpha"
+        ;;
+    RS3621xs+)
+        permanent="SZR"
+        serialstart="20A0"
+        suffix="alpha"
+        ;;
+    RS4021xs+)
+        permanent="T2R"
+        serialstart="2160"
+        suffix="alpha"
+        ;;
+    SA3200D)
+        permanent="S4R"
+        serialstart="19A0"
+        suffix="alpha"
+        ;;
+    SA3400)
+        permanent="RJR"
+        serialstart="1970"
+        suffix="alpha"
+        ;;
+    SA6400)
+        permanent="W8R"
+        serialstart="2350"
+        suffix="alpha"
+        ;;
+    SA3410)
+        permanent="UMR"
+        serialstart="2270"
+        suffix="alpha"
+        ;;
+    RS18016xs+)    
+        permanent="N8N"
+        serialstart="1660"
+        suffix="alpha"
+        ;;
+    DS425+)
+        permanent="YGR"
+        serialstart="2550"
+        suffix="alpha"
+        ;;
+    DS1525+)
+        permanent="YJR"
+        serialstart="2540"
+        suffix="alpha"
+        ;;
+    DS1825+)
+        permanent="WDR"
+        serialstart="2540"
+        suffix="alpha"
+        ;;
+    *)
+        permanent="XXX"
+        serialstart="0000"
+        suffix="alpha"
+        ;;
+    esac
+
+
+}
+
+# Function READ_YN, cecho                                                                                        
+# Made by FOXBI
+# 2022.04.14                                                                                                                  
+#                                                                                                                             
+# ==============================================================================                                              
+# Y or N Function                                                                                                             
+# ==============================================================================                                              
+function READ_YN () { # ${1}:question ${2}:default                                                                                         
+    while true; do
+        read -n1 -p "${1}" Y_N                                                                                                       
+        case "$Y_N" in                                                                                                            
+            [Yy]* ) Y_N="y"                                                                                                                
+                 echo -e "\n"; break ;;                                                                                                      
+            [Nn]* ) Y_N="n"                                                                                                                
+                 echo -e "\n"; break ;;                                                                                                      
+            *) echo -e "Please answer in Y / y or N / n.\n" ;;                                                                                                        
+        esac                                                                                                                      
+    done        
+}                                                                                         
+
+function st() {
+echo -e "[$(date '+%T.%3N')]:-------------------------------------------------------------" >> /home/tc/buildstatus
+echo -e "\e[35m$1\e[0m	\e[36m$2\e[0m	$3" >> /home/tc/buildstatus
+}
+
+function mountvol () {
+
+  # RAID 어레이가 이미 활성화되었는지 확인
+  if ! grep -q "active" /proc/mdstat 2>/dev/null; then
+    echo -e "\e[32mInitializing RAID/LVM...\e[0m"
+    sudo mdadm --assemble --scan
+    sudo pvscan # PV(Physical Volume) scan
+    sudo vgscan # VG(Volume Group) scan
+    sudo vgchange -ay # VG Avtivate (--activationmode degraded Option Retry)
+  fi
+
+  lvm_volumes=()
+  while IFS= read -r line; do
+    path=$(echo "$line" | awk '{print $1}')
+    size=$(echo "$line" | awk '{print $2}')
+    # 볼륨 이름만 추출하여 사용자 친화적 표시
+    vol_name="${path##*/}"
+    lvm_volumes+=("$path" "$vol_name ($size)")
+  done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null | grep volume)
+  
+  if [ ${#lvm_volumes[@]} -eq 0 ]; then 
+    echo "No Available Syno lvm Volume, press any key continue..."
+    read -n 1 -s answer                       
+    return 0   
+  fi
+  
+  dialog --backtitle "`backtitle`" --colors \
+    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
+    2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp=$(<${TMP_PATH}/resp)
+  [ -z "${resp}" ] && return
+  
+  # 볼륨 이름 추출 (예: /dev/mapper/vg1000-lv → lv)
+  vol_name="${resp##*-}"  # LV 이름만 추출
+  mount_point="/mnt/${vol_name}"  # 마운트 경로 생성
+  
+  T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
+  
+  sudo mkdir -p "${mount_point}"
+  if [ "$T" = "btrfs" ]; then
+    sudo mount -t btrfs "${resp}" "${mount_point}" -o ro,degraded
+  elif [ "$T" = "ext4" ]; then  
+    sudo mount -t ext4 "${resp}" "${mount_point}"
+  fi
+  
+  if mountpoint -q "${mount_point}"; then
+    echo -e "\e[32mMount success: ${resp} -> ${mount_point}\e[0m, press any key to continue..."
+  else
+    echo "Mount failed! Check filesystem type."
+  fi
+  read -n 1 -s answer
+  return 0
+}
+
+function open_md0() {
+  # assemble and mount md0
+  sudo rm -f "${TMP_PATH}/menuz"
+  sudo mkdir -p "${TMP_PATH}/mdX"
+  num=$(echo $DSMROOTS | wc -w)
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  if [ "$FRKRNL" = "NO" ] && [ "$T" = "ext4" ]; then
+      sudo tune2fs -O ^quota /dev/md0
+  fi    
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+}
+
+function close_md0() {
+  sudo umount "${TMP_PATH}/mdX"
+  sudo mdadm --stop /dev/md0
+  sudo rm -rf "${TMP_PATH}/mdX"
+}
+
+###############################################################################
+# Find and mount the DSM root filesystem
+function findDSMRoot() {
+  local DSMROOTS=""
+  if [ "$FRKRNL" = "YES" ]; then
+      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo mdadm --detail --scan 2>/dev/null | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
+      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
+  else
+      if [ "$(which mdadm)_" == "_" ]; then
+          tce-load -iw mdadm 2>&1 >/dev/null
+      fi    
+      [ -z "${DSMROOTS}" ] && DSMROOTS="$(sudo fdisk -l | grep -E "sd[a-z]{1,2}1" | grep -E '16785407|4982527' | awk '{print $1}')"
+  fi
+  echo "${DSMROOTS}"
+  return 0
+}
+
+###############################################################################
+# Reset DSM system password
+function changeDSMPassword() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  # assemble and mount md0
+  open_md0
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+  if [ -f "${TMP_PATH}/mdX/etc/shadow" ]; then
+    while read -r L; do
+      U=$(echo "${L}" | awk -F ':' '{if ($2 != "*" && $2 != "!!") print $1;}')
+      [ -z "${U}" ] && continue
+      E=$(echo "${L}" | awk -F ':' '{if ($8 == "1") print "disabled"; else print "        ";}')
+      grep -q "status=on" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${U}/method.config" 2>/dev/null
+      [ $? -eq 0 ] && S="SecureSignIn" || S="            "
+      printf "\"%-36s %-10s %-14s\"\n" "${U}" "${E}" "${S}" >>"${TMP_PATH}/menuz"
+    done <<<"$(sudo cat "${TMP_PATH}/mdX/etc/shadow" 2>/dev/null)"
+  fi
+
+  close_md0
+   
+  if [ ! -f "${TMP_PATH}/menuz" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --msgbox "All existing users have been disabled. Please try adding new user." 0 0
+    return
+  fi
+  dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --no-items --menu "Choose a user name" 0 0 20 --file "${TMP_PATH}/menuz" \
+    2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  USER="$(sudo cat "${TMP_PATH}/resp" 2>/dev/null | awk '{print $1}')"
+  [ -z "${USER}" ] && return
+  local STRPASSWD
+  while true; do
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Change DSM New Password" \
+      --inputbox "$(printf "Type a new password for user '%s'" "${USER}")" 0 70 "" \
+      2>"${TMP_PATH}/resp"
+    [ $? -ne 0 ] && break
+    resp="$(sudo cat "${TMP_PATH}/resp" 2>/dev/null)"
+    if [ -z "${resp}" ]; then
+      dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+        --title "Change DSM New Password" \
+        --msgbox "Invalid password" 0 0
+    else
+      STRPASSWD="${resp}"
+      break
+    fi
+  done
+  sudo rm -f "${TMP_PATH}/isOk"
+  (
+    sudo mkdir -p "${TMP_PATH}/mdX"
+    local NEWPASSWD
+    NEWPASSWD="$(sudo openssl passwd -6 -salt "$(sudo openssl rand -hex 8)" "${STRPASSWD}")"
+  
+    # assemble and mount md0
+    open_md0
+
+    [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+    sudo sed -i "s|^${USER}:[^:]*|${USER}:${NEWPASSWD}|" "${TMP_PATH}/mdX/etc/shadow"
+    sudo sed -i "/^${USER}:/ s/^\(${USER}:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\)[^:]*:/\1:/" "${TMP_PATH}/mdX/etc/shadow"
+    sudo sed -i "s|status=on|status=off|g" "${TMP_PATH}/mdX/usr/syno/etc/packages/SecureSignIn/preference/${USER}/method.config" 2>/dev/null
+    sudo sync
+  
+    echo "true" >"${TMP_PATH}/isOk"
+    close_md0
+    
+  ) 2>&1 | dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --progressbox "Resetting ..." 20 100
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG="$(printf "Reset password for user '%s' completed." "${USER}")"
+  else
+    MSG="$(printf "Reset password for user '%s' failed." "${USER}")"
+  fi
+  dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+    --title "Change DSM New Password" \
+    --msgbox "${MSG}" 0 0
+  return
+}
+
+###############################################################################
+# Add new DSM user
+function addNewDSMUser() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --title "Add New DSM User" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+  MSG="Add to administrators group by default"
+  dialog --title "Add New DSM User" \
+    --form "${MSG}" 8 60 3 \
+    "username:" 1 1 "" 1 10 50 0 \
+    "password:" 2 1 "" 2 10 50 0 \
+    2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  username=$(sudo sed -n '1p' "${TMP_PATH}/resp")
+  password=$(sudo sed -n '2p' "${TMP_PATH}/resp")
+
+  username_escaped=$(printf "%q" "$username")
+  password_escaped=$(printf "%q" "$password")
+      
+  sudo rm -f "${TMP_PATH}/isOk"
+  (
+    ONBOOTUP=""
+    ONBOOTUP="${ONBOOTUP}if synouser --enum local | grep -q ^${username_escaped}\$; then synouser --setpw ${username_escaped} ${password_escaped}; else synouser --add ${username_escaped} ${password_escaped} mshell 0 user@mshell.com 1; fi\n"
+    ONBOOTUP="${ONBOOTUP}synogroup --memberadd administrators ${username_escaped}\n"
+    ONBOOTUP="${ONBOOTUP}echo \"DELETE FROM task WHERE task_name LIKE ''ONBOOTUP_ADDUSER'';\" | sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db\n"
+
+    # assemble and mount md0
+    open_md0
+
+    [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+    if [ -f "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" ]; then
+      sudo sqlite3 "${TMP_PATH}/mdX/usr/syno/etc/esynoscheduler/esynoscheduler.db" <<EOF
+DELETE FROM task WHERE task_name LIKE 'ONBOOTUP_ADDUSER';
+INSERT INTO task VALUES('ONBOOTUP_ADDUSER', '', 'bootup', '', 1, 0, 0, 0, '', 0, '$(echo -e "${ONBOOTUP}")', 'script', '{}', '', '', '{}', '{}');
+EOF
+      sudo sync
+      echo "true" >"${TMP_PATH}/isOk"
+    fi
+
+    close_md0
+    
+  ) 2>&1 | dialog --title "Add New DSM User" \
+    --progressbox "Adding ..." 20 100
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG=$(printf "Add new user '%s' completed." "${username}")
+  else
+    MSG=$(printf "Add new user '%s' failed." "${username}")
+  fi
+  dialog --title "Add New DSM User" \
+    --msgbox "${MSG}" 0 0
+  return
+}
+
+###############################################################################
+# CleanSystemPart
+function CleanSystemPart() {
+
+param="${1}"
+
+echo -n "(Warning) Do you want to ${param} the System Partition(md0)? [yY/nN] : "
+readanswer
+if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "${param} System Partition(md0)" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  sudo rm -f "${TMP_PATH}/isOk"
+  # assemble and mount md0
+  open_md0
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+  if [ "${param}" = "clean" ]; then
+
+      if [ -d "${TMP_PATH}/mdX/etc" ]; then
+          removed=0
+      
+          for dir in "@autoupdate" "upd@te" ".log.junior"; do
+              path="${TMP_PATH}/mdX/${dir}/*"
+              if ls $path 1>/dev/null 2>&1; then
+                  sudo rm -vrf ${TMP_PATH}/mdX/${dir}/*
+                  removed=1
+              fi
+          done
+      
+          sudo sync
+      
+          if [ $removed -eq 0 ]; then
+              echo "Nothing to remove file"
+          else
+              echo "true" >"${TMP_PATH}/isOk"
+          fi
+      
+          echo "press any key to continue..."
+          read answer
+      fi
+  else
+      sudo rm -rf "${TMP_PATH}/mdX/" 2>/dev/null
+      sudo sync      
+      echo "true" >"${TMP_PATH}/isOk"        
+      echo "press any key to continue..."
+      read answer
+  fi
+
+  close_md0
+  
+  if [ -f "${TMP_PATH}/isOk" ]; then
+    MSG=$(printf "${param} System Partition(md0) completed.")
+  else
+    MSG=$(printf "${param} System Partition(md0) failed.")
+  fi
+  dialog --title "${param} System Partition(md0)" \
+    --msgbox "${MSG}" 0 0
+  return
+  
+fi
+
+}
+
+###############################################################################
+# Fix SmallFixNumber of Bootentry
+function fixBootEntry() {
+
+echo -n "(Warning) Do you want to fix Bootentry Update version? [yY/nN] : "
+readanswer
+if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Bootentry Update version correction" \
+      --msgbox "No DSM system partition(md0) found!\nPlease insert all disks before continuing." 0 0
+    return
+  fi
+
+  # assemble and mount md0
+  open_md0
+
+  [ $? -ne 0 ] && returnto "Assemble and mount md0 failed. Stop processing!!! " && return
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+      . ${TMP_PATH}/mdX/etc/VERSION
+      cat ${TMP_PATH}/mdX/etc/VERSION
+      updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
+      sudo sed -i "s/Update [0-9]/Update $smallfixnumber/g" "/mnt/${loaderdisk}1/boot/grub/grub.cfg"
+      grep menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg
+      echo "press any key to continue..."
+      read answer
+  fi
+
+  close_md0
+  
+  MSG=$(printf "Bootentry Update version correction completed.")
+  dialog --title "Bootentry Update version correction" \
+    --msgbox "${MSG}" 0 0
+  return
+  
+fi
+
+}
+
+###############################################################################
+# Check DSM version of md0
+function chkDsmversion() {
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    echo "There is no DSM"
+    return 0
+  fi
+
+  open_md0 || { returnto "Assemble and mount md0 failed (Maybe there's no synodisk)."; return 1; }
+
+  if [ -d "${TMP_PATH}/mdX/etc" ]; then
+    . "${TMP_PATH}/mdX/etc/VERSION"
+    close_md0 || true
+    if [ "${BUS}" == "block" ]; then
+        echo "Preinstalled version on your DSM      : ${productversion:-}"
+        echo "Version you are attempting to install : ${TARGET_VERSION}"
+    else
+        printf "Preinstalled version on your DSM      : ${productversion:-}\n" > /dev/tty
+        printf "Version you are attempting to install : ${TARGET_VERSION}\n" > /dev/tty
+    fi    
+    if [ "${productversion:-}" == "${TARGET_VERSION}" ]; then
+        return 0
+    else
+        if [ "${productversion:-}" == "7.3.1" ] && [ "${TARGET_VERSION}" == "7.3.2" ]; then
+            msgwarningtty "If your existing installed DSM version is 7.3.1 (or a false positive of 7.3.2) and the target loader version you want to build is 7.3.2, do you want to take the risk and proceed with the loader build? : "
+            if [ "${ucode}" == "ko_KR" ]; then
+              msgwarningtty "기존 설치된 DSM 버전이 7.3.1(또는 7.3.2의 오탐지)이고 빌드할 타겟로더 버전이 7.3.2인 경우 위험을 감수하고 로더빌드를 진행하겠습니까? : "
+            fi
+            readanswer
+            if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+              return 0
+            else
+              return 1
+            fi
+        else
+            return 1
+        fi
+    fi  
+  else
+    close_md0 || true
+    return 0
+  fi
+}
+
+function getlatestmshell() {
+
+    echo -n "Checking if a newer mshell version exists on the repo -> "
+
+    if [ ! -f $mshellgz ]; then
+        curl -ksL "$mshtarfile" -o $mshellgz
+    fi
+
+    curl -ksL "$mshtarfile" -o latest.mshell.gz
+
+    CURRENTSHA="$(sha256sum $mshellgz | awk '{print $1}')"
+    REPOSHA="$(sha256sum latest.mshell.gz | awk '{print $1}')"
+
+    if [ "${CURRENTSHA}" != "${REPOSHA}" ]; then
+    
+        if [ "${1}" = "noask" ]; then
+            confirmation="y"
+        else
+            echo -n "There is a newer version of m shell script on the repo should we use that ? [yY/nN]"
+            read confirmation
+        fi
+    
+        if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
+            echo "OK, updating, please re-run after updating"
+            cp -f /home/tc/latest.mshell.gz /home/tc/$mshellgz
+            rm -f /home/tc/latest.mshell.gz
+            tar -zxvf $mshellgz
+            echo "Updating m shell with latest updates"
+            . /home/tc/functions.sh
+            showlastupdate
+            echo "y"|rploader backup
+            echo "press any key to continue..."
+            read answer
+        else
+            rm -f /home/tc/latest.mshell.gz
+        fi
+    else
+        echo "Version is current"
+        rm -f /home/tc/latest.mshell.gz
+    fi
+
+}
+
+function get_tinycore9() {
+    echo "Downloading tinycore 9.0..."
+    sudo mkdir -p /mnt/${tcrppart}/v9/cde
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
+    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
+    if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
+      echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
+      chmod +x /home/tc/mountvol.sh
+
+      #GRUB 부트엔트리 Default 값 조정
+      grub_cfg="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
+      entry_count=$(grep -c '^menuentry' "$grub_cfg")
+      new_default=$((entry_count - 1))
+      sudo sed -i "/^set default=/cset default=\"${new_default}\"" "$grub_cfg"
+      
+      backuploader
+      restart
+    else
+      return 1
+    fi
+}
+
+function get_tinycore() {
+    cd /mnt/${tcrppart}
+    echo "Downloading tinycore 14.0..."
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
+    md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
+    md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
+    if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
+      echo "tinycore 14.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
+      sudo mv corepure64.gz_copy corepure64.gz
+      sudo mv vmlinuz64_copy vmlinuz64
+      cd ~      
+      return 0
+    else
+      cd ~
+      return 1
+    fi
+}
+
+function update_tinycore() {
+  echo "check update for tinycore 14.0..."
+  md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/corepure64.gz | awk '{print $1}')
+  md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/vmlinuz64 | awk '{print $1}')
+  if [ ${md5_corepure64} != "f33c4560e3909a7784c0e83ce424ff5c" ] || [ ${md5_vmlinuz64} != "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
+      echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
+      get_tinycore
+      if [ $? -eq 0 ]; then
+        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
+        echo "etc/shadow" >> /opt/.filetool.lst
+        backuploader
+        restart
+      fi
+  fi
+}
+
+function update_motd() {
+  echo "check update for /etc/motd"
+  md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
+  if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+  fi
+}
+
+function macgen() {
+echo
+
+    if [ "$realmac" == 'Y' ] ; then
+        mac2=$(/sbin/ifconfig eth1 | head -1 | awk '{print $NF}')
+        echo "Real Mac2 Address : $mac2"
+        echo "Notice : realmac option is requested, real mac2 will be used"
+    else
+        mac2="$(generateMacAddress ${1})"
+    fi
+
+    cecho y "Mac2 Address for Model ${1} : $mac2 "
+
+    macaddress2=$(echo $mac2 | sed -s 's/://g')
+
+    if [ $(cat user_config.json | grep "mac2" | wc -l) -gt 0 ]; then
+        bf_mac2="$(cat user_config.json | grep "mac2" | cut -d ':' -f 2 | cut -d '"' -f 2)"
+        cecho y "The Mac2 address : $bf_mac2 already exists. Change an existing value."
+        json="$(jq --arg var "$macaddress2" '.extra_cmdline.mac2 = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+#        sed -i "/mac2/s/'$bf_mac2'/'$macaddress2'/g" user_config.json
+    else
+        sed -i "/\"extra_cmdline\": {/c\  \"extra_cmdline\": {\"mac2\": \"$macaddress2\",\"netif_num\": \"2\", "  user_config.json
+    fi
+
+    echo "After changing user_config.json"      
+    cat user_config.json
+
+}
+
+function generateMacAddress() {
+    printf '00:11:32:%02X:%02X:%02X' $((RANDOM % 256)) $((RANDOM % 256)) $((RANDOM % 256))
+
+}
+function random() {
+        printf "%06d" $(($RANDOM % 30000 + 1))
+}
+function randomhex() {
+        val=$(($RANDOM % 255 + 1))
+        echo "obase=16; $val" | bc
+}
+function generateRandomLetter() {
+        for i in a b c d e f g h j k l m n p q r s t v w x y z; do
+            echo $i
+        done | sort -R | tail -1
+}
+function generateRandomValue() {
+        for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f g h j k l m n p q r s t v w x y z; do
+            echo $i
+        done | sort -R | tail -1
+}
+function toupper() {
+       echo $1 | tr '[:lower:]' '[:upper:]'
+}
+function generateSerial() {
+    case ${suffix} in
+    numeric)
+        serialnum="$(echo "$serialstart" | tr ' ' '\n' | sort -R | tail -1)$permanent"$(random)
+        ;;
+    alpha)
+        serialnum=$(toupper "$(echo "$serialstart" | tr ' ' '\n' | sort -R | tail -1)$permanent"$(generateRandomLetter)$(generateRandomValue)$(generateRandomValue)$(generateRandomValue)$(generateRandomValue)$(generateRandomLetter))
+        ;;
+    *)    
+        serialnum="$(echo "$serialstart" | tr ' ' '\n' | sort -R | tail -1)$permanent"$(random)
+        ;;  
+    esac
+    echo $serialnum
+}
+
+function readanswer() {
+    while true; do
+        read answ
+        case $answ in
+            [Yy]* ) answer="$answ"; break;;
+            [Nn]* ) answer="$answ"; break;;
+            * ) msgwarning "Please answer yY/nN.";;
+        esac
+    done
+}        
+
+function readanswerwithskip() {
+    while true; do
+        read answ
+        case $answ in
+            [Yy]* ) answer="$answ"; break;;
+            [Nn]* ) answer="$answ"; break;;
+            [Ss]* ) answer="$answ"; break;;            
+            * ) msgwarning "Please answer yY/nN/Ss.";;
+        esac
+    done
+}        
+
+
+function sync_usb_line() {
+    # 현재 usb_line 추출
+    updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
+    
+    # extra_cmdline의 각 항목을 읽어서 처리
+    while IFS='=' read -r key value; do
+        if [ -z "$value" ] || [ "$value" = "null" ]; then
+            continue
+        fi
+        
+        if echo "$updated_usb_line" | grep -q " ${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/ ${key}=[^ ]*/ ${key}=${value}/g")
+        elif echo "$updated_usb_line" | grep -q "^${key}="; then
+            updated_usb_line=$(echo "$updated_usb_line" | sed "s/^${key}=[^ ]*/${key}=${value}/")
+        else
+            updated_usb_line="${updated_usb_line}${key}=${value} "
+        fi
+        
+    done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
+    
+    # JSON 파일 업데이트
+    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+}
+
+###############################################################################
+# Write to json config file
+function writeConfigKey() {
+
+    block="$1"
+    field="$2"
+    value="$3"
+
+    if [ -n "$1 " ] && [ -n "$2" ]; then
+        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
+        echo $jsonfile | jq . >$userconfigfile
+        sync_usb_line
+    else
+        echo "No values to update"
+    fi
+
+}
+
+###############################################################################
+# Delete field from json config file
+function DeleteConfigKey() {
+
+    block="$1"
+    field="$2"
+
+    if [ -n "$1 " ] && [ -n "$2" ]; then
+        jsonfile=$(jq "del(.$block.$field)" $userconfigfile)
+        echo $jsonfile | jq . >$userconfigfile
+    else
+        echo "No values to remove"
+    fi
+
+}
+    
+function checkmachine() {
+
+    if grep -q ^flags.*\ hypervisor\  /proc/cpuinfo; then
+        MACHINE="VIRTUAL"
+        HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+        echo "Machine is $MACHINE Hypervisor=$HYPERVISOR"
+    else
+        MACHINE="NON-VIRTUAL"
+    fi
+
+    if [ $(lspci -nn | grep -ie "\[0107\]" | wc -l) -gt 0 ]; then
+        echo "Found SAS HBAs, Restrict use of DT Models."
+        HBADETECT="ON"
+    else
+        HBADETECT="OFF"    
+    fi   
+    
+}
+
+function check_github() {
+
+    echo -n "Checking GitHub Access -> "
+#    nslookup $gitdomain 2>&1 >/dev/null
+    curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
+
+    if [ $? -eq 0 ]; then
+        echo "OK"
+    else
+        cecho g "Error: GitHub is unavailable. Please try again later."
+        exit 99
+    fi
+
+}
+
+###############################################################################
+# check for Sas module
+function checkforsas() {
+
+    sasmods="mpt3sas hpsa mvsas"
+    for sasmodule in $sasmods
+    do
+        echo "Checking existense of $sasmodule"
+        for sas in `depmod -n 2>/dev/null |grep -i $sasmodule |grep pci|cut -d":" -f 2 | cut -c 6-9,15-18`
+    do
+        if [ `grep -i $sas /proc/bus/pci/devices |wc -l` -gt 0 ] ; then
+            echo "  => $sasmodule, device found, block eudev mode" 
+            BLOCK_EUDEV="Y"
+        fi
+    done
+    done 
+}
+
+###############################################################################
+# check Intel or AMD
+function checkcpu() {
+
+    if [ $(lscpu |grep Intel |wc -l) -gt 0 ]; then
+        CPU="INTEL"
+    else
+        #if [ $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//' | grep -e N36L -e N40L -e N54L | wc -l) -gt 0 ]; then
+        #    CPU="HP"
+        #    LDRMODE="JOT"
+        #    writeConfigKey "general" "loadermode" "${LDRMODE}"
+        #else
+            CPU="AMD"
+        #fi        
+    fi
+    
+    if [ $(lscpu |grep movbe |wc -l) -gt 0 ]; then    
+        AFTERHASWELL="ON"
+    else
+        AFTERHASWELL="OFF"
+    fi
+    
+    if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
+        AFTERHASWELL="ON"    
+    fi
+
+}
+
+###############################################################################
+# Get fastest url in list
+# @ - url list
+function _get_fastest() {
+  local speedlist=""
+  for I in $@; do
+    speed=$(ping -c 1 -W 5 ${I} 2>/dev/null | awk '/time=/ {print $7}' | cut -d '=' -f 2)
+    speedlist+="${I} ${speed:-999}\n"
+  done
+  fastest="$(echo -e "${speedlist}" | tr -s '\n' | sort -k2n | head -1 | awk '{print $1}')"
+  echo "${fastest}"
+}
+
+function chkavail() {
+
+    if [ $(df -h /mnt/${tcrppart} | grep mnt | awk '{print $4}' | grep G | wc -l) -gt 0 ]; then
+        avail_str=$(df -h /mnt/${tcrppart} | grep mnt | awk '{print $4}' | sed -e 's/G//g' | cut -c 1-3)
+        avail=$(echo "$avail_str 1000" | awk '{print $1 * $2}')
+    else
+        avail=$(df -h /mnt/${tcrppart} | grep mnt | awk '{print $4}' | sed -e 's/M//g' | cut -c 1-3)
+    fi
+
+    avail_num=$(($avail))
+    
+    echo "Avail space ${avail_num}M on /mnt/${tcrppart}"
+}    
+
+###############################################################################
+# get bus of disk
+# 1 - device path
+function getBus() {
+  BUS=""
+  # usb/ata(sata/ide)/scsi
+  [ -z "${BUS}" ] && BUS=$(udevadm info --query property --name "${1}" 2>/dev/null | grep ID_BUS | cut -d= -f2 | sed 's/ata/sata/')
+  # usb/sata(sata/ide)/nvme
+  [ -z "${BUS}" ] && BUS=$(lsblk -dpno KNAME,TRAN 2>/dev/null | grep "${1} " | awk '{print $2}') #Spaces are intentional
+  # usb/scsi(sata/ide)/virtio(scsi/virtio)/mmc/nvme/loop block
+  [ -z "${BUS}" ] && BUS=$(lsblk -dpno KNAME,SUBSYSTEMS 2>/dev/null | grep "${1} " | awk '{print $2}' | awk -F':' '{print (NF>1) ? $2 : $0}') #Spaces are intentional
+  # empty is block
+  [ -z "${BUS}" ] && BUS="block"
+  echo "${BUS}"
+
+  [ "${BUS}" = "nvme" ] && [[ "${loaderdisk}" != *p ]] && loaderdisk="${loaderdisk}p"
+  [ "${BUS}" = "mmc"  ] && [[ "${loaderdisk}" != *p ]] && loaderdisk="${loaderdisk}p"
+  [ "${BUS}" = "block" ] && [[ "${loaderdisk}" != *p ]] && loaderdisk="${loaderdisk}p"
+
+}
+
+###############################################################################
+# git clone redpill-load
+function gitdownload() {
+
+    git config --global http.sslVerify false   
+
+    if [ -d "/home/tc/redpill-load" ]; then
+        cecho y "Loader sources already downloaded, pulling latest !!!"
+        cd /home/tc/redpill-load
+        git pull
+        if [ $? -ne 0 ]; then
+           cd /home/tc    
+           rploader clean 
+           git clone -b master --single-branch https://github.com/PeterSuh-Q3/redpill-load.git
+           #git clone -b master --single-branch https://giteas.duckdns.org/PeterSuh-Q3/redpill-load.git
+        fi   
+        cd /home/tc
+    else
+        git clone -b master --single-branch https://github.com/PeterSuh-Q3/redpill-load.git
+        #git clone -b master --single-branch https://giteas.duckdns.org/PeterSuh-Q3/redpill-load.git
+    fi
+
+}
+
+function _pat_process() {
+
+  PATURL="${URL}"
+  PAT_FILE="${SYNOMODEL}.pat"
+  PAT_PATH="${patfile}"
+  #mirrors=("global.synologydownload.com" "global.download.synology.com" "cndl.synology.cn")
+  mirrors=("global.synologydownload.com" "global.download.synology.com")
+
+  fastest=$(_get_fastest "${mirrors[@]}")
+  echo "fastest = " "${fastest}"
+  mirror="$(echo ${PATURL} | sed 's|^http[s]*://\([^/]*\).*|\1|')"
+  echo "mirror = " "${mirror}"
+  if echo "${mirrors[@]}" | grep -wq "${mirror}" && [ "${mirror}" != "${fastest}" ]; then
+      echo "Based on the current network situation, switch to ${fastest} mirror to downloading."
+      PATURL="$(echo ${PATURL} | sed "s/${mirror}/${fastest}/")"
+  fi
+
+  # Discover remote file size
+  echo "BUS type = ${BUS} (Discover remote file size)"
+
+  if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+      msgnormal "Skip Checking Pat files on xTCRP with Synoboot Injected."
+  else
+      if [ "${BUS}" != "block"  ]; then
+          SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left
+          FILESIZE=$(curl -k -sLI "${PATURL}" | grep -i Content-Length | awk '{print$2}')
+    
+          FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
+          SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
+    
+          FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+          SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+          FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+          SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        
+          echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+          echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+        
+          if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+              # No disk space to download, change it to RAMDISK
+              echo "No adequate space on ${local_cache} to download file into cache folder, clean up PAT file now ....."
+              sudo sh -c "$([ "$FRKRNL" = "NO" ] && echo "sudo ")rm -vf $(ls -t "${local_cache}"/*.pat | head -n 1)"
+          fi
+      fi
+  fi    
+  
+  echo "PATURL = " "${PATURL}"
+  STATUS=$(sudo curl -k -w "%{http_code}" -L "${PATURL}" -o "${PAT_PATH}" --progress-bar)
+  if [ $? -ne 0 -o ${STATUS} -ne 200 ]; then
+      sudo rm -f "${PAT_PATH}"
+      echo "Check internet or cache disk space.\nError: ${STATUS}"
+      exit 99
+  fi
+
+}
+
+function setnetwork() {
+
+    if [ -f /opt/eth*.sh ] && [ "$(grep dhcp /opt/eth*.sh | wc -l)" -eq 0 ]; then
+
+        ipset="static"
+        ipgw="$(route | grep default | head -1 | awk '{print $2}')"
+        ipprefix="$(grep /sbin/ifconfig /opt/eth*.sh | head -1 | awk '{print "ipcalc -p " $3 " " $5 }' | sh - | awk -F= '{print $2}')"
+        myip="$(grep /sbin/ifconfig /opt/eth*.sh | head -1 | awk '{print $3 }')"
+        ipaddr="${myip}/${ipprefix}"
+        ipgw="$(grep route /opt/eth*.sh | head -1 | awk '{print  $5 }')"
+        ipdns="$(grep nameserver /opt/eth*.sh | head -1 | awk '{print  $3 }')"
+        ipproxy="$(env | grep -i http | awk -F= '{print $2}' | uniq)"
+
+        for field in ipset ipaddr ipgw ipdns ipproxy; do
+            jsonfile=$(jq ".ipsettings+={\"$field\":\"${!field}\"}" $userconfigfile)
+            echo $jsonfile | jq . >$userconfigfile
+        done
+
+    fi
+
+}
+
+function check_r8168_once() {
+    if [ "$R8168_DETECTED" != "Y" ] && [[ "$DRIVER" == r816* ]]; then
+        R8168_YN="Y"
+        R8168_DETECTED="Y"
+    elif [ "$R8168_DETECTED" != "Y" ]; then
+        R8168_YN="N"
+    fi
+}
+
+function getip() {
+    ethdevs=$(ls /sys/class/net/ | grep eth || true)
+    for eth in $ethdevs; do 
+        DRIVER=$(ls -ld /sys/class/net/${eth}/device/driver 2>/dev/null | awk -F '/' '{print $NF}')
+        if [ $(ls -l /sys/class/net/${eth}/device | grep "0000:" | wc -l) -gt 0 ]; then
+            BUSID=$(ls -ld /sys/class/net/${eth}/device 2>/dev/null | awk -F '0000:' '{print $NF}')
+        else
+            BUSID=""
+        fi
+        IP="$(/sbin/ifconfig ${eth} | grep inet | awk '{print $2}' | awk -F \: '{print $2}')"
+        HWADDR="$(/sbin/ifconfig ${eth} | grep HWaddr | awk '{print $5}')"
+        if [ -f /sys/class/net/${eth}/device/vendor ] && [ -f /sys/class/net/${eth}/device/device ]; then
+            VENDOR=$(cat /sys/class/net/${eth}/device/vendor | sed 's/0x//')
+            DEVICE=$(cat /sys/class/net/${eth}/device/device | sed 's/0x//')
+            if [ ! -z "${VENDOR}" ] && [ ! -z "${DEVICE}" ]; then
+                MATCHDRIVER=$(echo "$(matchpciidmodule ${VENDOR} ${DEVICE})")
+                if [ ! -z "${MATCHDRIVER}" ]; then
+                    if [ "${MATCHDRIVER}" != "${DRIVER}" ]; then
+                        DRIVER=${MATCHDRIVER}
+                    fi
+                fi
+            fi    
+        fi    
+        check_r8168_once
+        echo "IP Addr : $(msgnormal "${IP}"), ${HWADDR}, ${BUSID}, ${eth} (${DRIVER})"
+    done
+}
+
+function listpci() {
+
+    lspci -n | while read line; do
+
+        bus="$(echo $line | cut -c 1-7)"
+        class="$(echo $line | cut -c 9-12)"
+        vendor="$(echo $line | cut -c 15-18)"
+        device="$(echo $line | cut -c 20-23)"
+
+        #echo "PCI : $bus Class : $class Vendor: $vendor Device: $device"
+        case $class in
+#        0100)
+#            echo "Found SCSI Controller : pciid ${vendor}d0000${device}  Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+#        0106)
+#            echo "Found SATA Controller : pciid ${vendor}d0000${device}  Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+#        0101)
+#            echo "Found IDE Controller : pciid ${vendor}d0000${device}  Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+        0104)
+            msgnormal "RAID bus Controller : Required Extension : $(matchpciidmodule ${vendor} ${device})"
+            echo `lspci -nn |grep ${vendor}:${device}|awk 'match($0,/0104/) {print substr($0,RSTART+7,100)}'`| sed 's/\['"$vendor:$device"'\]//' | sed 's/(rev 05)//'
+            ;;
+        0107)
+            msgnormal "SAS Controller : Required Extension : $(matchpciidmodule ${vendor} ${device})"
+            echo `lspci -nn |grep ${vendor}:${device}|awk 'match($0,/0107/) {print substr($0,RSTART+7,100)}'`| sed 's/\['"$vendor:$device"'\]//' | sed 's/(rev 03)//'
+            ;;
+#        0200)
+#            msgnormal "Ethernet Interface : Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+#        0680)
+#            msgnormal "Ethernet Interface : Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+#        0300)
+#            echo "Found VGA Controller : pciid ${vendor}d0000${device}  Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+#        0c04)
+#            echo "Found Fibre Channel Controller : pciid ${vendor}d0000${device}  Required Extension : $(matchpciidmodule ${vendor} ${device})"
+#            ;;
+        esac
+    done
+
+}
+
+function monitor() {
+
+    getloaderdisk
+    if [ -z "${loaderdisk}" ]; then
+        echo "Not Supported Loader BUS Type, program Exit!!!"
+        exit 99
+    fi
+
+    getBus "${loaderdisk}" 
+
+    [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
+    [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
+
+    HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+
+    while true; do
+        clear
+        echo -e "-------------------------------System Information----------------------------"
+        echo -e "Hostname:\t\t"$(hostname) 
+        echo -e "uptime:\t\t\t"$(uptime | awk '{print $3}' | sed 's/,//')" min"
+        echo -e "Manufacturer:\t\t"$(cat /sys/class/dmi/id/chassis_vendor) 
+        echo -e "Product Name:\t\t"$(cat /sys/class/dmi/id/product_name)
+        echo -e "Version:\t\t"$(cat /sys/class/dmi/id/product_version)
+        echo -e "Serial Number:\t\t"$(sudo cat /sys/class/dmi/id/product_serial)
+        echo -e "Operating System:\t"$(grep PRETTY_NAME /etc/os-release | awk -F \= '{print $2}')
+        echo -e "Kernel:\t\t\t"$(uname -r)
+        echo -e "Processor Name:\t\t"$(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')
+        echo -e "Machine Type:\t\t"$(
+            vserver=$(lscpu | grep Hypervisor | wc -l)
+            [ $vserver -gt 0 ] && echo -e "VM (${HYPERVISOR})\n" || echo -e "Physical\n"
+            [ -d /sys/firmware/efi ] && echo ": EFI" || echo ": LEGACY(CSM,BIOS)"
+        ) 
+        msgnormal "CPU Threads:\t\t"$(nproc)
+        echo -e "Current Date Time:\t"$(date)
+        #msgnormal "System Main IP:\t\t"$(/sbin/ifconfig | grep inet | grep -v 127.0.0.1 | awk '{print $2}' | awk -F \: '{print $2}' | tr '\n' ',' | sed 's#,$##')
+        getip
+        listpci
+        echo -e "-------------------------------Loader boot entries---------------------------"
+        grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
+        echo -e "-------------------------------CPU / Memory----------------------------------"
+        msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
+        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), $3/$2*100}')
+        echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
+        echo -e "-------------------------------Disk Usage >80%-------------------------------"
+        df -Ph /mnt/${loaderdisk}1 /mnt/${loaderdisk}2 /mnt/${loaderdisk}3
+
+        echo "Press ctrl-c to exit"
+        sleep 10
+    done
+
+}
+
+function savesession() {
+
+    lastsessiondir="/mnt/${tcrppart}/lastsession"
+
+    echo -n "Saving user session for future use. "
+
+    [ ! -d ${lastsessiondir} ] && sudo mkdir ${lastsessiondir}
+
+    echo -n "Saving current extensions "
+
+    if [ "$FRKRNL" = "NO" ]; then
+        cat /home/tc/redpill-load/custom/extensions/*/*json | jq '.url' >${lastsessiondir}/extensions.list
+    else
+        echo
+    fi
+
+    [ -f ${lastsessiondir}/extensions.list ] && echo " -> OK !"
+
+    echo -n "Saving current user_config.json "
+
+    $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp /home/tc/user_config.json "${lastsessiondir}/user_config.json"
+    [ -f ${lastsessiondir}/user_config.json ] && echo " -> OK !"
+
+}
+
+function copyextractor() {
+#m shell mofified
+    local_cache="/mnt/${tcrppart}/auxfiles"
+
+    echo "making directory ${local_cache}"
+    [ ! -d ${local_cache} ] && mkdir ${local_cache}
+
+    echo "making directory ${local_cache}/extractor"
+    [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" -o /home/tc/extractor.gz
+    sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
+
+    if [ "${BUS}" = "block"  ]; then
+      git clone https://github.com/technorabilia/syno-extract-system-patch.git
+      cd syno-extract-system-patch
+      sudo docker build --tag syno-extract-system-patch .
+      sudo mkdir -p ~/data/in
+      sudo mkdir -p ~/data/out
+    fi
+
+    echo "Copying required libraries to local lib directory"
+    sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
+    echo "Linking lib to lib64"
+    [ ! -h /lib64 ] && sudo ln -s /lib /lib64
+    echo "Copying executable"
+    sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
+    echo "pigz copy for multithreaded compression"
+    sudo cp /mnt/${tcrppart}/auxfiles/extractor/pigz /usr/bin/pigz
+
+}
+
+function downloadextractor() {
+
+st "extractor" "Extraction tools" "Extraction Tools downloaded"
+[ "${BUS}" != "block" ] && log_build_step "Extraction tools" 3 12
+#    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
+#    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
+    local_cache="/mnt/${tcrppart}/auxfiles"
+    temp_folder="/tmp/synoesp"
+
+#m shell mofified
+    copyextractor
+
+    if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
+
+        msgnormal "Found extractor locally cached"
+
+    else
+
+        echo "Getting required extraction tool"
+        echo "------------------------------------------------------------------"
+        echo "Checking tinycore cache folder"
+
+        [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+
+        echo "Creating temp folder /tmp/synoesp"
+
+        mkdir ${temp_folder}
+
+        if [ -d /home/tc/custom-module ] && [ -f /home/tc/custom-module/*42218*.pat ]; then
+
+            patfile=$(ls /home/tc/custom-module/*42218*.pat | head -1)
+            echo "Found custom pat file ${patfile}"
+            echo "Processing old pat file to extract required files for extraction"
+            tar -C${temp_folder} -xf /${patfile} rd.gz
+        else
+            curl -kL https://global.download.synology.com/download/DSM/release/7.0.1/42218/DSM_DS3622xs%2B_42218.pat -o /home/tc/oldpat.tar.gz
+            [ -f /home/tc/oldpat.tar.gz ] && tar -C${temp_folder} -xf /home/tc/oldpat.tar.gz rd.gz
+        fi
+
+        echo "Entering synoesp"
+        cd ${temp_folder}
+
+        xz -dc <rd.gz >rd 2>/dev/null || echo "extract rd.gz"
+        echo "finish"
+        cpio -idm <rd 2>&1 || echo "extract rd"
+        mkdir extract
+
+        mkdir /mnt/${tcrppart}/auxfiles && cd /mnt/${tcrppart}/auxfiles
+
+        echo "Copying required files to local cache folder for future use"
+
+        mkdir /mnt/${tcrppart}/auxfiles/extractor
+
+        for file in usr/lib/libcurl.so.4 usr/lib/libmbedcrypto.so.5 usr/lib/libmbedtls.so.13 usr/lib/libmbedx509.so.1 usr/lib/libmsgpackc.so.2 usr/lib/libsodium.so usr/lib/libsynocodesign-ng-virtual-junior-wins.so.7 usr/syno/bin/scemd; do
+            echo "Copying $file to /mnt/${tcrppart}/auxfiles"
+            cp $file /mnt/${tcrppart}/auxfiles/extractor
+        done
+
+    fi
+
+    echo "Removing temp folder /tmp/synoesp"
+    rm -rf $temp_folder
+
+    if [ "${BUS}" != "block" ]; then
+        msgnormal "Checking if tool is accessible"
+        if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then    
+            /bin/syno_extract_system_patch 2>&1 >/dev/null
+        else
+            /bin/syno_extract_system_patch
+        fi
+        if [ $? -eq 255 ]; then echo "Executed succesfully"; else echo "Cound not execute"; fi    
+    fi
+}
+
+function testarchive() {
+
+    archive="$1"
+    if [ "${BUS}" != "block" ]; then
+        archiveheader="$(od -bcN2 ${archive} | awk 'NR==1 {print $3; exit}')"
+    
+        case ${archiveheader} in
+        105)
+            echo "${archive}, is a Tar file"
+            isencrypted="no"
+            return 0
+            ;;
+        255)
+            echo "File ${archive}, is  encrypted"
+            isencrypted="yes"
+            return 1
+            ;;
+        213)
+            echo "File ${archive}, is a compressed tar"
+            isencrypted="no"
+            ;;
+        057)
+            echo "File ${archive}, is a compressed tar (from GNU friend kernel)"
+            isencrypted="no"
+            ;;
+        *)
+            echo "Could not determine if file ${archive} is encrypted or not, maybe corrupted"
+            ls -ltr ${archive}
+            echo ${archiveheader}
+            exit 99
+            ;;
+        esac
+    else
+        if [ ${TARGET_REVISION} -gt 42218 ]; then
+            echo "Found build request for revision greater than 42218"
+            echo "File ${archive}, is  encrypted"
+            isencrypted="yes"
+            return 1
+        else
+            echo "Found build request for revision less equal than 42218"
+            echo "${archive}, is a Tar file"
+            isencrypted="no"
+            return 0
+        fi
+    fi
+
+}
+
+function processpat() {
+
+#    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
+#    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        local_cache="/dev/shm"
+    else
+        local_cache="/mnt/${tcrppart}/auxfiles"
+    fi    
+    temp_pat_folder="/tmp/pat"
+    temp_dsmpat_folder="/tmp/dsmpat"
+
+    setplatform
+
+    if [ ! -d "${temp_pat_folder}" ]; then
+        msgnormal "Creating temp folder ${temp_pat_folder} "
+        mkdir ${temp_pat_folder} && sudo mount -t tmpfs -o size=512M tmpfs ${temp_pat_folder} && cd ${temp_pat_folder}
+        mkdir ${temp_dsmpat_folder} && sudo mount -t tmpfs -o size=512M tmpfs ${temp_dsmpat_folder}
+    fi
+
+    echo "Checking for cached pat file"
+    [ -d $local_cache ] && msgnormal "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+
+    if [ -d ${local_cache} ] && [ -f ${local_cache}/*${SYNOMODEL}*.pat ] || [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ]; then
+
+        [ -f /home/tc/custom-module/*${SYNOMODEL}*.pat ] && patfile=$(ls /home/tc/custom-module/*${SYNOMODEL}*.pat | head -1)
+        [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ] && patfile=$(ls /home/tc/custom-module/*${MODEL}*${TARGET_REVISION}*.pat | head -1)
+
+        msgnormal "Found locally cached pat file ${patfile}"
+st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
+[ "${BUS}" != "block" ] && log_build_step "Caching pat file" 4 12
+        testarchive "${patfile}"
+        if [ ${isencrypted} = "no" ]; then
+            echo "File ${patfile} is already decrypted"
+            msgnormal "Copying file to /home/tc/redpill-load/cache folder"
+            sudo mv -f ${patfile} /home/tc/redpill-load/cache/
+        elif [ ${isencrypted} = "yes" ]; then
+            [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && testarchive /home/tc/redpill-load/cache/${SYNOMODEL}.pat
+            if [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && [ ${isencrypted} = "no" ]; then
+                echo "Decrypted file is already cached in :  /home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+            else
+                if [ "${BUS}" = "block"  ]; then            
+                  echo "Copying encrypted pat file : ${patfile} to ~/data/in"
+                  sudo mv -f ${patfile} ~/data/in/${SYNOMODEL}.pat
+                  echo "Extracting encrypted pat file : ~/data/in/${SYNOMODEL}.pat to ~/data/out"
+                  sudo docker run --rm -v ~/data:/data syno-extract-system-patch /data/in/${SYNOMODEL}.pat /data/out/. || echo "extract latest pat"
+                  rsync -a --remove-source-files ~/data/out/ ${temp_pat_folder}/
+                else
+                  echo "Copying encrypted pat file : ${patfile} to ${temp_dsmpat_folder}"
+                  sudo mv -f ${patfile} ${temp_dsmpat_folder}/${SYNOMODEL}.pat
+                  echo "Extracting encrypted pat file : ${temp_dsmpat_folder}/${SYNOMODEL}.pat to ${temp_pat_folder}"
+                  sudo /bin/syno_extract_system_patch ${temp_dsmpat_folder}/${SYNOMODEL}.pat ${temp_pat_folder} || echo "extract latest pat"
+                fi
+                echo "Decrypted pat file tar compression in progress ${SYNOMODEL}.pat to /home/tc/redpill-load/cache folder (multithreaded comporession)"
+                mkdir -p /home/tc/redpill-load/cache/
+                echo "threads = ${threads}"
+                if [ "${BUS}" = "block"  ]; then
+                  cd ${temp_pat_folder} && tar -cf ${temp_dsmpat_folder}/${SYNOMODEL}.pat ./ && cp -f ${temp_dsmpat_folder}/${SYNOMODEL}.pat /home/tc/redpill-load/cache/${SYNOMODEL}.pat
+                else
+                  if [ "$FRKRNL" = "NO" ]; then
+                      cd ${temp_pat_folder} && sudo sh -c "tar -cf - ./ | pigz -p ${threads} > ${temp_dsmpat_folder}/${SYNOMODEL}.pat" && sudo cp -f ${temp_dsmpat_folder}/${SYNOMODEL}.pat /home/tc/redpill-load/cache/${SYNOMODEL}.pat
+                  else    
+                      cd ${temp_pat_folder} && sudo sh -c "tar -cf ${temp_dsmpat_folder}/${SYNOMODEL}.pat ./" && sudo cp -f ${temp_dsmpat_folder}/${SYNOMODEL}.pat /home/tc/redpill-load/cache/${SYNOMODEL}.pat
+                  fi    
+                fi
+            fi
+            patfile="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"            
+
+        else
+            echo "Something went wrong, please check cache files"
+            exit 99
+        fi
+
+        cd /home/tc/redpill-load/cache
+st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
+[ "${BUS}" != "block" ] && log_build_step "Pat file extracted" 5 12
+        sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
+        os_md5=$(md5sum /home/tc/redpill-load/cache/${SYNOMODEL}.pat | awk '{print $1}')
+        msgnormal "Pat file md5sum is : $os_md5"
+
+        echo -n "Checking config file existence -> "
+        if [ -f "/home/tc/redpill-load/config/pats.json" ]; then
+            echo "OK"
+        else
+            echo "No config file(pats.json) found, The download may be corrupted or may not be run the original repo. Please re-download from original repo."
+            exit 99
+        fi
+
+        msgnormal "Editing config file !!!!!"
+       
+        echo -n "Verifying config file -> "
+        verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.sum) | .[0]" "${configfile}")
+        sed -i "s/${verifyid}/$os_md5/" ${configfile}
+        verifyid="$os_md5"
+
+        if [ "$os_md5" == "$verifyid" ]; then
+            echo "OK ! "
+        else
+            echo "config file, os md5 verify FAILED, check ${configfile} "
+            exit 99
+        fi
+
+        msgnormal "Clearing temp folders"
+        sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
+        sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}        
+
+        return
+
+    else
+
+        echo "Could not find pat file locally cached"
+        
+        pat_url=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
+        echo -e "Configfile: $configfile \nPat URL : $pat_url"
+        echo "Downloading pat file from URL : ${pat_url} "
+
+        chkavail
+        if [ $avail_num -le 370 ]; then
+            echo "No adequate space on ${local_cache} to download file into cache folder, clean up the space and restart"
+            exit 99
+        fi
+
+        [ -n $pat_url ] && curl -kL ${pat_url} -o "/${local_cache}/${SYNOMODEL}.pat"
+        patfile="/${local_cache}/${SYNOMODEL}.pat"
+        if [ -f ${patfile} ]; then
+            testarchive ${patfile}
+        else
+            echo "Failed to download PAT file $patfile from ${pat_url} "
+            exit 99
+        fi
+
+        if [ "${isencrypted}" = "yes" ]; then
+            echo "File ${patfile}, has been cached but its encrypted, re-running decrypting process"
+            processpat
+        else
+            return
+        fi
+
+    fi
+
+}
+
+function addrequiredexts() {
+
+    echo "Processing add_extensions entries found on models.json file : ${EXTENSIONS}"
+    for extension in ${EXTENSIONS_SOURCE_URL}; do
+        echo "Adding extension ${extension} "
+        cd /home/tc/redpill-load/ && ./ext-manager.sh add "$(echo $extension | sed -s 's/"//g' | sed -s 's/,//g')"
+        if [ $? -ne 0 ]; then
+            echo "FAILED : Processing add_extensions failed check the output for any errors"
+            rploader clean
+            exit 99
+        fi
+    done
+
+    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+        vkersion=${major}${minor}_${KVER}
+    else
+        vkersion=${KVER}
+    fi
+
+    for extension in ${EXTENSIONS}; do
+        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
+        platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
+        # Add Use RR's custom kernel module
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
+        echo "platkver = ${platkver}"
+        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
+        if [ $? -ne 0 ]; then
+            echo "FAILED : Processing add_extensions failed check the output for any errors"
+            rploader clean
+            exit 99
+        fi
+    done
+
+#m shell only
+ #Use user define dts file instaed of dtbpatch ext now
+    #if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "r1000" ]; then
+    #    echo "For user define dts file instaed of dtbpatch ext"
+    #    patchdtc
+    #    echo "Patch dtc is superseded by fbelavenuto dtbpatch"
+    #fi
+    
+}
+
+function updateuserconfig() {
+
+    echo "Checking user config for general block"
+    generalblock="$(jq -r -e '.general' $userconfigfile)"
+    if [ "$generalblock" = "null" ] || [ -n "$generalblock" ]; then
+        echo "Result=${generalblock}, File does not contain general block, adding block"
+
+        for field in model version smallfixnumber redpillmake zimghash rdhash usb_line sata_line; do
+            jsonfile=$(jq ".general+={\"$field\":\"\"}" $userconfigfile)
+            echo $jsonfile | jq . >$userconfigfile
+        done
+    fi
+
+}
+function updateuserconfigfield() {
+
+    block="$1"
+    field="$2"
+    value="$3"
+
+    if [ -n "$1 " ] && [ -n "$2" ]; then
+        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
+        echo $jsonfile | jq . >$userconfigfile
+    else
+        echo "No values to update specified"
+    fi
+}
+
+function postupdate() {
+
+#    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
+
+    cd /home/tc
+
+    updateuserconfig
+    setnetwork
+
+    updateuserconfigfield "general" "model" "$MODEL"
+    updateuserconfigfield "general" "version" "${BUILD}"
+    updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
+    updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
+    echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
+
+    echo "Mounting partition ${loaderdisk}1" && sudo mount /dev/${loaderdisk}1
+    echo "Mounting partition ${loaderdisk}2" && sudo mount /dev/${loaderdisk}2
+
+    zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
+    updateuserconfigfield "general" "zimghash" "$zimghash"
+    rdhash=$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')
+    updateuserconfigfield "general" "rdhash" "$rdhash"
+
+    zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
+    updateuserconfigfield "general" "zimghash" "$zimghash"
+    rdhash=$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')
+    updateuserconfigfield "general" "rdhash" "$rdhash"
+    echo "Backing up $userconfigfile "
+    cp $userconfigfile /mnt/${loaderdisk}3
+
+    cd /home/tc/ramdisk
+
+    echo "Extracting update ramdisk"
+
+    if [ $(od /mnt/${loaderdisk}2/rd.gz | head -1 | awk '{print $2}') == "000135" ]; then
+        sudo unlzma -c /mnt/${loaderdisk}2/rd.gz | cpio -idm 2>&1 >/dev/null
+    else
+        sudo cat /mnt/${loaderdisk}2/rd.gz | cpio -idm 2>&1 >/dev/null
+    fi
+
+    . ./etc.defaults/VERSION && echo "Found Version : ${productversion}-${buildnumber}-${smallfixnumber}"
+
+#    echo -n "Do you want to use this for the loader ? [yY/nN] : "
+#    readanswer
+
+#    if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
+
+        echo "Extracting redpill ramdisk"
+
+        if [ $(od /mnt/${loaderdisk}3/rd.gz | head -1 | awk '{print $2}') == "000135" ]; then
+            sudo unlzma -c /mnt/${loaderdisk}3/rd.gz | cpio -idm
+            RD_COMPRESSED="yes"
+        else
+            sudo cat /mnt/${loaderdisk}3/rd.gz | cpio -idm
+        fi
+
+        . ./etc.defaults/VERSION && echo "The new smallupdate version will be  : ${productversion}-${buildnumber}-${smallfixnumber}"
+
+#        echo -n "Do you want to use this for the loader ? [yY/nN] : "
+#        readanswer
+
+#        if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
+
+            echo "Recreating ramdisk "
+
+            if [ "$RD_COMPRESSED" = "yes" ]; then
+                sudo find . 2>/dev/null | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >../rd.gz
+            else
+                sudo find . 2>/dev/null | sudo cpio -o -H newc -R root:root >../rd.gz
+            fi
+
+            cd ..
+
+            echo "Adding fake sign" && sudo dd if=/dev/zero of=rd.gz bs=68 count=1 conv=notrunc oflag=append
+
+            echo "Putting ramdisk back to the loader partition ${loaderdisk}1" && sudo cp -f rd.gz /mnt/${loaderdisk}3/rd.gz
+
+            echo "Removing temp ramdisk space " && rm -rf ramdisk
+
+            echo "Done"
+#        else
+#            echo "Removing temp ramdisk space " && rm -rf ramdisk
+#            exit 0
+#        fi
+#    fi
+
+}
+
+function getgrubbkg() {
+
+    curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/grub/grubbkg.cfg"
+    if [ ! -f /home/tc/grubbkg.png ]; then
+        curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/grub/grubbkg.png"
+        sudo cp -vf /home/tc/grubbkg.png /mnt/${loaderdisk}3/grubbkg.png
+    fi
+}
+
+function getbspatch() {
+
+    chmod 777 /home/tc/tools/bspatch
+    if [ "$FRKRNL" = "YES" ]; then
+        if [ ! -f /usr/bin/bspatch ]; then
+            echo "bspatch does not exist, copy from tools"
+            sudo cp -vf /home/tc/tools/bspatch /usr/bin/
+        fi
+    else
+        if [ ! -f /usr/local/bin/bspatch ]; then
+            echo "bspatch does not exist, copy from tools"
+            sudo cp -vf /home/tc/tools/bspatch /usr/local/bin/
+        fi
+    fi
+
+}
+
+function getpigz() {
+
+    if [ ! -n "$(which pigz)" ]; then
+        echo "pigz does not exist, bringing over from repo"
+        curl -skLO "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/pigz"
+        chmod 777 /home/tc/pigz
+        sudo cp -vf /home/tc/pigz /usr/bin/
+    fi
+
+}
+
+function removemodelexts() {                                                                             
+                                                                                        
+    echo "Entering redpill-load directory to remove exts"                                                            
+    cd /home/tc/redpill-load/
+    echo "Removing all exts directories..."
+    sudo rm -rf /home/tc/redpill-load/custom/extensions/*
+                                                                                                                              
+    #echo "Removing model exts directories..."
+    #for modelextdir in ${EXTENSIONS}; do
+    #    if [ -d /home/tc/redpill-load/custom/extensions/${modelextdir} ]; then                                                         
+    #        echo "Removing : ${modelextdir}"
+    #        sudo rm -rf /home/tc/redpill-load/custom/extensions/${modelextdir}            
+    #    fi                                                                                            
+    #done                                                           
+
+} 
+
+function getPlatforms() {
+
+    platform_versions=$(jq -s '.[0].build_configs=(.[1].build_configs + .[0].build_configs | unique_by(.id)) | .[0]'  custom_config.json | jq -r '.build_configs[].id')
+    echo "platform_versions=$platform_versions"
+
+}
+
+function selectPlatform() {
+
+    platform_selected=$(jq -r ".${1}" models.json)
+    echo "platform_selected=${platform_selected}"
+
+}
+function getValueByJsonPath() {
+
+    local JSONPATH=${1}
+    local CONFIG=${2}
+    jq -c -r "${JSONPATH}" <<<${CONFIG}
+
+}
+function readConfig() {
+
+    if [ ! -e custom_config.json ]; then
+        cat global_config.json
+    else
+        jq -s '.[0].build_configs=(.[1].build_configs + .[0].build_configs | unique_by(.id)) | .[0]'  custom_config.json
+    fi
+
+}
+
+function setplatform() {
+
+    SYNOMODEL=${TARGET_PLATFORM}_${TARGET_REVISION}
+    #MODEL=$(echo "${TARGET_PLATFORM}" | sed 's/ds/DS/' | sed 's/rs/RS/' | sed 's/p/+/' | sed 's/dva/DVA/' | sed 's/fs/FS/' | sed 's/sa/SA/' )
+    #ORIGIN_PLATFORM="$(echo $platform_selected | jq -r -e '.platform_name')"
+
+}
+
+function getvars() {
+
+    KVER="$(jq -r -e '.general.kver' $userconfigfile)"
+
+    CONFIG=$(readConfig)
+    selectPlatform $1
+
+    GETTIME=$(curl -k -v -s https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+    INTERNETDATE=$(date +"%d%m%Y" -d "$GETTIME")
+    LOCALDATE=$(date +"%d%m%Y")
+
+    #EXTENSIONS="$(echo $platform_selected | jq -r -e '.add_extensions[]')"
+    EXTENSIONS="$(echo $platform_selected | jq -r -e '.add_extensions[]' | grep json | awk -F: '{print $1}' | sed -s 's/"//g')"
+    #EXTENSIONS_SOURCE_URL="$(echo $platform_selected | jq '.add_extensions[] .url')"
+    EXTENSIONS_SOURCE_URL="$(echo $platform_selected | jq '.add_extensions[]' | grep json | awk '{print $2}')"
+    #TARGET_PLATFORM="$(echo $platform_selected | jq -r -e '.id | split("-")' | jq -r -e .[0])"
+    #TARGET_VERSION="$(echo $platform_selected | jq -r -e '.id | split("-")' | jq -r -e .[1])"
+    #TARGET_REVISION="$(echo $platform_selected | jq -r -e '.id | split("-")' | jq -r -e .[2])"
+
+    tcrppart="${tcrpdisk}3"
+    local_cache="/mnt/${tcrppart}/auxfiles"
+    usbpart1uuid=$(/sbin/blkid /dev/${tcrpdisk}1 | awk '{print $3}' | sed -e "s/\"//g" -e "s/UUID=//g")
+    usbpart3uuid="6234-C863"
+
+    [ ! -h /lib64 ] && sudo ln -s /lib /lib64
+
+    sudo chown -R tc:staff /home/tc
+
+    getgrubbkg
+    getbspatch
+    getpigz
+
+    if [ "${offline}" = "NO" ]; then
+        echo "Redownload the latest module.alias.4.json file ..."    
+        echo
+        curl -ksL "$modalias4" -o modules.alias.4.json.gz
+        [ -f modules.alias.4.json.gz ] && gunzip -f modules.alias.4.json.gz    
+    fi    
+
+    [ ! -d ${local_cache} ] && sudo mkdir -p ${local_cache}
+    [ -h /home/tc/custom-module ] && unlink /home/tc/custom-module
+    [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+
+    if [ -z "$TARGET_PLATFORM" ] || [ -z "$TARGET_VERSION" ] || [ -z "$TARGET_REVISION" ]; then
+        echo "Error : Platform not found "
+        showhelp
+        exit 99
+    fi
+
+    if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+        KERNEL_MAJOR="3"
+        MODULE_ALIAS_FILE="modules.alias.3.json"
+    else
+        KERNEL_MAJOR="4"
+        MODULE_ALIAS_FILE="modules.alias.4.json"
+    fi
+
+    setplatform
+
+    threads="$(nproc)"
+    [ -z "$threads" ] && threads="1"
+
+    #echo "Platform : $platform_selected"
+    echo "Verbose Mode      : $VERBOSE_MODE"
+    echo "Rploader Version  : ${rploaderver}"
+    echo "Extensions        : $EXTENSIONS "
+    echo "Extensions URL    : $EXTENSIONS_SOURCE_URL"
+    echo "TARGET_PLATFORM   : $TARGET_PLATFORM"
+    echo "TARGET_VERSION    : $TARGET_VERSION"
+    echo "TARGET_REVISION   : $TARGET_REVISION"
+    echo "KERNEL_MAJOR      : $KERNEL_MAJOR"
+    echo "MODULE_ALIAS_FILE : $MODULE_ALIAS_FILE"
+    echo "SYNOMODEL         : $SYNOMODEL"
+    echo "MODEL             : $MODEL"
+    echo "KERNEL VERSION    : $KVER"
+    echo "Local Cache Folder : $local_cache"
+    echo "CPU THREADS       : $threads"
+    echo "DATE Internet     : $INTERNETDATE Local : $LOCALDATE"
+
+  if [ "${offline}" = "NO" ]; then
+    if [ "$INTERNETDATE" != "$LOCALDATE" ]; then
+        echo "ERROR ! System DATE is not correct"
+        synctime
+        echo "Current time after communicating with NTP server ${ntpserver} :  $(date) "
+    fi
+
+    LOCALDATE=$(date +"%d%m%Y")
+    if [ "$INTERNETDATE" != "$LOCALDATE" ]; then
+        echo "Sync with NTP server ${ntpserver} :  $(date) Fail !!!"
+        echo "ERROR !!! The system date is incorrect."
+        exit 99        
+    fi
+  fi
+    #getvarsmshell "$MODEL"
+
+}
+
+function cleanloader() {
+
+    echo "Clearing local redpill files"
+    sudo rm -rf /home/tc/redpill*
+    sudo rm -rf /home/tc/*tgz
+
+}
+
+function backupxtcrp() {
+
+    TGZ_FILE="${1}/xtcrp.tgz"
+    BACKUP_FILE="/dev/shm/xtcrp.tgz.bak"
+    TAR_UNZIPPED="/dev/shm/xtcrp.tar"
+    SOURCE_FILE="/home/tc/user_config.json"
+    
+    if [ -f "$TGZ_FILE" ]; then
+        if [ ! -f "$SOURCE_FILE" ]; then
+            echo "Error: Source file ${SOURCE_FILE} does not exist!"
+            exit 1
+        fi
+    
+        echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+    
+        # 백업 생성
+        sudo cp "$TGZ_FILE" "$BACKUP_FILE"
+
+        sudo cp "$TGZ_FILE" /dev/shm/xtcrp.tgz
+    
+        # Decompress the existing archive
+        if ! sudo gunzip /dev/shm/xtcrp.tgz; then
+            echo "Error: Failed to decompress ${TGZ_FILE}. Restoring backup."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Add the file to the archive with relative path
+        if ! sudo tar --append -C "$(dirname "$SOURCE_FILE")" --file="$TAR_UNZIPPED" "$(basename "$SOURCE_FILE")"; then
+            echo "Error: Failed to add ${SOURCE_FILE} to archive."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Compress the archive again and save with the original name
+        if ! sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"; then
+            echo "Error: Failed to compress ${TAR_UNZIPPED}. Restoring original file."
+            sudo mv "$BACKUP_FILE" "$TGZ_FILE"
+            exit 1
+        fi
+    
+        # Replace original file with compressed archive and clean up temporary files
+        sudo rm -f "$TAR_UNZIPPED" "$BACKUP_FILE"
+    
+        echo "Successfully added ${SOURCE_FILE} to ${TGZ_FILE}."
+    else
+        echo "Error: Target archive ${TGZ_FILE} does not exist!"
+    fi
+
+}
+
+# ============================================================================
+# 개선된 backuploader() 함수
+# 
+# 기능 개선사항:
+# 1. /mnt/${tcrppart} 여유공간 사전 계산
+# 2. xtcrp.tgz 및 mydata.tgz를 /dev/shm/ 에서 압축
+# 3. 용량 초과 시 /mnt/${tcrppart}/auxfiles/*.pat 파일 임의 1개 삭제
+# 4. 기존 sudo 권한 삭제 로직 참조
+# ============================================================================
+function backuploader() {
+
+    # Define the path to the file
+    local FILE_PATH="/opt/.filetool.lst"
+
+    sudo ln -sf /home/tc/menu.sh /usr/bin/menu.sh
+    sudo ln -sf /home/tc/monitor.sh /usr/bin/monitor.sh
+    sudo ln -sf /home/tc/ntp.sh /usr/bin/ntp.sh
+
+    # Define the patterns to be added
+    PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
+    
+    # 파일이 존재하고 FILE_PATH에 없는 경우만 추가
+    for pattern in "${PATTERNS[@]}"; do
+        if [ -f "/$pattern" ]; then
+            # 중복 확인 후 추가
+            if [ -f "$FILE_PATH" ] && grep -qF "$pattern" "$FILE_PATH"; then
+                echo "Already exists in list: $pattern" >&2
+            else
+                echo "$pattern" >> "$FILE_PATH"
+                echo "Added to backup list: $pattern" >&2
+            fi
+        else
+            echo "File not found, skipping: /$pattern" >&2
+        fi
+    done 2>/dev/null  # 전체 오류 출력 억제
+
+
+    local thread=$(nproc)
+    local backup_path="/mnt/${tcrppart}"
+    local auxfiles_path="${backup_path}/auxfiles"
+    local shm_path="/dev/shm"
+    
+    # 로깅 함수 (기존 코드와 호환)
+    local log_prefix="[BACKUP]"
+    
+    echo "${log_prefix} Backup loader process starting..."
+    
+    # ========================================================================
+    # STEP 1: /mnt/${tcrppart}의 여유공간 계산
+    # ========================================================================
+    echo "${log_prefix} Calculating available space on ${backup_path}..."
+    
+    local avail_space_kb=$(df "${backup_path}" | tail -1 | awk '{print $4}')
+    local avail_space_mb=$((avail_space_kb / 1024))
+    
+    echo "${log_prefix} Available space: ${avail_space_mb} MB"
+    
+    # 필요한 최소 여유공간 (버퍼: 100MB)
+    local min_required_space=$((150 + 100))  # xtcrp.tgz + mydata.tgz + 버퍼
+    
+    if [ ${avail_space_mb} -lt ${min_required_space} ]; then
+        echo "${log_prefix} WARNING: Low disk space (${avail_space_mb}MB < ${min_required_space}MB)"
+        echo "${log_prefix} Will attempt to free up space by removing old .pat files..."
+    fi
+    
+    # ========================================================================
+    # STEP 2: /dev/shm에서 xtcrp.tgz 압축
+    # ========================================================================
+    echo "${log_prefix} Compressing xtcrp to ${shm_path}/xtcrp.tgz..."
+    
+    local xtcrp_shm="${shm_path}/xtcrp.tgz"
+    local xtcrp_dest="${backup_path}/xtcrp.tgz"
+    
+    # 기존 /dev/shm 파일 정리
+    if [ -f "${xtcrp_shm}" ]; then
+        sudo rm -f "${xtcrp_shm}"
+    fi
+    
+    # xtcrp 압축 (ramdisk에서 수행하여 속도 향상)
+    if [ "${BUS}" != "block" ]; then
+        # BIOS_CNT가 1이고 FRKRNL이 YES인 경우 특별 처리
+        if [ ${BIOS_CNT} -eq 1 ] && [ "${FRKRNL}" = "YES" ]; then
+            backupxtcrp "${backup_path}"
+            return $?
+        else
+            # 표준 백업: tar + pigz 사용
+            if ! sudo sh -c "cd . && tar -cf - . | pigz -p ${thread}" > "${xtcrp_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create xtcrp.tgz in ${shm_path}!"
+                return 1
+            fi
+        fi
+    else
+        # BUS == block 인 경우
+        if ! sudo sh -c "cd . && tar -cf - . | pigz -p ${thread}" > "${xtcrp_shm}" 2>/dev/null; then
+            echo "${log_prefix} ERROR: Failed to create xtcrp.tgz in ${shm_path}!"
+            return 1
+        fi
+    fi
+    
+    echo "${log_prefix} xtcrp.tgz created successfully in ${shm_path}"
+    
+    # ========================================================================
+    # STEP 3: /dev/shm에서 mydata.tgz 압축
+    # ========================================================================
+    echo "${log_prefix} Compressing mydata to ${shm_path}/mydata.tgz..."
+    
+    local mydata_shm="${shm_path}/mydata.tgz"
+    local mydata_dest="${backup_path}/mydata.tgz"
+    
+    # 기존 /dev/shm 파일 정리
+    if [ -f "${mydata_shm}" ]; then
+        sudo rm -f "${mydata_shm}"
+    fi
+    
+    if [ "${FRKRNL}" = "YES" ]; then
+        # 기존 mydata.tgz가 있으면 먼저 처리
+        if [ -f "${mydata_dest}" ]; then
+            local home_size=$(du -sh /home/tc | awk '{print $1}')
+            echo "${log_prefix} Current /home/tc size: ${home_size}"
+            echo "${log_prefix} Please ensure using latest 1GB img before backup"
+            echo "${log_prefix} Note: Keep /home/tc size less than 1GB for image compatibility"
+            
+            # 기존 파일에 새로운 userconfig.json 추가
+            echo "${log_prefix} Adding updated userconfig.json to mydata.tgz..."
+        else
+            echo "${log_prefix} Creating new mydata.tgz..."
+        fi
+
+        local existing_file="/mnt/tcrp/mydatab.tgz"
+        local extract_dir="${shm_path}/mydatab"
+        
+        # /mnt/tcrp/mydatab.tgz 존재 확인 및 처리
+        if [ -f "${existing_file}" ]; then
+            sudo rm -rf "${extract_dir}"
+            sudo mkdir -p "${extract_dir}"
+            if ! sudo tar -xzf "${existing_file}" -C "${extract_dir}"; then
+                echo "${log_prefix} ERROR: Failed to extract ${existing_file} to ${extract_dir}!"
+                read answer
+                return 1
+            fi
+            
+            # /home/tc 내용을 /dev/shm/mydatab에 overwrite copy
+            if ! sudo cp -a /home/tc/ "${extract_dir}/home/"; then
+                echo "${log_prefix} ERROR: Failed to rsync /home/tc to ${extract_dir}!"
+                read answer
+                return 1
+            fi
+            
+            # /dev/shm/mydatab를 루트처럼 사용해 압축 (절대경로처럼 동작)
+            if ! sudo sh -c \
+                "cd ${extract_dir} && \\
+                 tar -cf - . | \\
+                 pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null; then
+                echo "${log_prefix} ERROR: Failed to create mydata.tgz from ${extract_dir}!"
+                read answer
+                return 1
+            fi
+            sudo rm -rf "${extract_dir}"
+        fi
+        
+    else
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+    fi
+    
+    echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
+    
+    # ========================================================================
+    # STEP 4: /dev/shm 파일 크기 확인 및 공간 부족 시 처리
+    # ========================================================================
+    echo "${log_prefix} Checking total backup size..."
+    
+    local xtcrp_size=0
+    local mydata_size=0
+    local total_backup_size=0
+    
+    if [ -f "${xtcrp_shm}" ]; then
+        xtcrp_size=$(stat -f%z "${xtcrp_shm}" 2>/dev/null || stat -c%s "${xtcrp_shm}" 2>/dev/null)
+        xtcrp_size=$((xtcrp_size / 1024 / 1024))  # Convert to MB
+    fi
+    
+    if [ -f "${mydata_shm}" ]; then
+        mydata_size=$(stat -f%z "${mydata_shm}" 2>/dev/null || stat -c%s "${mydata_shm}" 2>/dev/null)
+        mydata_size=$((mydata_size / 1024 / 1024))  # Convert to MB
+    fi
+    
+    total_backup_size=$((xtcrp_size + mydata_size))
+    
+    echo "${log_prefix} Backup sizes - xtcrp: ${xtcrp_size}MB, mydata: ${mydata_size}MB, total: ${total_backup_size}MB"
+    echo "${log_prefix} Available space: ${avail_space_mb}MB"
+    
+    # 여유공간이 부족한 경우 처리
+    if [ ${avail_space_mb} -lt $((total_backup_size + 50)) ]; then
+        echo "${log_prefix} WARNING: Insufficient space detected!"
+        echo "${log_prefix} Attempting to free space by removing old .pat files..."
+        
+        # 여유공간 충분할 때까지 .pat 파일 삭제
+        while [ ${avail_space_mb} -lt $((total_backup_size + 50)) ]; do
+            if [ ! -d "${auxfiles_path}" ]; then
+                echo "${log_prefix} ERROR: ${auxfiles_path} directory not found!"
+                return 1
+            fi
+            
+            # .pat 파일 목록 확인
+            local pat_files=($(find "${auxfiles_path}" -maxdepth 1 -name "*.pat" -type f 2>/dev/null))
+            
+            if [ ${#pat_files[@]} -eq 0 ]; then
+                echo "${log_prefix} ERROR: No .pat files found to delete!"
+                echo "${log_prefix} Backup aborted due to insufficient space!"
+                return 1
+            fi
+            
+            # 임의의 .pat 파일 선택 (RANDOM 사용)
+            local random_idx=$((RANDOM % ${#pat_files[@]}))
+            local pat_file_to_delete="${pat_files[${random_idx}]}"
+            local pat_filename=$(basename "${pat_file_to_delete}")
+            
+            echo "${log_prefix} Deleting ${pat_filename}..."
+            
+            # sudo 권한으로 파일 삭제 (기존 로직 참조)
+            if sudo rm -vf "${pat_file_to_delete}" 2>/dev/null; then
+                local pat_size=$(stat -f%z "${pat_file_to_delete}" 2>/dev/null || stat -c%s "${pat_file_to_delete}" 2>/dev/null)
+                pat_size=$((pat_size / 1024 / 1024))
+                echo "${log_prefix} Successfully deleted ${pat_filename} (${pat_size}MB recovered)"
+                
+                # 여유공간 재계산
+                avail_space_kb=$(df "${backup_path}" | tail -1 | awk '{print $4}')
+                avail_space_mb=$((avail_space_kb / 1024))
+                echo "${log_prefix} Available space after cleanup: ${avail_space_mb}MB"
+            else
+                echo "${log_prefix} ERROR: Failed to delete ${pat_filename}!"
+                return 1
+            fi
+        done
+    fi
+    
+    # ========================================================================
+    # STEP 5: /dev/shm에서 최종 목적지로 파일 이동
+    # ========================================================================
+    echo "${log_prefix} Moving backup files to ${backup_path}..."
+    backup_loader
+    # xtcrp.tgz 이동
+    if [ -f "${xtcrp_shm}" ]; then
+        if sudo dd if="${xtcrp_shm}" of="${xtcrp_dest}" conv=fsync status=progress 2>/dev/null; then
+            echo "${log_prefix} xtcrp.tgz moved successfully"
+        else
+            echo "${log_prefix} ERROR: Failed to move xtcrp.tgz!"
+            return 1
+        fi
+    fi
+    
+    # mydata.tgz 이동
+    if [ -f "${mydata_shm}" ]; then
+        if sudo dd if="${mydata_shm}" of="${mydata_dest}" conv=fsync status=progress 2>/dev/null; then
+            echo "${log_prefix} mydata.tgz moved successfully"
+        else
+            echo "${log_prefix} ERROR: Failed to move mydata.tgz!"
+            return 1
+        fi
+    fi
+    
+    # ========================================================================
+    # STEP 6: /dev/shm 정리 및 마무리
+    # ========================================================================
+    echo "${log_prefix} Cleaning up temporary files..."
+    
+    sudo rm -f "${xtcrp_shm}" "${mydata_shm}"
+    
+    # fsync로 디스크 동기화
+    sync
+    sudo sync
+    
+    if [ $? -eq 0 ]; then
+        echo "${log_prefix} Backup completed successfully!"
+        return 0
+    else
+        echo "${log_prefix} ERROR: Backup completed with errors!"
+        return 1
+    fi
+}
+
+function backuploader_old() {
+
+  thread=$(nproc)
+  if [ "${BUS}" != "block"  ]; then
+#Apply pigz for fast backup  
+    getpigz
+
+    # backup xtcrp together
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        backupxtcrp "/mnt/${tcrppart}"
+        return
+    else
+        sudo sh -c "tar -cf - ./ | pigz -p ${thread} > /mnt/${tcrppart}/xtcrp.tgz"
+        if [ $? -ne 0 ]; then
+            cecho r "An error occurred while backing up the loader!!!"
+        else
+            cecho y "Successfully backed up the loader!!!"
+        fi
+    fi    
+
+    if [ "$FRKRNL" = "YES" ]; then
+        TGZ_FILE="/mnt/${tcrppart}/mydata.tgz"
+        TAR_UNZIPPED="/mnt/${tcrppart}/mydata.tar"
+        SOURCE_FILE="/home/tc/user_config.json"
+        # Check if the compressed file exists
+        if [ -f "$TGZ_FILE" ]; then
+            echo "Adding ${SOURCE_FILE} to ${TGZ_FILE} !!!"
+            # Decompress the existing archive
+            sudo gunzip "$TGZ_FILE"
+            # Add the file to the archive
+            sudo tar --append -C / --file="$TAR_UNZIPPED" "$SOURCE_FILE"
+            # Compress the archive again and save with the original name
+            sudo sh -c "gzip -c $TAR_UNZIPPED > $TGZ_FILE"
+            # Remove the decompressed temporary file
+            sudo rm "$TAR_UNZIPPED"
+        fi
+        return
+    fi
+    
+    #if [ $(cat /usr/bin/filetool.sh | grep pigz | wc -l ) -eq 0 ]; then
+    #    sudo sed -i "s/\-czvf/\-cvf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #    sudo sed -i "s/\-czf/\-cf \- \| pigz -p "${thread}" \> \/dev\/shm\/\${MYDATA}.tgz \&\& cp \/dev\/shm\/\${MYDATA}.tgz /g" /usr/bin/filetool.sh
+    #fi
+  fi  
+#    loaderdisk=$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
+    homesize=$(du -sh /home/tc | awk '{print $1}')
+
+    echo "Please make sure you are using the latest 1GB img before using backup option"
+    echo "Current /home/tc size is $homesize , try to keep it less than 1GB as it might not fit into your image"
+
+    echo "Should i update the $loaderdisk with your current files [Yy/Nn]"
+    readanswer
+    if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
+        # Define the path to the file
+        FILE_PATH="/opt/.filetool.lst"
+
+        sudo ln -sf /home/tc/menu.sh /usr/bin/menu.sh
+        sudo ln -sf /home/tc/monitor.sh /usr/bin/monitor.sh
+        sudo ln -sf /home/tc/ntp.sh /usr/bin/ntp.sh
+
+        # Define the patterns to be added
+        PATTERNS=("etc/motd" "usr/bin/menu.sh" "usr/bin/monitor.sh" "usr/bin/ntp.sh" "usr/sbin/sz" "usr/sbin/rz" "usr/local/bin/bspatch" "usr/bin/pigz")
+        
+        # 파일이 존재하고 FILE_PATH에 없는 경우만 추가
+        for pattern in "${PATTERNS[@]}"; do
+            if [ -f "/$pattern" ]; then
+                # 중복 확인 후 추가
+                if [ -f "$FILE_PATH" ] && grep -qF "$pattern" "$FILE_PATH"; then
+                    echo "Already exists in list: $pattern" >&2
+                else
+                    echo "$pattern" >> "$FILE_PATH"
+                    echo "Added to backup list: $pattern" >&2
+                fi
+            else
+                echo "File not found, skipping: /$pattern" >&2
+            fi
+        done 2>/dev/null  # 전체 오류 출력 억제
+
+        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        backup_loader
+        sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
+        if [ $? -ne 0 ]; then
+            echo "Error: Couldn't backup files"
+        fi
+    else
+        echo "OK, keeping last status"
+    fi
+
+}
+
+function checkfilechecksum() {
+
+    local FILE="${1}"
+    local EXPECTED_SHA256="${2}"
+    local SHA256_RESULT=$(sha256sum ${FILE})
+    if [ "${SHA256_RESULT%% *}" != "${EXPECTED_SHA256}" ]; then
+        echo "The ${FILE} is corrupted, expected sha256 checksum ${EXPECTED_SHA256}, got ${SHA256_RESULT%% *}"
+        #rm -f "${FILE}"
+        #echo "Deleted corrupted file ${FILE}. Please re-run your action!"
+        echo "Please delete the file ${FILE} manualy and re-run your command!"
+        exit 99
+    fi
+
+}
+
+function tinyentry() {
+    cat <<EOF
+menuentry 'Tiny Core Image Build (version 14.0)' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /vmlinuz64 loglevel=3 cde waitusb=5 vga=791
+        echo Loading initramfs...
+        initrd /corepure64.gz
+        echo Booting TinyCore for loader creation
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tinyentry9() {
+    cat <<EOF
+menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading Linux...
+        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
+        echo Loading initramfs...
+        initrd /v9/corepure64.gz
+        echo Booting TinyCore for mount btrfs volume
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tcrpfriendentry() {
+    cat <<EOF
+menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8
+        echo Loading initramfs...
+        initrd /initrd-friend
+        echo Booting TinyCore Friend
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function xtcrpconfigureentry() {
+    cat <<EOF
+menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8 IWANTTOCONFIGURE
+        echo Loading initramfs to configure loader...
+        initrd /initrd-friend
+        echo Loding RAMDISK to configure loader...
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tcrpentry_junior() {
+    cat <<EOF
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM}' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        set kernel_cmdline="${USB_LINE} force_junior"
+        set bus_type="${BUS}"
+        if [ "\${bus_type}" != "usb" ]; then
+            set kernel_cmdline="\${kernel_cmdline} synoboot_satadom=1"
+        fi
+        linux /zImage-dsm \${kernel_cmdline}
+        echo Loading initramfs...
+        initrd /initrd-dsm
+        echo Entering Force Junior (For Re-install DSM)
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function postupdateentry() {
+    cat <<EOF
+menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 
+        echo Loading initramfs...
+        initrd /initrd-friend
+        echo Booting TinyCore Friend
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tinyjotfunc() {
+    cat <<EOF
+function savedefault {
+    saved_entry="\${chosen}"
+    save_env --file \$prefix/grubenv saved_entry
+    set gfxpayload=keep
+    set color_normal=green/black    
+    echo "TCRP-MSHELL Direct-Boot Version : ${rploaderver}"
+    echo "BUS Type:   ${BUS}"
+    echo -n "Boot Time: "; date
+    echo ""
+    echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
+    echo "Version : ${BUILD}"
+    echo "Kernel  : ${KVER}"
+    echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
+    echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
+    echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
+    echo ""
+    set color_normal=light-cyan/black
+    echo "Cmdline:"
+    echo "${CMD_LINE}"
+    echo ""
+    echo "Access http://find.synology.com/ or http://${IP}:5000 to connect the DSM via web."
+    echo ""
+}    
+EOF
+}
+
+function tcrpjotentry() {
+    cat <<EOF
+menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM})' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading DSM Linux... ${DMPM}
+        linux /zImage-dsm ${CMD_LINE}
+        echo Loading DSM initramfs...
+        initrd /initrd-dsm
+        echo Starting kernel with USB/SATA boot
+        echo
+        echo "HTTP, Synology Web Assistant (BusyBox httpd) service may take 20 - 40 seconds."
+        echo "(Network access is not immediately available)"
+        echo "Kernel loading has started, nothing will be displayed here anymore ..."
+        echo -en "Enter the following address in your web browser :"
+        echo " http://${IP}:5000"
+}
+EOF
+}
+
+function tcrpjot_junior() {
+    cat <<EOF
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM}' {    
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading DSM Linux... ${DMPM}
+        linux /zImage-dsm ${CMD_LINE} force_junior
+        echo Loading DSM initramfs...
+        initrd /initrd-dsm
+        echo Starting kernel with USB/SATA boot
+        echo
+        echo "HTTP, Synology Web Assistant (BusyBox httpd) service may take 20 - 40 seconds."
+        echo "(Network access is not immediately available)"
+        echo "Kernel loading has started, nothing will be displayed here anymore ..."
+        echo -en "Enter the following address in your web browser :"
+        echo " http://${IP}:5000"
+}
+EOF
+}
+
+
+function showsyntax() {
+    cat <<EOF
+$(basename ${0})
+
+Version : $rploaderver
+----------------------------------------------------------------------------------------
+
+Usage: ${0} <action> <platform version> <static or compile module> [extension manager arguments]
+
+Actions: build, ext, download, clean, listmod, serialgen, identifyusb, patchdtc, 
+satamap, backup, backuploader, restoreloader, restoresession, mountdsmroot, postupdate,
+mountshare, version, monitor, getgrubconf, help
+
+----------------------------------------------------------------------------------------
+Available platform versions:
+----------------------------------------------------------------------------------------
+$(getPlatforms)
+----------------------------------------------------------------------------------------
+Check custom_config.json for platform settings.
+EOF
+}
+
+function showhelp() {
+    cat <<EOF
+$(basename ${0})
+
+Version : $rploaderver
+----------------------------------------------------------------------------------------
+Usage: ${0} <action> <platform version> <static or compile module> [extension manager arguments]
+
+Actions: build, ext, download, clean, listmod, serialgen, identifyusb, patchdtc, 
+satamap, backup, backuploader, restoreloader, restoresession, mountdsmroot, postupdate, 
+mountshare, version, monitor, bringfriend, downloadupgradepat, help 
+
+- build <platform> <option> : 
+  Build the 💊 RedPill LKM and update the loader image for the specified platform version and update
+  current loader.
+
+  Valid Options:     static/compile/manual/junmod/withfriend
+
+  ** withfriend add the TCRP friend and a boot option for auto patching 
+  
+- ext <platform> <option> <URL> 
+  Manage extensions using redpill extension manager. 
+
+  Valid Options:  add/force_add/info/remove/update/cleanup/auto . Options after platform 
+  
+  Example: 
+  rploader ext apollolake-7.0.1-42218 add https://raw.githubusercontent.com/PeterSuh-Q3/rp-ext/master/e1000/rpext-index.json
+  or for auto detect use 
+  rploader ext apollolake-7.0.1-42218 auto 
+  
+- download <platform> :
+  Download redpill sources only
+  
+- clean :
+  Removes all cached and downloaded files and starts over clean
+ 
+- listmods <platform>:
+  Tries to figure out any required extensions. This usually are device modules
+  
+- serialgen <synomodel> <option> :
+  Generates a serial number and mac address for the following platforms 
+  DS3615xs DS3617xs DS916+ DS918+ DS920+ DS3622xs+ FS6400 DVA3219 DVA3221 DS1621+ DVA1622 DS2422+ RS4021xs+ DS923+
+  
+  Valid Options :  realmac , keeps the real mac of interface eth0
+  
+- identifyusb :    
+  Tries to identify your loader usb stick VID:PID and updates the user_config.json file 
+  
+- patchdtc :       
+  Tries to identify and patch your dtc model for your disk and nvme devices. If you want to have 
+  your manually edited dts file used convert it to dtb and place it under /home/tc/custom-modules
+  
+- satamap :
+  Tries to identify your SataPortMap and DiskIdxMap values and updates the user_config.json file 
+  
+- backup :
+  Backup and make changes /home/tc changed permanent to your loader disk. Next time you boot,
+  your /home will be restored to the current state.
+  
+- backuploader :
+  Backup current loader partitions to your TCRP partition
+  
+- restoreloader :
+  Restore current loader partitions from your TCRP partition
+  
+- restoresession :
+  Restore last user session files. (extensions and user_config.json)
+  
+- mountdsmroot :
+  Mount DSM root for manual intervention on DSM root partition
+  
+- postupdate :
+  Runs a postupdate process to recreate your rd.gz, zImage and custom.gz for junior to match root
+  
+- mountshare :
+  Mounts a remote CIFS working directory
+
+- version <option>:
+  Prints rploader version and if the history option is passed then the version history is listed.
+
+  Valid Options : history, shows rploader release history.
+
+- monitor :
+  Prints system statistics related to TCRP loader 
+
+- getgrubconf :
+  Checks your user_config.json file variables against current grub.cfg variables and updates your
+  user_config.json accordingly
+
+- bringfriend
+  Downloads TCRP friend and makes it the default boot option. TCRP Friend is here to assist with
+  automated patching after an upgrade. No postupgrade actions will be required anymore, if TCRP
+  friend is left as the default boot option.
+
+- downloadupgradepat
+  Downloads a specific upgade pat that can be used for various troubleshooting purposes
+
+- removefriend
+  Reverse bringfriend actions and remove TCRP from your loader 
+
+- help:           Show this page
+
+----------------------------------------------------------------------------------------
+Version : $rploaderver
+EOF
+
+}
+
+function checkUserConfig() {
+
+  SN=$(jq -r -e '.extra_cmdline.sn' "$userconfigfile")
+  MACADDR1=$(jq -r -e '.extra_cmdline.mac1' "$userconfigfile")
+  netif_num=$(jq -r -e '.extra_cmdline.netif_num' $userconfigfile)
+  netif_num_cnt=$(cat $userconfigfile | grep \"mac | wc -l)
+  
+  tz="US"
+
+  if [ "${BUS}" = "block"  ]; then
+    [ ! -n "${SN}" ] && SN=$(echo $(generateSerial ${MODEL})) && writeConfigKey "extra_cmdline" "sn" "${SN}"
+    [ ! -n "${MACADDR1}" ] && MACADDR1=`./macgen.sh "randommac" "eth0" ${MODEL}` && writeConfigKey "extra_cmdline" "mac1" "${MACADDR1}"
+  fi
+
+  if [ ! -n "${SN}" ]; then
+    eval "echo \${MSG${tz}36}"
+    msgalert "Synology serial number not set. Check user_config.json again. Abort the loader build !!!!!!"
+    exit 99
+  fi
+  
+  if [ ! -n "${MACADDR1}" ]; then
+    eval "echo \${MSG${tz}37}"
+    msgalert "The first MAC address is not set. Check user_config.json again. Abort the loader build !!!!!!"
+    exit 99
+  fi
+
+  if [ "${BUS}" != "block"  ]; then
+      if [ $netif_num != $netif_num_cnt ]; then
+        echo "netif_num = ${netif_num}"
+        echo "number of mac addresses = ${netif_num_cnt}"       
+        eval "echo \${MSG${tz}38}"
+        msgalert "The netif_num and the number of mac addresses do not match. Check user_config.json again. Abort the loader build !!!!!!"
+        exit 99
+      fi  
+  fi
+}
+
+###############################################################################
+# Replace/remove/add values in .conf K=V file
+# 1 - file
+# 2 - key
+# 3 - value
+function _set_conf_kv() {
+  # Delete
+  if [ -z "${3}" ]; then
+    sed -i "/^${2}=/d" "${1}" 2>/dev/null
+    return $?
+  fi
+
+  # Replace
+  if grep -q "^${2}=" "${1}" 2>/dev/null; then
+    sed -i "s#^${2}=.*#${2}=\"${3}\"#" "${1}" 2>/dev/null
+    return $?
+  fi
+
+  # Add if doesn't exist
+  mkdir -p "$(dirname "${1}" 2>/dev/null)" 2>/dev/null
+  echo "${2}=\"${3}\"" >>"${1}" 2>/dev/null
+  return $?
+}
+
+function buildloader() {
+
+#    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
+    local_cache="/mnt/${tcrppart}/auxfiles"
+
+checkmachine
+
+    [ "$1" == "junmod" ] && JUNLOADER="YES" || JUNLOADER="NO"
+
+    [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -d /home/tc/custom-module ] && ln -s $local_cache /home/tc/custom-module
+
+    DMPM="$(jq -r -e '.general.devmod' $userconfigfile)"
+    msgnormal "Device Module Processing Method is ${DMPM}"
+
+    cd /home/tc
+
+    echo -n "Checking user_config.json : "
+    if jq -s . user_config.json >/dev/null; then
+        echo "Done"
+    else
+        echo "Error : Problem found in user_config.json"
+        exit 99
+    fi
+
+    echo "Clean up extension files before building!!!"
+    removemodelexts    
+
+    [ ! -d /lib64 ] &&  sudo ln -s /lib /lib64
+    [ ! -f /lib64/libbz2.so.1 ] && sudo ln -s /usr/local/lib/libbz2.so.1.0.8 /lib64/libbz2.so.1
+    [ ! -f /home/tc/redpill-load/user_config.json ] && ln -s /home/tc/user_config.json /home/tc/redpill-load/user_config.json
+    [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
+    cd /home/tc/redpill-load
+
+# download commands...
+    if [ ${TARGET_REVISION} -gt 42218 ]; then
+        echo "Found build request for revision greater than 42218"
+        downloadextractor
+        processpat
+    else
+        [ -d /home/tc/custom-module ] && sudo cp -adp /home/tc/custom-module/*${TARGET_REVISION}*.pat /home/tc/redpill-load/cache/
+    fi
+
+    [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
+
+    [ ! -d /home/tc/redpill-load/custom/extensions ] && mkdir -p /home/tc/redpill-load/custom/extensions
+
+# compilation commands...       
+st "extensions" "Extensions collection" "Extensions collection..."
+[ "${BUS}" != "block" ] && log_build_step "Collecting extensions" 6 12
+    addrequiredexts
+
+# image creation commands...
+st "make loader" "Creation boot loader" "Compile n make boot file."
+[ "${BUS}" != "block" ] && log_build_step "Creation boot loader" 7 12
+st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
+[ "${BUS}" != "block" ] && log_build_step "Copying files to P1,P2" 8 12
+    UPPER_ORIGIN_PLATFORM=$(echo ${ORIGIN_PLATFORM} | tr '[:lower:]' '[:upper:]')
+
+    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+        vkersion=${major}${minor}_${KVER}
+    else
+        vkersion=${KVER}
+    fi
+
+    #if [ "$WITHFRIEND" != "YES" ]; then
+    #    jsonfile=$(jq "del(.[\"localrss\"])" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+    #fi 
+    
+    if [ "$JUNLOADER" == "YES" ]; then
+        echo "jun build option has been specified, so JUN MOD loader will be created"
+        # jun's mod must patch using custom.gz from the first partition, so you need to fix the partition.
+        sed -i "s/BRP_OUT_P2}\/\${BRP_CUSTOM_RD_NAME/BRP_OUT_P1}\/\${BRP_CUSTOM_RD_NAME/g" /home/tc/redpill-load/build-loader.sh
+        $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
+    else
+        $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${vkersion} ${SYNOMODEL}
+    fi
+
+    [ $? -ne 0 ] && echo "FAILED : Loader creation failed check the output for any errors" && exit 99
+    msgnormal "Chkeck Result of build-loader"
+    ls -l /mnt/${loaderdisk}1/
+    ls -l /mnt/${loaderdisk}2/
+    ls -l /mnt/${loaderdisk}3/
+
+    msgnormal "Modify Jot Menu entry"
+    # backup Jot menuentry to tempentry
+    # Get Only USB Part from line 61 to 80
+    tempentry=$(cat /tmp/grub.cfg | head -n 80 | tail -n 20)
+    #if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
+    #    sudo sed -i '61,80d' /tmp/grub.cfg
+    #else
+        sudo sed -i '43,80d' /tmp/grub.cfg
+    #fi
+    echo "$tempentry" > /tmp/tempentry.txt
+    # Append background to grub.cfg
+    #if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
+    #    echo
+    #else
+        sudo tee -a /tmp/grub.cfg < /home/tc/grubbkg.cfg
+    #fi
+    
+    if [ "$WITHFRIEND" = "YES" ]; then
+        echo
+    else
+        sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
+        sudo sed -i '31,34d' /tmp/grub.cfg
+        # Check dom size and set max size accordingly for jot
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            if [ "${BUS}" != "usb" ]; then
+                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+                sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
+            fi
+        fi    
+        sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
+        sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
+    fi
+
+    msgnormal "Replacing set root with filesystem UUID instead"
+    sudo sed -i "s/set root=(hd0,msdos1)/search --set=root --fs-uuid $usbpart1uuid --hint hd0,msdos1/" /tmp/tempentry.txt
+    sudo sed -i "s/Verbose/Verbose, ${DMPM}/" /tmp/tempentry.txt
+    sudo sed -i "s/Linux.../Linux... ${DMPM}/" /tmp/tempentry.txt
+
+    # Share RD of friend kernel with JOT 2023.05.01
+    if [ ! -f /home/tc/friend/initrd-friend ] && [ ! -f /home/tc/friend/bzImage-friend ]; then
+st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdisk}3"
+[ "${BUS}" != "block" ] && log_build_step "Friend downloading" 9 12
+        bringoverfriend
+        #upgrademan v0.1.3m
+    fi
+
+    if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
+      if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${loaderdisk}1/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${loaderdisk}1/bzImage-friend conv=fsync status=progress
+      else
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${loaderdisk}3/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${loaderdisk}3/bzImage-friend conv=fsync status=progress
+      fi  
+    fi
+
+    USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+        SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
+        if [ -n "$SATA_DOM" ]; then
+            SATA_LINE="synoboot_satadom=${SATA_DOM} "
+        fi        
+    fi
+
+    if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
+        USB_LINE="${USB_LINE} nox2apic"
+    fi
+
+    if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
+        echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
+        USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
+    fi
+
+    if [ -v CPU ]; then
+        if [ "${CPU}" == "AMD" ]; then
+            echo "Add configuration disable_mtrr_trim for AMD"
+            USB_LINE="${USB_LINE} disable_mtrr_trim=1"
+        else
+            #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
+            #    if [ "$MACHINE" = "VIRTUAL" ]; then
+            #        USB_LINE="${USB_LINE} intel_iommu=igfx_off "
+            #    fi   
+            #fi    
+    
+            if [ -d "/home/tc/redpill-load/custom/extensions/nvmesystem" ]; then
+                echo "Add configuration pci=nommconf for nvmesystem addon"
+                USB_LINE="${USB_LINE} pci=nommconf"
+            fi
+        fi
+    fi
+
+    if lspci -nn | grep -qi 'VGA.*\[1002:'; then
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
+        fi
+    fi
+    
+    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} fbcon=map:99 vga=keep"    
+
+    [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
+
+    USB_LINE="${USB_LINE} "
+
+    if [ "${BUS}" = "usb" ]; then
+        CMD_LINE=${USB_LINE}
+    else
+        [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
+    fi
+
+    if [ "$WITHFRIEND" = "YES" ]; then
+        echo "Creating tinycore friend entry"
+        tcrpfriendentry | sudo tee --append /tmp/grub.cfg
+    else
+        #Create Jot Information
+        tinyjotfunc | sudo tee --append /tmp/grub.cfg    
+        echo "Creating tinycore Jot entry"
+        tcrpjotentry | sudo tee --append /tmp/grub.cfg        
+    fi
+
+    if [ -f /mnt/${tcrppart}/corepure64.gz ] && [ -f /mnt/${tcrppart}/vmlinuz64 ] && [ -d /mnt/${tcrppart}/cde ]; then
+        echo "Creating tinycore configure loader entry"
+        tinyentry | sudo tee --append /tmp/grub.cfg
+    fi
+    
+    echo "Creating xTCRP configure loader entry"
+    xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
+
+    if [ "$WITHFRIEND" = "YES" ]; then
+        echo "Creating tinycore friend Junior Boot entry"    
+        tcrpentry_junior | sudo tee --append /tmp/grub.cfg 
+    else
+        echo "Creating tinycore Jot Junior Boot entry"
+        tcrpjot_junior | sudo tee --append /tmp/grub.cfg
+    fi
+
+    cd /home/tc/redpill-load
+
+    msgnormal "Entries in Localdisk bootloader : "
+    echo "======================================================================="
+    grep menuentry /tmp/grub.cfg
+
+    ### Updating user_config.json
+    updateuserconfigfield "general" "model" "$MODEL"
+    updateuserconfigfield "general" "version" "${BUILD}"
+    updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
+    updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
+    zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
+    updateuserconfigfield "general" "zimghash" "$zimghash"
+    rdhash=$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')
+    updateuserconfigfield "general" "rdhash" "$rdhash"
+    
+    msgwarning "Updated user_config with USB Command Line : $USB_LINE"
+    json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
+        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    else
+        msgwarning "Starting with kernel 5, the unused sata_line element is removed."
+        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
+    fi    
+
+    sudo cp $userconfigfile /mnt/${loaderdisk}3/
+
+    # Share RD of friend kernel with JOT 2023.05.01
+    sudo cp /mnt/${loaderdisk}1/zImage /mnt/${loaderdisk}3/zImage-dsm
+
+    # Repack custom.gz including /usr/lib/modules and /usr/lib/firmware in all_modules 2024.02.18
+    # Compining rd.gz and custom.gz
+
+    declare -A SYNOINFO    
+    # Read synoinfo from user config
+    # SYNOINFO["SN"]="${SN}"
+    while read -r KEY VALUE; do
+      SYNOINFO["$KEY"]="$VALUE"
+    done < <(jq -r '.synoinfo | to_entries[] | "\(.key) \(.value)"' "${userconfigfile}")
+
+    rdtemp="/home/tc/rd.temp"
+    
+    [ ! -d $rdtemp ] && mkdir $rdtemp
+    [ -d $rdtemp ] && cd $rdtemp
+    RD_COMPRESSED=$(cat /home/tc/redpill-load/config/${ORIGIN_PLATFORM}/${BUILD}/config.json | jq -r -e ' .extra .compress_rd')
+
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        gzs_path="/dev/shm"  
+    else
+        gzs_path="/mnt/${loaderdisk}3"
+    fi
+
+    if [ "$RD_COMPRESSED" = "false" ]; then
+        echo "Ramdisk in not compressed "
+        cat ${gzs_path}/rd.gz | sudo cpio -idm
+    else    
+        echo "Ramdisk in compressed " 
+        unlzma -dc ${gzs_path}/rd.gz | sudo cpio -idm
+    fi
+
+    # 1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
+    if [ -f ${gzs_path}/custom.gz ]; then
+        echo "Found custom.gz, so extract from custom.gz " 
+        cat ${gzs_path}/custom.gz | sudo cpio -idm  >/dev/null 2>&1
+    else
+        echo "Not found custom.gz, extract /exts from initrd-dsm" 
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*exts*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*modprobe*"  >/dev/null 2>&1
+        cat ${gzs_path}/initrd-dsm | sudo cpio -idm "*rp.ko*"  >/dev/null 2>&1
+    fi
+
+    # Network card configuration file
+    for N in $(seq 0 7); do
+      echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
+    done
+    sudo cp -vf /home/tc/ifcfg-eth* $rdtemp/etc/sysconfig/network-scripts/
+
+    # SA6400 patches for JOT Mode
+    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+        echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
+        sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
+        if [ "$TARGET_REVISION" == "81180" ]; then
+
+cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
+echo "[INIT] Waiting up to 190 seconds for eth0 NIC (addr_assign_type=0)..."
+MAX_WAIT=190
+while [ $MAX_WAIT -gt 0 ]; do
+  if [ -e "/sys/class/net/eth0" ]; then
+    MAC=$(cat "/sys/class/net/eth0/address" 2>/dev/null)
+    if echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && [ "$MAC" != "00:00:00:00:00:00" ]; then
+      echo "[INIT] eth0 is ready with MAC: $MAC"
+      ip a show eth0
+      break
+    fi
+  fi
+  echo "[INIT] Waiting... $MAX_WAIT sec left"
+  sleep 1
+  MAX_WAIT=$((MAX_WAIT - 1))
+done
+
+if [ $MAX_WAIT -le 0 ]; then
+  echo "[INIT] Warning: eth0 NIC did not become ready within timeout."
+fi
+EOF
+            chmod +x $rdtemp/nic-wait-snippet.sh
+            #ls -l $rdtemp/nic-wait-snippet.sh
+            #cat $rdtemp/nic-wait-snippet.sh
+        fi
+        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
+        sudo cat $rdtemp/linuxrc.syno  
+
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            echo "Use static firmware and module loading methods when using custom modules"
+            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+            #sudo rm -rf $rdtemp/exts/all-modules/
+        fi    
+    fi
+    if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
+        sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
+    fi
+    sudo chmod +x $rdtemp/usr/sbin/modprobe    
+
+    # add dummy loop0 test
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/boot-image-dummy-sda.img.gz -o $rdtemp/root/boot-image-dummy-sda.img.gz
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/root/load-sda-first.sh -o $rdtemp/root/load-sda-first.sh
+    #sudo chmod +x $rdtemp/root/load-sda-first.sh 
+    #sudo mkdir -p $rdtemp/etc/udev/rules.d
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tcrpfriend/main/buildroot/board/tcrpfriend/rootfs-overlay/etc/udev/rules.d/99-custom.rules -o $rdtemp/etc/udev/rules.d/99-custom.rules
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/libsmartcols.so.1 -o $rdtemp/usr/lib/libsmartcols.so.1
+    #sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/losetup/master/sbin/losetup -o $rdtemp/usr/sbin/losetup
+    #sudo chmod +x $rdtemp/usr/sbin/losetup
+
+    RAMDISK_PATH="$rdtemp"
+    # Patch synoinfo.conf
+    mkdir -p "${RAMDISK_PATH}/addons"    
+    echo -n "."
+    echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
+    for KEY in "${!SYNOINFO[@]}"; do
+      echo "Set synoinfo ${KEY}"
+      echo "${KEY}=\"${SYNOINFO[${KEY}]}\"" >>"${RAMDISK_PATH}/addons/synoinfo.conf"
+      _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+      _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
+    done
+
+    # Reassembly ramdisk ( no compress, use cpio raw type )
+    if [ "$RD_COMPRESSED" = "false" ]; then
+        if [ "$FRKRNL" = "NO" ]; then
+            #if [ "${MDLNAME}" == "custom-modules" ]; then
+            #    if [ "$(which zstd)_" == "_" ]; then  
+            #        echo "zstd does not exist, install from tinycore"
+            #        tce-load -iw zstd 
+            #    fi            
+            #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
+            #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
+            #else
+                echo "Ramdisk in not compressed, use cpio raw"            
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
+            #fi
+        else
+            #if [ "$(which zstd)_" == "_" ]; then  
+                echo "Ramdisk in not compressed, use cpio raw"                    
+                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
+            #else
+            #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
+            #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
+            #fi
+            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
+        fi
+    else
+        echo "Ramdisk in compressed, use xz(lzma) "
+        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+    fi
+    
+    if [ "$WITHFRIEND" = "YES" ]; then
+        msgnormal "Setting default boot entry to TCRP Friend"
+    else
+        msgnormal "Setting default boot entry to JOT ${BUS}"
+    fi
+    sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
+        sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
+    fi
+    sudo cp -vf /tmp/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
+st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
+[ "${BUS}" != "block" ] && log_build_step "Gen GRUB entries" 10 12
+
+# finalization commands...
+    [ -f /mnt/${loaderdisk}3/loader72.img ] && rm /mnt/${loaderdisk}3/loader72.img
+    [ -f /mnt/${loaderdisk}3/grub72.cfg ] && rm /mnt/${loaderdisk}3/grub72.cfg
+    [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
+
+    sudo cp -vf $rdtemp/linuxrc.syno.impl /home/tc/linuxrc.syno.impl.${SYNOMODEL}
+    sudo rm -rf $rdtemp /home/tc/friend /home/tc/cache/*.pat
+
+    if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+        msgnormal "Skip Caching files on xTCRP with Synoboot Injected."
+    else
+        if [ "${BUS}" != "block" ]; then
+            msgnormal "Caching files for future use"
+            [ ! -d ${local_cache} ] && mkdir ${local_cache}
+        
+            # Discover remote file size
+            patfile=$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)    
+            FILESIZE=$(stat -c%s "${patfile}")
+            SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
+        
+            FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+            SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+            FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+            SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        
+            echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+            echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+        
+            if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+                # No disk space to download, change it to RAMDISK
+                echo "No adequate space on ${local_cache} to backup cache pat file, clean up PAT file now ....."
+                sudo sh -c "rm -vf $(ls -t ${local_cache}/*.pat | head -n 1)"
+            fi
+        
+            if [ -f ${patfile} ]; then
+                echo "Found ${patfile}, moving to cache directory : ${local_cache} "
+                $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache} && $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
+            fi
+st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
+[ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
+        fi    
+    fi    
+}
+
+function curlfriend() {
+    REPO="PeterSuh-Q3/tcrpfriend"
+    FRTAG=""
+
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"
+        PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+          jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+        if [ -n "$PRERELEASE_TAG" ]; then
+            echo "Pre-release tag found: $PRERELEASE_TAG"
+            FRTAG="$PRERELEASE_TAG"
+        fi
+        writeConfigKey "general" "friendautoupd" "false"
+    fi
+
+    if [ -z "$FRTAG" ]; then
+        LATESTURL=$(curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest")
+        FRTAG="${LATESTURL##*/}"
+        [ -f /tmp/test_mode ] || echo "Latest tag: $FRTAG"
+    fi
+
+    # [ "${CPU}" = "HP" ] && FRTAG="${FRTAG}a"
+    echo "FRIEND TAG is ${FRTAG}"
+
+    curl -kLO# "https://github.com/$REPO/releases/download/${FRTAG}/chksum" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/bzImage-friend" \
+         -O "https://github.com/$REPO/releases/download/${FRTAG}/initrd-friend"
+
+    if [ $? -ne 0 ]; then
+        msgalert "Download failed from github.com friend... !!!!!!!!"
+    else
+        msgnormal "Bringing over my friend from github.com Done!!!!!!!!!!!!!!"
+    fi
+}
+
+function bringoverfriend() {
+
+  [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
+
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then  #||[ "${CPU}" = "HP" ]
+      curlfriend
+  else    
+      echo -n "Checking for latest friend -> "
+      # for test
+      #curl -kLO# https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/chksum -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/bzImage-friend -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/initrd-friend
+      #return
+      
+      URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
+      [ -n "$URL" ] && curl --connect-timeout 5 -s -k -L $URL -O
+    
+      if [ -f chksum ]; then
+        FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+        BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+        INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+        if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
+            msgnormal "OK, latest \n"
+        else
+            msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
+            curlfriend
+    
+            if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
+                FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+                BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+                INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+                cat chksum |grep VERSION
+                echo
+                [ "$(sha256sum bzImage-friend | awk '{print $1}')" == "$BZIMAGESHA256" ] && msgnormal "bzImage-friend checksum OK !" || msgalert "bzImage-friend checksum ERROR !" || exit 99
+                [ "$(sha256sum initrd-friend | awk '{print $1}')" == "$INITRDSHA256" ] && msgnormal "initrd-friend checksum OK !" || msgalert "initrd-friend checksum ERROR !" || exit 99
+            else
+                msgalert "Could not find friend files !!!!!!!!!!!!!!!!!!!!!!!"
+            fi
+        fi
+      else
+        msgalert "No IP yet to check for latest friend \n"
+      fi
+   fi
+}
+
+function synctime() {
+
+    if [ "$FRKRNL" = "NO" ]; then
+        #Get Timezone
+        tz=$(curl -s ipinfo.io | grep timezone | awk '{print $2}' | sed 's/,//')
+        if [ $(echo $tz | grep Seoul | wc -l ) -gt 0 ]; then
+            ntpserver="asia.pool.ntp.org"
+        else
+            ntpserver="pool.ntp.org"
+        fi
+    
+        if [ "$(which ntpclient)_" == "_" ]; then
+            tce-load -iw ntpclient 2>&1 >/dev/null
+        fi    
+        export TZ="${timezone}"
+        echo "Synchronizing dateTime with ntp server $ntpserver ......"
+        sudo ntpclient -s -h ${ntpserver} 2>&1 >/dev/null
+    else
+        GOOGLETIME=$(curl -k -v -s https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+        sudo date -u -s "$(date -d "$GOOGLETIME" "+%Y-%m-%d %H:%M:%S")"
+    fi
+    echo
+    echo "DateTime synchronization complete!!!"
+
+}
+
+function matchpciidmodule() {
+
+    MODULE_ALIAS_FILE="modules.alias.4.json"
+
+    vendor="$(echo $1 | sed 's/[a-z]/\U&/g')"
+    device="$(echo $2 | sed 's/[a-z]/\U&/g')"
+
+    pciid="${vendor}d0000${device}"
+
+    #jq -e -r ".modules[] | select(.alias | test(\"(?i)${1}\")?) |   .name " modules.alias.json
+    # Correction to work with tinycore jq
+    matchedmodule=$(jq -e -r ".modules[] | select(.alias | contains(\"${pciid}\")?) | .name " $MODULE_ALIAS_FILE)
+
+    # Call listextensions for extention matching
+
+    echo "$matchedmodule"
+
+    #listextension $matchedmodule
+
+}
+
+function getmodaliasfile() {
+
+    echo "{"
+    echo "\"modules\" : ["
+
+    grep -ie pci -ie usb /lib/modules/$(uname -r)/modules.alias | while read line; do
+
+        read alias pciid module <<<"$line"
+        echo "{"
+        echo "\"name\" :  \"${module}\"",
+        echo "\"alias\" :  \"${pciid}\""
+        echo "}",
+        #       echo "},"
+
+    done | sed '$ s/,//'
+
+    echo "]"
+    echo "}"
+
+}
+
+function listmodules() {
+
+    if [ ! -f $MODULE_ALIAS_FILE ]; then
+        echo "Creating module alias json file"
+        getmodaliasfile >modules.alias.4.json
+    fi
+
+    echo -n "Testing $MODULE_ALIAS_FILE -> "
+    if $(jq '.' $MODULE_ALIAS_FILE >/dev/null); then
+        echo "File OK"
+        echo "------------------------------------------------------------------------------------------------"
+        echo -e "It looks that you will need the following modules : \n\n"
+
+        if [ "$WITHFRIEND" = "YES" ]; then
+            echo "Block listpci for using all-modules. 2022.11.09"
+        else    
+            listpci
+        fi
+
+        echo "------------------------------------------------------------------------------------------------"
+    else
+        echo "Error : File $MODULE_ALIAS_FILE could not be parsed"
+    fi
+
+}
+
+function ext_manager() {
+
+    local _SCRIPTNAME="${0}"
+    local _ACTION="${1}"
+    local _PLATFORM_VERSION="${2}"
+    shift 2
+    local _REDPILL_LOAD_SRC="/home/tc/redpill-load"
+    export MRP_SRC_NAME="${_SCRIPTNAME} ${_ACTION} ${_PLATFORM_VERSION}"
+    ${_REDPILL_LOAD_SRC}/ext-manager.sh $@
+    exit $?
+
+}
+
+function getredpillko() {
+
+    DSMVER=$(echo ${TARGET_VERSION} | cut -c 1-3 )
+    echo "KERNEL VERSION of getredpillko() is ${KVER}, DSMVER is ${DSMVER}"
+    v=""
+
+    REPO="PeterSuh-Q3/redpill-lkm"
+    TAG=""
+    if [ "${offline}" = "NO" ]; then
+        echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
+        LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
+        if [ -f /tmp/test_mode ]; then
+            cecho g "###############################  This is Test Mode  ############################"
+            LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+              jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+            if [ -n "$LKM_PRERELEASE_TAG" ]; then
+                echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
+                TAG="$LKM_PRERELEASE_TAG"
+            else
+                echo "Pre-release tag not found, use latest 26.2.3"
+                TAG="${LATESTURL##*/}"
+            fi            
+        else        
+            TAG="${LATESTURL##*/}"
+        fi    
+        echo "TAG is ${TAG}"
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
+    else
+        echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
+    fi    
+
+    sudo rm -f /home/tc/custom-module/*.gz
+    sudo rm -f /home/tc/custom-module/*.ko
+    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
+        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
+    elif echo "bromolow" | grep -qw ${ORIGIN_PLATFORM}; then    
+        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
+        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
+    else    
+        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
+        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
+    fi
+
+    if [ -z "${TAG}" ]; then
+        rm -f /tmp/VERSION
+        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        VERSION -d /tmp >/dev/null 2>&1
+        TAG=$(cat /tmp/VERSION )
+        echo "TAG of VERSION is ${TAG}"
+    fi
+
+    if [ "$(echo "${KVER:-3}" | cut -d'.' -f1)" -eq 3 ]; then
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
+    else
+        REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
+    fi    
+    sudo cp -vf /home/tc/custom-module/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+    sudo strip --strip-debug /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+
+}
+
+function changeautoupdate {
+    if [ -z "$1" ]; then
+      echo -en "\r$(msgalert "There is no on or off parameter.!!!")\n"
+      exit 99
+    elif [ "$1" != "on" ] && [ "$1" != "off" ]; then
+      echo -en "\r$(msgalert "There is no on or off parameter.!!!")\n"
+      exit 99
+    fi
+
+    getloaderdisk
+    tcrppart="${loaderdisk}3"
+
+    jsonfile=$(jq . "$userconfigfile")
+    
+    echo -n "friendautoupd on User config file needs update, updating -> "
+    if [ "$1" = "on" ]; then
+        writeConfigKey "general" "friendautoupd" "true"
+    else
+        writeConfigKey "general" "friendautoupd" "false"
+    fi
+    cp $userconfigfile /mnt/${tcrppart}/
+    echo $jsonfile | jq . >$userconfigfile && echo "Done" || echo "Failed"
+    
+    cat $userconfigfile | grep friendautoupd
+}
+
+function upgrademan() {
+    if [ -z "$1" ]; then
+      echo -en "\r$(msgalert "There is no TCRP Friend version.!!!")\n"
+      exit 99
+    fi
+
+    getloaderdisk
+    tcrppart="${loaderdisk}3"
+
+    [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
+    
+    friendautoupd="$(jq -r -e '.general .friendautoupd' $userconfigfile)"
+    if [ "${friendautoupd}" = "false" ]; then
+        echo -en "\r$(msgwarning "TCRP Friend auto update disabled")\n"
+    else
+        echo -en "\r$(msgwarning "TCRP Friend auto update enabled")\n"	
+    fi
+    FRIENDVERSION="$1"
+    msgwarning "Found target version, bringing over new friend version : $FRIENDVERSION \n"
+    echo -n "Checking for version $FRIENDVERSION friend -> "
+    URL=$(curl --connect-timeout 15 -s --insecure -L https://api.github.com/repos/PeterSuh-Q3/tcrpfriend/releases/tags/"${FRIENDVERSION}" | jq -r -e .assets[].browser_download_url | grep chksum)
+    if [ $? -ne 0 ]; then
+        msgalert "Error downloading version of $FRIENDVERSION friend...\n"
+        exit 99
+    fi
+
+    # download file chksum
+    [ -n "$URL" ] && curl -s --insecure -L $URL -O
+    if [ $? -ne 0 ]; then
+        msgalert "Error downloading version of $FRIENDVERSION friend...\n"
+        exit 99
+    fi
+    URLS=$(curl --insecure -s https://api.github.com/repos/PeterSuh-Q3/tcrpfriend/releases/tags/"${FRIENDVERSION}" | jq -r ".assets[].browser_download_url")
+    for file in $URLS; do curl --insecure --location --progress-bar "$file" -O; done
+    FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+    BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+    INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && cp -f bzImage-friend /mnt/${tcrppart}/ && msgnormal "bzImage OK! \n"
+    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && cp -f initrd-friend /mnt/${tcrppart}/ && msgnormal "initrd-friend OK! \n"
+    echo -e "$(msgnormal "TCRP FRIEND HAS BEEN UPDATED!!!")"
+    changeautoupdate "off"
+
+    if [ -f /home/tc/friend/initrd-friend ] && [ -f /home/tc/friend/bzImage-friend ]; then
+        sudo dd if=/home/tc/friend/initrd-friend of=/mnt/${tcrppart}/initrd-friend conv=fsync status=progress
+        sudo dd if=/home/tc/friend/bzImage-friend of=/mnt/${tcrppart}/bzImage-friend conv=fsync status=progress
+        sudo rm -rf /home/tc/friend
+    fi
+
+}
+
+function returnto() {
+    echo "${1}"
+    read answer
+    cd ~
+}
+
+function spacechk() {
+  # Discover file size
+  SPACEUSED=$(df --block-size=1 | awk '/'${1}'/{print $3}') # Check disk space used
+  SPACELEFT=$(df --block-size=1 | awk '/'${2}'/{print $4}') # Check disk space left
+
+  SPACEUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
+  SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+  SPACEUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
+  SPACELEFT_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACELEFT} / 1024 / 1024}")      
+
+  msgwarning "SOURCE SPACE USED = ${SPACEUSED_FORMATTED} bytes (${SPACEUSED_MB} MB)"
+  msgwarning "TARGET SPACE LEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+}
+
+function get_partition() {
+    local disk=$1
+    local num=$2
+    if [[ "$disk" =~ ^/dev/nv ]]; then
+        echo "${disk}p${num}"
+    else
+        echo "${disk}${num}"
+    fi
+}
+
+function tcrpfriendentry_hdd() {
+    
+    cat <<EOF
+menuentry 'Tiny Core Friend ${MODEL} ${BUILD} Update 0 ${DMPM}' {
+        savedefault
+        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8
+        echo Loading initramfs...
+        initrd /initrd-friend
+        echo Booting TinyCore Friend
+}
+EOF
+
+}
+
+function xtcrpconfigureentry_hdd() {
+    cat <<EOF
+menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
+        savedefault
+        search --set=root --fs-uuid "1234-5678" --hint hd0,msdos${1}
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8 IWANTTOCONFIGURE
+        echo Loading initramfs to configure loader...
+        initrd /initrd-friend
+        echo Loding xTCRP RAMDISK to configure loader...
+}
+EOF
+}
+
+function wr_part1() {
+
+    fediskpart="$(get_partition "${edisk}" ${1})"
+    mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
+    
+    [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
+    while true; do
+        sleep 1
+        echo "Mounting ${fediskpart} ..."
+        sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 4th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
+        [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
+    done
+    sudo rm -rf "${mdiskpart}"/*
+
+    diskid=$(echo "${fediskpart}" | sed 's#/dev/##')
+    spacechk "${loaderdisk}1" "${diskid}"
+    FILESIZE1=$(ls -l /mnt/${loaderdisk}3/bzImage-friend | awk '{print$5}')
+    FILESIZE2=$(ls -l /mnt/${loaderdisk}3/initrd-friend | awk '{print$5}')
+    
+    a_num=$(echo $FILESIZE1 | bc)
+    b_num=$(echo $FILESIZE2 | bc)
+    c_num=$(echo $SPACEUSED | bc)
+    t_num=$(($a_num + $b_num + $c_num))
+    
+    TOTALUSED=$(echo $t_num)
+    TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+
+    ZIMAGESIZE=""
+    if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
+        ZIMAGESIZE=$(ls -l /mnt/${loaderdisk}1/zImage | awk '{print$5}')
+        z_num=$(echo $ZIMAGESIZE | bc)
+        t_num=$(($t_num - $z_num))
+
+        TOTALUSED=$(echo $t_num)
+        TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
+        TOTALUSED_MB=$((TOTALUSED / 1024 / 1024))
+        echo "FIXED TOTALUSED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+
+        if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
+            mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+            returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+            false
+        fi   
+    fi
+
+    if [ -z ${ZIMAGESIZE} ]; then
+        cd /mnt/${loaderdisk}1 && sudo find . | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+    else
+        cd /mnt/${loaderdisk}1 && sudo find . -not -name "zImage" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+    fi
+
+    echo "Modifying grub.cfg for new loader boot..."
+    sudo sed -i '61,$d' "${mdiskpart}"/boot/grub/grub.cfg
+    tcrpfriendentry_hdd ${1} | sudo tee --append "${mdiskpart}"/boot/grub/grub.cfg
+    xtcrpconfigureentry_hdd ${1} | sudo tee --append "${mdiskpart}"/boot/grub/grub.cfg
+
+    sudo cp -vf /mnt/${loaderdisk}3/bzImage-friend  "${mdiskpart}"
+    sudo cp -vf /mnt/${loaderdisk}3/initrd-friend  "${mdiskpart}"
+
+    sudo mkdir -p /usr/local/share/locale
+
+    true
+}
+
+function wr_part2() {
+
+    fediskpart="$(get_partition "${edisk}" ${1})"
+    mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
+    
+    [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
+    while true; do
+        sleep 1
+        echo "Mounting ${fediskpart} ..."
+        sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 6th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
+        [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
+    done
+    sudo rm -rf "${mdiskpart}"/*
+
+    diskid=$(echo "${fediskpart}" | sed 's#/dev/##')        
+    spacechk "${loaderdisk}2" "${diskid}"
+
+    TOTALUSED_FORMATTED=$(printf "%'d" "${SPACEUSED}")
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACEUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+
+    if [ 0${SPACEUSED} -ge 0${SPACELEFT} ]; then
+        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        returnto "Source Partition is too big ${SPACEUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+        false
+    fi   
+  
+    cd /mnt/${loaderdisk}2 && sudo find . | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+    true
+}
+
+function wr_part3() {
+
+    fediskpart="$(get_partition "${edisk}" ${1})"
+    mdiskpart=$(echo "${fediskpart}" | sed 's/dev/mnt/')
+    
+    [ ! -d "${mdiskpart}" ] && sudo mkdir "${mdiskpart}"
+    while true; do
+        sleep 1
+        echo "Mounting ${fediskpart} ..."
+        sudo mount "${fediskpart}" "${mdiskpart}"
+        if [ $? -ne 0 ]; then
+            echo -e "Failed to mount the 7th partition ${fediskpart}. Stop processing!!!\n"
+            remove_loader
+            return 1
+        fi
+        [ $( mount | grep "${fediskpart}" | wc -l ) -gt 0 ] && break
+    done
+    sudo rm -rf "${mdiskpart}"/*
+
+    diskid=$(echo "${fediskpart}" | sed 's#/dev/##')
+    spacechk "${loaderdisk}3" "${diskid}"
+    FILESIZE1=$(ls -l /mnt/${loaderdisk}3/zImage-dsm | awk '{print$5}')
+    FILESIZE2=$(ls -l /mnt/${loaderdisk}3/initrd-dsm | awk '{print$5}')
+    
+    a_num=$(echo $FILESIZE1 | bc)
+    b_num=$(echo $FILESIZE2 | bc)
+    t_num=$(($a_num + $b_num + 2000 ))
+    TOTALUSED=$(echo $t_num)
+
+    TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
+    TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
+    msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
+    
+    if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
+        mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
+        returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
+        remove_loader
+        return 1
+    fi   
+
+    cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
+
+    
+    TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz"
+
+    SPACELEFT=$(df --block-size=1 | grep "${mdiskpart}" | awk '{print $4}') # Check disk space left
+    FILESIZE=$(curl -k -sLI "${TGZURL}" | grep -i Content-Length | awk '{print$2}')
+    
+    FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
+    SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
+    
+    FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
+    SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+    FILESIZE_MB=$((FILESIZE / 1024 / 1024))
+    SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+    
+    echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
+    echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+    
+    if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
+      # No disk space to download, change it to RAMDISK
+      echo "No adequate space on ${mdiskpart} to download file, skip download xtcrp.tgz... "
+      true
+      return 0
+    fi
+    
+    sudo curl -kL# "${TGZURL}" -o "${mdiskpart}"/xtcrp.tgz
+    backupxtcrp ${mdiskpart}
+    true
+}
+
+function prepare_grub() {
+
+    tce-load -i grub2-multi 
+    if [ $? -eq 0 ]; then
+        echo "Install grub2-multi OK !!!"
+    else
+        tce-load -iw grub2-multi
+        [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && false
+    fi
+    #sudo echo "grub2-multi.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+
+    true
+}
+
+function prepare_img() {
+
+    echo "Downloading tempelete disk image to ${imgpath}..."
+    imgpath="/dev/shm/boot-image-to-hdd.img"  
+    if [ -f ${imgpath} ]; then
+        echo "Image file ${imgpath} Already Exist..."
+     else
+        sudo curl -kL# https://github.com/PeterSuh-Q3/rp-ext/releases/download/temp/boot-image-to-hdd.img.gz -o "${imgpath}.gz"
+        [ $? -ne 0 ] && returnto "Download failed. Stop processing!!! ${imgpath}" && false
+        echo "Unpacking image ${imgpath}..."
+        sudo gunzip -f "${imgpath}.gz"
+    fi
+
+     if [ -z "$(losetup | grep -i ${imgpath})" ]; then
+        if [ ! -n "$(losetup -j ${imgpath} | awk '{print $1}' | sed -e 's/://')" ]; then
+            echo -n "Setting up ${imgpath} loop -> "
+            sudo losetup -fP ${imgpath}
+            [ $? -ne 0 ] && returnto "Mount loop device for ${imgpath} failed. Stop processing!!! " && false
+        else
+            echo -n "Loop device exists..."
+        fi
+    fi
+    loopdev=$(losetup -j ${imgpath} | awk '{print $1}' | sed -e 's/://')
+    echo "$loopdev"
+ 
+    true
+}
+
+function get_disk_type_cnt() {
+
+    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
+    
+    if [ "${2}" = "Y" ]; then
+        echo "RAID_CNT=$RAID_CNT"
+        echo "DOS_CNT=$DOS_CNT"
+        echo "W95_CNT=$W95_CNT"
+        echo "EXT_CNT=$EXT_CNT"
+        echo "BIOS_CNT=$BIOS_CNT"
+        echo "TB2T_CNT=$TB2T_CNT"
+    fi    
+}
+
+function inject_loader() {
+
+  if [ ! -f /mnt/${loaderdisk}3/bzImage-friend ] || [ ! -f /mnt/${loaderdisk}3/initrd-friend ] || [ ! -f /mnt/${loaderdisk}3/zImage-dsm ] || [ ! -f /mnt/${loaderdisk}3/initrd-dsm ] || [ ! -f /mnt/${loaderdisk}3/user_config.json ] || [ ! $(grep -i "Tiny Core Friend" /mnt/${loaderdisk}1/boot/grub/grub.cfg | wc -l) -eq 1 ]; then
+    returnto "The loader has not been built yet. Start with the build.... Stop processing!!! " && return
+  fi
+
+  plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
+  if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+      returnto "${plat} is not supported... Stop processing!!! " 
+      return
+  fi
+
+  #[ "$MACHINE" = "VIRTUAL" ] &&    returnto "Virtual system environment is not supported. Two or more BASIC type hard disks are required on bare metal. (SSD not possible)... Stop processing!!! " && return
+
+  SHR=0
+  SHR_EX=0
+  GPT=0 
+  GPT_EX=0 
+  TB2T_CNT=0
+  DETECTED_DISKS=()  # SHR 또는 SHR_EX 디스크를 저장할 배열
+  FIRST_SHR=""      # 사용자가 선택한 첫 번째 SHR 디스크
+  
+  while read -r edisk; do
+      get_disk_type_cnt "${edisk}" "N"
+      
+      if [ $RAID_CNT -eq 3 ]; then
+          case "$DOS_CNT $W95_CNT" in
+              "0 1")
+                  echo "This is SHR Type Hard Disk. $edisk"
+                  ((SHR++))
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
+                  ;;
+              "3 1")
+                  echo "This is SHR Type Hard Disk and Has synoboot1, synoboot2 and synoboot3 Boot Partition $edisk"
+                  ((SHR_EX++))
+                  DETECTED_DISKS+=("$edisk")  # 배열에 추가
+                  FIRST_SHR="$edisk"
+                  ;;
+              "0 0" | "3 0")
+                  EXPECTED_START_1=8192
+                  EXPECTED_START_2=16785408
+  
+                  EXPECTED_START_11=2048
+                  EXPECTED_START_22=4982528
+  
+                  partition_table=$(sudo fdisk -l "$edisk" | grep -E 'dos|gpt' | awk '{print $NF}')
+                  
+                  IS_GPT="OFF"
+                  if [[ "$partition_table" == "gpt" ]]; then
+                      IS_GPT="ON"
+                  fi
+  
+                  partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
+          
+                  start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
+                  start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
+          
+                  if { [ "$start_1" == "$EXPECTED_START_1" ] && [ "$start_2" == "$EXPECTED_START_2" ] && [ "$IS_GPT" == "ON" ]; } || \
+                     { [ "$start_1" == "$EXPECTED_START_11" ] && [ "$start_2" == "$EXPECTED_START_22" ] && [ "$IS_GPT" == "ON" ]; }; then
+                      echo -e "Detected GPT Type Hard Disk (larger than 2TB). $edisk \n"
+                      if [ $BIOS_CNT -eq 1 ]; then 
+                          ((GPT_EX++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
+                          FIRST_SHR="$edisk"
+                      else
+                          ((GPT++))
+                          DETECTED_DISKS+=("$edisk")  # 배열에 추가
+                      fi
+                      ((W95_CNT++))
+                      TB2T_CNT=$((GPT + GPT_EX))
+                  fi
+                  ;;
+              *)
+                  echo "Unknown disk type for $edisk"
+                  ;;                  
+          esac
+      fi
+  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+  echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
+
+  SHR=$((SHR + GPT))
+  SHR_EX=$((SHR_EX + GPT_EX))
+  # 사용자 메뉴 제공 및 선택 처리
+  if [ -z "$FIRST_SHR" ]; then
+      if [ ${#DETECTED_DISKS[@]} -gt 0 ]; then
+          echo "Detected SHR(MBR) or GPT disks:"
+          for i in "${!DETECTED_DISKS[@]}"; do
+              echo "$((i + 1)). ${DETECTED_DISKS[$i]}"
+          done
+      
+          while true; do
+              read -p "Select a disk (enter the number): " selection
+              
+              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_DISKS[@]}" ]; then
+                  FIRST_SHR="${DETECTED_DISKS[$((selection - 1))]}"
+                  break
+              else
+                  echo "Invalid selection. Please try again."
+              fi
+          done
+      
+          echo "You selected: $FIRST_SHR"
+      else
+          echo "No MBR SHR or GPT disks detected."
+      fi
+  fi    
+  
+  [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
+
+  [ -n "$FIRST_SHR" ] && sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
+
+  do_ex_first=""
+  if [ $SHR_EX -eq 1 ]; then
+    echo -e "There is at least one SHR type disk each with an injected bootloader...OK \n"
+    do_ex_first="Y"
+  elif [ $SHR -ge 1 ]; then
+    echo -e "There is at least one disk of type SHR...OK \n"
+    if [ -z "${do_ex_first}" ]; then
+      do_ex_first="N"
+    fi
+  else
+      echo
+      returnto "There is not enough Type Disk. Function Exit now!!! Press any key to continue..." && return  
+  fi
+
+  echo -e "do_ex_first = ${do_ex_first} \n"
+  
+echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
+readanswer
+if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+    synomodel="$(jq -r -e '.general.model' $userconfigfile)"
+    synoversion="$(jq -r -e '.general.version' $userconfigfile)"
+    getvarsmshell "${synomodel}-${synoversion}"
+    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
+        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
+        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
+    fi    
+
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
+    tce-load -i bc
+    if [ $? -eq 0 ]; then
+        echo "Install bc OK !!!"
+    else
+        tce-load -iw bc
+        [ $? -ne 0 ] && returnto "Install grub2-multi failed. Stop processing!!! " && return
+    fi
+    tce-load -i dosfstools
+    if [ $? -eq 0 ]; then
+        echo "Install dosfstools OK !!!"
+    else
+        tce-load -iw dosfstools
+        [ $? -ne 0 ] && returnto "Install dosfstools failed. Stop processing!!! " && false
+    fi
+
+    if [ "${do_ex_first}" = "N" ]; then
+        if [ $SHR -ge 1 ]; then
+            echo -e "New bootloader injection (including /sbin/fdisk partition creation)...\n"
+
+            BOOTMAKE=""
+            SYNOP3MAKE=""
+
+            # If there is a SHR disk, only process that disk.
+            if [ -n "$FIRST_SHR" ]; then
+                disk_list="$FIRST_SHR"
+            else
+                # descending sort from /dev/sd            
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+            fi
+            
+            for edisk in $disk_list; do
+         
+                model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
+                get_disk_type_cnt "${edisk}" "Y"
+                if [ $TB2T_CNT -ge 1 ]; then
+                    W95_CNT=$TB2T_CNT
+                fi
+                
+                if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
+                    echo "Skip this disk as it is a loader disk. $model"
+                    continue
+                elif [ -z "${BOOTMAKE}" ] && [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
+
+                    prepare_grub
+                    [ $? -ne 0 ] && return
+
+                    if [ $W95_CNT -ge 1 ]; then
+                        # SHR OR RAID can make primary partition
+                        echo -e "Create primary partitions on disk. ${model} \n"
+                        # get 1st partition's end sector
+                        end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
+
+                        if [ $end_sector = "4982527" ]; then
+                        # Before DSM 7.0.1    
+                            last_sector="9176832"
+                        else
+                        # After DSM 7.1.1
+                            last_sector="20979712"
+                        fi
+                    
+                        # +127M
+                        echo -e "Create 4th partition on disks... $edisk\n"
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            if [ -d /sys/firmware/efi ]; then
+                                parttype="EF00"
+                            else
+                                parttype="8300"
+                            fi
+                            echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+
+                        # gdisk 명령의 성공 여부 확인
+                        if [ $? -ne 0 ]; then
+                            echo  -e "Failed to create the 4th partition on ${edisk}. Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
+                        sleep 2
+                        sudo blockdev --rereadpt "${edisk}"
+                        
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
+                        sleep 4         
+
+                        # make 6th partition
+                        last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                        # for RAID 1, RAID 5, RAID 6, BASIC ETC...
+                        [ -z $last_sector ] && last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
+
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            # +1 sectors 
+                            [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                        else
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                # +65 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
+                            else
+                                # +513 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                            fi   
+                        fi
+                        
+                        # +13M
+                        echo -e "Create 6th partition on disks... $edisk\n"
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                        else
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                partsize="12800K"
+                            else
+                                partsize="13M"
+                            fi
+                            echo -e "n\n$last_sector\n+$partsize\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+
+                        # gdisk 명령의 성공 여부 확인 (6th partition)
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to create the 6th partition on ${edisk}. Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
+                        sleep 2
+                        sudo blockdev --rereadpt "${edisk}"
+                        
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
+                        sleep 4
+
+                        echo -e "Create 7th partition on disks... $edisk\n"
+                        if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
+                            # make 7th partition
+                            last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
+
+                            if [ $TB2T_CNT -ge 1 ]; then
+                                # +1 sectors 
+                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                            else
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                    # +65 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
+                                else
+                                    # +513 sectors 
+                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
+                                fi
+                            fi
+                            
+                            # about +79M ~ +83M (last all space)
+                            if [ $TB2T_CNT -ge 1 ]; then
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            else
+                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            fi
+
+                            # gdisk 명령의 성공 여부 확인 (7th partition)
+                            if [ $? -ne 0 ]; then
+                                echo -e "Failed to create the 7th partition on ${edisk}. Stop processing!!!\n"
+                                remove_loader
+                                return
+                            fi
+                            sleep 2
+                            sudo blockdev --rereadpt "${edisk}"
+                            
+                            if [ $? -ne 0 ]; then
+                                echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
+                                remove_loader
+                                return
+                            fi
+                            sleep 4
+                        else
+                            echo -e "The synoboot3 was already made!!!\n"
+                        fi
+
+                        # Make BIOS Boot Parttion (EF02,GPT) or Activate (MBR)
+                        if [ $TB2T_CNT -ge 1 ]; then
+                            if [ -d /sys/firmware/efi ]; then
+                                echo -e "UEFI does not require a Bios Boot Partition...\n"
+                            else
+                                if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
+                                    echo -e "EF02 Partition is already exists!!!\n"
+                                else
+                                    echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                fi
+                            fi    
+                        else
+                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                        fi
+                        sleep 2
+                        sudo blockdev --rereadpt "${edisk}"                        
+                        [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
+                        sleep 2
+
+                        if [[ $TB2T_CNT -ge 1 ]] && [ -d /sys/firmware/efi ]; then
+                            echo "Creating FAT32 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F32 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        else
+                            echo "Creating FAT16 filesystem on partition $(get_partition "${edisk}" 4)"
+                            sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
+                        fi
+                        synop1=$(get_partition "${edisk}" 4)
+                        wr_part1 "4"
+                        [ $? -ne 0 ] && remove_loader && return
+
+                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
+                        synop2=$(get_partition "${edisk}" 6)
+                        wr_part2 "6"
+                        [ $? -ne 0 ] && remove_loader && return
+
+                        #prepare_img
+                        sudo mkfs.vfat -i 87654321 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
+                        synop3=$(get_partition "${edisk}" 7)
+                        wr_part3 "7"
+                        [ $? -ne 0 ] && remove_loader && return
+                        
+                        SYNOP3MAKE="YES"
+                        break
+                    fi    
+           
+                else
+                    echo "The conditions for adding a fat partition are not met (3 rd, 0 83). $model"
+                    continue
+                fi
+            done
+        fi
+    elif [ "${do_ex_first}" = "Y" ]; then
+        if [ $SHR_EX -eq 1 ]; then
+            echo -e "Reinject bootloader (into existing partition)... \n"
+
+            # If there is a SHR disk, only process that disk.
+            if [ -n "$FIRST_SHR" ]; then
+                disk_list="$FIRST_SHR"
+            else
+                # descending sort from /dev/sd            
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+            fi
+            
+            for edisk in $disk_list; do
+         
+                model=$(lsblk -o PATH,MODEL | grep $edisk | head -1)
+                get_disk_type_cnt "${edisk}" "Y"
+                if [ $TB2T_CNT -ge 1 ]; then
+                    W95_CNT=$TB2T_CNT
+                fi
+                
+                echo
+                if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
+                    echo "Skip this disk as it is a loader disk. $model"
+                    continue
+                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -ge 1 ] && [ $EXT_CNT -eq 0 ]; then
+                    # single SHR 
+                    prepare_grub
+                    [ $? -ne 0 ] && remove_loader && return
+
+                    synop1=$(get_partition "${edisk}" 4)                    
+                    wr_part1 "4"
+                    [ $? -ne 0 ] && remove_loader && return                    
+
+                    synop2=$(get_partition "${edisk}" 6)                 
+                    wr_part2 "6"
+                    [ $? -ne 0 ] && remove_loader && return
+
+                    synop3=$(get_partition "${edisk}" 7)
+                    wr_part3 "7"
+                    [ $? -ne 0 ] && remove_loader && return
+                    
+                    break
+              
+                fi
+            done
+        fi
+    fi 
+    #sudo losetup -d ${loopdev}
+    #[ -z "$(losetup | grep -i ${imgpath})" ] && echo "boot-image-to-hdd.img losetup OK !!!"
+    sync
+    echo -e "unmount synoboot partitions...${synop1}, ${synop2}, ${synop3} \n"
+    synop1=$(echo "${synop1}" | sed 's/dev/mnt/')
+    synop2=$(echo "${synop2}" | sed 's/dev/mnt/')
+    synop3=$(echo "${synop3}" | sed 's/dev/mnt/')
+
+    sudo rm -rf ${synop1}/boot/grub/locale
+    if [ -d /sys/firmware/efi ]; then
+        cecho y "Installing BIOS & EFI GRUB-INSTALL..."
+        sudo grub-install --target=x86_64-efi --boot-directory=${synop1}/boot --efi-directory=${synop1} --removable
+        [ $? -ne 0 ] && returnto "excute grub-install ${synop1} for EFI failed. Stop processing!!! " && false
+    else
+        cecho y "Installing BIOS GRUB-INSTALL..."
+        sudo grub-install --target=i386-pc --boot-directory=${synop1}/boot ${edisk}
+        [ $? -ne 0 ] && returnto "excute grub-install ${synop1} for BIOS(CSM,LEGACY) failed. Stop processing!!! " && false
+    fi    
+
+    echo
+    
+    mountpoint -q "${synop1}" && sudo umount ${synop1} 
+    mountpoint -q "${synop2}" && sudo umount ${synop2} 
+    mountpoint -q "${synop3}" && sudo umount ${synop3}
+
+    sudo /usr/local/sbin/fdisk -l "${edisk}"
+    
+    returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
+fi
+
+}
+
+function debug_msg() {
+    echo "[DEBUG] $1" >&2
+}
+
+function remove_loader() {
+
+  echo -n "(Warning) Do you want to remove partitions from Syno disk? [yY/nN] : "
+  readanswer
+  if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
+        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
+        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
+    fi    
+
+    tce-load -i gdisk
+    if [ $? -eq 0 ]; then
+        echo "Install gdisk OK !!!"
+    else
+        tce-load -iw gdisk
+        [ $? -ne 0 ] && returnto "Install gdisk failed. Stop processing!!! " && false
+    fi
+    
+    # Delete partitions with GUID codes 8300 (Linux filesystem) or EF02 (BIOS boot)
+    # 모든 디스크 스캔
+    LC_ALL=C sudo fdisk -l | grep -E '^Disk /dev/s' | awk '{print $2}' | tr -d ':' | while read -r disk; do
+        echo "Processing $disk..."
+        
+        # 파티션 테이블 유형 확인 (GPT 또는 MBR)
+        partition_table=$(sudo fdisk -l "$disk" | grep -E 'dos|gpt' | awk '{print $NF}')
+        
+        if [[ "$partition_table" == "gpt" ]]; then
+            echo "Detected GPT partition table on $disk"
+            
+            # GPT 디스크의 대상 파티션 찾기 및 삭제
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "EF02" && $1 == 3) || 
+                ($6 == "EF00" && $1 == 4) || 
+                ($6 == "EF02" && $1 == 5) || 
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on GPT disk"
+                    sudo sgdisk -d "$part" "$disk" > /dev/null 2>&1
+                done
+            fi
+    
+        elif [[ "$partition_table" == "dos" ]]; then
+            echo "Detected MBR (DOS) partition table on $disk"
+            
+            # MBR 디스크의 대상 파티션 찾기 (4번 파티션 이후로 Linux 타입만)
+            target_partitions=$(
+              sudo sgdisk -p "$disk" | awk '
+                ($6 == "8300" && $1 >=4) {print $1}
+              ' | sort -nr | tr '\n' ' '
+            )
+            
+            if [[ -n "$target_partitions" ]]; then
+                IFS=' ' read -ra partitions <<< "$target_partitions"
+                for part in "${partitions[@]}"; do
+                    echo "Processing Delete: Partition $part on MBR disk"
+                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk" > /dev/null 2>&1
+                done
+            fi
+    
+        else
+            echo "Unknown partition table type for $disk. Skipping..."
+        fi
+        
+    done
+  
+  fi
+  returnto "The entire process of removing the partition is completed! Press any key to continue..." && return
+
+}
+
+function rploader() {
+
+    getip
+    echo "LOADER DISK = ${loaderdisk}"
+    [ -z "${loaderdisk}" ] && getloaderdisk
+    if [ -z "${loaderdisk}" ]; then
+        echo "Not Supported Loader BUS Type, program Exit!!!"
+        exit 99
+    fi
+    
+    #getBus "${loaderdisk}" 
+    echo -ne "Loader BUS: $(msgnormal "${BUS}")\n"
+
+    tcrppart="${loaderdisk}3"
+    tcrpdisk=$loaderdisk
+
+    case $1 in
+
+    build)
+
+        getvars $ORIGIN_PLATFORM
+        if [ -d /dev/shm/tcrp-modules/ ]; then
+            offline="YES"
+        else
+            offline="NO"
+            check_github
+        fi    
+#        getlatestrploader
+#        gitdownload     # When called from the parent my.sh, -d flag authority check is not possible, pre-downloaded in advance 
+        checkUserConfig
+        getredpillko
+#for test getredpillko
+#exit 0
+echo "$3"
+
+        [ "$3" = "withfriend" ] && WITHFRIEND="YES" || WITHFRIEND="NO"
+
+        case $3 in
+
+        manual)
+
+            echo "Using static compiled redpill extension"
+            echo "Got $REDPILL_MOD_NAME "
+            echo "Manual extension handling,skipping extension auto detection "
+            echo "Starting loader creation "
+            buildloader "manual"
+            [ $? -eq 0 ] && savesession
+            ;;
+
+        jun)
+            echo "Using static compiled redpill extension"
+            echo "Got $REDPILL_MOD_NAME "
+            listmodules
+            echo "Starting loader creation "
+            buildloader "junmod"
+            [ $? -eq 0 ] && savesession
+            ;;
+
+        static | *)
+            echo "No extra build option or static specified, using default <static> "
+            echo "Using static compiled redpill extension"
+            echo "Got $REDPILL_MOD_NAME "
+            listmodules 
+            echo "Starting loader creation "
+            buildloader "static"
+            [ $? -eq 0 ] && savesession
+            ;;
+
+        esac
+        ;;
+
+    clean)
+        cleanloader
+        ;;
+
+    backup)
+        backuploader
+        ;;
+
+    postupdate)
+        getvars $ORIGIN_PLATFORM
+        check_github
+        gitdownload
+        postupdate
+        [ $? -eq 0 ] && savesession
+        ;;
+    help)
+        showhelp
+        exit 99
+        ;;
+    monitor)
+        monitor
+        exit 0
+        ;;    
+    *)
+        showsyntax
+        exit 99
+        ;;
+
+    esac
+}
+
+function add-addons() {
+    jsonfile=$(jq ". |= .+ {\"${1}\": \"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/${1}/rpext-index.json\"}" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json    
+}
+
+function my() {
+
+  echo "$1"
+  echo "$2"
+  echo "$3"
+
+  echo "LOADER DISK = ${loaderdisk}"
+  [ -z "${loaderdisk}" ] && getloaderdisk
+  if [ -z "${loaderdisk}" ]; then
+      echo "Not Supported Loader BUS Type, program Exit!!!"
+      exit 99
+  fi
+
+  echo "${loaderdisk}" > /tmp/loaderdisk
+  
+  #getBus "${loaderdisk}" 
+    
+  tcrppart="${loaderdisk}3"
+
+  if [ "${BUS}" = "block" ]; then
+    git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git"
+    mkdir -p /dev/shm/tcrp-addons
+    rm -rf ./tcrp-addons/.git/
+    mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
+  fi
+  
+  if [ -d /dev/shm/tcrp-modules/ ]; then
+      offline="YES"
+  else
+      offline="NO"
+      check_github
+      if [ "$gitdomain" = "raw.githubusercontent.com" ]; then
+          if [ $# -lt 1 ]; then
+              getlatestmshell "ask"
+          else
+              if [ "$1" = "update" ]; then 
+                  getlatestmshell "noask"
+                  exit 0
+              else
+                  getlatestmshell "noask"
+              fi
+          fi
+      fi
+      gitdownload
+  fi
+  
+  if [ $# -lt 1 ]; then
+      showhelp 
+      exit 99
+  fi
+  
+  getvarsmshell "$1"
+
+  #echo "$TARGET_REVISION"                                                      
+  #echo "$TARGET_PLATFORM"                                            
+  #echo "$SYNOMODEL"                                      
+  
+  postupdate="N"
+  userdts="N"
+  noconfig="N"
+  jot="N"
+  prevent_init="N"
+  
+  shift
+      while [[ "$#" > 0 ]] ; do
+  
+          case $1 in
+          postupdate)
+              postupdate="Y"
+              ;;
+              
+          userdts)
+              userdts="Y"
+              ;;
+  
+          noconfig)
+              noconfig="Y"
+              ;;
+           
+          jot)
+              jot="Y"
+              ;;
+  
+          fri)
+              jot="N"
+              ;;
+  
+          prevent_init)
+              prevent_init="Y"
+              ;;
+  
+          *)
+              echo "Syntax error, not valid arguments or not enough options"
+              exit 99
+              ;;
+  
+          esac
+          shift
+      done
+  
+  #echo $postupdate
+  #echo $userdts
+  #echo $noconfig
+  
+  echo
+  
+  if [ "$tcrppart" = "mmc3" ]; then
+      tcrppart="mmcblk0p3"
+  fi
+  
+  echo
+  echo "loaderdisk is" "${loaderdisk}"
+  echo
+  
+  if [ ! -d "/mnt/${tcrppart}/auxfiles" ]; then
+      cecho g "making directory  /mnt/${tcrppart}/auxfiles"  
+      mkdir -p /mnt/${tcrppart}/auxfiles 
+  fi
+  if [ ! -h /home/tc/custom-module ]; then
+      cecho y "making link /home/tc/custom-module"  
+      sudo ln -s /mnt/${tcrppart}/auxfiles /home/tc/custom-module 
+  fi
+  
+  local_cache="/mnt/${tcrppart}/auxfiles"
+  
+  #if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
+  #    echo "Found extractor locally cached"
+  #else
+  #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
+  #    mkdir /mnt/${tcrppart}/auxfiles/extractor
+  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
+  #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
+  #fi
+  
+  echo
+  cecho y "TARGET_PLATFORM is $TARGET_PLATFORM"
+  cecho r "ORIGIN_PLATFORM is $ORIGIN_PLATFORM"
+  cecho c "TARGET_VERSION is $TARGET_VERSION"
+  cecho p "TARGET_REVISION is $TARGET_REVISION"
+  cecho g "SYNOMODEL is $SYNOMODEL"  
+  cecho c "KERNEL VERSION is $KVER"  
+
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    if [ "${BUS}" != "block" ]; then
+        if [ -d /sys/firmware/efi ]; then
+          msgalert "It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier.\n"
+          msgalert "Change to CSM Enabled Legacy Mode (Not Legacy Boot Mode). Aborting the loader build!!!\n"
+          echo "press any key to continue..."      
+          read answer 
+          exit 99
+        fi  
+    fi    
+    if [ "${BUS}" = "nvme" ] || [ "${BUS}" = "mmc" ]; then
+      msgalert "Kernel versions 4.4.59 and earlier have restrictions on the use of NVME or MMC type bootloaders!!!\n"
+      echo "Aborting the loader build, press any key to continue..."
+      read answer
+      exit 99
+    fi
+    if [ "${BUS}" != "block" ]; then
+        if [ "${DMPM}" != "DDSML" ]; then    
+          msgalert "Kernel versions 4.4.59 and earlier have restricted 'EUDEV' usage.!!!\n"
+          echo "Aborting the loader build, press any key to continue..."
+          read answer
+          exit 99
+        fi
+    fi    
+    if echo ${dsm6notsupported} | grep -qw ${ORIGIN_PLATFORM}; then
+      msgalert "DSM 6.2.4 ${ORIGIN_PLATFORM} will be temporarily unavailable until system instability is confirmed!!!\n"
+      echo "Aborting the loader build, press any key to continue..."
+      read answer
+      exit 99
+    fi
+  fi
+    
+  st "buildstatus" "Building started" "Model :$MODEL-$TARGET_VERSION-$TARGET_REVISION"
+  [ "${BUS}" != "block" ] && log_build_step "Building started" 1 12
+  
+  #fullupgrade="Y"
+  
+  cecho y "If fullupgrade is required, please handle it separately."
+  
+  cecho g "Downloading Peter Suh's custom configuration files.................."
+  
+  writeConfigKey "general" "kver" "${KVER}"
+  
+  DMPM="$(jq -r -e '.general.devmod' $userconfigfile)"
+  if [ "${DMPM}" = "null" ]; then
+      DMPM="DDSML"
+      writeConfigKey "general" "devmod" "${DMPM}"
+  fi
+  cecho y "Device Module Processing Method is ${DMPM}"
+
+  MDLNAME="$(jq -r -e '.general.modulename' $userconfigfile)"
+  if [ "${MDLNAME}" = "null" ]; then
+      MDLNAME="all-modules"
+      writeConfigKey "general" "modulename" "${MDLNAME}"
+  fi
+  cecho y "The selected integrated module pack is ${MDLNAME}"
+  
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof=true || spoof=false
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("nvmesystem")') = true ] && nvmes=true || nvmes=false
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("vmtools")') = true ] && vmtools=true || vmtools=false  
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils=true || dbgutils=false
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
+  
+  echo  "download original bundled-exts.json file..."
+  curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
+  
+  if [ "${DMPM}" = "DDSML" ]; then
+      jsonfile=$(jq 'del(.eudev)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+  elif [ "${DMPM}" = "EUDEV" ]; then
+      jsonfile=$(jq 'del(.ddsml)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+  elif [ "${DMPM}" = "DDSML+EUDEV" ]; then
+      cecho p "It uses both ddsml and eudev from /home/tc/redpill-load/bundled-exts.json file"
+  else
+      cecho p "Device Module Processing Method is Undefined, Program Exit!!!!!!!!"
+      exit 99
+  fi
+
+  #if [ "$MACHINE" = "VIRTUAL" ]; then
+  #    jsonfile=$(jq 'del(.acpid)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+  #fi
+  
+  [ "$spoof" = true ] && add-addons "mac-spoof" 
+  [ "$nvmes" = true ] && add-addons "nvmesystem" 
+  [ "$vmtools" = true ] && add-addons "vmtools" 
+  [ "$dbgutils" = true ] && add-addons "dbgutils" 
+  [ "$sortnetif" = true ] && add-addons "sortnetif" 
+
+  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+
+  if [ "${MDLNAME}" = "all-modules" ]; then
+      sed -i "s/rr-modules/all-modules/g" models.json
+  elif [ "${MDLNAME}" = "rr-modules" ]; then
+      sed -i "s/all-modules/rr-modules/g" models.json
+  fi  
+  
+  echo
+  if [ "$jot" = "N" ]; then    
+  cecho y "This is TCRP friend mode"
+  else    
+  cecho y "This is TCRP original jot mode"
+  fi
+  
+  if [ -f /home/tc/custom-module/${TARGET_PLATFORM}.dts ]; then
+      sed -i "s/dtbpatch/redpill-dtb-static/g" models.json
+  fi
+  
+  if [ "$postupdate" = "Y" ]; then
+      cecho y "Postupdate in progress..."  
+      sudo rploader postupdate ${TARGET_PLATFORM}-7.1.1-${TARGET_REVISION}
+  
+      echo                                                                                                                                        
+      cecho y "Backup in progress..."
+      echo                                                                                                                                        
+      echo "y"|rploader backup    
+      exit 0
+  fi
+  
+  if [ "$userdts" = "Y" ]; then
+      
+      cecho y "user-define dts file make in progress..."  
+      echo
+      
+      cecho g "copy and paste user dts contents here, press any key to continue..."      
+      read answer
+      sudo vi /home/tc/custom-module/${TARGET_PLATFORM}.dts
+  
+      cecho p "press any key to continue..."
+      read answer
+  
+      echo                                                                                                                                        
+      cecho y "Backup in progress..."
+      echo                                                                                                                                        
+      echo "y"|rploader backup    
+      exit 0
+  fi
+  
+  echo
+  
+  if [ "$noconfig" = "Y" ]; then                            
+      cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
+      checkmachine
+      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_init}" = "N" ]; then
+          cecho p "Sataportmap,DiskIdxMap to blank for VIRTUAL MACHINE"
+          json="$(jq --arg var "" '.extra_cmdline.SataPortMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+          json="$(jq --arg var "" '.extra_cmdline.DiskIdxMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json        
+          cat user_config.json
+      fi
+  else 
+      cecho c "Before changing user_config.json" 
+      cat user_config.json
+      echo "y"|rploader identifyusb
+  
+      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
+          cecho p "Device Tree based model does not need SataPortMap setting...."     
+      else    
+          rploader satamap    
+      fi    
+      cecho y "After changing user_config.json"     
+      cat user_config.json        
+  fi
+  
+  echo
+  echo
+  DN_MODEL="$(echo $MODEL | sed 's/+/%2B/g')"
+  echo "DN_MODEL is $DN_MODEL"
+
+  BUILD=$(jq -r -e '.general.version' "$userconfigfile")
+
+  echo "BUILD is $BUILD"
+  
+  cecho p "DSM PAT file pre-downloading in progress..."
+  
+  echo  "download original pats.json file..."
+  pats_url="https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json"
+  pats_t_url="https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json"
+  if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
+    curl -skL# $pats_t_url -o $configfile
+  else  
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"        
+        curl -skL# $pats_t_url -o $configfile
+    else
+        [ "${BUS}" == "block" ] && curl -skL# $pats_t_url -o $configfile || curl -skL# $pats_url -o $configfile
+    fi    
+  fi  
+
+  URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
+  cecho y "$URL"
+  if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
+      patfile="/dev/shm/${SYNOMODEL}.pat"
+  else
+      patfile="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"
+  fi    
+  
+  if [ "$TARGET_VERSION" = "7.2" ]; then
+      TARGET_VERSION="7.2.0"
+  fi
+  if [ "$TARGET_VERSION" = "7.3" ]; then
+      TARGET_VERSION="7.3.0"
+  fi
+  
+#  if [[ "${BUS}" != "block" ]] && [[ "$TARGET_VERSION" == "7.3"* ]]; then
+#      msgnormaltty "We recommend using the Synology Control Panel update for DSM 7.2.2 and earlier, rather than the loader build for DSM 7.3.X.\n"
+#      msgnormaltty "After this Control Panel update, FRIEND kernels v0.1.3w and later will automatically upgrade to DSM 7.3.2.\n"
+#      msgnormaltty "If you still want this build, it will only be allowed if the corresponding version of DSM 7.3.X has been pre-installed on your Synology Disk.\n"
+#      msgnormaltty "Please note that building the loader without prior updates may result in network unresponsiveness and system partition initialization.\n"
+#      msgwarningtty "(Warning) If you build without checking the version, the system partition may be initialized.\n"
+#      msgwarningtty "(Warning) Do you want to continue building this version? or Skip version checking? [yY/nN/sS] : "
+#
+#      if [ "${ucode}" == "ko_KR" ]; then
+#          msgnormaltty "DSM 7.3.X 의 로더빌드 보다는 DSM 7.2.2 이하에서 시놀로지 제어판의 업데이트 사용을 권장합니다.\n"
+#          msgnormaltty "이 제어판 업데이트 이후 FRIEND 커널 v0.1.3w 이상에서 DSM 7.3.2 로의 업그레이드가 자동진행됩니다.\n"
+#          msgnormaltty "그래도 이 빌드를 원하신다면, 해당 버전의 DSM 7.3.X 를 시노디스크에 미리 설치한 경우만 빌드를 허용합니댜.\n"
+#          msgnormaltty "사전 업데이트 없이 로더부터 빌드하면, 네트워크 무반응, 시스템 파티션 초기화 현상을 동반할 수 있으므로 주의하시기 바랍니다.\n"
+#          msgwarningtty "(경고) 버전 확인 없이 빌드하면 시스템 파티션이 초기화될 수 있습니다.\n"
+#          msgwarningtty "(경고) 이 버전을 계속 빌드하시겠습니까? 아니면 버전 확인을 건너뛰시겠습니까? [yY/nN/sS] : "
+#      fi      
+#      readanswerwithskip
+#      if [ "${answer}" = "S" ] || [ "${answer}" = "s" ]; then
+#          printf "[OK] Now skip checking DSM version. Continue...\n" > /dev/tty
+#      elif [ "${answer}" = "N" ] || [ "${answer}" = "n" ]; then
+#          exit 99
+#      elif [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+#          if chkDsmversion; then
+#              printf "[OK] The DSM versions match. Or, there is no DSM. Continue...\n" > /dev/tty
+#          else
+#              msgalerttty "[FAIL] Pre Installed DSM version mismatch or verification failed. Exiting.\n"
+#              [ "${ucode}" == "ko_KR" ] && msgwarningtty "[FAIL] 사전설치된 DSM version 이 불일치 하거나 검증에 실패했습니다. 종료합니다.\n"
+#              exit 99
+#          fi    
+#      fi    
+#  fi
+
+  #if [ "$ORIGIN_PLATFORM" = "apollolake" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
+  #   jsonfile=$(jq 'del(.drivedatabase)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+  #   sudo rm -rf /home/tc/redpill-load/custom/extensions/drivedatabase
+  #   jsonfile=$(jq 'del(.reboottotcrp)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+  #   sudo rm -rf /home/tc/redpill-load/custom/extensions/reboottotcrp
+  #fi   
+
+  if [ "${MDLNAME}" == "custom-modules" ]; then
+      echo "Discover left space for custom-modules initrd-dsm ... "        
+      SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
+      SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+      SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+      echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+  
+      SPACELEFT_MB=$(df -BM --output=avail /dev/"${loaderdisk}"3 | tail -1 | sed 's/M//')
+      if [ "${SPACELEFT_MB%.*}" -le 800 ]; then  # 800MB 기준
+          echo "Insufficient space (${SPACELEFT_MB}MB), cleaning up... Space has been freed up. Now, please rebuild."
+          sudo rm -rf /mnt/${tcrppart}/auxfiles/*.pat
+          exit 99
+      fi    
+  fi    
+  
+  if [ -f ${patfile} ]; then
+      cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
+      cecho b "Downloadng Skipped!!!"
+  st "download pat" "Found pat    " "Found ${SYNOMODEL}.pat"
+  [ "${BUS}" != "block" ] && log_build_step "Found pat file" 2 12
+  else
+  
+  st "download pat" "Downloading pat  " "${SYNOMODEL}.pat"        
+  [ "${BUS}" != "block" ] && log_build_step "Download pat file" 2 12
+      #if [ 1 = 0 ]; then
+      #  STATUS=`curl --insecure -w "%{http_code}" -L "${URL}" -o ${patfile} --progress-bar`
+      #  if [ $? -ne 0 -o ${STATUS} -ne 200 ]; then
+      #    echo  "Check internet or cache disk space"
+      #    exit 99
+      #  fi
+      #else
+      echo "offline = ${offline}"
+        [ "${offline}" = "NO" ] && _pat_process    
+      #fi
+  
+      os_md5=$(md5sum ${patfile} | awk '{print $1}')                                
+      cecho y "Pat file md5sum is : $os_md5"                                       
+       
+      verifyid=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.sum) | .[0]" "${configfile}")
+      cecho p "verifyid md5sum is : $verifyid"                                        
+  
+      if [ "$os_md5" = "$verifyid" ]; then                                            
+          cecho y "pat file md5sum is OK ! "                                           
+      else                                                                                
+          cecho y "os md5sum verify FAILED, check ${patfile} "
+          exit 99                                                                         
+      fi
+  fi
+  
+  echo
+  cecho g "Loader Building in progress..."
+  echo
+  
+  if [ "$MODEL" = "SA6400" ] && [ "${BUS}" = "usb" ] && [ "${MDLNAME}" != "custom-modules" ]; then
+      cecho g "Remove Exts for SA6400 (thethorgroup.boot-wait) ..."
+      jsonfile=$(jq 'del(.["thethorgroup.boot-wait"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+      sudo rm -rf /home/tc/redpill-load/custom/extensions/thethorgroup.boot-wait
+
+      cecho g "Remove Exts for SA6400 (automount) ..."
+      jsonfile=$(jq 'del(.["automount"])' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+      sudo rm -rf /home/tc/redpill-load/custom/extensions/automount
+  fi
+  
+  if [ "$jot" = "N" ]; then
+      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} withfriend
+  else
+      echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
+  fi
+
+  errorcode=$?  
+  echo "errorcode = $errorcode"
+  
+  if [ "$errorcode" != "0" ]; then
+      cecho r "An error occurred while building the loader!!! Clean the redpill-load directory!!! "
+      echo "y"|rploader clean
+  else
+      [ "${BUS}" = "block" ] && exit 0
+      [ "$MACHINE" != "VIRTUAL" ] && sleep 2
+      echo "y"|rploader backup
+  fi
+  return $errorcode
+#[ "$FRKRNL" = "YES" ] && readanswer  
+}
+
+if [ $# -gt 1 ]; then
+    case $1 in
+    
+    my) 
+        getloaderdisk
+        getBus "${loaderdisk}"
+        my "$2" "$3" "$4"
+        ;;
+    update)
+        upgrademan "$2"
+        ;;
+    autoupdate)
+        changeautoupdate "$2"
+        ;;
+    *)
+        ;;
+    esac    
+fi
