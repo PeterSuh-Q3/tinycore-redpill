@@ -1853,6 +1853,7 @@ function addon_gitdown()
   # https://github.com/PeterSuh-Q3/tcrp-addons/tree/b140fede84bbace815233936b78860d5c1feb22c
   git fetch origin b140fede84bbace815233936b78860d5c1feb22c
   git checkout b140fede84bbace815233936b78860d5c1feb22c  
+  sed -i 's/d77c927ce59d9189c5205d3c2c0b385b283d30b7350188f0da7754fb494745d4/3a3f348d3cd90a700e2232427bba20c2ed3257df7038c2409b4af5433b46abac/g' /dev/shm/tcrp-addons/localrss/recipes/universal.json
   cd ~ 
   #if [ $? -ne 0 ]; then
   #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
