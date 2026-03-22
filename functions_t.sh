@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.4"
+rploaderver="1.2.8.0"
 build="master"
 redpillmake="prod"
 
@@ -225,10 +225,6 @@ function history() {
     1.2.7.8 Support for RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese
     1.2.7.9 Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
     1.2.8.0 Discontinued the use of the term Jot and standardized to Direct-Boot
-    1.2.8.1 Official epyc7002(sa6400) 7.3.2 amdgpu module support
-    1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
-    1.2.8.3 Added user DTS file mapping feature
-    1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -659,14 +655,6 @@ EOF
 # Switch from zstd to xz(lzma2) when compressing initrd-dsm (ramdisk) of custom module.
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
-# 2026.03.17 v1.2.8.1 
-# Official epyc7002(sa6400) 7.3.2 amdgpu module support
-# 2026.03.19 v1.2.8.2 
-# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
-# 2026.03.19 v1.2.8.3 
-# Added user DTS file mapping feature
-# 2026.03.20 v1.2.8.4 
-# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     
 function showlastupdate() {
     cat <<EOF
@@ -792,18 +780,6 @@ function showlastupdate() {
 
 # 2026.03.15 v1.2.8.0 
 # Discontinued the use of the term Jot and standardized to Direct-Boot
-
-# 2026.03.17 v1.2.8.1 
-# Official epyc7002(sa6400) 7.3.2 amdgpu module support
-
-# 2026.03.19 v1.2.8.2 
-# Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
-
-# 2026.03.20 v1.2.8.3 
-# Added user DTS file mapping feature
-
-# 2026.03.20 v1.2.8.4
-# Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
 
 EOF
 }
@@ -2906,7 +2882,6 @@ function addrequiredexts() {
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
         # Add Use RR's custom kernel module
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && platkver="${platkver}_amdgpu"
         echo "platkver = ${platkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -3708,7 +3683,7 @@ EOF
 
 function tcrpfriendentry() {
     cat <<EOF
-menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD}' {
+menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -3738,14 +3713,14 @@ EOF
 
 function tcrpentry_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM} ${MDLNAME}:${MLMETHOD}' {
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
         set kernel_cmdline="${USB_LINE} force_junior"
         set bus_type="${BUS}"
-        if [ "\\${bus_type}" != "usb" ]; then
-            set kernel_cmdline="${kernel_cmdline} synoboot_satadom=1"
+        if [ "\${bus_type}" != "usb" ]; then
+            set kernel_cmdline="\${kernel_cmdline} synoboot_satadom=1"
         fi
         linux /zImage-dsm \${kernel_cmdline}
         echo Loading initramfs...
@@ -3758,7 +3733,7 @@ EOF
 
 function postupdateentry() {
     cat <<EOF
-menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD}' {
+menuentry 'Tiny Core PostUpdate (RamDisk Update) $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -3785,7 +3760,6 @@ function savedefault {
     echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
     echo "Version : ${BUILD}"
     echo "Kernel  : ${KVER}"
-    echo "Module  : ${MDLNAME}-${MLMETHOD}
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
@@ -3802,7 +3776,7 @@ EOF
 
 function tcrpjotentry() {
     cat <<EOF
-menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM} ${MDLNAME}-${MLMETHOD})' {
+menuentry 'RedPill $MODEL ${BUILD} Direct-Boot (USB/SATA, Verbose, ${DMPM})' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -3822,7 +3796,7 @@ EOF
 
 function tcrpjot_junior() {
     cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM} ${MDLNAME}-${MLMETHOD}' {    
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM}' {    
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading DSM Linux... ${DMPM}
@@ -4208,7 +4182,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
-        if [[ "${MDLNAME}" == "custom-modules" || "${MDLNAME}" == "amdgpu-modules" ]]; then
+        if [ "${MDLNAME}" == "custom-modules" ]; then
             USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         fi
     fi
@@ -4363,12 +4337,13 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        if [ "${MLMETHOD}" = "PML" ]; then
-            echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
+        if [ "${MDLNAME}" == "custom-modules" ]; then
+            echo "Use static firmware and module loading methods when using custom modules"
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-            sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
-            sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-        fi
+            sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+            sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+            #sudo rm -rf $rdtemp/exts/all-modules/
+        fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
@@ -4397,12 +4372,6 @@ EOF
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
 
-    #copy user dts file.
-    [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
-
-    #mark PML or not
-    [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
-    
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
@@ -6136,8 +6105,6 @@ function my() {
   #   jsonfile=$(jq 'del(.reboottotcrp)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #   sudo rm -rf /home/tc/redpill-load/custom/extensions/reboottotcrp
   #fi   
-
-  [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat
 
   if [ "${MDLNAME}" == "custom-modules" ]; then
       echo "Discover left space for custom-modules initrd-dsm ... "        
