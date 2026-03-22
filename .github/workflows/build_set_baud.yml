@@ -1,0 +1,84 @@
+name: Build set_baud
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create set_baud.c
+        run: |
+          cat > set_baud.c << 'EOF'
+          #include <stdio.h>
+          #include <fcntl.h>
+          #include <termios.h>
+          #include <unistd.h>
+          #include <stdlib.h>
+
+          int main(int argc, char *argv[]) {
+              if (argc < 3) {
+                  fprintf(stderr, "Usage: %s <device> <baud>\n", argv[0]);
+                  fprintf(stderr, "  e.g: %s /dev/ttyUSB0 115200\n", argv[0]);
+                  return 1;
+              }
+
+              const char *dev = argv[1];
+              int baud_req = atoi(argv[2]);
+
+              speed_t baud;
+              switch (baud_req) {
+                  case 9600:   baud = B9600;   break;
+                  case 19200:  baud = B19200;  break;
+                  case 38400:  baud = B38400;  break;
+                  case 57600:  baud = B57600;  break;
+                  case 115200: baud = B115200; break;
+                  default:
+                      fprintf(stderr, "Unsupported baud: %d\n", baud_req);
+                      return 1;
+              }
+
+              int fd = open(dev, O_RDWR | O_NOCTTY | O_NONBLOCK);
+              if (fd < 0) { perror("open"); return 1; }
+
+              struct termios tio;
+              tcgetattr(fd, &tio);
+              cfsetispeed(&tio, baud);
+              cfsetospeed(&tio, baud);
+              tio.c_cflag |= (CLOCAL | CREAD);
+              tio.c_cflag &= ~PARENB;
+              tio.c_cflag &= ~CSTOPB;
+              tio.c_cflag &= ~CSIZE;
+              tio.c_cflag |= CS8;
+              tcsetattr(fd, TCSANOW, &tio);
+
+              printf("%s set to %d 8N1\n", dev, baud_req);
+              close(fd);
+              return 0;
+          }
+          EOF
+
+      - name: Install musl-tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Compile
+        run: |
+          musl-gcc -static -o set_baud set_baud.c
+
+      - name: Verify binary
+        run: |
+          file set_baud
+          ls -lh set_baud
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: set_baud-x86_64-linux
+          path: set_baud
+          retention-days: 30
