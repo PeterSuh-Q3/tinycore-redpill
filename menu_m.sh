@@ -1849,12 +1849,15 @@ function addon_gitdown()
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  if [ $? -ne 0 ]; then
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-    rm -rf /dev/shm/tcrp-modules
-    mkdir -p /dev/shm/tcrp-modules
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
-  fi    
+  cd /dev/shm/tcrp-addons
+  # https://github.com/PeterSuh-Q3/tcrp-addons/tree/b140fede84bbace815233936b78860d5c1feb22c
+  git reset --hard b140fede84bbace815233936b78860d5c1feb22c
+  #if [ $? -ne 0 ]; then
+  #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+  #  rm -rf /dev/shm/tcrp-modules
+  #  mkdir -p /dev/shm/tcrp-modules
+  #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
+  #fi    
 }
 
 # Main loop ###########################################################################################
