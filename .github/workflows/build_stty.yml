@@ -23,7 +23,7 @@ jobs:
 
       - name: Configure with musl (stty only)
         run: |
-          cd coreutils-9.4
+          cd coreutils-9.2
           ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
@@ -35,19 +35,19 @@ jobs:
 
       - name: Build stty only
         run: |
-          cd coreutils-9.4
+          cd coreutils-9.2
           make -j$(nproc) src/stty
 
       - name: Verify binary
         run: |
-          file coreutils-9.4/src/stty
-          ls -lh coreutils-9.4/src/stty
+          file coreutils-9.2/src/stty
+          ls -lh coreutils-9.2/src/stty
           # static 확인 — "statically linked" 문자열 있어야 함
-          file coreutils-9.4/src/stty | grep -i static
+          file coreutils-9.2/src/stty | grep -i static
 
       - name: Collect artifact
         run: |
-          cp coreutils-9.4/src/stty ./stty-static
+          cp coreutils-9.2/src/stty ./stty-static
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
