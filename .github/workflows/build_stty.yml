@@ -10,9 +10,9 @@ jobs:
       image: alpine:3.19
 
     steps:
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
-          apk add --no-cache \
+          apk add --no-cache build-base \
             build-base \
             musl-dev \
             wget \
