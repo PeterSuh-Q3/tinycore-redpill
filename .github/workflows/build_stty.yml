@@ -30,7 +30,8 @@ jobs:
             CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 \
                     -Dtimezone_t=void* \
                     -DO_BINARY=0 \
-                    -include limits.h" \
+                    -DFNM_EXTMATCH=0 \
+                    -DGNULIB_defined_FDUPFD_CLOEXEC=1" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
