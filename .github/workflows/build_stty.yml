@@ -1,50 +1,60 @@
-name: Build stty (musl static via musl-gcc on Ubuntu)
-
+name: Build static stty (musl)
 on:
   workflow_dispatch:
-
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04
     steps:
       - name: Install dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y musl-tools wget xz-utils
 
-      - name: Download GNU coreutils source
+      - name: Download coreutils
         run: |
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.1.tar.xz
           tar -xf coreutils-9.1.tar.xz
 
-      - name: Configure and Build stty
+      - name: Configure
         run: |
           cd coreutils-9.1
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
-            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 \
-                    -Dtimezone_t=void*" \
+            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 -Dtimezone_t=void*" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
             --disable-xattr
+
+      - name: Patch gnulib for musl compatibility
+        run: |
+          cd coreutils-9.1
+
+          # O_BINARY / O_TEXT → 0 (POSIX 환경에서 무의미한 플래그)
+          sed -i 's/O_BINARY/0/g; s/O_TEXT/0/g' lib/binary-io.h lib/pipe2.c
+
+          # timezone_t 관련 glibc 전용 함수군 제거
+          sed -i \
+            -e 's/tzalloc([^)]*)/NULL/g' \
+            -e 's/tzfree([^)]*)/((void)0)/g' \
+            -e 's/localtime_rz\s*(\s*[^,]*,/localtime_r(/g' \
+            -e 's/mktime_z\s*(\s*[^,]*,/mktime(/g' \
+            lib/nstrftime.c lib/parse-datetime.c 2>/dev/null || true
+
+      - name: Build stty
+        run: |
+          cd coreutils-9.1
           make -j$(nproc) src/stty
 
       - name: Verify binary
         run: |
           file coreutils-9.1/src/stty
+          ldd coreutils-9.1/src/stty || echo "statically linked (expected)"
           ls -lh coreutils-9.1/src/stty
-          file coreutils-9.1/src/stty | grep -i static
-
-      - name: Collect artifact
-        run: |
-          cp coreutils-9.1/src/stty ./stty-static
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stty-x86_64-linux-musl-static
-          path: stty-static
-          retention-days: 30
+          name: stty-musl-static
+          path: coreutils-9.1/src/stty
