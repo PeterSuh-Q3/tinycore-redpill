@@ -32,12 +32,15 @@ jobs:
                     -DO_BINARY=0 \
                     -DFNM_EXTMATCH=0 \
                     -DGNULIB_defined_FDUPFD_CLOEXEC=1 \
-                    -DINTMAX=__INT64_MAX__ \
-                    -DINTMIN='(-__INT64_MAX__-1)'" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
             --disable-xattr
+
+      - name: Patch xdectoint.c for musl INTMAX/INTMIN
+        run: |
+          cd coreutils-8.32
+          sed -i '1s|^|#include <limits.h>\n#ifndef INTMAX\n# define INTMAX 9223372036854775807LL\n#endif\n#ifndef INTMIN\n# define INTMIN (-9223372036854775807LL-1)\n#endif\n|' lib/xdectoint.c
 
       # ── 4. stty 빌드 ────────────────────────────────────────────
       - name: Build src/stty
