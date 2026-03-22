@@ -1,4 +1,4 @@
-name: Build static stty (Alpine)
+name: Build static stty (Alpine + source build)
 
 on:
   workflow_dispatch:
@@ -8,15 +8,24 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Build static stty via Alpine container
+      - name: Build static stty inside Alpine container
         run: |
           docker run --rm \
             -v "${{ github.workspace }}":/out \
             alpine:3.19 \
             sh -c "
-              apk add --no-cache coreutils binutils &&
-              cp /bin/stty /out/stty &&
-              strip /out/stty
+              apk add --no-cache gcc make musl-dev wget xz &&
+              wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz &&
+              tar -xf coreutils-8.32.tar.xz &&
+              cd coreutils-8.32 &&
+              FORCE_UNSAFE_CONFIGURE=1 ./configure \
+                LDFLAGS='-static' \
+                --disable-nls \
+                --disable-acl \
+                --disable-xattr &&
+              make -j\$(nproc) src/stty &&
+              strip src/stty &&
+              cp src/stty /out/stty
             "
 
       - name: Verify binary
