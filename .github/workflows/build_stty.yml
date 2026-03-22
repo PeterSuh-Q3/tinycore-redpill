@@ -24,7 +24,8 @@ jobs:
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
-            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222" \
+            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 \
+                    -Dtimezone_t=void*" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
