@@ -345,16 +345,15 @@ function seleudev() {
 function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
-
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
     if [ "${platform}" == "epyc7002(DT)" ]; then  
-      menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amdgpu-modules(Persistent:PML)")
+      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amdgpu-modules(Persistent:PML)")
     else
-      menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)" "k" "${MSG28}, custom-modules(Persistent:PML)" )  
+      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" )  
     fi
   else
-    menu_options=("f" "${MSG28}, all-modules(Persistent:PML)" "j" "${MSG28}, all-modules(In-Memory:IML)")
+    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
   fi
   menu_options+=("m" "${MSG29} : false")
   
@@ -367,7 +366,6 @@ function selectldrmode() {
       MSG_LDR="${MSG28}"
       menu_options[-1]="${MSG29} : false"
     fi
-
     # f, j, k 레이블 갱신 (키는 짝수, 레이블은 홀수 인덱스)
     for key_idx in "${!menu_options[@]}"; do
       [ $((key_idx % 2)) -eq 0 ] && continue          # 키 인덱스 스킵
@@ -406,11 +404,9 @@ function selectldrmode() {
       continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
-
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
   writeConfigKey "general" "mlmethod" "${MLMETHOD}"
-
 }
 
 ###############################################################################
@@ -2142,7 +2138,7 @@ if [ "${MDLNAME}" = "null" ]; then
 fi
 
 if [ "${MLMETHOD}" = "null" ]; then
-    MLMETHOD="PML"
+    MLMETHOD="IML"
     writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
 fi
 
