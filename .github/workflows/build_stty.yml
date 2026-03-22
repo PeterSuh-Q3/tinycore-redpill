@@ -1,4 +1,4 @@
-name: Build stty (musl static via Alpine)
+name: Build stty (musl static via musl-gcc on Ubuntu)
 
 on:
   workflow_dispatch:
@@ -8,23 +8,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install musl toolchain
+      - name: Install dependencies
         run: |
+          sudo apt-get update -qq
           sudo apt-get install -y musl-tools wget xz-utils
 
-      - name: Download and build coreutils
+      - name: Download GNU coreutils source
         run: |
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.1.tar.xz
           tar -xf coreutils-9.1.tar.xz
+
+      - name: Configure and Build stty
+        run: |
           cd coreutils-9.1
-          CC=musl-gcc FORCE_UNSAFE_CONFIGURE=1 ./configure \
+          FORCE_UNSAFE_CONFIGURE=1 ./configure \
+            CC=musl-gcc \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
             --disable-xattr
           make -j$(nproc) src/stty
-          
+
       - name: Verify binary
         run: |
           file coreutils-9.1/src/stty
