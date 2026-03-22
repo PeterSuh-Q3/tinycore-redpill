@@ -5,7 +5,6 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES #####################################################################################################
 . /home/tc/functions.sh
 . /home/tc/i18n.h
-. /home/tc/dts_mapping.sh
 #####################################################################################################
 
 kver3explatforms="bromolow braswell cedarview grantley"
@@ -202,7 +201,6 @@ NVMES=$(jq -r -e '.general.nvmesystem' "$USER_CONFIG_FILE")
 VMTOOLS=$(jq -r -e '.general.vmtools' "$USER_CONFIG_FILE")
 LDRMODE=$(jq -r -e '.general.loadermode' "$USER_CONFIG_FILE")
 MDLNAME=$(jq -r -e '.general.modulename' "$USER_CONFIG_FILE")
-MLMETHOD=$(jq -r -e '.general.mlmethod' "$USER_CONFIG_FILE")
 ucode=$(jq -r -e '.general.ucode' "$USER_CONFIG_FILE")
 
 lcode=$(echo $ucode | cut -c 4-)
@@ -225,18 +223,18 @@ function backtitle() {
   BACKTITLE+=" ${ucode}"
   BACKTITLE+=" ${LDRMODE}"
   BACKTITLE+=" ${MDLNAME}"
-  BACKTITLE+=" ${MLMETHOD}"
-  
   [ -n "${MODEL}" ] && BACKTITLE+=" ${MODEL}" || BACKTITLE+=" (no model)"
   [ -n "${BUILD}" ] && BACKTITLE+=" ${BUILD}" || BACKTITLE+=" (no build)"
   [ -n "${SN}" ] && BACKTITLE+=" ${SN}" || BACKTITLE+=" (no SN)"
   [ -n "${IP}" ] && BACKTITLE+=" ${IP}" || BACKTITLE+=" (no IP)"
-
-  for i in 1 2 3 4 5 6 7 8; do
-    varname="MACADDR${i}"
-    [[ -n "${!varname}" && "${!varname}" != "null" ]] && BACKTITLE+=" ${!varname}"
-  done
-  
+  [ ! -n "${MACADDR1}" ] && BACKTITLE+=" (no MAC1)" || BACKTITLE+=" ${MACADDR1}"
+  [ ! -n "${MACADDR2}" ] && BACKTITLE+=" (no MAC2)" || BACKTITLE+=" ${MACADDR2}"
+  [ ! -n "${MACADDR3}" ] && BACKTITLE+=" (no MAC3)" || BACKTITLE+=" ${MACADDR3}"
+  [ ! -n "${MACADDR4}" ] && BACKTITLE+=" (no MAC4)" || BACKTITLE+=" ${MACADDR4}"  
+  [ ! -n "${MACADDR5}" ] && BACKTITLE+=" (no MAC5)" || BACKTITLE+=" ${MACADDR5}"
+  [ ! -n "${MACADDR6}" ] && BACKTITLE+=" (no MAC6)" || BACKTITLE+=" ${MACADDR6}"
+  [ ! -n "${MACADDR7}" ] && BACKTITLE+=" (no MAC7)" || BACKTITLE+=" ${MACADDR7}"
+  [ ! -n "${MACADDR8}" ] && BACKTITLE+=" (no MAC8)" || BACKTITLE+=" ${MACADDR8}"  
   [ -n "${KEYMAP}" ] && BACKTITLE+=" (${LAYOUT}/${KEYMAP})" || BACKTITLE+=" (qwerty/us)"
   echo ${BACKTITLE}
 }
@@ -345,37 +343,15 @@ function seleudev() {
 function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   eval "MSG29=\"\${MSG${tz}29}\""  
+
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
-    if [ "${platform}" == "epyc7002(DT)" ]; then  
-      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amdgpu-modules(Persistent:PML)")
-    else
-      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" )  
-    fi
+    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
   else
-    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
+    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   fi
-  menu_options+=("m" "${MSG29} : false")
   
   while true; do
-    # LDRMODE 상태에 따라 f/j/k 레이블 및 m 레이블 실시간 갱신
-    if [ "${LDRMODE}" = "JOT" ]; then
-      MSG_LDR="${MSG29}"
-      menu_options[-1]="${MSG29} : true"
-    else
-      MSG_LDR="${MSG28}"
-      menu_options[-1]="${MSG29} : false"
-    fi
-    # f, j, k 레이블 갱신 (키는 짝수, 레이블은 홀수 인덱스)
-    for key_idx in "${!menu_options[@]}"; do
-      [ $((key_idx % 2)) -eq 0 ] && continue          # 키 인덱스 스킵
-      case "${menu_options[$((key_idx - 1))]}" in
-        "f") menu_options[${key_idx}]="${MSG_LDR}, all-modules(Persistent:PML)" ;;
-        "j") menu_options[${key_idx}]="${MSG_LDR}, all-modules(In-Memory:IML)" ;;
-        "k") menu_options[${key_idx}]="${MSG_LDR}, custom-modules(Persistent:PML)" ;;
-      esac
-    done
-    
     dialog --clear --backtitle "`backtitle`" \
       --menu "Choose a option" 0 0 0 \
       "${menu_options[@]}" \
@@ -384,29 +360,27 @@ function selectldrmode() {
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
     if [ "${resp}" = "f" ]; then
+      LDRMODE="FRIEND"
       MDLNAME="all-modules"
-      MLMETHOD="PML"
       break
     elif [ "${resp}" = "j" ]; then
-      MDLNAME="all-modules"
-      MLMETHOD="IML"
+      LDRMODE="JOT"
+      MDLNAME="all-modules"      
       break
     elif [ "${resp}" = "k" ]; then
+      LDRMODE="FRIEND"
       MDLNAME="custom-modules"
-      MLMETHOD="PML"
       break
     elif [ "${resp}" = "l" ]; then
-      MDLNAME="amdgpu-modules"
-      MLMETHOD="PML"
+      LDRMODE="JOT"
+      MDLNAME="custom-modules"
       break
-    elif [ "${resp}" = "m" ]; then
-      [ "${LDRMODE}" = "JOT" ] && LDRMODE="FRIEND" || LDRMODE="JOT"
-      continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
+
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
-  writeConfigKey "general" "mlmethod" "${MLMETHOD}"
+
 }
 
 ###############################################################################
@@ -1528,13 +1502,13 @@ function additional() {
   default_resp="l"
 
   while true; do
-    eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"  
-    eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"c \\\"${MSG52}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1548,7 +1522,6 @@ function additional() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
-    c) dtsmapping; default_resp="c";;    
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
@@ -1567,6 +1540,7 @@ function additional() {
       default_resp="z"
       ;;
     b) prevent; default_resp="b";;
+    c) showsata; default_resp="c";;
     d) viewerrorlog; default_resp="d";;
     e) burnloader; default_resp="e";;
     f) cloneloader; default_resp="f";;
@@ -1681,15 +1655,6 @@ function build-pre-option() {
     
   done
 
-}
-
-function dtsmapping() {
-  dts_init
-  platform_fix="${platform%(DT)}"
-  DTSMODEL="synology_${platform_fix}_${MODEL}"
-  COMPATIBLE="Synology"
-  OUTPUT_DTS="/home/tc/model.dts"
-  main_menu
 }
 
 function sortnetif() {
@@ -2137,11 +2102,6 @@ if [ "${MDLNAME}" = "null" ]; then
     writeConfigKey "general" "modulename" "${MDLNAME}"          
 fi
 
-if [ "${MLMETHOD}" = "null" ]; then
-    MLMETHOD="IML"
-    writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
-fi
-
 # Get actual IP
 IP="$(/sbin/ifconfig | grep -i "inet " | grep -v "127.0.0.1" | awk '{print $2}' | cut -c 6- )"
 
@@ -2366,7 +2326,6 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
-  [ "${LDRMODE}" = "JOT" ] && ldrname="Direct-Boot" || ldrname="Friend"
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
@@ -2383,8 +2342,8 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}06} (${ldrname}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"    
-    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${ldrname}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"      
+    eval "echo \"k \\\"\${MSG${tz}06} (${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"    
+    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${LDRMODE}, ${MDLNAME})\\\"\""   >> "${TMP_PATH}/menu"      
   fi
   eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
   [ "$FRKRNL" = "YES" ] && 
