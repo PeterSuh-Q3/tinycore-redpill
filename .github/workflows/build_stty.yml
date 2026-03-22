@@ -15,7 +15,6 @@ jobs:
           sudo apt-get install -y musl-tools wget xz-utils
 
       # ── 2. coreutils 8.32 소스 다운로드 ────────────────────────
-      #   변경: 9.1 → 8.32 (musl 1.2.x 호환 버전)
       - name: Download coreutils 8.32
         run: |
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
@@ -28,7 +27,10 @@ jobs:
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
-            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 -Dtimezone_t=void*" \
+            CFLAGS="-DS_IXUGO=0111 -DS_IRWXUGO=0777 -DS_IRUGO=0444 -DS_IWUGO=0222 \
+                    -Dtimezone_t=void* \
+                    -DO_BINARY=0 \
+                    -include limits.h" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
