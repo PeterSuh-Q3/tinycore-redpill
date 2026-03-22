@@ -30,7 +30,7 @@ jobs:
           cd coreutils-9.4
           ./configure \
             CC=gcc \
-            CFLAGS="-musl" \
+            CFLAGS="-02" \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
