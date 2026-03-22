@@ -21,30 +21,29 @@ jobs:
 
       - name: Download GNU coreutils source
         run: |
-          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.4.tar.xz
-          tar -xf coreutils-9.4.tar.xz
+          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.1.tar.xz
+          tar -xf coreutils-9.1.tar.xz
 
       - name: Configure and Build stty
         run: |
-          cd coreutils-9.4
+          cd coreutils-9.1
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
             --disable-acl \
-            --disable-xattr \
-            --without-gmp
+            --disable-xattr
           make -j$(nproc) src/stty
 
       - name: Verify binary
         run: |
-          file coreutils-9.4/src/stty
-          ls -lh coreutils-9.4/src/stty
-          file coreutils-9.4/src/stty | grep -i static
+          file coreutils-9.1/src/stty
+          ls -lh coreutils-9.1/src/stty
+          file coreutils-9.1/src/stty | grep -i static
 
       - name: Collect artifact
         run: |
-          cp coreutils-9.4/src/stty ./stty-static
+          cp coreutils-9.1/src/stty ./stty-static
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
