@@ -27,7 +27,7 @@ jobs:
       - name: Configure and Build stty
         run: |
           cd coreutils-9.4
-          ./configure \
+          FORCE_UNSAFE_CONFIGURE=1 ./configure \
             LDFLAGS="-static" \
             --prefix=/tmp/coreutils-out \
             --disable-nls \
