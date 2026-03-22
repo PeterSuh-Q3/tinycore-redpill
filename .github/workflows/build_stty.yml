@@ -32,10 +32,21 @@ jobs:
           # → 매크로/typedef만 순수하게 정의, 헤더 include 없음.
           # → S_IXUGO 등은 POSIX 표준 8진수 리터럴로 직접 정의.
           printf '%s\n' \
+            '/* stddef.h: ptrdiff_t 등 기본 타입 제공 (cdefs 충돌 없음) */' \
+            '#include <stddef.h>' \
+            '' \
             '/* musl compat: timezone_t */' \
             '#ifndef _TIMEZONE_T_DEFINED' \
             '# define _TIMEZONE_T_DEFINED' \
             'typedef void* timezone_t;' \
+            '#endif' \
+            '' \
+            '/* musl compat: O_BINARY / O_TEXT (Windows 전용, musl에 없음) */' \
+            '#ifndef O_BINARY' \
+            '# define O_BINARY 0' \
+            '#endif' \
+            '#ifndef O_TEXT' \
+            '# define O_TEXT 0' \
             '#endif' \
             '' \
             '/* musl compat: S_IXUGO 등 - 시스템 헤더 include 없이 리터럴로 정의 */' \
