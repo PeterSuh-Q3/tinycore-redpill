@@ -1,0 +1,57 @@
+name: Build stty (musl static)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools wget xz-utils
+
+      - name: Download GNU coreutils source
+        run: |
+          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.4.tar.xz
+          tar -xf coreutils-9.4.tar.xz
+
+      - name: Configure with musl (stty only)
+        run: |
+          cd coreutils-9.4
+          ./configure \
+            CC=musl-gcc \
+            LDFLAGS="-static" \
+            --prefix=/tmp/coreutils-out \
+            --disable-nls \
+            --disable-acl \
+            --disable-xattr \
+            --without-gmp
+
+      - name: Build stty only
+        run: |
+          cd coreutils-9.4
+          make -j$(nproc) src/stty
+
+      - name: Verify binary
+        run: |
+          file coreutils-9.4/src/stty
+          ls -lh coreutils-9.4/src/stty
+          # static 확인 — "statically linked" 문자열 있어야 함
+          file coreutils-9.4/src/stty | grep -i static
+
+      - name: Collect artifact
+        run: |
+          cp coreutils-9.4/src/stty ./stty-static
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stty-x86_64-linux-musl-static
+          path: stty-static
+          retention-days: 30
