@@ -35,7 +35,8 @@ jobs:
       - name: Build stty only
         run: |
           cd coreutils-9.4
-          make -j$(nproc) src/stty
+          ./configure --disable-nls --disable-acl --disable-xattr --without-gmp
+          make -j$(nproc) -C src stty
 
       - name: Verify binary
         run: |
