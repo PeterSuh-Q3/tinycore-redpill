@@ -1,23 +1,35 @@
 name: Build static stty (musl)
+
 on:
+  push:
+    branches: [ "main" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
+
     steps:
+      # ── 1. 의존성 설치 ──────────────────────────────────────────
       - name: Install dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y musl-tools wget xz-utils
 
-      - name: Download coreutils
+      # ── 2. coreutils 8.32 소스 다운로드 ────────────────────────
+      #   변경: 9.1 → 8.32 (musl 1.2.x 호환 버전)
+      - name: Download coreutils 8.32
         run: |
-          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-9.1.tar.xz
-          tar -xf coreutils-9.1.tar.xz
+          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
+          tar -xf coreutils-8.32.tar.xz
 
-      - name: Configure
+      # ── 3. configure ────────────────────────────────────────────
+      - name: Configure coreutils with musl-gcc (static)
         run: |
-          cd coreutils-9.1
+          cd coreutils-8.32
           FORCE_UNSAFE_CONFIGURE=1 ./configure \
             CC=musl-gcc \
             LDFLAGS="-static" \
@@ -27,34 +39,22 @@ jobs:
             --disable-acl \
             --disable-xattr
 
-      - name: Patch gnulib for musl compatibility
+      # ── 4. stty 빌드 ────────────────────────────────────────────
+      - name: Build src/stty
         run: |
-          cd coreutils-9.1
-
-          # O_BINARY / O_TEXT → 0 (POSIX 환경에서 무의미한 플래그)
-          sed -i 's/O_BINARY/0/g; s/O_TEXT/0/g' lib/binary-io.h lib/pipe2.c
-
-          # timezone_t 관련 glibc 전용 함수군 제거
-          sed -i \
-            -e 's/tzalloc([^)]*)/NULL/g' \
-            -e 's/tzfree([^)]*)/((void)0)/g' \
-            -e 's/localtime_rz\s*(\s*[^,]*,/localtime_r(/g' \
-            -e 's/mktime_z\s*(\s*[^,]*,/mktime(/g' \
-            lib/nstrftime.c lib/parse-datetime.c 2>/dev/null || true
-
-      - name: Build stty
-        run: |
-          cd coreutils-9.1
+          cd coreutils-8.32
           make -j$(nproc) src/stty
 
+      # ── 5. 바이너리 검증 ─────────────────────────────────────────
       - name: Verify binary
         run: |
-          file coreutils-9.1/src/stty
-          ldd coreutils-9.1/src/stty || echo "statically linked (expected)"
-          ls -lh coreutils-9.1/src/stty
+          file coreutils-8.32/src/stty
+          ls -lh coreutils-8.32/src/stty
 
-      - name: Upload artifact
+      # ── 6. 아티팩트 업로드 ──────────────────────────────────────
+      - name: Upload stty artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stty-musl-static
-          path: coreutils-9.1/src/stty
+          name: stty-static-musl
+          path: coreutils-8.32/src/stty
+          if-no-files-found: error
