@@ -7,16 +7,11 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
-    # ── [P1 수정] CFLAGS를 job 레벨 env로 선언 → 모든 스텝에서 공유됨 ──
+    # [수정] -Dtimezone_t=void* 제거 (전역 토큰 치환 → error.c 파싱 파괴)
+    # [수정] S_IXUGO 등 제거 → compat 헤더 방식으로 대체
+    # 꼭 필요한 플래그만 유지
     env:
-      MUSL_CFLAGS: >-
-        -DS_IXUGO=0111
-        -DS_IRWXUGO=0777
-        -DS_IRUGO=0444
-        -DS_IWUGO=0222
-        -Dtimezone_t=void*
-        -DO_BINARY=0
-        -DFNM_EXTMATCH=0
+      MUSL_CFLAGS: "-DO_BINARY=0 -DFNM_EXTMATCH=0"
 
     steps:
       # ── 1. 의존성 설치 ──────────────────────────────────────────
@@ -44,54 +39,67 @@ jobs:
             --disable-acl \
             --disable-xattr
 
-      # ── 4. config.h 및 소스 패치 ────────────────────────────────
-      - name: Patch config.h and sources
+      # ── 4. 소스 패치 ────────────────────────────────────────────
+      - name: Patch sources
         run: |
           cd coreutils-8.32
 
-          # [P2 수정] sed의 치환 성공 여부에 의존하지 않고 강제로 append
-          # (이미 정의되어 있어도 마지막 정의가 우선되므로 안전)
-          echo '#ifndef GNULIB_defined_FDUPFD_CLOEXEC' >> lib/config.h
-          echo '# define GNULIB_defined_FDUPFD_CLOEXEC 1' >> lib/config.h
-          echo '#endif' >> lib/config.h
-
-          # [P5 수정] limits.h 외 stdint.h도 추가하여 INTMAX_MAX 등 보장
-          sed -i '1s|^|#include <limits.h>\n#include <stdint.h>\n|' lib/xdectoint.c
-
-          # [P3 수정] S_IXUGO 등이 musl 헤더에 이미 정의된 경우 재정의 충돌 방지
-          # sys/stat.h 이후에 정의가 오도록 compat 헤더 생성
-          cat > lib/sys_stat_compat.h << 'HEADER'
+          # ── [에러1 수정] timezone_t: -Dtimezone_t=void* 는 전처리기가
+          #   코드 전체의 "timezone_t" 토큰을 "void*"로 치환해서
+          #   error.c의 함수 선언 파싱을 파괴함.
+          #   → typedef 선언으로 타입을 올바르게 제공하는 compat 헤더 사용
+          cat > lib/timezone_compat.h << 'HEADER'
+          /* musl does not define timezone_t; provide a compatible stub */
           #pragma once
-          #ifndef S_IXUGO
-          # define S_IXUGO  0111
-          #endif
-          #ifndef S_IRWXUGO
-          # define S_IRWXUGO 0777
-          #endif
-          #ifndef S_IRUGO
-          # define S_IRUGO  0444
-          #endif
-          #ifndef S_IWUGO
-          # define S_IWUGO  0222
+          #ifndef _TIMEZONE_T_DEFINED
+          # define _TIMEZONE_T_DEFINED
+          typedef void* timezone_t;
           #endif
           HEADER
 
-          # MUSL_CFLAGS의 S_IXUGO 계열 플래그를 제거하고 compat 헤더 방식으로 대체
-          # (config.h에 include 추가)
-          echo '#include "sys_stat_compat.h"' >> lib/config.h
+          # config.h 맨 앞에 삽입 (다른 헤더보다 먼저 읽혀야 함)
+          echo '#include "timezone_compat.h"' | cat - lib/config.h > /tmp/config_patched.h
+          mv /tmp/config_patched.h lib/config.h
+
+          # ── [에러2 수정] fcntl.c:507이 참조하는 매크로는
+          #   GNULIB_defined_F_DUPFD_CLOEXEC (F_ 포함)
+          #   원본/이전 워크플로우는 GNULIB_defined_FDUPFD_CLOEXEC (F_ 빠진 오타)
+          #   컴파일러 힌트: "did you mean 'GNULIB_defined_FDUPFD_CLOEXEC'?"
+          #   → 올바른 이름으로 정의
+          echo '' >> lib/config.h
+          echo '/* musl compat: F_DUPFD_CLOEXEC runtime detection */' >> lib/config.h
+          echo '#ifndef GNULIB_defined_F_DUPFD_CLOEXEC' >> lib/config.h
+          echo '# define GNULIB_defined_F_DUPFD_CLOEXEC 1' >> lib/config.h
+          echo '#endif' >> lib/config.h
+
+          # ── S_IXUGO 등: -D 플래그 대신 ifndef 가드 compat 헤더로 안전하게 제공
+          cat > lib/stat_compat.h << 'HEADER'
+          /* musl may not define these POSIX extensions */
+          #pragma once
+          #include <sys/stat.h>
+          #ifndef S_IXUGO
+          # define S_IXUGO  (S_IXUSR|S_IXGRP|S_IXOTH)
+          #endif
+          #ifndef S_IRWXUGO
+          # define S_IRWXUGO (S_IRWXU|S_IRWXG|S_IRWXO)
+          #endif
+          #ifndef S_IRUGO
+          # define S_IRUGO  (S_IRUSR|S_IRGRP|S_IROTH)
+          #endif
+          #ifndef S_IWUGO
+          # define S_IWUGO  (S_IWUSR|S_IWGRP|S_IWOTH)
+          #endif
+          HEADER
+          echo '#include "stat_compat.h"' >> lib/config.h
+
+          # ── xdectoint.c: INTMAX_MAX 등 보장
+          sed -i '1s|^|#include <limits.h>\n#include <stdint.h>\n|' lib/xdectoint.c
 
       # ── 5. 빌드 ──────────────────────────────────────────────────
       - name: Build stty
         run: |
           cd coreutils-8.32
-
-          # [P4 수정] lib → src 순서로 의존성 먼저 빌드 후 stty 링크
-          # CFLAGS를 make에도 명시적으로 전달
-          make -j$(nproc) lib \
-            CC=musl-gcc \
-            LDFLAGS="-static" \
-            CFLAGS="$MUSL_CFLAGS"
-
+          # make src/stty 가 lib/*.o 도 함께 빌드함 (빌드 로그에서 확인됨)
           make -j$(nproc) src/stty \
             CC=musl-gcc \
             LDFLAGS="-static" \
@@ -102,7 +110,7 @@ jobs:
         run: |
           file coreutils-8.32/src/stty
           ls -lh coreutils-8.32/src/stty
-          # 정적 링크 확인 (ldd가 "not a dynamic executable" 출력해야 정상)
+          # 정적 링크 확인: "not a dynamic executable" 이어야 정상
           ldd coreutils-8.32/src/stty || true
 
       # ── 7. 아티팩트 업로드 ──────────────────────────────────────
