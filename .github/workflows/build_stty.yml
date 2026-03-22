@@ -20,30 +20,17 @@ jobs:
           wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
           tar -xf coreutils-8.32.tar.xz
 
-      # ── 3. Configure ─────────────────────────────────────────────
-      - name: Configure
-        run: |
-          cd coreutils-8.32
-          FORCE_UNSAFE_CONFIGURE=1 ./configure \
-            CC=musl-gcc \
-            LDFLAGS="-static" \
-            CFLAGS="-DO_BINARY=0 -DFNM_EXTMATCH=0" \
-            --prefix=/tmp/coreutils-out \
-            --disable-nls \
-            --disable-acl \
-            --disable-xattr
-
-      # ── 4. 소스 패치 ────────────────────────────────────────────
+      # ── 3. 소스 패치 (configure 전) ────────────────────────────
       - name: Patch sources
         run: |
           cd coreutils-8.32
 
-          # [에러1 수정] timezone_t / S_IXUGO 등:
-          # config.h를 건드리면 gnulib 내부 매크로(_GL_ATTRIBUTE_FORMAT_PRINTF 등)
-          # 정의 순서가 파괴되어 error.c:205 컴파일 실패 발생.
-          # 해결: musl_compat.h를 생성하고 CFLAGS에 -include 절대경로로 주입.
-          # → config.h를 전혀 수정하지 않음
-          # → 모든 컴파일 단위 최앞에 강제 삽입됨
+          # musl_compat.h: 시스템 헤더를 일절 include하지 않음.
+          # -include로 config.h보다 먼저 삽입되므로 #include <sys/stat.h> 등이
+          # musl cdefs 체인을 조기 로드하면 gnulib의 _GL_ATTRIBUTE_FORMAT_PRINTF
+          # 등 매크로 정의가 꼬여 error.c:205 컴파일 실패 발생.
+          # → 매크로/typedef만 순수하게 정의, 헤더 include 없음.
+          # → S_IXUGO 등은 POSIX 표준 8진수 리터럴로 직접 정의.
           printf '%s\n' \
             '/* musl compat: timezone_t */' \
             '#ifndef _TIMEZONE_T_DEFINED' \
@@ -51,25 +38,22 @@ jobs:
             'typedef void* timezone_t;' \
             '#endif' \
             '' \
-            '/* musl compat: S_IXUGO 등 POSIX 확장 매크로 */' \
-            '#include <sys/stat.h>' \
+            '/* musl compat: S_IXUGO 등 - 시스템 헤더 include 없이 리터럴로 정의 */' \
             '#ifndef S_IXUGO' \
-            '# define S_IXUGO  (S_IXUSR|S_IXGRP|S_IXOTH)' \
+            '# define S_IXUGO  0111' \
             '#endif' \
             '#ifndef S_IRWXUGO' \
-            '# define S_IRWXUGO (S_IRWXU|S_IRWXG|S_IRWXO)' \
+            '# define S_IRWXUGO 0777' \
             '#endif' \
             '#ifndef S_IRUGO' \
-            '# define S_IRUGO  (S_IRUSR|S_IRGRP|S_IROTH)' \
+            '# define S_IRUGO  0444' \
             '#endif' \
             '#ifndef S_IWUGO' \
-            '# define S_IWUGO  (S_IWUSR|S_IWGRP|S_IWOTH)' \
+            '# define S_IWUGO  0222' \
             '#endif' \
             > lib/musl_compat.h
 
-          # [에러2 수정] fcntl.c:507이 참조하는 매크로는
-          # GNULIB_defined_F_DUPFD_CLOEXEC (F_ 포함).
-          # config.h 맨 끝에 append → 기존 내용/순서 보존
+          # [에러2 수정] GNULIB_defined_F_DUPFD_CLOEXEC → config.h append
           printf '%s\n' \
             '' \
             '/* musl compat: F_DUPFD_CLOEXEC runtime detection */' \
@@ -81,12 +65,25 @@ jobs:
           # xdectoint.c: INTMAX_MAX 등 보장
           sed -i '1s|^|#include <limits.h>\n#include <stdint.h>\n|' lib/xdectoint.c
 
+      # ── 4. Configure ─────────────────────────────────────────────
+      - name: Configure
+        run: |
+          cd coreutils-8.32
+          # configure와 make 양쪽에 동일한 CFLAGS 적용 (특히 -include 경로 일치)
+          # musl_compat.h가 configure 테스트에도 적용되어야 config.h가 올바르게 생성됨
+          FORCE_UNSAFE_CONFIGURE=1 ./configure \
+            CC=musl-gcc \
+            LDFLAGS="-static" \
+            CFLAGS="-DO_BINARY=0 -DFNM_EXTMATCH=0 -include $(pwd)/lib/musl_compat.h" \
+            --prefix=/tmp/coreutils-out \
+            --disable-nls \
+            --disable-acl \
+            --disable-xattr
+
       # ── 5. 빌드 ──────────────────────────────────────────────────
       - name: Build stty
         run: |
           cd coreutils-8.32
-          # -include 절대경로: 모든 .c 파일 컴파일 시 musl_compat.h를 최우선 삽입
-          # configure 시 CFLAGS와 동일하게 make에도 전달
           make -j$(nproc) src/stty \
             CC=musl-gcc \
             LDFLAGS="-static" \
