@@ -1,4 +1,4 @@
-name: Build static stty (musl)
+name: Build static stty (Alpine)
 
 on:
   workflow_dispatch:
@@ -8,118 +8,26 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      # ── 1. 의존성 설치 ──────────────────────────────────────────
-      - name: Install dependencies
+      - name: Build static stty via Alpine container
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y musl-tools wget xz-utils
+          docker run --rm \
+            -v "${{ github.workspace }}":/out \
+            alpine:3.19 \
+            sh -c "
+              apk add --no-cache coreutils binutils &&
+              cp /bin/stty /out/stty &&
+              strip /out/stty
+            "
 
-      # ── 2. coreutils 8.32 소스 다운로드 ────────────────────────
-      - name: Download coreutils 8.32
-        run: |
-          wget -q https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz
-          tar -xf coreutils-8.32.tar.xz
-
-      # ── 3. 소스 패치 (configure 전) ────────────────────────────
-      - name: Patch sources
-        run: |
-          cd coreutils-8.32
-
-          # musl_compat.h: 시스템 헤더를 일절 include하지 않음.
-          # -include로 config.h보다 먼저 삽입되므로 #include <sys/stat.h> 등이
-          # musl cdefs 체인을 조기 로드하면 gnulib의 _GL_ATTRIBUTE_FORMAT_PRINTF
-          # 등 매크로 정의가 꼬여 error.c:205 컴파일 실패 발생.
-          # → 매크로/typedef만 순수하게 정의, 헤더 include 없음.
-          # → S_IXUGO 등은 POSIX 표준 8진수 리터럴로 직접 정의.
-          printf '%s\n' \
-            '/* musl compat: 시스템 헤더 include 없이 순수 타입/매크로만 정의 */' \
-            '/* ptrdiff_t: stddef.h 없이 직접 정의 (stddef.h는 musl cdefs 체인 유발) */' \
-            '#ifndef _PTRDIFF_T_DEFINED' \
-            '# define _PTRDIFF_T_DEFINED' \
-            'typedef long ptrdiff_t;' \
-            '#endif' \
-            '' \
-            '/* timezone_t: musl에 없는 POSIX 타입 */' \
-            '#ifndef _TIMEZONE_T_DEFINED' \
-            '# define _TIMEZONE_T_DEFINED' \
-            'typedef void* timezone_t;' \
-            '#endif' \
-            '' \
-            '/* O_BINARY / O_TEXT: Windows 전용 플래그, musl에 없음 */' \
-            '#ifndef O_BINARY' \
-            '# define O_BINARY 0' \
-            '#endif' \
-            '#ifndef O_TEXT' \
-            '# define O_TEXT 0' \
-            '#endif' \
-            '' \
-            '/* S_IXUGO 등: 시스템 헤더 없이 8진수 리터럴로 직접 정의 */' \
-            '#ifndef S_IXUGO' \
-            '# define S_IXUGO  0111' \
-            '#endif' \
-            '#ifndef S_IRWXUGO' \
-            '# define S_IRWXUGO 0777' \
-            '#endif' \
-            '#ifndef S_IRUGO' \
-            '# define S_IRUGO  0444' \
-            '#endif' \
-            '#ifndef S_IWUGO' \
-            '# define S_IWUGO  0222' \
-            '#endif' \
-            > lib/musl_compat.h
-
-          # xdectoint.c: INTMAX_MAX 등 보장
-          sed -i '1s|^|#include <limits.h>\n#include <stdint.h>\n|' lib/xdectoint.c
-
-      # ── 4. Configure ─────────────────────────────────────────────
-      - name: Configure
-        run: |
-          cd coreutils-8.32
-          # configure와 make 양쪽에 동일한 CFLAGS 적용 (특히 -include 경로 일치)
-          # musl_compat.h가 configure 테스트에도 적용되어야 config.h가 올바르게 생성됨
-          FORCE_UNSAFE_CONFIGURE=1 ./configure \
-            CC=musl-gcc \
-            LDFLAGS="-static" \
-            CFLAGS="-DO_BINARY=0 -DFNM_EXTMATCH=0 -include $(pwd)/lib/musl_compat.h" \
-            --prefix=/tmp/coreutils-out \
-            --disable-nls \
-            --disable-acl \
-            --disable-xattr
-
-      # ── 5. config.h 패치 (configure 이후) ─────────────────────
-      - name: Patch config.h
-        run: |
-          cd coreutils-8.32
-          # configure 실행 시 config.status가 lib/config.h를 새로 생성함.
-          # 따라서 config.h 패치는 반드시 configure 완료 이후에 해야 함.
-          printf '%s\n' \
-            '' \
-            '/* musl compat: F_DUPFD_CLOEXEC runtime detection */' \
-            '#ifndef GNULIB_defined_F_DUPFD_CLOEXEC' \
-            '# define GNULIB_defined_F_DUPFD_CLOEXEC 1' \
-            '#endif' \
-            >> lib/config.h
-
-      # ── 6. 빌드 ──────────────────────────────────────────────────
-      - name: Build stty
-        run: |
-          cd coreutils-8.32
-          make -j$(nproc) src/stty \
-            CC=musl-gcc \
-            LDFLAGS="-static" \
-            CFLAGS="-DO_BINARY=0 -DFNM_EXTMATCH=0 -include $(pwd)/lib/musl_compat.h"
-
-      # ── 6. 바이너리 검증 ─────────────────────────────────────────
       - name: Verify binary
         run: |
-          file coreutils-8.32/src/stty
-          ls -lh coreutils-8.32/src/stty
-          ldd coreutils-8.32/src/stty || true
+          file stty
+          ls -lh stty
+          ldd stty || true
 
-      # ── 7. 아티팩트 업로드 ──────────────────────────────────────
       - name: Upload stty artifact
         uses: actions/upload-artifact@v4
         with:
           name: stty-static-musl
-          path: coreutils-8.32/src/stty
+          path: stty
           if-no-files-found: error
