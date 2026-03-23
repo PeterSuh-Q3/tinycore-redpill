@@ -1854,11 +1854,11 @@ function addon_gitdown()
   mkdir -p /dev/shm/tcrp-addons
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
   cd /dev/shm/tcrp-addons
-  # https://github.com/PeterSuh-Q3/tcrp-addons/tree/b140fede84bbace815233936b78860d5c1feb22c
-  git fetch origin b140fede84bbace815233936b78860d5c1feb22c
-  git checkout b140fede84bbace815233936b78860d5c1feb22c  
-  sed -i 's/d77c927ce59d9189c5205d3c2c0b385b283d30b7350188f0da7754fb494745d4/3a3f348d3cd90a700e2232427bba20c2ed3257df7038c2409b4af5433b46abac/g' /dev/shm/tcrp-addons/localrss/recipes/universal.json
-  cd ~ 
+  # https://github.com/PeterSuh-Q3/tcrp-addons/tree/1eba367027969d01f8dd3d651d4c7b001579b7dd
+  git fetch origin 1eba367027969d01f8dd3d651d4c7b001579b7dd
+  git checkout 1eba367027969d01f8dd3d651d4c7b001579b7dd  
+  #sed -i 's/d77c927ce59d9189c5205d3c2c0b385b283d30b7350188f0da7754fb494745d4/3a3f348d3cd90a700e2232427bba20c2ed3257df7038c2409b4af5433b46abac/g' /dev/shm/tcrp-addons/localrss/recipes/universal.json
+  cd /home/tc
   #if [ $? -ne 0 ]; then
   #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
   #  rm -rf /dev/shm/tcrp-modules
@@ -1888,9 +1888,9 @@ addon_gitdown
 
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
   cd /dev/shm/tcrp-modules
-  # https://github.com/PeterSuh-Q3/tcrp-modules/tree/4d2b39dc98fa96c1772511528d0c82395a53c77c
-  git fetch origin 4d2b39dc98fa96c1772511528d0c82395a53c77c
-  git checkout 4d2b39dc98fa96c1772511528d0c82395a53c77c  
+  # https://github.com/PeterSuh-Q3/tcrp-modules/tree/f048fc1cabd593c93a8f1d19e70cc24b4835e20f
+  git fetch origin f048fc1cabd593c93a8f1d19e70cc24b4835e20f
+  git checkout f048fc1cabd593c93a8f1d19e70cc24b4835e20f  
 
 #  if [ $? -ne 0 ]; then
 #    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
