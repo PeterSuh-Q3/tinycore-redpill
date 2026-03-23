@@ -5749,7 +5749,8 @@ function my() {
     rm -rf ./tcrp-addons/.git/
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
   fi
-  
+
+  offline="NO"
   #if [ -d /dev/shm/tcrp-modules/ ]; then
   #    offline="YES"
   #else
