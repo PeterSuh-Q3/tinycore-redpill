@@ -1846,6 +1846,10 @@ function chk_shr_ex()
 function addon_gitdown()
 {
 # add git download 2023.10.18
+  sudo rm -rf /dev/shm/*
+  sudo umount /dev/shm
+  sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
+
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
@@ -1893,6 +1897,11 @@ addon_gitdown
 #  fi    
 #fi
 cd /home/tc
+
+df -h /dev/shm
+
+echo "press any key to continue..."
+read answer
 
 #Start Locale Setting process
 #Get Langugae code & country code
