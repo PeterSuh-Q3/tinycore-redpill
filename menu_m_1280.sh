@@ -1879,7 +1879,15 @@ addon_gitdown
 #if [ -d /dev/shm/tcrp-modules ]; then
 #  echo "tcrp-modules already downloaded!"    
 #else    
-#  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git"
+  rm -rf /dev/shm/tcrp-modules
+  mkdir -p /dev/shm/tcrp-modules
+
+  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+  cd /dev/shm/tcrp-modules
+  # https://github.com/PeterSuh-Q3/tcrp-modules/tree/4d2b39dc98fa96c1772511528d0c82395a53c77c
+  git fetch origin 4d2b39dc98fa96c1772511528d0c82395a53c77c
+  git checkout 4d2b39dc98fa96c1772511528d0c82395a53c77c  
+
 #  if [ $? -ne 0 ]; then
 #    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
 #  fi    
