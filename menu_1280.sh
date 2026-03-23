@@ -138,9 +138,7 @@ else
     offline="NO"
 fi  
 
-
-
-if [ "${offline}" = "NO" ]; then
+#if [ "${offline}" = "NO" ]; then
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
     if [ -f /tmp/test_mode ]; then
       cecho g "###############################  This is for version v${oldver} ############################"
@@ -157,7 +155,7 @@ if [ "${offline}" = "NO" ]; then
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
     . /home/tc/functions.sh    
-fi
+#fi
 
 /home/tc/menu_m.sh
 exit 0
