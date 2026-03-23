@@ -145,7 +145,7 @@ if [ "${offline}" = "NO" ]; then
     if [ -f /tmp/test_mode ]; then
       cecho g "###############################  This is for version v${oldver} ############################"
       curl -skL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_${oldver}.sh -o functions.sh
-      curl -skLO https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m_${oldver}.sh -o menu_m.sh
+      curl -skL https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m_${oldver}.sh -o menu_m.sh
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
