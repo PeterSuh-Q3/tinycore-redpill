@@ -3785,7 +3785,7 @@ function savedefault {
     echo "Model   : ${MODEL}(${ORIGIN_PLATFORM})"
     echo "Version : ${BUILD}"
     echo "Kernel  : ${KVER}"
-    echo "Module  : ${MDLNAME}-${MLMETHOD}
+    echo "Module  : ${MDLNAME}-${MLMETHOD}"
     echo "DMI     : $(dmesg 2>/dev/null | grep -i "DMI:" | head -1 | sed 's/\[.*\] DMI: //i')"
     echo "CPU     : $(awk -F': ' '/model name/ {print $2}' /proc/cpuinfo | uniq)"
     echo "MEM     : $(awk '/MemTotal:/ {printf "%.2f", $2 / 1024}' /proc/meminfo) MB"
