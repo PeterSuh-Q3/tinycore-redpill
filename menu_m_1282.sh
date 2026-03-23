@@ -346,7 +346,11 @@ function selectldrmode() {
 
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
-    menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
+    if [ "${platform}" == "epyc7002(DT)" ]; then  
+      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules" "m" "AMD GPU DRM Support, amdgpu-modules")  
+    else
+      menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)" "k" "${MSG28}, custom-modules" "l" "${MSG29}, custom-modules")  
+    fi
   else
     menu_options=("f" "${MSG28}, all-modules(tcrp)" "j" "${MSG29}, all-modules(tcrp)")
   fi
@@ -374,6 +378,10 @@ function selectldrmode() {
     elif [ "${resp}" = "l" ]; then
       LDRMODE="JOT"
       MDLNAME="custom-modules"
+      break
+    elif [ "${resp}" = "m" ]; then
+      LDRMODE="FRIEND"
+      MDLNAME="amdgpu-modules"
       break
     fi      
   done
@@ -1846,25 +1854,15 @@ function chk_shr_ex()
 function addon_gitdown()
 {
 # add git download 2023.10.18
-  sudo rm -rf /dev/shm/*
-  sudo umount /dev/shm
-  sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
-
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  cd /dev/shm/tcrp-addons
-  # https://github.com/PeterSuh-Q3/tcrp-addons/tree/1eba367027969d01f8dd3d651d4c7b001579b7dd
-  git fetch origin 1eba367027969d01f8dd3d651d4c7b001579b7dd
-  git checkout 1eba367027969d01f8dd3d651d4c7b001579b7dd  
-  #sed -i 's/d77c927ce59d9189c5205d3c2c0b385b283d30b7350188f0da7754fb494745d4/3a3f348d3cd90a700e2232427bba20c2ed3257df7038c2409b4af5433b46abac/g' /dev/shm/tcrp-addons/localrss/recipes/universal.json
-  cd /home/tc
-  #if [ $? -ne 0 ]; then
-  #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  #  rm -rf /dev/shm/tcrp-modules
-  #  mkdir -p /dev/shm/tcrp-modules
-  #  git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
-  #fi    
+  if [ $? -ne 0 ]; then
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+    rm -rf /dev/shm/tcrp-modules
+    mkdir -p /dev/shm/tcrp-modules
+    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
+  fi    
 }
 
 # Main loop ###########################################################################################
@@ -1883,25 +1881,12 @@ addon_gitdown
 #if [ -d /dev/shm/tcrp-modules ]; then
 #  echo "tcrp-modules already downloaded!"    
 #else    
-  rm -rf /dev/shm/tcrp-modules
-  mkdir -p /dev/shm/tcrp-modules
-
-  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
-  cd /dev/shm/tcrp-modules
-  # https://github.com/PeterSuh-Q3/tcrp-modules/tree/f048fc1cabd593c93a8f1d19e70cc24b4835e20f
-  git fetch origin f048fc1cabd593c93a8f1d19e70cc24b4835e20f
-  git checkout f048fc1cabd593c93a8f1d19e70cc24b4835e20f  
-
+#  git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git"
 #  if [ $? -ne 0 ]; then
 #    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
 #  fi    
 #fi
 cd /home/tc
-
-df -h /dev/shm
-
-echo "press any key to continue..."
-read answer
 
 #Start Locale Setting process
 #Get Langugae code & country code
