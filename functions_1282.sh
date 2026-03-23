@@ -5650,12 +5650,12 @@ function rploader() {
     build)
 
         getvars $ORIGIN_PLATFORM
-        if [ -d /dev/shm/tcrp-modules/ ]; then
-            offline="YES"
-        else
+        #if [ -d /dev/shm/tcrp-modules/ ]; then
+        #    offline="YES"
+        #else
             offline="NO"
             check_github
-        fi    
+        #fi    
 #        getlatestrploader
 #        gitdownload     # When called from the parent my.sh, -d flag authority check is not possible, pre-downloaded in advance 
         checkUserConfig
@@ -5760,26 +5760,8 @@ function my() {
     rm -rf ./tcrp-addons/.git/
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
   fi
-  
-  if [ -d /dev/shm/tcrp-modules/ ]; then
-      offline="YES"
-  else
-      offline="NO"
-      check_github
-      if [ "$gitdomain" = "raw.githubusercontent.com" ]; then
-          if [ $# -lt 1 ]; then
-              getlatestmshell "ask"
-          else
-              if [ "$1" = "update" ]; then 
-                  getlatestmshell "noask"
-                  exit 0
-              else
-                  getlatestmshell "noask"
-              fi
-          fi
-      fi
-      gitdownload
-  fi
+
+  offline="NO"  
   
   if [ $# -lt 1 ]; then
       showhelp 
