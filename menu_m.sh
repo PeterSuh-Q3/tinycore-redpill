@@ -1881,15 +1881,34 @@ function chk_shr_ex()
 function addon_gitdown()
 {
 # add git download 2023.10.18
+  if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
+    #/dev/shm 공간 2.5GB 확보
+    sudo umount /dev/shm
+    sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
+  fi  
+  
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
   git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  if [ $? -ne 0 ]; then
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+  
+  if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
+    # oldver 가 유효한 버전인 경우 처리
+    cd /dev/shm/tcrp-addons
+    git fetch origin "${addons_hash}"
+    git checkout "${addons_hash}"
+
     rm -rf /dev/shm/tcrp-modules
     mkdir -p /dev/shm/tcrp-modules
-    git clone --depth=1 "https://gitea.com/PeterSuh-Q3/tcrp-modules.git"
-  fi    
+    git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+    cd /dev/shm/tcrp-modules
+    git fetch origin "${modules_hash}"
+    git checkout "${modules_hash}"
+
+    df -h /dev/shm
+    cd /home/tc
+    echo "press any key to continue..."
+    read answer
+  fi  
 }
 
 # Main loop ###########################################################################################
