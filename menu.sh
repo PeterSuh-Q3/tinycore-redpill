@@ -126,6 +126,41 @@ function extract_old_shell() {
   done
 }
 
+function get_dep_hashes() {
+  local TAG="${1}"
+  local REPO="PeterSuh-Q3/tinycore-redpill"
+  local API_URL="https://api.github.com/repos/${REPO}/releases/tags/${TAG}"
+
+  # 릴리즈 노트 body 가져오기
+  local BODY
+  BODY=$(curl -skL "${API_URL}" | jq -r '.body')
+
+  if [ -z "${BODY}" ] || [ "${BODY}" = "null" ]; then
+    echo "[!] Release notes not found for tag: ${TAG}"
+    return 1
+  fi
+
+  # 첫 번째 라인 = tcrp-addons 해시
+  local ADDONS_HASH
+  ADDONS_HASH=$(echo "${BODY}" | sed -n '1p' | tr -d '[:space:]')
+
+  # 두 번째 라인 = tcrp-modules 해시
+  local MODULES_HASH
+  MODULES_HASH=$(echo "${BODY}" | sed -n '2p' | tr -d '[:space:]')
+
+  if [ -z "${ADDONS_HASH}" ] || [ -z "${MODULES_HASH}" ]; then
+    echo "[!] Hash values are empty. Check release notes format."
+    return 1
+  fi
+
+  echo "[*] tcrp-addons  hash : ${ADDONS_HASH}"
+  echo "[*] tcrp-modules hash : ${MODULES_HASH}"
+
+  # 전역 변수로 export (호출부에서 사용 가능)
+  addons_hash="${ADDONS_HASH}"
+  modules_hash="${MODULES_HASH}"
+}
+
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
     if [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ]; then
         echo "There is Synodisk Injected Bootloader..."
@@ -227,34 +262,36 @@ if [ "${offline}" = "NO" ]; then
         curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
         curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
       fi
-      if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
-        #/dev/shm 공간 2.5GB 확보
-        sudo umount /dev/shm
-        sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
-      fi  
+
+      get_dep_hashes "$oldver"
+
+      echo "addons  : ${addons_hash}"
+      echo "modules : ${modules_hash}"
+      
+      #/dev/shm 공간 2.5GB 확보
+      sudo umount /dev/shm
+      sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
       
       rm -rf /dev/shm/tcrp-addons
       mkdir -p /dev/shm/tcrp-addons
       git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
       
-      if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
-        # oldver 가 유효한 버전인 경우 처리
-        cd /dev/shm/tcrp-addons
-        git fetch origin "${addons_hash}"
-        git checkout "${addons_hash}"
-    
-        rm -rf /dev/shm/tcrp-modules
-        mkdir -p /dev/shm/tcrp-modules
-        git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
-        cd /dev/shm/tcrp-modules
-        git fetch origin "${modules_hash}"
-        git checkout "${modules_hash}"
-    
-        df -h /dev/shm
-        cd /home/tc
-        echo "press any key to continue..."
-        read answer
-      fi  
+      # oldver 가 유효한 버전인 경우 처리
+      cd /dev/shm/tcrp-addons
+      git fetch origin "${addons_hash}"
+      git checkout "${addons_hash}"
+  
+      rm -rf /dev/shm/tcrp-modules
+      mkdir -p /dev/shm/tcrp-modules
+      git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+      cd /dev/shm/tcrp-modules
+      git fetch origin "${modules_hash}"
+      git checkout "${modules_hash}"
+  
+      df -h /dev/shm
+      cd /home/tc
+      echo "press any key to continue..."
+      read answer
       
     fi
 
