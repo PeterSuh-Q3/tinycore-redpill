@@ -184,9 +184,15 @@ else
 fi
 
 if [ -z "${1-}" ]; then
-  [ -f /tmp/test_mode ] && rm /tmp/test_mode
+  [ -f /tmp/test_mode ] && rm -f /tmp/test_mode
+  oldver="unknown"  # 또는 원하는 기본값
 else
-  touch /tmp/test_mode
+  if [ "$1" = "test" ]; then
+    rm -f /tmp/test_mode && touch /tmp/test_mode
+    oldver="test"
+  else
+    oldver="$1"
+  fi
 fi
 
 if [ -f /dev/shm/offline ]; then
@@ -197,7 +203,7 @@ fi
 
 if [ "${offline}" = "NO" ]; then
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
-    if [ -f /tmp/test_mode ]; then
+    if [ "$oldver" = "test" ]; then
       cecho g "###############################  This is Test Mode  ############################"
       curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
@@ -205,8 +211,11 @@ if [ "${offline}" = "NO" ]; then
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
-    else
+    elif [ "$oldver" = "unknown" ]; then
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+    else
+      cecho g "###############################  This is for version v${oldver} ############################"
+      extract_old_shell "$oldver"
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
