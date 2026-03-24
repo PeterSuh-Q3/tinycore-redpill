@@ -63,27 +63,23 @@ function mmc_modprobe() {
 }
 
 function extract_old_shell() {
+  local TAG="${1}"
+  local REPO="PeterSuh-Q3/tinycore-redpill"
+  local WORK_DIR="/dev/shm"
+  local DEST="/home/tc"
 
-# Usage: ./fetch_tcredpill.sh v1.2.8.4
-# GitHub release에서 tgz를 다운로드해 .sh 파일만 /dev/shm 에 압축해제
-
-  REPO="PeterSuh-Q3/tinycore-redpill"   # repo를 필요에 따라 변경
-  TAG="${1}"
-  
   if [ -z "$TAG" ]; then
-      echo "Usage: $0 <tag>  (예: $0 v1.2.8.4)"
-      exit 1
+    echo "Usage: fetch_tcredpill <tag>  (예: fetch_tcredpill v1.2.8.0)"
+    return 1
   fi
-  
-  # tag에서 v 제거하여 파일명 버전 생성
-  VER="${TAG#v}"
-  
-  REPONAME="tinycore-redpill"
-  FILENAME="${REPONAME}-${VER}.zip"
-  URL="https://github.com/${REPO}/releases/download/${TAG}/${FILENAME}"
-  WORK_DIR="/dev/shm"
-  DEST="/home/tc"
-  
+
+  local VER="${TAG#v}"
+  local REPONAME="tinycore-redpill"
+  local FILENAME="${REPONAME}-${VER}.zip"
+  local URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.zip"
+  local TMP_ZIP="${WORK_DIR}/${FILENAME}"
+  local EXTRACT_DIR="${WORK_DIR}/${REPONAME}-${VER}"
+
   echo "[*] TAG     : ${TAG}"
   echo "[*] VERSION : ${VER}"
   echo "[*] URL     : ${URL}"
@@ -91,40 +87,33 @@ function extract_old_shell() {
   echo "[*] DEST    : ${DEST}"
   echo ""
 
-  # 다운로드
-  TMP_ZIP="${WORK_DIR}/${FILENAME}"
   echo "[+] Downloading ${FILENAME} ..."
   curl -kL --retry 3 --retry-delay 2 -o "${TMP_ZIP}" "${URL}"
-  
+
   if [ $? -ne 0 ] || [ ! -s "${TMP_ZIP}" ]; then
-      echo "[!] Download failed or file is empty: ${URL}"
-      exit 1
+    echo "[!] Download failed or file is empty: ${URL}"
+    return 1
   fi
-  
-  # /dev/shm 에 압축 해제
-  EXTRACT_DIR="${WORK_DIR}/${REPONAME}-${VER}"
+
   echo "[+] Extracting to ${EXTRACT_DIR} ..."
   unzip -o "${TMP_ZIP}" -d "${WORK_DIR}"
-  
+
   if [ $? -ne 0 ]; then
-      echo "[!] Extraction failed."
-      rm -f "${TMP_ZIP}"
-      exit 1
+    echo "[!] Extraction failed."
+    rm -f "${TMP_ZIP}"
+    return 1
   fi
-  
-  # .sh 파일만 /home/tc 로 복사
+
   echo "[+] Copying .sh files to ${DEST} ..."
   find "${EXTRACT_DIR}" -maxdepth 1 -name "*.sh" -exec cp -v {} "${DEST}/" \;
   chmod +x "${DEST}"/*.sh 2>/dev/null
-  
-  # 임시 파일 정리
+
   rm -f "${TMP_ZIP}"
   rm -rf "${EXTRACT_DIR}"
-  
+
   echo ""
   echo "[+] Done. .sh files in ${DEST}:"
   ls -lh "${DEST}"/*.sh 2>/dev/null
-
 }
 
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
