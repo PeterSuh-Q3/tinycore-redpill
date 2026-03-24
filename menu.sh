@@ -63,10 +63,12 @@ function mmc_modprobe() {
 }
 
 function extract_old_shell() {
+
   local TAG="${1}"
   local REPO="PeterSuh-Q3/tinycore-redpill"
   local WORK_DIR="/dev/shm"
   local DEST="/home/tc"
+  local FILES=("menu.sh" "menu_m.sh" "functions.sh" "i18n.h")
 
   if [ -z "$TAG" ]; then
     echo "Usage: fetch_tcredpill <tag>  (예: fetch_tcredpill v1.2.8.0)"
@@ -104,16 +106,24 @@ function extract_old_shell() {
     return 1
   fi
 
-  echo "[+] Copying .sh files to ${DEST} ..."
-  find "${EXTRACT_DIR}" -maxdepth 1 -name "*.sh" -exec cp -v {} "${DEST}/" \;
+  echo "[+] Copying files to ${DEST} ..."
+  for f in "${FILES[@]}"; do
+    if [ -f "${EXTRACT_DIR}/${f}" ]; then
+      cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"
+    else
+      echo "[!] Not found: ${f}"
+    fi
+  done
   chmod +x "${DEST}"/*.sh 2>/dev/null
 
   rm -f "${TMP_ZIP}"
   rm -rf "${EXTRACT_DIR}"
 
   echo ""
-  echo "[+] Done. .sh files in ${DEST}:"
-  ls -lh "${DEST}"/*.sh 2>/dev/null
+  echo "[+] Done. Copied files in ${DEST}:"
+  for f in "${FILES[@]}"; do
+    ls -lh "${DEST}/${f}" 2>/dev/null
+  done
 }
 
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
