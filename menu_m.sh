@@ -1878,6 +1878,94 @@ function chk_shr_ex()
   [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 }
 
+select_and_run_menu() {
+    # ucode 변수 기반 언어 설정
+    if [ "${ucode}" = "ko_KR" ]; then
+        local LANG_KR=true
+    else
+        local LANG_KR=false
+    fi
+
+    # TAG / DATE / DESC_EN / DESC_KR
+    local TAGS=(
+        "v1.2.8.4" "2026-03-24" "Supports two distinct menus for IML / PML module loading"             "IML / PML 두 가지 모듈 로딩 메뉴 지원"
+        "v1.2.8.3" "2026-03-19" "Added user DTS file mapping feature"                                  "사용자 DTS 파일 매핑 기능 추가"
+        "v1.2.8.2" "2026-03-19" "Switch all-modules loading from dynamic to static (like RR/ARC)"      "all-modules 로딩 방식 dynamic→static 전환"
+        "v1.2.8.0" "2026-03-15" "Discontinued Jot, standardized to Direct-Boot"                       "Jot 용어 폐기, Direct-Boot으로 표준화"
+        "v1.2.7.9" "2026-03-10" "Switch initrd-dsm compression from zstd to xz(lzma2)"                "initrd-dsm 압축 방식 zstd→xz(lzma2) 변경"
+        "v1.2.7.8" "2026-03-08" "Support RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese"     "RS18016xs+ (bromolow DSM 7.3.x) 및 번체중국어 지원"
+        "v1.2.7.7" "2026-03-06" "Use static firmware and module loading for custom modules"            "custom modules 사용 시 static 펌웨어/모듈 로딩"
+        "v1.2.7.6" "2026-03-01" "Expose modular selection menu as upper menu"                         "modular selection 메뉴를 상위 메뉴로 노출"
+        "v1.2.7.5" "2026-02-22" "Remove default internalportcfg value (0xffff) in user_config.json"   "user_config.json 기본 internalportcfg 값(0xffff) 제거"
+        "v1.2.7.4" "2026-02-12" "Removed DSM 7.3.X build warning, adjusted Jot Grub boot entry"       "DSM 7.3.X 빌드 경고 제거 및 Jot Grub 부트 엔트리 조정"
+        "v1.2.7.3" "2026-02-08" "Changes to warning messages and guides for DSM 7.3.X loader build"   "DSM 7.3.X 로더 빌드 경고 메시지/가이드 변경"
+        "v1.2.7.2" "2026-02-05" "Official DSM 7.3 support, R8168 auto-conversion (EUDEV+DDSML)"       "DSM 7.3 공식 지원, R8168 자동변환(EUDEV+DDSML) 추가"
+        "v1.2.7.1" "2026-01-30" "Added support for DSM 7.1.0 and Braswell (DS916+, DS716+)"           "DSM 7.1.0 지원, Braswell (DS916+, DS716+) 추가"
+        "v1.2.7.0" "2026-01-24" "Skip backup and reboot after ttyd injection (prevent infinite reboot)" "ttyd 주입 후 백업/재부팅 스킵 (무한재부팅 방지)"
+        "v1.2.6.9" "2025-12-31" "Stabilization of system partition (md0) format menu"                 "시스템 파티션(md0) 포맷 메뉴 안정화"
+        "v1.2.6.8" "2025-12-17" "Improved backuploader() with free space check before backup"         "backuploader() 개선 (백업 전 여유공간 체크)"
+        "v1.2.6.7" "2025-12-03" "Support DSM 7.3.2-86009 official version (kernel 4.4 only)"          "DSM 7.3.2-86009 공식 버전 지원 (kernel 4.4 전용)"
+        "v1.2.6.6" "2025-11-18" "Default Verbose OFF on loader build, warning for 7.3/7.3.1 build"    "로더 빌드 시 Verbose OFF 기본처리, 7.3/7.3.1 경고 추가"
+        "v1.2.6.5" "2025-11-07" "Added Format System Partition (md0) menu for new install"            "신규 설치용 시스템 파티션(md0) 포맷 메뉴 추가"
+        "v1.2.6.4" "2025-11-02" "Add support for DSM 6.2.4-25556 official version"                    "DSM 6.2.4-25556 공식 버전 지원 추가"
+    )
+
+    # 컬럼 수 (tag / date / desc_en / desc_kr)
+    local COLS=4
+    local MENU_ITEMS=()
+    local i=1
+
+    for (( j=0; j<${#TAGS[@]}; j+=COLS )); do
+        local tag="${TAGS[$j]}"
+        local date="${TAGS[$j+1]}"
+        local desc_en="${TAGS[$j+2]}"
+        local desc_kr="${TAGS[$j+3]}"
+
+        if [ "${LANG_KR}" = true ]; then
+            local label="[${date}] ${desc_kr}"
+        else
+            local label="[${date}] ${desc_en}"
+        fi
+
+        MENU_ITEMS+=("$i" "${tag}  ${label}")
+        (( i++ ))
+    done
+
+    # 타이틀/프롬프트 언어 분기
+    if [ "${LANG_KR}" = true ]; then
+        local TITLE="TCRP 릴리즈 태그 선택"
+        local PROMPT="실행할 릴리즈 태그를 선택하세요:"
+        local MSG_CANCEL="취소되었습니다."
+        local MSG_RUN="menu.sh 실행 중..."
+    else
+        local TITLE="TCRP Release Tag Selection"
+        local PROMPT="Select a release tag to run:"
+        local MSG_CANCEL="Cancelled."
+        local MSG_RUN="Running menu.sh ..."
+    fi
+
+    local CHOICE
+    CHOICE=$(dialog --clear \
+        --title "${TITLE}" \
+        --menu "${PROMPT}" 28 90 20 \
+        "${MENU_ITEMS[@]}" \
+        2>&1 >/dev/tty)
+
+    local EXIT_CODE=$?
+    clear
+
+    if [ $EXIT_CODE -ne 0 ] || [ -z "$CHOICE" ]; then
+        echo "${MSG_CANCEL}"
+        return 1
+    fi
+
+    local IDX=$(( (CHOICE - 1) * COLS ))
+    local SELECTED_TAG="${TAGS[$IDX]}"
+
+    echo ">>> ${SELECTED_TAG}  ${MSG_RUN}"
+    bash menu.sh "${SELECTED_TAG}"
+}
+
 function addon_gitdown()
 {
 # add git download 2023.10.18
@@ -2394,6 +2482,7 @@ while true; do
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \"w \\\"Rebuild Previous Version\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
@@ -2444,6 +2533,7 @@ while true; do
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
     b) backuploader;   NEXT="r" ;;
+    w) select_and_run_menu; NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
   esac
