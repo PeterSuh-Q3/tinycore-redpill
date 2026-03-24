@@ -164,7 +164,7 @@ else
     start_time=$(date +%s)
     while true; do
       if check_internet; then
-        getlatestmshell "noask"
+        [ -z "${1-}" ] && getlatestmshell "noask"
         break
       fi
       # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
