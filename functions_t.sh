@@ -5676,7 +5676,7 @@ function rploader() {
     build)
 
         getvars $ORIGIN_PLATFORM
-        if [ -d /dev/shm/tcrp-modules/ ]; then
+        if [ -f /dev/shm/offline ]; then
             offline="YES"
         else
             offline="NO"
@@ -5787,7 +5787,7 @@ function my() {
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
   fi
   
-  if [ -d /dev/shm/tcrp-modules/ ]; then
+  if [ -f /dev/shm/offline ]; then
       offline="YES"
   else
       offline="NO"
