@@ -1876,9 +1876,6 @@ select_and_run_menu() {
         "v1.2.7.9" "2026-03-10" "Switch initrd-dsm compression from zstd to xz(lzma2)"                "initrd-dsm 압축 방식 zstd→xz(lzma2) 변경"
         "v1.2.7.8" "2026-03-08" "Support RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese"     "RS18016xs+ (bromolow DSM 7.3.x) 및 번체중국어 지원"
         "v1.2.7.7" "2026-03-06" "Use static firmware and module loading for custom modules"            "custom modules 사용 시 static 펌웨어/모듈 로딩"
-        "v1.2.7.6" "2026-03-01" "Expose modular selection menu as upper menu"                         "modular selection 메뉴를 상위 메뉴로 노출"
-        "v1.2.7.5" "2026-02-22" "Remove default internalportcfg value (0xffff) in user_config.json"   "user_config.json 기본 internalportcfg 값(0xffff) 제거"
-        "v1.2.7.4" "2026-02-12" "Removed DSM 7.3.X build warning, adjusted Jot Grub boot entry"       "DSM 7.3.X 빌드 경고 제거 및 Jot Grub 부트 엔트리 조정"
     )
 
     # 컬럼 수 (tag / date / desc_en / desc_kr)
