@@ -344,7 +344,7 @@ function seleudev() {
 # Shows available between FRIEND and JOT
 function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
-  eval "MSG29=\"\${MSG${tz}29}\""  
+  #eval "MSG29=\"\${MSG${tz}29}\""  
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
     if [ "${platform}" == "epyc7002(DT)" ]; then  
@@ -355,27 +355,8 @@ function selectldrmode() {
   else
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
   fi
-  menu_options+=("m" "${MSG29} : false")
   
   while true; do
-    # LDRMODE 상태에 따라 f/j/k 레이블 및 m 레이블 실시간 갱신
-    if [ "${LDRMODE}" = "JOT" ]; then
-      MSG_LDR="${MSG29}"
-      menu_options[-1]="${MSG29} : true"
-    else
-      MSG_LDR="${MSG28}"
-      menu_options[-1]="${MSG29} : false"
-    fi
-    # f, j, k 레이블 갱신 (키는 짝수, 레이블은 홀수 인덱스)
-    for key_idx in "${!menu_options[@]}"; do
-      [ $((key_idx % 2)) -eq 0 ] && continue          # 키 인덱스 스킵
-      case "${menu_options[$((key_idx - 1))]}" in
-        "f") menu_options[${key_idx}]="${MSG_LDR}, all-modules(Persistent:PML)" ;;
-        "j") menu_options[${key_idx}]="${MSG_LDR}, all-modules(In-Memory:IML)" ;;
-        "k") menu_options[${key_idx}]="${MSG_LDR}, custom-modules(Persistent:PML)" ;;
-      esac
-    done
-    
     dialog --clear --backtitle "`backtitle`" \
       --menu "Choose a option" 0 0 0 \
       "${menu_options[@]}" \
@@ -399,9 +380,9 @@ function selectldrmode() {
       MDLNAME="amdgpu-modules"
       MLMETHOD="PML"
       break
-    elif [ "${resp}" = "m" ]; then
-      [ "${LDRMODE}" = "JOT" ] && LDRMODE="FRIEND" || LDRMODE="JOT"
-      continue  # 레이블 갱신을 위해 루프 재진입
+    #elif [ "${resp}" = "m" ]; then
+    #  [ "${LDRMODE}" = "JOT" ] && LDRMODE="FRIEND" || LDRMODE="JOT"
+    #  continue  # 레이블 갱신을 위해 루프 재진입
     fi      
   done
   writeConfigKey "general" "loadermode" "${LDRMODE}"
@@ -2444,7 +2425,6 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
-  [ "${LDRMODE}" = "JOT" ] && ldrname="Direct-Boot" || ldrname="Friend"
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
@@ -2503,8 +2483,8 @@ while true; do
     k) selectldrmode ;    NEXT="p" ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
          make_with_progress "fri" "${prevent_init}" 
-       else  
-         make_with_progress "jot" "${prevent_init}"
+       #else  
+       #  make_with_progress "jot" "${prevent_init}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
          NEXT="y"
