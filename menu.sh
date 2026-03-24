@@ -272,9 +272,9 @@ if [ "${offline}" = "NO" ]; then
       echo "addons  : ${addons_hash}"
       echo "modules : ${modules_hash}"
       
-      #/dev/shm 공간 2.5GB 확보
-      sudo umount /dev/shm
-      sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
+      #/dev/shm 공간 2.5GB 확보, 메뉴빌드전 6GB 이상요구, 3GB /dev/shm 확보완료.
+      #sudo umount /dev/shm
+      #sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
       
       rm -rf /dev/shm/tcrp-addons
       mkdir -p /dev/shm/tcrp-addons
