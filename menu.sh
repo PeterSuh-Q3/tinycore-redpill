@@ -222,12 +222,26 @@ if [ "${offline}" = "NO" ]; then
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
+      if [ $? -ne 0 ]; then
+        echo "[!] extract_old_shell failed. Falling back to master functions.sh ..."
+        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+      fi      
       sleep 2
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
-    . /home/tc/functions.sh    
+    # 재소싱 전 파일 존재 확인
+    if [ -f /home/tc/functions.sh ]; then
+      . /home/tc/functions.sh
+    else
+      echo "[!] functions.sh not found, cannot source."
+      exit 1
+    fi
 fi
-
+if [ ! -f /home/tc/menu_m.sh ]; then
+  echo "[!] menu_m.sh not found, cannot execute."
+  exit 1
+fi
 /home/tc/menu_m.sh
 exit 0
