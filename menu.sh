@@ -243,5 +243,6 @@ if [ ! -f /home/tc/menu_m.sh ]; then
   echo "[!] menu_m.sh not found, cannot execute."
   exit 1
 fi
+chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
 exit 0
