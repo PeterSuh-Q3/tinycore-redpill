@@ -98,7 +98,7 @@ function extract_old_shell() {
   fi
 
   echo "[+] Extracting to ${EXTRACT_DIR} ..."
-  unzip -o "${TMP_ZIP}" -d "${WORK_DIR}"
+  unzip -o "${TMP_ZIP}" -d "${WORK_DIR}" 2>/dev/null
 
   if [ $? -ne 0 ]; then
     echo "[!] Extraction failed."
