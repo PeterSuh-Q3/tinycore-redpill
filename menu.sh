@@ -271,6 +271,8 @@ if [ ! -f /home/tc/menu_m.sh ]; then
   echo "[!] menu_m.sh not found, cannot execute."
   exit 1
 fi
+# 함수 전체 주석 처리 (실제 함수명: addon_gitdown)
+sed -i '/^function addon_gitdown/,/^}$/ s/^/#DISABLED# /' /home/tc/menu_m.sh
 chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
 exit 0
