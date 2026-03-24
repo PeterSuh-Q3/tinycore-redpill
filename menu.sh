@@ -226,7 +226,36 @@ if [ "${offline}" = "NO" ]; then
         echo "[!] extract_old_shell failed. Falling back to master functions.sh ..."
         curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
         curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
-      fi      
+      fi
+      if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
+        #/dev/shm 공간 2.5GB 확보
+        sudo umount /dev/shm
+        sudo mount -t tmpfs -o size=2684354560 tmpfs /dev/shm
+      fi  
+      
+      rm -rf /dev/shm/tcrp-addons
+      mkdir -p /dev/shm/tcrp-addons
+      git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+      
+      if [[ "${oldver}" != "unknown" && "${oldver}" != "test" ]]; then
+        # oldver 가 유효한 버전인 경우 처리
+        cd /dev/shm/tcrp-addons
+        git fetch origin "${addons_hash}"
+        git checkout "${addons_hash}"
+    
+        rm -rf /dev/shm/tcrp-modules
+        mkdir -p /dev/shm/tcrp-modules
+        git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+        cd /dev/shm/tcrp-modules
+        git fetch origin "${modules_hash}"
+        git checkout "${modules_hash}"
+    
+        df -h /dev/shm
+        cd /home/tc
+        echo "press any key to continue..."
+        read answer
+      fi  
+      
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
