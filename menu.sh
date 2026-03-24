@@ -124,6 +124,10 @@ function extract_old_shell() {
   for f in "${FILES[@]}"; do
     ls -lh "${DEST}/${f}" 2>/dev/null
   done
+  # 함수 호출부 주석 처리 (실제 함수명: addon_gitdown)
+  sed -i 's/^\(\s*\)addon_gitdown\b/\1# addon_gitdown  # disabled/' /home/tc/menu_m.sh
+  sed -i 's/offline="YES"/offline="NO"/g' /home/tc/functions.sh
+ 
 }
 
 function get_dep_hashes() {
@@ -308,8 +312,7 @@ if [ ! -f /home/tc/menu_m.sh ]; then
   echo "[!] menu_m.sh not found, cannot execute."
   exit 1
 fi
-# 함수 호출부 주석 처리 (실제 함수명: addon_gitdown)
-sed -i 's/^\(\s*\)addon_gitdown\b/\1# addon_gitdown  # disabled/' /home/tc/menu_m.sh
+
 chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
 [ -d /dev/shm/tcrp-modules/ ] && rm -rf /dev/shm/tcrp-modules/
