@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.4"
+rploaderver="1.2.8.5"
 build="master"
 redpillmake="prod"
 
@@ -229,6 +229,7 @@ function history() {
     1.2.8.2 Switch all-modules loading method from dynamic loading to static loading (like RR/ARC)
     1.2.8.3 Added user DTS file mapping feature
     1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
+    1.2.8.5 Discontinued Direct-Boot feature, added menu to revert to previous version build
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -667,6 +668,8 @@ EOF
 # Added user DTS file mapping feature
 # 2026.03.20 v1.2.8.4 
 # Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
+# 2026.03.24 v1.2.8.5 
+# Discontinued Direct-Boot feature, added menu to revert to previous version build
     
 function showlastupdate() {
     cat <<EOF
@@ -804,6 +807,9 @@ function showlastupdate() {
 
 # 2026.03.20 v1.2.8.4
 # Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
+
+# 2026.03.24 v1.2.8.5 
+# Discontinued Direct-Boot feature, added menu to revert to previous version build
 
 EOF
 }
