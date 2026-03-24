@@ -30,8 +30,8 @@ jobs:
           MODULES_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD | awk '{print $1}')
           
           {
-            echo "tcrp-addons : ${ADDONS_SHA}"
-            echo "tcrp-modules: ${MODULES_SHA}"
+            echo "${ADDONS_SHA}"
+            echo "${MODULES_SHA}"
             echo
             echo "    ${note}"
           } > RELEASE_NOTES.md
