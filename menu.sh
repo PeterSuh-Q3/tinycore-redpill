@@ -68,7 +68,7 @@ function extract_old_shell() {
   local REPO="PeterSuh-Q3/tinycore-redpill"
   local WORK_DIR="/dev/shm"
   local DEST="/home/tc"
-  local FILES=("menu_m.sh" "functions.sh" "i18n.h")
+  local FILES=("menu_m.sh" "functions.sh" "i18n.h my.sh.gz")
 
   if [ -z "$TAG" ]; then
     echo "Usage: fetch_tcredpill <tag>  (예: fetch_tcredpill v1.2.8.0)"
