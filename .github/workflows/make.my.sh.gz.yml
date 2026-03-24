@@ -24,7 +24,19 @@ jobs:
           vers=`cat functions.sh | grep rploaderver= | cut -d\" -f2`
           note=$(grep -m1 -A$((${{github.event.inputs.board}} - 1)) "${vers} " functions.sh | head -n ${{github.event.inputs.board}} | sed 's/^[[:space:]]*//')          
           #note=`cat functions.sh | grep "${vers} " | head -n 1`
-          echo "    ""${note}" > RELEASE_NOTES.md
+          
+          # ===== 여기부터 추가: addons / modules 최신 해시 얻기 =====
+          ADDONS_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-addons.git HEAD | awk '{print $1}')
+          MODULES_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD | awk '{print $1}')
+          
+          {
+            echo "tcrp-addons : ${ADDONS_SHA}"
+            echo "tcrp-modules: ${MODULES_SHA}"
+            echo
+            echo "    ${note}"
+          } > RELEASE_NOTES.md
+          # ===== 여기까지 수정 (기존 echo 한 줄을 블록으로 교체) =====
+          
           echo "note: ${note}"
           # 개행문자 제거 및 특수문자 이스케이프
           note_escaped=$(echo "${note}" | tr '\n' ' ' | sed 's/^ *//;s/ *$//')
