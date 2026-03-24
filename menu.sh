@@ -312,4 +312,5 @@ fi
 sed -i 's/^\(\s*\)addon_gitdown\b/\1# addon_gitdown  # disabled/' /home/tc/menu_m.sh
 chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
+[ -d /dev/shm/tcrp-modules/ ] && rm -rf /dev/shm/tcrp-modules/
 exit 0
