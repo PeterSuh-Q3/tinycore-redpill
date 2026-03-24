@@ -222,6 +222,7 @@ if [ "${offline}" = "NO" ]; then
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
+      sleep 2
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
