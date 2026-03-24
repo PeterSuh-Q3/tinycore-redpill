@@ -1898,16 +1898,6 @@ select_and_run_menu() {
         "v1.2.7.6" "2026-03-01" "Expose modular selection menu as upper menu"                         "modular selection 메뉴를 상위 메뉴로 노출"
         "v1.2.7.5" "2026-02-22" "Remove default internalportcfg value (0xffff) in user_config.json"   "user_config.json 기본 internalportcfg 값(0xffff) 제거"
         "v1.2.7.4" "2026-02-12" "Removed DSM 7.3.X build warning, adjusted Jot Grub boot entry"       "DSM 7.3.X 빌드 경고 제거 및 Jot Grub 부트 엔트리 조정"
-        "v1.2.7.3" "2026-02-08" "Changes to warning messages and guides for DSM 7.3.X loader build"   "DSM 7.3.X 로더 빌드 경고 메시지/가이드 변경"
-        "v1.2.7.2" "2026-02-05" "Official DSM 7.3 support, R8168 auto-conversion (EUDEV+DDSML)"       "DSM 7.3 공식 지원, R8168 자동변환(EUDEV+DDSML) 추가"
-        "v1.2.7.1" "2026-01-30" "Added support for DSM 7.1.0 and Braswell (DS916+, DS716+)"           "DSM 7.1.0 지원, Braswell (DS916+, DS716+) 추가"
-        "v1.2.7.0" "2026-01-24" "Skip backup and reboot after ttyd injection (prevent infinite reboot)" "ttyd 주입 후 백업/재부팅 스킵 (무한재부팅 방지)"
-        "v1.2.6.9" "2025-12-31" "Stabilization of system partition (md0) format menu"                 "시스템 파티션(md0) 포맷 메뉴 안정화"
-        "v1.2.6.8" "2025-12-17" "Improved backuploader() with free space check before backup"         "backuploader() 개선 (백업 전 여유공간 체크)"
-        "v1.2.6.7" "2025-12-03" "Support DSM 7.3.2-86009 official version (kernel 4.4 only)"          "DSM 7.3.2-86009 공식 버전 지원 (kernel 4.4 전용)"
-        "v1.2.6.6" "2025-11-18" "Default Verbose OFF on loader build, warning for 7.3/7.3.1 build"    "로더 빌드 시 Verbose OFF 기본처리, 7.3/7.3.1 경고 추가"
-        "v1.2.6.5" "2025-11-07" "Added Format System Partition (md0) menu for new install"            "신규 설치용 시스템 파티션(md0) 포맷 메뉴 추가"
-        "v1.2.6.4" "2025-11-02" "Add support for DSM 6.2.4-25556 official version"                    "DSM 6.2.4-25556 공식 버전 지원 추가"
     )
 
     # 컬럼 수 (tag / date / desc_en / desc_kr)
@@ -1963,7 +1953,7 @@ select_and_run_menu() {
     local SELECTED_TAG="${TAGS[$IDX]}"
 
     echo ">>> ${SELECTED_TAG}  ${MSG_RUN}"
-    bash menu.sh "${SELECTED_TAG}"
+    urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh "${SELECTED_TAG}"
 }
 
 function addon_gitdown()
