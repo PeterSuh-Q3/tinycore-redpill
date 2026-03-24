@@ -79,44 +79,51 @@ function extract_old_shell() {
   VER="${TAG#v}"
   
   REPONAME="tinycore-redpill"
-  FILENAME="${REPONAME}-${VER}.tar.gz"
+  FILENAME="${REPONAME}-${VER}.zip"
   URL="https://github.com/${REPO}/releases/download/${TAG}/${FILENAME}"
-  DEST="/dev/shm"
+  WORK_DIR="/dev/shm"
+  DEST="/home/tc"
   
   echo "[*] TAG     : ${TAG}"
   echo "[*] VERSION : ${VER}"
   echo "[*] URL     : ${URL}"
+  echo "[*] WORK    : ${WORK_DIR}"
   echo "[*] DEST    : ${DEST}"
   echo ""
-  
+
   # 다운로드
-  TMP_TGZ="${DEST}/${FILENAME}"
+  TMP_ZIP="${WORK_DIR}/${FILENAME}"
   echo "[+] Downloading ${FILENAME} ..."
-  curl -kL --retry 3 --retry-delay 2 -o "${TMP_TGZ}" "${URL}"
+  curl -kL --retry 3 --retry-delay 2 -o "${TMP_ZIP}" "${URL}"
   
-  if [ $? -ne 0 ] || [ ! -s "${TMP_TGZ}" ]; then
+  if [ $? -ne 0 ] || [ ! -s "${TMP_ZIP}" ]; then
       echo "[!] Download failed or file is empty: ${URL}"
       exit 1
   fi
   
-  # .sh 파일만 /dev/shm 에 압축해제
-  echo "[+] Extracting .sh files to ${DEST} ..."
-  tar -xzf "${TMP_TGZ}" -C "${DEST}" \
-      --wildcards '*.sh' \
-      --strip-components=1   # 최상위 디렉토리 제거 (필요시 0으로 변경)
+  # /dev/shm 에 압축 해제
+  EXTRACT_DIR="${WORK_DIR}/${REPONAME}-${VER}"
+  echo "[+] Extracting to ${EXTRACT_DIR} ..."
+  unzip -o "${TMP_ZIP}" -d "${WORK_DIR}"
   
   if [ $? -ne 0 ]; then
       echo "[!] Extraction failed."
-      rm -f "${TMP_TGZ}"
+      rm -f "${TMP_ZIP}"
       exit 1
   fi
   
-  # 압축파일 정리
-  rm -f "${TMP_TGZ}"
+  # .sh 파일만 /home/tc 로 복사
+  echo "[+] Copying .sh files to ${DEST} ..."
+  find "${EXTRACT_DIR}" -maxdepth 1 -name "*.sh" -exec cp -v {} "${DEST}/" \;
+  chmod +x "${DEST}"/*.sh 2>/dev/null
+  
+  # 임시 파일 정리
+  rm -f "${TMP_ZIP}"
+  rm -rf "${EXTRACT_DIR}"
+  
   echo ""
-  echo "[+] Done. Extracted .sh files:"
+  echo "[+] Done. .sh files in ${DEST}:"
   ls -lh "${DEST}"/*.sh 2>/dev/null
-  cp -vf "${DEST}"/*.sh /home/tc/
 
 }
 
