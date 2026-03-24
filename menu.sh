@@ -214,7 +214,7 @@ if [ "${offline}" = "NO" ]; then
     elif [ "$oldver" = "unknown" ]; then
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
     else
-      cecho g "###############################  This is for version v${oldver} ############################"
+      cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
     fi
 
