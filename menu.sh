@@ -62,6 +62,64 @@ function mmc_modprobe() {
   fi
 }
 
+function extract_old_shell() {
+
+# Usage: ./fetch_tcredpill.sh v1.2.8.4
+# GitHub release에서 tgz를 다운로드해 .sh 파일만 /dev/shm 에 압축해제
+
+  REPO="PeterSuh-Q3/tinycore-redpill"   # repo를 필요에 따라 변경
+  TAG="${1}"
+  
+  if [ -z "$TAG" ]; then
+      echo "Usage: $0 <tag>  (예: $0 v1.2.8.4)"
+      exit 1
+  fi
+  
+  # tag에서 v 제거하여 파일명 버전 생성
+  VER="${TAG#v}"
+  
+  REPONAME="tinycore-redpill"
+  FILENAME="${REPONAME}-${VER}.tar.gz"
+  URL="https://github.com/${REPO}/releases/download/${TAG}/${FILENAME}"
+  DEST="/dev/shm"
+  
+  echo "[*] TAG     : ${TAG}"
+  echo "[*] VERSION : ${VER}"
+  echo "[*] URL     : ${URL}"
+  echo "[*] DEST    : ${DEST}"
+  echo ""
+  
+  # 다운로드
+  TMP_TGZ="${DEST}/${FILENAME}"
+  echo "[+] Downloading ${FILENAME} ..."
+  curl -kL --retry 3 --retry-delay 2 -o "${TMP_TGZ}" "${URL}"
+  
+  if [ $? -ne 0 ] || [ ! -s "${TMP_TGZ}" ]; then
+      echo "[!] Download failed or file is empty: ${URL}"
+      exit 1
+  fi
+  
+  # .sh 파일만 /dev/shm 에 압축해제
+  echo "[+] Extracting .sh files to ${DEST} ..."
+  tar -xzf "${TMP_TGZ}" -C "${DEST}" \
+      --wildcards '*.sh' \
+      --strip-components=1   # 최상위 디렉토리 제거 (필요시 0으로 변경)
+  
+  if [ $? -ne 0 ]; then
+      echo "[!] Extraction failed."
+      rm -f "${TMP_TGZ}"
+      exit 1
+  fi
+  
+  # 압축파일 정리
+  rm -f "${TMP_TGZ}"
+  echo ""
+  echo "[+] Done. Extracted .sh files:"
+  ls -lh "${DEST}"/*.sh 2>/dev/null
+  cp -vf "${DEST}"/*.sh /home/tc/
+
+}
+
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
     if [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ]; then
         echo "There is Synodisk Injected Bootloader..."
