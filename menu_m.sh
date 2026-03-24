@@ -1860,13 +1860,38 @@ function chk_shr_ex()
 }
 
 select_and_run_menu() {
-    # ucode 변수 기반 언어 설정
+
+   # 총 메모리(kB) 읽기
+    local MEM_KB
+    MEM_KB=$(grep -i '^MemTotal:' /proc/meminfo 2>/dev/null | awk '{print $2}')
+    # kB → MiB
+    local MEM_MB=$(( MEM_KB / 1024 ))
+    # 6GB 기준 (약 6144MB)
+    local MIN_MB=6144
+
+    # ucode 기반 언어 설정 먼저 해서 메시지 분기에 사용
     if [ "${ucode}" = "ko_KR" ]; then
         local LANG_KR=true
     else
         local LANG_KR=false
     fi
 
+    if [ "$MEM_MB" -lt "$MIN_MB" ]; then
+        if [ "${LANG_KR}" = true ]; then
+            echo "이전 버전 재빌드를 위해서는 최소 6GB 이상의 메모리가 필요합니다."
+            echo "현재 시스템 메모리: ${MEM_MB}MB"
+            echo -n "계속하려면 아무 키나 누르세요..."
+        else
+            echo "At least 6GB of memory is required to rebuild the previous version."
+            echo "Current system memory: ${MEM_MB}MB"
+            echo -n "Press any key to continue..."
+        fi
+        # 아무 키 입력 대기
+        read -r -n1 _
+        echo
+        return
+    fi
+    
     # TAG / DATE / DESC_EN / DESC_KR
     local TAGS=(
         "v1.2.8.4" "2026-03-24" "Supports two distinct menus for IML / PML module loading"             "IML / PML 두 가지 모듈 로딩 메뉴 지원"
