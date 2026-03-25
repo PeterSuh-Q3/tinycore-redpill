@@ -2050,6 +2050,8 @@ function showAutoUpdateMenu() {
       12 60 2 \
       "a" "Tinycore Loader Builder Auto Update  [ ${TCB_LABEL} ]" \
       "b" "FRIEND Kernel Console Auto Update    [ ${FKC_LABEL} ]" \
+      "c" "Run Tinycore Loader Builder Update" \
+      "d" "Run Friend Kernel Console Update" \
       3>&1 1>&2 2>&3)
 
     EXIT_CODE=$?
@@ -2074,6 +2076,15 @@ function showAutoUpdateMenu() {
         [ "$FKC" = "true" ] && FKC="false" || FKC="true"
         writeConfigKey "general" "friendautoupd" "${FKC}"
         ;;
+      c)
+        getlatestmshell "noask"
+        dialog --msgbox "\nUpdate complete.\nA reboot is required to apply changes.\n\nPress Enter to Reboot..." 9 50
+        clear
+        sudo reboot
+        ;;
+      d)
+        bringoverfriend
+        ;;        
     esac
   done
 }
