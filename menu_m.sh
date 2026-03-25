@@ -2031,8 +2031,9 @@ function showAutoUpdateMenu() {
   TCB=$(readConfigKey "general" "tcbautoupd")
   FKC=$(readConfigKey "general" "friendautoupd")
 
-  [[ "$TCB" != "true" && "$TCB" != "false" ]] && TCB="false"
-  [[ "$FKC" != "true" && "$FKC" != "false" ]] && FKC="false"
+  # 누락 시 기본값 ON
+  [[ "$TCB" != "true" && "$TCB" != "false" ]] && TCB="true"
+  [[ "$FKC" != "true" && "$FKC" != "false" ]] && FKC="true"  
 
   while true; do
     local TCB_LABEL FKC_LABEL CHOICE EXIT_CODE
