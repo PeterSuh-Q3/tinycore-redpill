@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.5"
+rploaderver="1.2.8.6"
 build="master"
 redpillmake="prod"
 
@@ -230,6 +230,7 @@ function history() {
     1.2.8.3 Added user DTS file mapping feature
     1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     1.2.8.5 Discontinued Direct-Boot feature, added menu to revert to previous version build
+    1.2.8.6 Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -670,6 +671,8 @@ EOF
 # Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
 # 2026.03.24 v1.2.8.5 
 # Discontinued Direct-Boot feature, added menu to revert to previous version build
+# 2026.03.25 v1.2.8.6 
+# Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
     
 function showlastupdate() {
     cat <<EOF
@@ -810,6 +813,9 @@ function showlastupdate() {
 
 # 2026.03.24 v1.2.8.5 
 # Discontinued Direct-Boot feature, added menu to revert to previous version build
+
+# 2026.03.25 v1.2.8.6 
+# Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
 
 EOF
 }
@@ -2168,6 +2174,14 @@ function sync_usb_line() {
     
     # JSON 파일 업데이트
     jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+}
+
+###############################################################################
+# Read json config file
+function readConfigKey() {
+  local section="$1"
+  local key="$2"
+  jq -r -e ".${section}.${key} // empty" "${userconfigfile}" 2>/dev/null
 }
 
 ###############################################################################
@@ -5676,7 +5690,7 @@ function rploader() {
     build)
 
         getvars $ORIGIN_PLATFORM
-        if [ -f /dev/shm/offline ]; then
+        if [ -d /dev/shm/tcrp-modules/ ]; then
             offline="YES"
         else
             offline="NO"
@@ -5787,7 +5801,7 @@ function my() {
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
   fi
   
-  if [ -f /dev/shm/offline ]; then
+  if [ -d /dev/shm/tcrp-modules/ ]; then
       offline="YES"
   else
       offline="NO"
@@ -5800,7 +5814,7 @@ function my() {
                   getlatestmshell "noask"
                   exit 0
               else
-                  getlatestmshell "noask"
+                  [ "$TCB" = "true" ] && getlatestmshell "noask"
               fi
           fi
       fi
