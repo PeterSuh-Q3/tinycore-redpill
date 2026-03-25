@@ -4546,46 +4546,50 @@ function curlfriend() {
 }
 
 function bringoverfriend() {
+  local retval=0
 
-  [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
+  [ ! -d /home/tc/friend ] && mkdir -p /home/tc/friend && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then  #||[ "${CPU}" = "HP" ]
-      curlfriend
-  else    
-      echo -n "Checking for latest friend -> "
-      # for test
-      #curl -kLO# https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/chksum -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/bzImage-friend -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/initrd-friend
-      #return
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then
+    # 파일 없음 → curlfriend 호출 후 리턴값 전달
+    curlfriend || { retval=2; msgalert "curlfriend failed"; }
+    return $retval
+  fi
+
+  echo -n "Checking for latest friend -> "
+  URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
+  curl --connect-timeout 5 -s -k -L "$URL" -O || { retval=3; msgalert "Failed to download chksum"; return $retval; }
+
+  if [ -f chksum ]; then
+    FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+    BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+    INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+
+    if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && \
+       [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
+      msgnormal "OK, latest \n"
+      return 0  # 최신 버전
+    else
+      msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
+      curlfriend || { retval=2; msgalert "curlfriend update failed"; return $retval; }
       
-      URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
-      [ -n "$URL" ] && curl --connect-timeout 5 -s -k -L $URL -O
-    
-      if [ -f chksum ]; then
-        FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-        BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-        INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-        if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
-            msgnormal "OK, latest \n"
-        else
-            msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
-            curlfriend
-    
-            if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
-                FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-                BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-                INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-                cat chksum |grep VERSION
-                echo
-                [ "$(sha256sum bzImage-friend | awk '{print $1}')" == "$BZIMAGESHA256" ] && msgnormal "bzImage-friend checksum OK !" || msgalert "bzImage-friend checksum ERROR !" || exit 99
-                [ "$(sha256sum initrd-friend | awk '{print $1}')" == "$INITRDSHA256" ] && msgnormal "initrd-friend checksum OK !" || msgalert "initrd-friend checksum ERROR !" || exit 99
-            else
-                msgalert "Could not find friend files !!!!!!!!!!!!!!!!!!!!!!!"
-            fi
-        fi
+      # 체크섬 검증
+      if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
+        [ "$(sha256sum bzImage-friend | awk '{print $1}')" != "$BZIMAGESHA256" ] && { retval=2; msgalert "bzImage-friend checksum ERROR!"; return $retval; }
+        [ "$(sha256sum initrd-friend | awk '{print $1}')" != "$INITRDSHA256" ] && { retval=2; msgalert "initrd-friend checksum ERROR!"; return $retval; }
+        msgnormal "Update successful: $FRIENDVERSION"
+        return 1  # 업데이트 성공
       else
-        msgalert "No IP yet to check for latest friend \n"
+        retval=2
+        msgalert "Could not find friend files!"
+        return $retval
       fi
-   fi
+    fi
+  else
+    retval=3
+    msgalert "No chksum file downloaded"
+    return $retval
+  fi
 }
 
 function synctime() {
