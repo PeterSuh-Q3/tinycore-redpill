@@ -2062,6 +2062,7 @@ function showAutoUpdateMenu() {
       writeConfigKey "general" "friendautoupd" "${FKC}"
       dialog --infobox "Settings saved." 3 25
       sleep 1
+      backuploader
       clear
       return 0
     fi
