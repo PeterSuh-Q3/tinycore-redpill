@@ -204,6 +204,8 @@ LDRMODE=$(readConfigKey "general" "loadermode")
 MDLNAME=$(readConfigKey "general" "modulename")
 MLMETHOD=$(readConfigKey "general" "mlmethod")
 ucode=$(readConfigKey "general" "ucode")
+TCB=$(readConfigKey "general" "tcbautoupd")
+FKC=$(readConfigKey "general" "friendautoupd")
 
 if [ -z "${KEYMAP}" ]; then
     LAYOUT="qwerty"
@@ -251,6 +253,16 @@ fi
 if [ -z "${MLMETHOD}" ]; then
     MLMETHOD="IML"
     writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
+fi
+
+if [ -z "${TCB}" ]; then
+    TCB="true"
+    writeConfigKey "general" "tcbautoupd" "${TCB}"          
+fi
+
+if [ -z "${FKC}" ]; then
+    FKC="true"
+    writeConfigKey "general" "friendautoupd" "${FKC}"          
 fi
 
 lcode=$(echo $ucode | cut -c 4-)
@@ -2027,9 +2039,6 @@ function getLabel() {
 
 # ─── 메인 메뉴 함수 ──────────────────────────────────────────────
 function showAutoUpdateMenu() {
-
-  TCB=$(readConfigKey "general" "tcbautoupd")
-  FKC=$(readConfigKey "general" "friendautoupd")
 
   # 누락 시 기본값 ON
   [[ "$TCB" != "true" && "$TCB" != "false" ]] && TCB="true"
