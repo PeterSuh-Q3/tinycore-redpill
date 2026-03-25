@@ -1948,46 +1948,57 @@ function chkDsmversion() {
 }
 
 function getlatestmshell() {
+  local retval=0
 
-    echo -n "Checking if a newer mshell version exists on the repo -> "
+  echo -n "Checking if a newer mshell version exists on the repo -> "
 
-    if [ ! -f $mshellgz ]; then
-        curl -ksL "$mshtarfile" -o $mshellgz
-    fi
+  # 최신 파일 다운로드
+  curl -ksL "$mshtarfile" -o latest.mshell.gz || { retval=3; msgalert "Failed to download latest.mshell.gz"; return $retval; }
 
-    curl -ksL "$mshtarfile" -o latest.mshell.gz
+  if [ ! -f "$mshellgz" ] || [ ! -f latest.mshell.gz ]; then
+    retval=3
+    msgalert "Required files not found"
+    rm -f latest.mshell.gz
+    return $retval
+  fi
 
-    CURRENTSHA="$(sha256sum $mshellgz | awk '{print $1}')"
-    REPOSHA="$(sha256sum latest.mshell.gz | awk '{print $1}')"
+  CURRENTSHA="$(sha256sum "$mshellgz" | awk '{print $1}')"
+  REPOSHA="$(sha256sum latest.mshell.gz | awk '{print $1}')"
 
-    if [ "${CURRENTSHA}" != "${REPOSHA}" ]; then
-    
-        if [ "${1}" = "noask" ]; then
-            confirmation="y"
-        else
-            echo -n "There is a newer version of m shell script on the repo should we use that ? [yY/nN]"
-            read confirmation
-        fi
-    
-        if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
-            echo "OK, updating, please re-run after updating"
-            cp -f /home/tc/latest.mshell.gz /home/tc/$mshellgz
-            rm -f /home/tc/latest.mshell.gz
-            tar -zxvf $mshellgz
-            echo "Updating m shell with latest updates"
-            . /home/tc/functions.sh
-            showlastupdate
-            echo "y"|rploader backup
-            echo "press any key to continue..."
-            read answer
-        else
-            rm -f /home/tc/latest.mshell.gz
-        fi
+  if [ "${CURRENTSHA}" != "${REPOSHA}" ]; then
+    if [ "${1}" = "noask" ]; then
+      local confirmation="y"
     else
-        echo "Version is current"
-        rm -f /home/tc/latest.mshell.gz
+      echo -n "There is a newer version of m shell script on the repo should we use that ? [yY/nN]"
+      read confirmation
     fi
 
+    if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
+      echo "OK, updating, please re-run after updating"
+      
+      # 업데이트 과정
+      cp -f latest.mshell.gz "$mshellgz" || { retval=3; msgalert "Failed to copy mshell.gz"; rm -f latest.mshell.gz; return $retval; }
+      rm -f latest.mshell.gz
+      
+      tar -zxvf "$mshellgz" || { retval=3; msgalert "Failed to extract mshell.gz"; return $retval; }
+      
+      echo "Updating m shell with latest updates"
+      . /home/tc/functions.sh
+      showlastupdate
+      echo "y" | rploader backup
+      
+      retval=1  # 업데이트 성공
+    else
+      rm -f latest.mshell.gz
+      retval=2  # 업데이트 거부
+    fi
+  else
+    echo "Version is current"
+    rm -f latest.mshell.gz
+    retval=0  # 최신 버전
+  fi
+
+  return $retval
 }
 
 function get_tinycore9() {
