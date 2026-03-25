@@ -2177,6 +2177,14 @@ function sync_usb_line() {
 }
 
 ###############################################################################
+# Read json config file
+function readConfigKey() {
+  local section="$1"
+  local key="$2"
+  jq -r -e ".${section}.${key} // empty" "${userconfigfile}" 2>/dev/null
+}
+
+###############################################################################
 # Write to json config file
 function writeConfigKey() {
 
