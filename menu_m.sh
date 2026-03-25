@@ -2095,6 +2095,8 @@ function showAutoUpdateMenu() {
           3)
             dialog --msgbox "Update failed (code: $retval)\nCheck network and try again." 7 45
             ;;
+        esac
+        ;;
       d)
         bringoverfriend
         local retval=$?
@@ -2103,15 +2105,15 @@ function showAutoUpdateMenu() {
             dialog --msgbox "Already latest version." 6 40
             ;;
           1)
-            dialog --msgbox "\nUpdate complete.\nReboot required.\n\nPress Enter to Reboot..." 9 50
-            clear
-            sudo reboot
+            dialog --msgbox "Update complete." 9 50
             ;;
           2|3)
             dialog --msgbox "Update failed (code: $retval)\nCheck logs and try again." 7 45
-            ;;        
-     esac
-  done
+            ;;
+        esac
+        ;;
+    esac  # ← 이 `case "${CHOICE}"` 의 종료
+  done    # ← 이 `while true` 의 종료
 }
 
 # Main loop ###########################################################################################
