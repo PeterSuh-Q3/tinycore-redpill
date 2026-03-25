@@ -2047,7 +2047,7 @@ function showAutoUpdateMenu() {
       --ok-label "Toggle" \
       --cancel-label "Save & Exit" \
       --menu "\nENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit\n" \
-      12 60 2 \
+      12 60 4 \
       "a" "Tinycore Loader Builder Auto Update  [ ${TCB_LABEL} ]" \
       "b" "FRIEND Kernel Console Auto Update    [ ${FKC_LABEL} ]" \
       "c" "Run Tinycore Loader Builder Update" \
