@@ -239,10 +239,9 @@ fi
 
 [ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
 
-if [ -z "${LDRMODE}" ]; then
-    LDRMODE="FRIEND"
-    writeConfigKey "general" "loadermode" "${LDRMODE}"          
-fi
+# FIX FRIEND, No Jot Mode
+LDRMODE="FRIEND"
+writeConfigKey "general" "loadermode" "${LDRMODE}"   
 
 if [ -z "${MDLNAME}" ]; then
     MDLNAME="all-modules"
