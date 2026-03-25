@@ -1948,46 +1948,57 @@ function chkDsmversion() {
 }
 
 function getlatestmshell() {
+  local retval=0
 
-    echo -n "Checking if a newer mshell version exists on the repo -> "
+  echo -n "Checking if a newer mshell version exists on the repo -> "
 
-    if [ ! -f $mshellgz ]; then
-        curl -ksL "$mshtarfile" -o $mshellgz
-    fi
+  # 최신 파일 다운로드
+  curl -ksL "$mshtarfile" -o latest.mshell.gz || { retval=3; msgalert "Failed to download latest.mshell.gz"; return $retval; }
 
-    curl -ksL "$mshtarfile" -o latest.mshell.gz
+  if [ ! -f "$mshellgz" ] || [ ! -f latest.mshell.gz ]; then
+    retval=3
+    msgalert "Required files not found"
+    rm -f latest.mshell.gz
+    return $retval
+  fi
 
-    CURRENTSHA="$(sha256sum $mshellgz | awk '{print $1}')"
-    REPOSHA="$(sha256sum latest.mshell.gz | awk '{print $1}')"
+  CURRENTSHA="$(sha256sum "$mshellgz" | awk '{print $1}')"
+  REPOSHA="$(sha256sum latest.mshell.gz | awk '{print $1}')"
 
-    if [ "${CURRENTSHA}" != "${REPOSHA}" ]; then
-    
-        if [ "${1}" = "noask" ]; then
-            confirmation="y"
-        else
-            echo -n "There is a newer version of m shell script on the repo should we use that ? [yY/nN]"
-            read confirmation
-        fi
-    
-        if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
-            echo "OK, updating, please re-run after updating"
-            cp -f /home/tc/latest.mshell.gz /home/tc/$mshellgz
-            rm -f /home/tc/latest.mshell.gz
-            tar -zxvf $mshellgz
-            echo "Updating m shell with latest updates"
-            . /home/tc/functions.sh
-            showlastupdate
-            echo "y"|rploader backup
-            echo "press any key to continue..."
-            read answer
-        else
-            rm -f /home/tc/latest.mshell.gz
-        fi
+  if [ "${CURRENTSHA}" != "${REPOSHA}" ]; then
+    if [ "${1}" = "noask" ]; then
+      local confirmation="y"
     else
-        echo "Version is current"
-        rm -f /home/tc/latest.mshell.gz
+      echo -n "There is a newer version of m shell script on the repo should we use that ? [yY/nN]"
+      read confirmation
     fi
 
+    if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
+      echo "OK, updating, please re-run after updating"
+      
+      # 업데이트 과정
+      cp -f latest.mshell.gz "$mshellgz" || { retval=3; msgalert "Failed to copy mshell.gz"; rm -f latest.mshell.gz; return $retval; }
+      rm -f latest.mshell.gz
+      
+      tar -zxvf "$mshellgz" || { retval=3; msgalert "Failed to extract mshell.gz"; return $retval; }
+      
+      echo "Updating m shell with latest updates"
+      . /home/tc/functions.sh
+      showlastupdate
+      echo "y" | rploader backup
+      
+      retval=1  # 업데이트 성공
+    else
+      rm -f latest.mshell.gz
+      retval=2  # 업데이트 거부
+    fi
+  else
+    echo "Version is current"
+    rm -f latest.mshell.gz
+    retval=0  # 최신 버전
+  fi
+
+  return $retval
 }
 
 function get_tinycore9() {
@@ -4546,46 +4557,50 @@ function curlfriend() {
 }
 
 function bringoverfriend() {
+  local retval=0
 
-  [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
+  [ ! -d /home/tc/friend ] && mkdir -p /home/tc/friend && cd /home/tc/friend
 
-  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then  #||[ "${CPU}" = "HP" ]
-      curlfriend
-  else    
-      echo -n "Checking for latest friend -> "
-      # for test
-      #curl -kLO# https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/chksum -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/bzImage-friend -O https://github.com/PeterSuh-Q3/tcrpfriend/releases/download/v0.1.0o/initrd-friend
-      #return
+  if [ ! -f /mnt/${tcrppart}/bzImage-friend ] || [ -f /tmp/test_mode ]; then
+    # 파일 없음 → curlfriend 호출 후 리턴값 전달
+    curlfriend || { retval=2; msgalert "curlfriend failed"; }
+    return $retval
+  fi
+
+  echo -n "Checking for latest friend -> "
+  URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
+  curl --connect-timeout 5 -s -k -L "$URL" -O || { retval=3; msgalert "Failed to download chksum"; return $retval; }
+
+  if [ -f chksum ]; then
+    FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
+    BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
+    INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
+
+    if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && \
+       [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
+      msgnormal "OK, latest \n"
+      return 0  # 최신 버전
+    else
+      msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
+      curlfriend || { retval=2; msgalert "curlfriend update failed"; return $retval; }
       
-      URL="https://github.com/PeterSuh-Q3/tcrpfriend/releases/latest/download/chksum"
-      [ -n "$URL" ] && curl --connect-timeout 5 -s -k -L $URL -O
-    
-      if [ -f chksum ]; then
-        FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-        BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-        INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-        if [ "$(sha256sum /mnt/${tcrppart}/bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum /mnt/${tcrppart}/initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ]; then
-            msgnormal "OK, latest \n"
-        else
-            msgwarning "Found new version, bringing over new friend version : $FRIENDVERSION \n"
-            curlfriend
-    
-            if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
-                FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
-                BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
-                INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-                cat chksum |grep VERSION
-                echo
-                [ "$(sha256sum bzImage-friend | awk '{print $1}')" == "$BZIMAGESHA256" ] && msgnormal "bzImage-friend checksum OK !" || msgalert "bzImage-friend checksum ERROR !" || exit 99
-                [ "$(sha256sum initrd-friend | awk '{print $1}')" == "$INITRDSHA256" ] && msgnormal "initrd-friend checksum OK !" || msgalert "initrd-friend checksum ERROR !" || exit 99
-            else
-                msgalert "Could not find friend files !!!!!!!!!!!!!!!!!!!!!!!"
-            fi
-        fi
+      # 체크섬 검증
+      if [ -f bzImage-friend ] && [ -f initrd-friend ] && [ -f chksum ]; then
+        [ "$(sha256sum bzImage-friend | awk '{print $1}')" != "$BZIMAGESHA256" ] && { retval=2; msgalert "bzImage-friend checksum ERROR!"; return $retval; }
+        [ "$(sha256sum initrd-friend | awk '{print $1}')" != "$INITRDSHA256" ] && { retval=2; msgalert "initrd-friend checksum ERROR!"; return $retval; }
+        msgnormal "Update successful: $FRIENDVERSION"
+        return 1  # 업데이트 성공
       else
-        msgalert "No IP yet to check for latest friend \n"
+        retval=2
+        msgalert "Could not find friend files!"
+        return $retval
       fi
-   fi
+    fi
+  else
+    retval=3
+    msgalert "No chksum file downloaded"
+    return $retval
+  fi
 }
 
 function synctime() {
