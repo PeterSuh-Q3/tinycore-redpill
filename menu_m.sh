@@ -171,39 +171,88 @@ fi
 
 TMP_PATH=/tmp
 LOG_FILE="${TMP_PATH}/log.txt"
-USER_CONFIG_FILE="/home/tc/user_config.json"
-if [ ! -f "${USER_CONFIG_FILE}" ]; then
+
+if [ ! -f "${userconfigfile}" ]; then
     echo "Not Found User config file, program Exit!!!"
     echo "press any key to continue..."
     read answer    
     exit 99
 fi
 
-MODEL=$(jq -r -e '.general.model' "$USER_CONFIG_FILE")
-BUILD=$(jq -r -e '.general.version' "$USER_CONFIG_FILE")
-SN=$(jq -r -e '.extra_cmdline.sn' "$USER_CONFIG_FILE")
-MACADDR1="$(jq -r -e '.extra_cmdline.mac1' $USER_CONFIG_FILE)"
-MACADDR2="$(jq -r -e '.extra_cmdline.mac2' $USER_CONFIG_FILE)"
-MACADDR3="$(jq -r -e '.extra_cmdline.mac3' $USER_CONFIG_FILE)"
-MACADDR4="$(jq -r -e '.extra_cmdline.mac4' $USER_CONFIG_FILE)"
-MACADDR5="$(jq -r -e '.extra_cmdline.mac5' $USER_CONFIG_FILE)"
-MACADDR6="$(jq -r -e '.extra_cmdline.mac6' $USER_CONFIG_FILE)"
-MACADDR7="$(jq -r -e '.extra_cmdline.mac7' $USER_CONFIG_FILE)"
-MACADDR8="$(jq -r -e '.extra_cmdline.mac8' $USER_CONFIG_FILE)"
+MODEL=$(readConfigKey "general" "model")
+BUILD=$(readConfigKey "general" "version")
+SN=$(readConfigKey "extra_cmdline" "sn")
+MACADDR1=$(readConfigKey "extra_cmdline" "mac1")
+MACADDR2=$(readConfigKey "extra_cmdline" "mac2")
+MACADDR3=$(readConfigKey "extra_cmdline" "mac3")
+MACADDR4=$(readConfigKey "extra_cmdline" "mac4")
+MACADDR5=$(readConfigKey "extra_cmdline" "mac5")
+MACADDR6=$(readConfigKey "extra_cmdline" "mac6")
+MACADDR7=$(readConfigKey "extra_cmdline" "mac7")
+MACADDR8=$(readConfigKey "extra_cmdline" "mac8")
 NETNUM="1"
 
-LAYOUT=$(jq -r -e '.general.layout' "$USER_CONFIG_FILE")
-KEYMAP=$(jq -r -e '.general.keymap' "$USER_CONFIG_FILE")
+LAYOUT=$(readConfigKey "general" "layout")
+KEYMAP=$(readConfigKey "general" "keymap")
 
-I915MODE=$(jq -r -e '.general.i915mode' "$USER_CONFIG_FILE")
-BFBAY=$(jq -r -e '.general.bay' "$USER_CONFIG_FILE")
-DMPM=$(jq -r -e '.general.devmod' "$USER_CONFIG_FILE")
-NVMES=$(jq -r -e '.general.nvmesystem' "$USER_CONFIG_FILE")
-VMTOOLS=$(jq -r -e '.general.vmtools' "$USER_CONFIG_FILE")
-LDRMODE=$(jq -r -e '.general.loadermode' "$USER_CONFIG_FILE")
-MDLNAME=$(jq -r -e '.general.modulename' "$USER_CONFIG_FILE")
-MLMETHOD=$(jq -r -e '.general.mlmethod' "$USER_CONFIG_FILE")
-ucode=$(jq -r -e '.general.ucode' "$USER_CONFIG_FILE")
+I915MODE=$(readConfigKey "general" "i915mode")
+BFBAY=$(readConfigKey "general" "bay")
+DMPM=$(readConfigKey "general" "devmod")
+NVMES=$(readConfigKey "general" "nvmesystem")
+VMTOOLS=$(readConfigKey "general" "vmtools")
+LDRMODE=$(readConfigKey "general" "loadermode")
+MDLNAME=$(readConfigKey "general" "modulename")
+MLMETHOD=$(readConfigKey "general" "mlmethod")
+ucode=$(readConfigKey "general" "ucode")
+
+if [ -z "${KEYMAP}" ]; then
+    LAYOUT="qwerty"
+    KEYMAP="us"
+    writeConfigKey "general" "layout" "${LAYOUT}"
+    writeConfigKey "general" "keymap" "${KEYMAP}"
+fi
+
+if [ -z "${I915MODE}" ]; then
+    I915MODE="1"
+    writeConfigKey "general" "i915mode" "${I915MODE}"
+fi
+
+if [ -z "${DMPM}" ]; then
+    DMPM="DDSML"
+    writeConfigKey "general" "devmod" "${DMPM}"          
+fi
+
+if [ "${BUS}" = "mmc"  ]; then
+    DMPM="EUDEV"
+    writeConfigKey "general" "devmod" "${DMPM}"          
+fi
+
+if [ -z "${NVMES}" ]; then
+    NVMES="false"
+    writeConfigKey "general" "nvmesystem" "${NVMES}"
+fi
+
+if [ -z "${VMTOOLS}" ]; then
+    VMTOOLS="false"
+    writeConfigKey "general" "vmtools" "${VMTOOLS}"
+fi
+
+[ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
+
+if [ -z "${LDRMODE}" ]; then
+    LDRMODE="FRIEND"
+    writeConfigKey "general" "loadermode" "${LDRMODE}"          
+fi
+
+if [ -z "${MDLNAME}" ]; then
+    MDLNAME="all-modules"
+    writeConfigKey "general" "modulename" "${MDLNAME}"          
+fi
+
+if [ -z "${MLMETHOD}" ]; then
+    MLMETHOD="IML"
+    writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
+fi
 
 lcode=$(echo $ucode | cut -c 4-)
 BLOCK_EUDEV="N"
@@ -827,13 +876,13 @@ function prevent() {
 function editUserConfig() {
   while true; do
     dialog --backtitle "`backtitle`" --title "Edit with caution" \
-      --editbox "${USER_CONFIG_FILE}" 0 0 2>"${TMP_PATH}/userconfig"
+      --editbox "${userconfigfile}" 0 0 2>"${TMP_PATH}/userconfig"
     
     [ $? -ne 0 ] && return
 
     # JSON format validation
     if jq . "${TMP_PATH}/userconfig" > /dev/null 2>&1; then
-        mv "${TMP_PATH}/userconfig" "${USER_CONFIG_FILE}"
+        mv "${TMP_PATH}/userconfig" "${userconfigfile}"
         [ $? -eq 0 ] && break
     else
         dialog --backtitle "`backtitle`" --title "Invalid JSON format" --msgbox "The JSON format is invalid." 0 0
@@ -842,17 +891,18 @@ function editUserConfig() {
 
   sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json
 
-  MODEL="$(jq -r -e '.general.model' $USER_CONFIG_FILE)"
-  SN="$(jq -r -e '.extra_cmdline.sn' $USER_CONFIG_FILE)"
-  MACADDR1="$(jq -r -e '.extra_cmdline.mac1' $USER_CONFIG_FILE)"
-  MACADDR2="$(jq -r -e '.extra_cmdline.mac2' $USER_CONFIG_FILE)"
-  MACADDR3="$(jq -r -e '.extra_cmdline.mac3' $USER_CONFIG_FILE)"
-  MACADDR4="$(jq -r -e '.extra_cmdline.mac4' $USER_CONFIG_FILE)"
-  MACADDR5="$(jq -r -e '.extra_cmdline.mac5' $USER_CONFIG_FILE)"
-  MACADDR6="$(jq -r -e '.extra_cmdline.mac6' $USER_CONFIG_FILE)"
-  MACADDR7="$(jq -r -e '.extra_cmdline.mac7' $USER_CONFIG_FILE)"
-  MACADDR8="$(jq -r -e '.extra_cmdline.mac8' $USER_CONFIG_FILE)"
-  NETNUM"=$(jq -r -e '.extra_cmdline.netif_num' $USER_CONFIG_FILE)"
+  MODEL=$(readConfigKey "general" "model")
+  SN=$(readConfigKey "extra_cmdline" "sn")
+  MACADDR1=$(readConfigKey "extra_cmdline" "mac1")
+  MACADDR2=$(readConfigKey "extra_cmdline" "mac2")
+  MACADDR3=$(readConfigKey "extra_cmdline" "mac3")
+  MACADDR4=$(readConfigKey "extra_cmdline" "mac4")
+  MACADDR5=$(readConfigKey "extra_cmdline" "mac5")
+  MACADDR6=$(readConfigKey "extra_cmdline" "mac6")
+  MACADDR7=$(readConfigKey "extra_cmdline" "mac7")
+  MACADDR8=$(readConfigKey "extra_cmdline" "mac8")
+  NETNUM=$(readConfigKey "extra_cmdline" "netif_num")
+  
 }
 
 ###############################################################################
@@ -933,8 +983,8 @@ function checkUserConfig() {
     writeConfigKey "extra_cmdline" "mac8" "${MACADDR8}"
   fi
 
-  netif_num=$(jq -r -e '.extra_cmdline.netif_num' $USER_CONFIG_FILE)
-  netif_num_cnt=$(cat $USER_CONFIG_FILE | grep \"mac | wc -l)
+  netif_num=$(readConfigKey "extra_cmdline" "netif_num")
+  netif_num_cnt=$(cat $userconfigfile | grep \"mac | wc -l)
                     
   if [ $netif_num != $netif_num_cnt ]; then
     echo "netif_num = ${netif_num}"
@@ -2035,8 +2085,8 @@ sudo chown tc:118 /opt/bootlocal.sh
 
 chk_diskcnt
 writeConfigKey "general" "diskcount" "${DISKCNT}"
-CHKDISK=$(jq -r -e '.general.check_diskcnt' "$USER_CONFIG_FILE")
-[ -n "${CHKDISK}" ] && writeConfigKey "general" "check_diskcnt" "false"
+CHKDISK=$(readConfigKey "general" "check_diskcnt")
+[ -z "${CHKDISK}" ] && writeConfigKey "general" "check_diskcnt" "false"
 
 # add git download 2023.10.18
 addon_gitdown
@@ -2059,7 +2109,7 @@ config_ucode="${ucode}"
 
 country=$(curl -s ipinfo.io | grep country | awk '{print $2}' | cut -c 2-3 )
 
-if [ "${ucode}" == "null" ]; then 
+if [ -z "${ucode}" ]; then 
   lcode="${country}"
 else
   if [ "${lcode}" != "${country}" ]; then
@@ -2229,122 +2279,80 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep "kmaps.t
     restart
 fi    
 
-if [ "${KEYMAP}" = "null" ]; then
-    LAYOUT="qwerty"
-    KEYMAP="us"
-    writeConfigKey "general" "layout" "${LAYOUT}"
-    writeConfigKey "general" "keymap" "${KEYMAP}"
-fi
-
-if [ "${I915MODE}" = "null" ]; then
-    I915MODE="1"
-    writeConfigKey "general" "i915mode" "${I915MODE}"
-fi
-
-if [ "${DMPM}" = "null" ]; then
-    DMPM="DDSML"
-    writeConfigKey "general" "devmod" "${DMPM}"          
-fi
-
-if [ "${BUS}" = "mmc"  ]; then
-    DMPM="EUDEV"
-    writeConfigKey "general" "devmod" "${DMPM}"          
-fi
-
-if [ "${NVMES}" = "null"  ]; then
-    NVMES="false"
-    writeConfigKey "general" "nvmesystem" "${NVMES}"
-fi
-
-if [ "${VMTOOLS}" = "null"  ]; then
-    VMTOOLS="false"
-    writeConfigKey "general" "vmtools" "${VMTOOLS}"
-fi
-
-[ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
-
-if [ "${LDRMODE}" = "null" ]; then
-    LDRMODE="FRIEND"
-    writeConfigKey "general" "loadermode" "${LDRMODE}"          
-fi
-
-if [ "${MDLNAME}" = "null" ]; then
-    MDLNAME="all-modules"
-    writeConfigKey "general" "modulename" "${MDLNAME}"          
-fi
-
-if [ "${MLMETHOD}" = "null" ]; then
-    MLMETHOD="IML"
-    writeConfigKey "general" "mlmethod" "${MLMETHOD}"          
-fi
 
 # Get actual IP
 IP="$(/sbin/ifconfig | grep -i "inet " | grep -v "127.0.0.1" | awk '{print $2}' | cut -c 6- )"
 
-  if [ ! -n "${MACADDR1}" ]; then
-    MACADDR1=`./macgen.sh "realmac" "eth0" ${MODEL}`
+if [ -z "${MACADDR1}" ]; then
+    MACADDR1=$(./macgen.sh "realmac" "eth0" "${MODEL}")
     writeConfigKey "extra_cmdline" "mac1" "${MACADDR1}"
-  fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ]; then
-  MACADDR2="$(jq -r -e '.extra_cmdline.mac2' $USER_CONFIG_FILE)"
-  NETNUM="2"
-  if [ ! -n "${MACADDR2}" ]; then
-    MACADDR2=`./macgen.sh "realmac" "eth1" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac2" "${MACADDR2}"
-  fi
-fi  
+    MACADDR2=$(readConfigKey "extra_cmdline" "mac2")
+    NETNUM="2"
+    if [ -z "${MACADDR2}" ]; then
+        MACADDR2=$(./macgen.sh "realmac" "eth1" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac2" "${MACADDR2}"
+    fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth2 | wc -l) -gt 0 ]; then
-  MACADDR3="$(jq -r -e '.extra_cmdline.mac3' $USER_CONFIG_FILE)"
-  NETNUM="3"
-  if [ ! -n "${MACADDR3}" ]; then
-    MACADDR3=`./macgen.sh "realmac" "eth2" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac3" "${MACADDR3}"
-  fi
-fi  
+    MACADDR3=$(readConfigKey "extra_cmdline" "mac3")
+    NETNUM="3"
+    if [ -z "${MACADDR3}" ]; then
+        MACADDR3=$(./macgen.sh "realmac" "eth2" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac3" "${MACADDR3}"
+    fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth3 | wc -l) -gt 0 ]; then
-  MACADDR4="$(jq -r -e '.extra_cmdline.mac4' $USER_CONFIG_FILE)"
-  NETNUM="4"
-  if [ ! -n "${MACADDR4}" ]; then
-    MACADDR4=`./macgen.sh "realmac" "eth3" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac4" "${MACADDR4}"
-  fi
-fi  
+    MACADDR4=$(readConfigKey "extra_cmdline" "mac4")
+    NETNUM="4"
+    if [ -z "${MACADDR4}" ]; then
+        MACADDR4=$(./macgen.sh "realmac" "eth3" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac4" "${MACADDR4}"
+    fi
+fi
 
 if [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ]; then
-  MACADDR5="$(jq -r -e '.extra_cmdline.mac5' $USER_CONFIG_FILE)"
-  NETNUM="5"
-  if [ ! -n "${MACADDR5}" ]; then
-    MACADDR5=`./macgen.sh "realmac" "eth4" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac5" "${MACADDR5}"
-  fi
-fi  
+    MACADDR5=$(readConfigKey "extra_cmdline" "mac5")
+    NETNUM="5"
+    if [ -z "${MACADDR5}" ]; then
+        MACADDR5=$(./macgen.sh "realmac" "eth4" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac5" "${MACADDR5}"
+    fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ]; then
-  MACADDR6="$(jq -r -e '.extra_cmdline.mac6' $USER_CONFIG_FILE)"
-  NETNUM="6"
-  if [ ! -n "${MACADDR6}" ]; then
-    MACADDR6=`./macgen.sh "realmac" "eth5" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac6" "${MACADDR6}"
-  fi
-fi  
+    MACADDR6=$(readConfigKey "extra_cmdline" "mac6")
+    NETNUM="6"
+    if [ -z "${MACADDR6}" ]; then
+        MACADDR6=$(./macgen.sh "realmac" "eth5" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac6" "${MACADDR6}"
+    fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ]; then
-  MACADDR7="$(jq -r -e '.extra_cmdline.mac7' $USER_CONFIG_FILE)"
-  NETNUM="7"
-  if [ ! -n "${MACADDR7}" ]; then
-    MACADDR7=`./macgen.sh "realmac" "eth6" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac7" "${MACADDR7}"
-  fi
-fi  
+    MACADDR7=$(readConfigKey "extra_cmdline" "mac7")
+    NETNUM="7"
+    if [ -z "${MACADDR7}" ]; then
+        MACADDR7=$(./macgen.sh "realmac" "eth6" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac7" "${MACADDR7}"
+    fi
+fi
+
 if [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ]; then
-  MACADDR8="$(jq -r -e '.extra_cmdline.mac8' $USER_CONFIG_FILE)"
-  NETNUM="8"
-  if [ ! -n "${MACADDR8}" ]; then
-    MACADDR8=`./macgen.sh "realmac" "eth7" ${MODEL}`
-    writeConfigKey "extra_cmdline" "mac8" "${MACADDR8}"
-  fi
-fi  
+    MACADDR8=$(readConfigKey "extra_cmdline" "mac8")
+    NETNUM="8"
+    if [ -z "${MACADDR8}" ]; then
+        MACADDR8=$(./macgen.sh "realmac" "eth7" "${MODEL}")
+        writeConfigKey "extra_cmdline" "mac8" "${MACADDR8}"
+    fi
+fi
 
+CURNETNUM=$(readConfigKey "extra_cmdline" "netif_num")
 
-CURNETNUM="$(jq -r -e '.extra_cmdline.netif_num' $USER_CONFIG_FILE)"
 if [ $CURNETNUM != $NETNUM ]; then
   if [ $NETNUM -ge 1 ] && [ $NETNUM -le 8 ]; then
     for i in $(seq 8 -1 $((NETNUM + 1))); do
@@ -2492,8 +2500,8 @@ fi
 
 NEXT="m"
 setSuggest $MODEL
-bfbay=$(jq -r -e '.general.bay' "$USER_CONFIG_FILE")
-if [ -n "${bfbay}" ]; then
+bfbay=$(readConfigKey "general" "bay")
+if [ -z "${bfbay}" ]; then
   bay=${bfbay}
 fi
 writeConfigKey "general" "bay" "${bay}"
