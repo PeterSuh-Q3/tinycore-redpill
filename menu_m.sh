@@ -2085,8 +2085,20 @@ function showAutoUpdateMenu() {
         ;;
       d)
         bringoverfriend
-        ;;        
-    esac
+        local retval=$?
+        case $retval in
+          0)
+            dialog --msgbox "Already latest version." 6 40
+            ;;
+          1)
+            dialog --msgbox "\nUpdate complete.\nReboot required.\n\nPress Enter to Reboot..." 9 50
+            clear
+            sudo reboot
+            ;;
+          2|3)
+            dialog --msgbox "Update failed (code: $retval)\nCheck logs and try again." 7 45
+            ;;        
+     esac
   done
 }
 
