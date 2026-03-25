@@ -1971,6 +1971,64 @@ function addon_gitdown()
   fi    
 }
 
+# ON/OFF 라벨 반환
+function getLabel() {
+  [ "$1" = "true" ] && echo "ON" || echo "OFF"
+}
+
+# ─── 메인 메뉴 함수 ──────────────────────────────────────────────
+function showAutoUpdateMenu() {
+  local TCB FKC
+
+  TCB=$(readConfigKey "general" "tcbautoupd")
+  FKC=$(readConfigKey "general" "friendautoupd")
+
+  [[ "$TCB" != "true" && "$TCB" != "false" ]] && TCB="false"
+  [[ "$FKC" != "true" && "$FKC" != "false" ]] && FKC="false"
+
+  while true; do
+    local TCB_LABEL FKC_LABEL CHOICE EXIT_CODE
+    TCB_LABEL=$(getLabel "$TCB")
+    FKC_LABEL=$(getLabel "$FKC")
+
+    CHOICE=$(dialog \
+      --clear \
+      --backtitle "Auto Update Settings" \
+      --title "[ Auto Update ]" \
+      --ok-label "Toggle" \
+      --cancel-label "Save & Exit" \
+      --menu "\nENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit\n" \
+      12 60 2 \
+      "a" "Tinycore Loader Builder Auto Update  [ ${TCB_LABEL} ]" \
+      "b" "FRIEND Kernel Console Auto Update    [ ${FKC_LABEL} ]" \
+      3>&1 1>&2 2>&3)
+
+    EXIT_CODE=$?
+
+    # Save & Exit (Cancel 버튼 또는 ESC)
+    if [ ${EXIT_CODE} -ne 0 ]; then
+      writeConfigKey "general" "tcbautoupd"    "${TCB}"
+      writeConfigKey "general" "friendautoupd" "${FKC}"
+      dialog --infobox "Settings saved." 3 25
+      sleep 1
+      clear
+      return 0
+    fi
+
+    # 토글 처리 → 즉시 파일에 반영
+    case "${CHOICE}" in
+      a)
+        [ "$TCB" = "true" ] && TCB="false" || TCB="true"
+        writeConfigKey "general" "tcbautoupd" "${TCB}"
+        ;;
+      b)
+        [ "$FKC" = "true" ] && FKC="false" || FKC="true"
+        writeConfigKey "general" "friendautoupd" "${FKC}"
+        ;;
+    esac
+  done
+}
+
 # Main loop ###########################################################################################
 
 # Fix bug /opt/bootlocal.sh ownership 2025.09.15
@@ -2473,6 +2531,7 @@ while true; do
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"w \\\"Rebuild Previous Version\\\"\""     >> "${TMP_PATH}/menu"
+  eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
@@ -2524,6 +2583,7 @@ while true; do
     l) langMenu ;;
     b) backuploader;   NEXT="r" ;;
     w) select_and_run_menu; NEXT="r" ;;
+    q) showAutoUpdateMenu; NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
   esac
