@@ -5814,7 +5814,7 @@ function my() {
                   getlatestmshell "noask"
                   exit 0
               else
-                  getlatestmshell "noask"
+                  [ "$TCB" = "true" ] && getlatestmshell "noask"
               fi
           fi
       fi
