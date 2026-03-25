@@ -1978,7 +1978,6 @@ function getLabel() {
 
 # ─── 메인 메뉴 함수 ──────────────────────────────────────────────
 function showAutoUpdateMenu() {
-  local TCB FKC
 
   TCB=$(readConfigKey "general" "tcbautoupd")
   FKC=$(readConfigKey "general" "friendautoupd")
