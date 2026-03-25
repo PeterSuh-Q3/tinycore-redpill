@@ -2079,10 +2079,22 @@ function showAutoUpdateMenu() {
         ;;
       c)
         getlatestmshell "noask"
-        dialog --msgbox "\nUpdate complete.\nA reboot is required to apply changes.\n\nPress Enter to Reboot..." 9 50
-        clear
-        sudo reboot
-        ;;
+        local retval=$?
+        case $retval in
+          0)
+            dialog --msgbox "Already latest version." 6 40
+            ;;
+          1)
+            dialog --msgbox "\nUpdate complete.\nReboot required.\n\nPress Enter to Reboot..." 9 50
+            clear
+            sudo reboot
+            ;;
+          2)
+            dialog --msgbox "Update cancelled by user." 6 40
+            ;;
+          3)
+            dialog --msgbox "Update failed (code: $retval)\nCheck network and try again." 7 45
+            ;;
       d)
         bringoverfriend
         local retval=$?
