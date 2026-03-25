@@ -192,7 +192,7 @@ tcrppart="${loaderdisk}3"
 TCB=$(readConfigKey "general" "tcbautoupd")
 if [ -z "${TCB}" ]; then
     TCB="true"
-    writeConfigKey "general" "tcbautoupd" "${TCB}"          
+    writeConfigKey "general" "tcbautoupd" "${TCB}"
 fi
 
 if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
@@ -209,7 +209,7 @@ else
     start_time=$(date +%s)
     while true; do
       if check_internet; then
-        [[ -z "${1-}" || "$TCB" = "true" ]] && getlatestmshell "noask"
+        [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
         break
       fi
       # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
