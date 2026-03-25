@@ -189,6 +189,12 @@ getBus "${loaderdisk}"
 
 tcrppart="${loaderdisk}3"
 
+TCB=$(readConfigKey "general" "tcbautoupd")
+if [ -z "${TCB}" ]; then
+    TCB="true"
+    writeConfigKey "general" "tcbautoupd" "${TCB}"          
+fi
+
 if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
     echo "Repositories for offline loader building have been confirmed. Copy the repositories to the required location..."
     echo "Press any key to continue..."    
@@ -203,7 +209,7 @@ else
     start_time=$(date +%s)
     while true; do
       if check_internet; then
-        [ -z "${1-}" ] && getlatestmshell "noask"
+        [[ -z "${1-}" || "$TCB" = "true" ]] && getlatestmshell "noask"
         break
       fi
       # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
