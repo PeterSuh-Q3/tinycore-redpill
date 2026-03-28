@@ -4737,7 +4737,9 @@ function getredpillko() {
             TAG="${LATESTURL##*/}"
         fi    
         echo "TAG is ${TAG}"
-        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
+        RR-VER=""
+        RR-VER="26.3.1"
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms-${RR-VER}.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
         echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
     fi    
