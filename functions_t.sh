@@ -4715,33 +4715,29 @@ function getredpillko() {
 
     DSMVER=$(echo ${TARGET_VERSION} | cut -c 1-3 )
     echo "KERNEL VERSION of getredpillko() is ${KVER}, DSMVER is ${DSMVER}"
-    
     v=""
+
+    REPO="PeterSuh-Q3/redpill-lkm"
     TAG=""
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
-        REPO="PeterSuh-Q3/redpill-lkm"
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
-            REPO="RROrg/rr-lkms"
-            #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest"`"
             cecho g "###############################  This is Test Mode  ############################"
-            #LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
-            #  jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
-            #if [ -n "$LKM_PRERELEASE_TAG" ]; then
-            #    echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
-            #    TAG="$LKM_PRERELEASE_TAG"
-            #else
-            #    echo "Pre-release tag not found, use latest 26.2.3"
-                TAG="26.3.1"
-                echo "TAG=$TAG"
-                STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/$REPO/releases/download/${TAG}/rp-lkms-${TAG}.zip" -o "/mnt/${tcrppart}/rp-lkms.zip"`
-            #fi            
+            LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+              jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
+            if [ -n "$LKM_PRERELEASE_TAG" ]; then
+                echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
+                TAG="$LKM_PRERELEASE_TAG"
+            else
+                echo "Pre-release tag not found, use latest 26.2.3"
+                TAG="${LATESTURL##*/}"
+            fi            
         else        
             TAG="${LATESTURL##*/}"
-            echo "TAG is ${TAG}"
-            STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
         fi    
+        echo "TAG is ${TAG}"
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
         echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
     fi    
