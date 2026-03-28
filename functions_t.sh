@@ -4715,15 +4715,16 @@ function getredpillko() {
 
     DSMVER=$(echo ${TARGET_VERSION} | cut -c 1-3 )
     echo "KERNEL VERSION of getredpillko() is ${KVER}, DSMVER is ${DSMVER}"
+    
     v=""
-
-    REPO="PeterSuh-Q3/redpill-lkm"
     TAG=""
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
+        REPO="PeterSuh-Q3/redpill-lkm"
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
-            LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/RROrg/rr-lkms/releases/latest"`"
+            REPO="RROrg/rr-lkms"
+            #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/$REPO/releases/latest"`"
             cecho g "###############################  This is Test Mode  ############################"
             #LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
             #  jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
@@ -4732,8 +4733,9 @@ function getredpillko() {
             #    TAG="$LKM_PRERELEASE_TAG"
             #else
             #    echo "Pre-release tag not found, use latest 26.2.3"
-                TAG="${LATESTURL##*/}"
-                STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/RROrg/rr-lkms/releases/download/${TAG}/rp-lkms${TAG}.zip" -o "/mnt/${tcrppart}/rp-lkms.zip"`
+                TAG="26.3.1"
+                echo "TAG=$TAG"
+                STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/$REPO/releases/download/${TAG}/rp-lkms${TAG}.zip" -o "/mnt/${tcrppart}/rp-lkms.zip"`
             #fi            
         else        
             TAG="${LATESTURL##*/}"
