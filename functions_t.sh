@@ -4735,7 +4735,7 @@ function getredpillko() {
             #    echo "Pre-release tag not found, use latest 26.2.3"
                 TAG="26.3.1"
                 echo "TAG=$TAG"
-                STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/$REPO/releases/download/${TAG}/rp-lkms${TAG}.zip" -o "/mnt/${tcrppart}/rp-lkms.zip"`
+                STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/$REPO/releases/download/${TAG}/rp-lkms-${TAG}.zip" -o "/mnt/${tcrppart}/rp-lkms.zip"`
             #fi            
         else        
             TAG="${LATESTURL##*/}"
