@@ -1,4 +1,4 @@
-b282dce001cf968551ad8f08ae7452219be8206b
-9bebb899384a3ba4fdcf049336de9e02edd840d5
+1338fe43b115d86393b2d289e24a70e9acb6e9e9
+b736e7fd2e21f192304f1695a743cdf71f797008
 
-    1.2.8.6 Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
+    1.2.8.7 Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
