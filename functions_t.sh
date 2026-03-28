@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.6"
+rploaderver="1.2.8.7"
 build="master"
 redpillmake="prod"
 
@@ -231,6 +231,7 @@ function history() {
     1.2.8.4 Supports two distinct menus for module loading methods: In-Memory Module Loading (IML) / Persistent Module Loading (PML)
     1.2.8.5 Discontinued Direct-Boot feature, added menu to revert to previous version build
     1.2.8.6 Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
+    1.2.8.7 Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -673,6 +674,8 @@ EOF
 # Discontinued Direct-Boot feature, added menu to revert to previous version build
 # 2026.03.25 v1.2.8.6 
 # Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
+# 2026.03.28 v1.2.8.7 
+# Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
     
 function showlastupdate() {
     cat <<EOF
@@ -816,6 +819,9 @@ function showlastupdate() {
 
 # 2026.03.25 v1.2.8.6 
 # Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
+
+# 2026.03.28 v1.2.8.7 
+# Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
 
 EOF
 }
@@ -3752,6 +3758,21 @@ menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${M
 EOF
 }
 
+function tcrpentry_junior() {
+    cat <<EOF
+menuentry 'Re-Install DSM of $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD}' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /bzImage-friend loglevel=3 waitusb=5 vga=791 net.ifnames=0 biosdevname=0 console=ttyS0,115200n8 force_junior
+        echo Loading initramfs...
+        initrd /initrd-friend
+        echo Booting TinyCore Friend
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
 function xtcrpconfigureentry() {
     cat <<EOF
 menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
@@ -3762,26 +3783,6 @@ menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
         echo Loading initramfs to configure loader...
         initrd /initrd-friend
         echo Loding RAMDISK to configure loader...
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
-}
-
-function tcrpentry_junior() {
-    cat <<EOF
-menuentry 'Re-Install DSM of $MODEL ${BUILD} Update 0 ${DMPM} ${MDLNAME}:${MLMETHOD}' {
-        savedefault
-        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
-        echo Loading Linux...
-        set kernel_cmdline="${USB_LINE} force_junior"
-        set bus_type="${BUS}"
-        if [ "\${bus_type}" != "usb" ]; then
-            set kernel_cmdline="\${kernel_cmdline} synoboot_satadom=1"
-        fi
-        linux /zImage-dsm \${kernel_cmdline}
-        echo Loading initramfs...
-        initrd /initrd-dsm
-        echo Entering Force Junior (For Re-install DSM)
         set gfxpayload=1024x768x16,1024x768
 }
 EOF
