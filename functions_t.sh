@@ -4433,7 +4433,9 @@ EOF
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
     #mark PML or not
-    [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
+    if [ "${BUS}" != "block" ]; then
+        [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
+    fi
     
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
