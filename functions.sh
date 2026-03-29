@@ -4737,7 +4737,9 @@ function getredpillko() {
             TAG="${LATESTURL##*/}"
         fi    
         echo "TAG is ${TAG}"
-        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
+        RR_VER=""
+        RR_VER="26.3.1"
+        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms-${RR_VER}.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
     else
         echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
     fi    
@@ -5830,7 +5832,9 @@ function my() {
                   getlatestmshell "noask"
                   exit 0
               else
-                  [ "$TCB" = "true" ] && getlatestmshell "noask"
+                  if [ "${BUS}" != "block" ]; then
+                      [ "$TCB" = "true" ] && getlatestmshell "noask"
+                  fi    
               fi
           fi
       fi
