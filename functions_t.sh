@@ -5832,7 +5832,9 @@ function my() {
                   getlatestmshell "noask"
                   exit 0
               else
-                  [ "$TCB" = "true" ] && getlatestmshell "noask"
+                  if [ "${BUS}" != "block" ]; then
+                      [ "$TCB" = "true" ] && getlatestmshell "noask"
+                  fi    
               fi
           fi
       fi
