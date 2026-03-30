@@ -4395,12 +4395,14 @@ EOF
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
 
-        if [ "${MLMETHOD}" = "PML" ]; then
-            echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
-            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-            sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
-            sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
-        fi
+        if [ "${BUS}" != "block" ]; then
+            if [ "${MLMETHOD}" = "PML" ]; then
+                echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
+                [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+                sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1      
+                sudo tar xvfz $rdtemp/exts/all-modules/firmware*.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1       
+            fi
+        fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
