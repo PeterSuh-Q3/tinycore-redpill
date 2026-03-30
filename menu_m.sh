@@ -783,6 +783,7 @@ function serialMenu() {
   done
   SN="${SERIAL}"
   writeConfigKey "extra_cmdline" "sn" "${SN}"
+  sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
 }
 
 ###############################################################################
@@ -871,6 +872,7 @@ function macMenu() {
       writeConfigKey "extra_cmdline" "netif_num" "8"
   fi
 
+  sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
 }
 
 function prevent() {
