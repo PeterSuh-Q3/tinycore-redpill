@@ -6008,7 +6008,9 @@ function my() {
   curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
   
   if [ "${DMPM}" = "DDSML" ]; then
-      jsonfile=$(jq 'del(.eudev)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+      jq 'del(.eudev, .aeudev)' \
+        /home/tc/redpill-load/bundled-exts.json > /tmp/bundled-exts.tmp && \
+        mv /tmp/bundled-exts.tmp /home/tc/redpill-load/bundled-exts.json
   elif [ "${DMPM}" = "EUDEV" ]; then
       jsonfile=$(jq 'del(.ddsml)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   elif [ "${DMPM}" = "DDSML+EUDEV" ]; then
