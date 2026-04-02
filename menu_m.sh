@@ -264,12 +264,11 @@ if [ -z "${FKC}" ]; then
     writeConfigKey "general" "friendautoupd" "${FKC}"
 fi
 
-PREVENT_INIT=$(readConfigKey "general" "PREVENT_INIT")
+PREVENT_INIT=$(readConfigKey "general" "prevent_init")
 if [ -z "${PREVENT_INIT}" ]; then
     PREVENT_INIT="OFF"
-    writeConfigKey "general" "PREVENT_INIT" "${PREVENT_INIT}"
+    writeConfigKey "general" "prevent_init" "${PREVENT_INIT}"
 fi
-prevent_init="${PREVENT_INIT}"
 
 lcode=$(echo $ucode | cut -c 4-)
 BLOCK_EUDEV="N"
@@ -882,14 +881,14 @@ function macMenu() {
 }
 
 function prevent() {
-    if [ "${prevent_init}" = "OFF" ]; then
-        prevent_init="ON"
+    if [ "${PREVENT_INIT}" = "OFF" ]; then
+        PREVENT_INIT="ON"
         echo "SataPortMap/DiskIdxMap initialization protection: Enabled"
     else
-        prevent_init="OFF"
+        PREVENT_INIT="OFF"
         echo "SataPortMap/DiskIdxMap initialization protection: Disabled"
     fi
-    writeConfigKey "general" "PREVENT_INIT" "${prevent_init}"
+    writeConfigKey "general" "prevent_init" "${PREVENT_INIT}"
     echo "press any key to continue..."
     read answer
 }
@@ -1075,7 +1074,7 @@ function make() {
   usbidentify
   clear
 
-  if [ "${prevent_init}" = "OFF" ]; then
+  if [ "${PREVENT_INIT}" = "OFF" ]; then
     my "${MODEL}"-"${BUILD}" noconfig "${1}" | tee "/home/tc/zlastbuild.log"
   else
     my "${MODEL}"-"${BUILD}" noconfig "${1}" prevent_init | tee "/home/tc/zlastbuild.log"
@@ -1582,7 +1581,7 @@ function additional() {
   default_resp="l"
 
   while true; do
-    [ "${prevent_init}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
+    [ "${PREVENT_INIT}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
     eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
@@ -2628,9 +2627,9 @@ while true; do
     z) build-pre-option ; NEXT="p" ;;
     k) selectldrmode ;    NEXT="p" ;;    
     p) if [ "${LDRMODE}" == "FRIEND" ]; then
-         make_with_progress "fri" "${prevent_init}" 
+         make_with_progress "fri" "${PREVENT_INIT}" 
        #else  
-       #  make_with_progress "jot" "${prevent_init}"
+       #  make_with_progress "jot" "${PREVENT_INIT}"
        fi  
        if [ "$FRKRNL" = "YES" ]; then
          NEXT="y"
