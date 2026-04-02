@@ -387,15 +387,15 @@ function seleudev() {
     fi
   done
 
-  del-addon "aeudev"
+  del-addon "eudev"
   del-addon "ddsml"
   if [ "${DMPM}" = "DDSML" ]; then
       add-addons "ddsml"
   elif [ "${DMPM}" = "EUDEV" ]; then
-      add-addons "aeudev"
+      add-addons "eudev"
   elif [ "${DMPM}" = "DDSML+EUDEV" ]; then
       add-addons "ddsml"
-      add-addons "aeudev"
+      add-addons "eudev"
   fi
   
   #curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
