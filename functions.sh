@@ -969,7 +969,7 @@ log_backup_step() {
 #################################################################################
 make_with_progress() {
     local ldr_mode="${1}"
-    local prevent_init="${2}"
+    local prevent_param="${2}"
     local build_cmd=""
 
     checkUserConfig 
@@ -988,11 +988,11 @@ make_with_progress() {
     fi
     writeConfigKey "general" "devmod" "${DMPM}"
 
-    if [ "${prevent_init}" = "OFF" ]; then
+    if [ "${prevent_param}" = "OFF" ]; then
         build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     else
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init}"
-    fi 
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} prevent_param"
+    fi
 
     set -o pipefail  
     if [ "$VERBOSE_MODE" = "OFF" ]; then
@@ -5860,7 +5860,7 @@ function my() {
   userdts="N"
   noconfig="N"
   jot="N"
-  prevent_init="N"
+  prevent_param="N"
   
   shift
       while [[ "$#" > 0 ]] ; do
@@ -5886,8 +5886,8 @@ function my() {
               jot="N"
               ;;
   
-          prevent_init)
-              prevent_init="Y"
+          prevent_param)
+              prevent_param="Y"
               ;;
   
           *)
@@ -6082,7 +6082,7 @@ function my() {
   if [ "$noconfig" = "Y" ]; then                            
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
       checkmachine
-      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_init}" = "N" ]; then
+      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_param}" = "N" ]; then
           cecho p "Sataportmap,DiskIdxMap to blank for VIRTUAL MACHINE"
           json="$(jq --arg var "" '.extra_cmdline.SataPortMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
           json="$(jq --arg var "" '.extra_cmdline.DiskIdxMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json        
