@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.7"
+rploaderver="1.2.8.8"
 build="master"
 redpillmake="prod"
 
@@ -232,6 +232,7 @@ function history() {
     1.2.8.5 Discontinued Direct-Boot feature, added menu to revert to previous version build
     1.2.8.6 Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
     1.2.8.7 Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
+    1.2.8.8 Change the eudev pathname to aeudev (so that it runs before all-modules)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -676,6 +677,8 @@ EOF
 # Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
 # 2026.03.28 v1.2.8.7 
 # Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
+# 2026.04.02 v1.2.8.8 
+# Change the eudev pathname to aeudev (so that it runs before all-modules)
     
 function showlastupdate() {
     cat <<EOF
@@ -822,6 +825,9 @@ function showlastupdate() {
 
 # 2026.03.28 v1.2.8.7 
 # Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
+
+# 2026.04.02 v1.2.8.8 
+# Change the eudev pathname to aeudev (so that it runs before all-modules)
 
 EOF
 }
