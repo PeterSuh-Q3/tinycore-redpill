@@ -135,8 +135,7 @@ if [ -f /home/tc/myv.sh ]; then
   rm /home/tc/myv.sh
 fi
 
-# Prevent SataPortMap/DiskIdxMap initialization 2023.12.31
-prevent_init="OFF"
+# Prevent SataPortMap/DiskIdxMap initialization - loaded from user_config.json
 
 # Trap Ctrl+C (SIGINT) signals and call ctrl_c function
 trap ctrl_c INT
@@ -262,8 +261,15 @@ fi
 
 if [ -z "${FKC}" ]; then
     FKC="true"
-    writeConfigKey "general" "friendautoupd" "${FKC}"          
+    writeConfigKey "general" "friendautoupd" "${FKC}"
 fi
+
+PREVENT_INIT=$(readConfigKey "general" "PREVENT_INIT")
+if [ -z "${PREVENT_INIT}" ]; then
+    PREVENT_INIT="OFF"
+    writeConfigKey "general" "PREVENT_INIT" "${PREVENT_INIT}"
+fi
+prevent_init="${PREVENT_INIT}"
 
 lcode=$(echo $ucode | cut -c 4-)
 BLOCK_EUDEV="N"
@@ -876,12 +882,16 @@ function macMenu() {
 }
 
 function prevent() {
-
-    prevent_init="ON"
-    echo "Enable SataPortMap/DiskIdxMap initialization protection"
+    if [ "${prevent_init}" = "OFF" ]; then
+        prevent_init="ON"
+        echo "SataPortMap/DiskIdxMap initialization protection: Enabled"
+    else
+        prevent_init="OFF"
+        echo "SataPortMap/DiskIdxMap initialization protection: Disabled"
+    fi
+    writeConfigKey "general" "PREVENT_INIT" "${prevent_init}"
     echo "press any key to continue..."
     read answer
-  
 }
 
 ###############################################################################
@@ -1572,13 +1582,14 @@ function additional() {
   default_resp="l"
 
   while true; do
-    eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"  
+    [ "${prevent_init}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
+    eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"b \\\"${MSG51}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"b \\\"${MSG51}: ${PREVENT_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
