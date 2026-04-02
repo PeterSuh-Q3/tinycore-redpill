@@ -991,8 +991,8 @@ make_with_progress() {
     if [ "${prevent_init}" = "OFF" ]; then
         build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode}"
     else
-        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} ${prevent_init}"
-    fi 
+        build_cmd="my ${MODEL}-${BUILD} noconfig ${ldr_mode} prevent_init"
+    fi
 
     set -o pipefail  
     if [ "$VERBOSE_MODE" = "OFF" ]; then
