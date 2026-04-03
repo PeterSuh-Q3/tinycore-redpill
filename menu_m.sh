@@ -574,9 +574,14 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if echo ${kver5explatforms} | grep -qw ${platform}; then
+  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then  
+      echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
+  else
       MDLNAME="all-modules"
-      writeConfigKey "general" "modulename" "${MDLNAME}"
+      writeConfigKey "general" "modulename" "${MDLNAME}"      
+      MLMETHOD="IML"
+      writeConfigKey "general" "mlmethod" "${MLMETHOD}"
+      echo "${platform} change to ${MDLNAME}, ${MLMETHOD}"      
   fi
 
   if echo ${kver3explatforms} | grep -qw ${platform}; then
@@ -600,14 +605,6 @@ function modelMenu() {
     DMPM="DDSML+EUDEV"
   fi
   writeConfigKey "general" "devmod" "${DMPM}"
-
-  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then  
-      echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
-  else
-      MDLNAME="all-modules"
-      MLMETHOD="IML"
-      echo "${platform} change to ${MDLNAME}, ${MLMETHOD}"      
-  fi
 }
 
 # Set Describe model-specific requirements or suggested hardware
