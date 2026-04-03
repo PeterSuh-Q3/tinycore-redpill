@@ -1200,14 +1200,14 @@ function langMenu() {
     አማርኛ) tz="ET"; ucode="am_ET";;
     ไทย) tz="TH"; ucode="th_TH";;
   esac
-
-  export LANG=${ucode}.UTF-8
-  export LC_ALL=${ucode}.UTF-8
-  set -o allexport
   
   [ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale
   sudo localedef -c -i ${ucode} -f UTF-8 ${ucode}.UTF-8 > /dev/null 2>&1
   sudo localedef -f UTF-8 -i ${ucode} ${ucode}.UTF-8 > /dev/null 2>&1
+
+  export LANG=${ucode}.UTF-8
+  export LC_ALL=${ucode}.UTF-8
+  set -o allexport
   
   writeConfigKey "general" "ucode" "${ucode}"  
   [ "$FRKRNL" = "NO" ] && writexsession
