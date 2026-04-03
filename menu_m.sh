@@ -600,7 +600,14 @@ function modelMenu() {
     DMPM="DDSML+EUDEV"
   fi
   writeConfigKey "general" "devmod" "${DMPM}"
-  
+
+  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then  
+      echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
+  else
+      MDLNAME="all-modules"
+      MLMETHOD="IML"
+      echo "${platform} change to ${MDLNAME}, ${MLMETHOD}"      
+  fi
 }
 
 # Set Describe model-specific requirements or suggested hardware
