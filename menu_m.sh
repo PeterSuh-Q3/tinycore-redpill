@@ -2272,9 +2272,6 @@ fi
 
 # for 2Byte Language
 [ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale
-export LANG=${ucode}.UTF-8
-export LC_ALL=${ucode}.UTF-8
-set -o allexport
 
 if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -gt 0 ]; then
   
@@ -2308,6 +2305,11 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | w
     echo "URxvt*locale: ${ucode}.UTF-8"  >> ~/.Xdefaults
   fi
 fi
+
+export LANG=${ucode}.UTF-8
+export LC_ALL=${ucode}.UTF-8
+set -o allexport
+
 
 #gettext
 [ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/lang.tgz > /dev/null 2>&1
