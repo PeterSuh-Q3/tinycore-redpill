@@ -21,9 +21,9 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 #Defaults
 smallfixnumber="0"
 
-kver3platforms="bromolow braswell avoton cedarview grantley"
+kver3platforms="bromolow braswell avoton cedarview"
 kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
-dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap grantley"
+dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap"
 
 # 전역 변수로 플래그 설정 (한번 Y면 영구 유지)
 R8168_YN="N"
