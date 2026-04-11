@@ -8,7 +8,7 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/dts_mapping.sh
 #####################################################################################################
 
-kver3explatforms="bromolow braswell cedarview grantley"
+kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
 configfile="/home/tc/redpill-load/config/pats.json"
 
@@ -508,7 +508,7 @@ function modelMenu() {
   
   # Define platform groups
   M_GRP1="epyc7002 v1000nk r1000nk geminilakenk broadwellnk"
-  M_GRP2="broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview grantley"
+  M_GRP2="broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview"
   M_GRP3="denverton"
   M_GRP4="apollolake"
   M_GRP5="r1000"
