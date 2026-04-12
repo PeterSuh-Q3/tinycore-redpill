@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.8"
+rploaderver="1.2.8.9"
 build="master"
 redpillmake="prod"
 
@@ -233,6 +233,7 @@ function history() {
     1.2.8.6 Added a menu to block automatic updates for Tinycore Loader Builder(TCB) and FRIEND Kernel Console(FKC).
     1.2.8.7 Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
     1.2.8.8 Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
+    1.2.8.9 Separating and stabilizing lkm(redpill.ko) by platform and DSM version
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -679,6 +680,8 @@ EOF
 # Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
 # 2026.04.03 v1.2.8.8 
 # Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
+# 2026.04.12 v1.2.8.9 
+# Separating and stabilizing lkm(redpill.ko) by platform and DSM version
     
 function showlastupdate() {
     cat <<EOF
@@ -828,6 +831,9 @@ function showlastupdate() {
 
 # 2026.04.03 v1.2.8.8 
 # Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
+
+# 2026.04.12 v1.2.8.9 
+# Separating and stabilizing lkm(redpill.ko) by platform and DSM version
 
 EOF
 }
@@ -4761,19 +4767,10 @@ function getredpillko() {
 
     sudo rm -f /home/tc/custom-module/*.gz
     sudo rm -f /home/tc/custom-module/*.ko
-    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
-        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
-    elif echo "bromolow" | grep -qw ${ORIGIN_PLATFORM}; then    
-        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
-        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
-    else    
-        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
-        gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-        sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
-    fi
+
+    unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
+    gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
+    sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
 
     if [ -z "${TAG}" ]; then
         rm -f /tmp/VERSION
