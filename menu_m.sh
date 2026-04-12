@@ -1969,13 +1969,15 @@ select_and_run_menu() {
     
     # TAG / DATE / DESC_EN / DESC_KR
     local TAGS=(
-        "v1.2.8.4" "2026-03-24" "Supports two distinct menus for IML / PML module loading"             "IML / PML 두 가지 모듈 로딩 메뉴 지원"
-        "v1.2.8.3" "2026-03-19" "Added user DTS file mapping feature"                                  "사용자 DTS 파일 매핑 기능 추가"
-        "v1.2.8.2" "2026-03-19" "Switch all-modules loading from dynamic to static (like RR/ARC)"      "all-modules 로딩 방식 dynamic→static 전환"
+        "v1.2.8.6" "2026-03-25" "Added menu to block automatic updates for TCB / FKC"                 "TCB/FKC 자동 업데이트를 차단하는 메뉴를 추가"    
+        "v1.2.8.5" "2026-03-24" "Added menu to revert to previous version build"                      "이전 버전으로 되돌리는 메뉴를 추가"    
+        "v1.2.8.4" "2026-03-20" "Supports two distinct menus for IML / PML module loading"            "IML / PML 두 가지 모듈 로딩 메뉴 지원"
+        "v1.2.8.3" "2026-03-19" "Added user DTS file mapping feature"                                 "사용자 DTS 파일 매핑 기능 추가"
+        "v1.2.8.2" "2026-03-19" "Switch all-modules loading from dynamic to static (like RR/ARC)"     "all-modules 로딩 방식 dynamic→static 전환"
         "v1.2.8.0" "2026-03-15" "Discontinued Jot, standardized to Direct-Boot"                       "Jot 용어 폐기, Direct-Boot으로 표준화"
         "v1.2.7.9" "2026-03-10" "Switch initrd-dsm compression from zstd to xz(lzma2)"                "initrd-dsm 압축 방식 zstd→xz(lzma2) 변경"
         "v1.2.7.8" "2026-03-08" "Support RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese"     "RS18016xs+ (bromolow DSM 7.3.x) 및 번체중국어 지원"
-        "v1.2.7.7" "2026-03-06" "Use static firmware and module loading for custom modules"            "custom modules 사용 시 static 펌웨어/모듈 로딩"
+        "v1.2.7.7" "2026-03-06" "Use static firmware and module loading for custom modules"           "custom modules 사용 시 static 펌웨어/모듈 로딩"
     )
 
     # 컬럼 수 (tag / date / desc_en / desc_kr)
