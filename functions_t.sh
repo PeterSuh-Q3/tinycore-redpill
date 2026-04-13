@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.8.9"
+rploaderver="1.2.9.0"
 build="master"
 redpillmake="prod"
 
@@ -234,6 +234,7 @@ function history() {
     1.2.8.7 Switching the loading method for the last inactive Grub boot entry, DSM Reinstallation (Junior).
     1.2.8.8 Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
     1.2.8.9 Separating and stabilizing lkm(redpill.ko) by platform and DSM version
+    1.2.9.0 HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -682,6 +683,8 @@ EOF
 # Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
 # 2026.04.12 v1.2.8.9 
 # Separating and stabilizing lkm(redpill.ko) by platform and DSM version
+# 2026.04.14 v1.2.9.0 
+# HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
     
 function showlastupdate() {
     cat <<EOF
@@ -834,6 +837,9 @@ function showlastupdate() {
 
 # 2026.04.12 v1.2.8.9 
 # Separating and stabilizing lkm(redpill.ko) by platform and DSM version
+
+# 2026.04.14 v1.2.9.0 
+# HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
 
 EOF
 }
@@ -4228,10 +4234,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         USB_LINE="${USB_LINE} nox2apic"
     fi
 
-    if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
-        echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
-        USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
-    fi
+    #if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
+    #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
+    #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
+    #fi
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
