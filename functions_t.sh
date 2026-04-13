@@ -4,7 +4,7 @@ set -u # Unbound variable errors are not allowed
 
 rploaderver="1.2.8.9"
 build="master"
-redpillmake="prod"
+redpillmake="dev"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
