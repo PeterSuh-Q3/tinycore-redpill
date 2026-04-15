@@ -4498,7 +4498,12 @@ EOF
     else
         msgnormal "Setting default boot entry to JOT ${BUS}"
     fi
-    sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"
+        sudo sed -i "/set default=\"*\"/cset default=\"1\"" /tmp/grub.cfg    
+    else
+        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+    fi
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
         sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
