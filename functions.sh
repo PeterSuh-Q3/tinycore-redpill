@@ -4238,6 +4238,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
     #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
     #fi
+    
+    USB_LINE="${USB_LINE} pcie_aspm=off"
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
@@ -4751,8 +4753,8 @@ function getredpillko() {
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
-            #redpillmake="dev"
-            #updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
+            redpillmake="dev"
+            updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
             LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
               jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
             if [ -n "$LKM_PRERELEASE_TAG" ]; then
