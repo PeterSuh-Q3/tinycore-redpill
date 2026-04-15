@@ -4238,6 +4238,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
     #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
     #fi
+    
+    USB_LINE="${USB_LINE} pcie_aspm=off"
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
