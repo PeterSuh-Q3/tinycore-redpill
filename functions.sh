@@ -4385,53 +4385,26 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
-        if [ "$TARGET_REVISION" == "81180" ]; then
-
-cat <<'EOF' > /home/tc/rd.temp/nic-wait-snippet.sh
-echo "[INIT] Waiting up to 190 seconds for eth0 NIC (addr_assign_type=0)..."
-MAX_WAIT=190
-while [ $MAX_WAIT -gt 0 ]; do
-  if [ -e "/sys/class/net/eth0" ]; then
-    MAC=$(cat "/sys/class/net/eth0/address" 2>/dev/null)
-    if echo "$MAC" | grep -qiE "^[0-9a-f]{2}(:[0-9a-f]{2}){5}$" && [ "$MAC" != "00:00:00:00:00:00" ]; then
-      echo "[INIT] eth0 is ready with MAC: $MAC"
-      ip a show eth0
-      break
-    fi
-  fi
-  echo "[INIT] Waiting... $MAX_WAIT sec left"
-  sleep 1
-  MAX_WAIT=$((MAX_WAIT - 1))
-done
-
-if [ $MAX_WAIT -le 0 ]; then
-  echo "[INIT] Warning: eth0 NIC did not become ready within timeout."
-fi
-EOF
-            chmod +x $rdtemp/nic-wait-snippet.sh
-            #ls -l $rdtemp/nic-wait-snippet.sh
-            #cat $rdtemp/nic-wait-snippet.sh
-        fi
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
-
-        if [ "${BUS}" != "block" ]; then
-            if [ "${MLMETHOD}" = "PML" ]; then
-                echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
-                [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
-                sudo tar xvfz $rdtemp/exts/all-modules/*${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1  
-                if [ "${MDLNAME}" == "custom-modules" ]; then
-                    sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                else    
-                    sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
-                    [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                fi    
-            fi
-        fi    
     fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
+    if [ "${BUS}" != "block" ]; then
+        if [ "${MLMETHOD}" = "PML" ]; then
+            echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
+            [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
+            if [ "${MDLNAME}" == "custom-modules" ]; then
+                sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+            else    
+                sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
+                [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+            fi    
+        fi
+    fi    
     sudo chmod +x $rdtemp/usr/sbin/modprobe    
 
     # add dummy loop0 test
