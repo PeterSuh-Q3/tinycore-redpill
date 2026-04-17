@@ -4498,7 +4498,12 @@ EOF
     else
         msgnormal "Setting default boot entry to JOT ${BUS}"
     fi
-    sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+    if [ -f /tmp/test_mode ]; then
+        cecho g "###############################  This is Test Mode  ############################"
+        sudo sed -i "/set default=\"*\"/cset default=\"1\"" /tmp/grub.cfg    
+    else
+        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+    fi
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then
         sudo sed -i "s/6234-C863/1234-5678/g" /tmp/grub.cfg
@@ -4778,24 +4783,64 @@ function getredpillko() {
     sudo rm -f /home/tc/custom-module/*.gz
     sudo rm -f /home/tc/custom-module/*.ko
 
-    unzip /mnt/${tcrppart}/rp-lkms${v}.zip        rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz -d /tmp >/dev/null 2>&1
-    gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1
-    sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko /home/tc/custom-module/redpill.ko
-
-    if [ -z "${TAG}" ]; then
+    # 오류 발생 즉시 중단 + 파이프 오류도 감지
+    set -euo pipefail
+    
+    # 오류 발생 위치 출력 함수
+    die() {
+        echo "[ERROR] $1" >&2
+        echo "[ERROR] Line ${BASH_LINENO[0]} 에서 중단됨" >&2
+        exit 1
+    }
+    
+    # 1. ko.gz 파일 추출
+    unzip /mnt/${tcrppart}/rp-lkms${v}.zip \
+        "rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz" \
+        -d /tmp >/dev/null 2>&1 \
+        || die "unzip 실패: rp-lkms${v}.zip 에서 ko.gz 추출 오류"
+    
+    # 2. gunzip 압축 해제
+    gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1 \
+        || die "gunzip 실패: ko.gz 압축 해제 오류"
+    
+    # 3. redpill.ko 복사
+    sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko \
+        /home/tc/custom-module/redpill.ko \
+        || die "cp 실패: redpill.ko 복사 오류"
+    
+    # 4. TAG가 없으면 VERSION 파일에서 추출
+    if [ -z "${TAG:-}" ]; then
         rm -f /tmp/VERSION
-        unzip /mnt/${tcrppart}/rp-lkms${v}.zip        VERSION -d /tmp >/dev/null 2>&1
-        TAG=$(cat /tmp/VERSION )
+        unzip /mnt/${tcrppart}/rp-lkms${v}.zip VERSION -d /tmp >/dev/null 2>&1 \
+            || die "unzip 실패: VERSION 파일 추출 오류"
+    
+        [ -f /tmp/VERSION ] || die "VERSION 파일이 존재하지 않음"
+    
+        TAG=$(cat /tmp/VERSION)
+        [ -n "${TAG}" ] || die "VERSION 파일이 비어 있음"
+    
         echo "TAG of VERSION is ${TAG}"
     fi
-
-    if [ "$(echo "${KVER:-3}" | cut -d'.' -f1)" -eq 3 ]; then
+    
+    # 5. 커널 버전에 따라 모듈 이름 결정
+    KVER_MAJOR="$(echo "${KVER:-3}" | cut -d'.' -f1)"
+    if [ "${KVER_MAJOR}" -eq 3 ]; then
         REDPILL_MOD_NAME="redpill-linux-v${KVER}.ko"
     else
         REDPILL_MOD_NAME="redpill-linux-v${KVER}+.ko"
-    fi    
-    sudo cp -vf /home/tc/custom-module/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
-    sudo strip --strip-debug /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+    fi
+    
+    # 6. 최종 위치로 복사
+    sudo cp -vf /home/tc/custom-module/redpill.ko \
+        /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME} \
+        || die "cp 실패: ${REDPILL_MOD_NAME} 복사 오류"
+    
+    # 7. 디버그 심볼 제거
+    sudo strip --strip-debug \
+        /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME} \
+        || die "strip 실패: ${REDPILL_MOD_NAME}"
+
+    set +euo pipefail    
 
 }
 
