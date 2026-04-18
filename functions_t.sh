@@ -4732,20 +4732,20 @@ function getredpillko() {
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
             redpillmake="dev"
-            updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
             LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
               jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
             if [ -n "$LKM_PRERELEASE_TAG" ]; then
                 echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
                 TAG="$LKM_PRERELEASE_TAG"
             else
-                echo "Pre-release tag not found, use latest 26.2.3"
+                echo "Pre-release tag not found, use latest"
                 TAG="${LATESTURL##*/}"
             fi            
         else        
             TAG="${LATESTURL##*/}"
         fi    
         echo "TAG is ${TAG}"
+        updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
         #RR_VER="26.3.1"
         #STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms-${RR_VER}.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
         STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
@@ -4765,19 +4765,21 @@ function getredpillko() {
         echo "[ERROR] Line ${BASH_LINENO[0]} 에서 중단됨" >&2
         exit 1
     }
-    
+
+    rp_file="rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko"
+    rp_gz_file="${rp_file}.gz"
     # 1. ko.gz 파일 추출
     sudo unzip /mnt/${tcrppart}/rp-lkms${v}.zip \
-        "rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz" \
+        "${rp_gz_file}" \
         -d /tmp >/dev/null 2>&1 \
         || die "unzip 실패: rp-lkms${v}.zip 에서 ko.gz 추출 오류"
     
     # 2. gunzip 압축 해제
-    gunzip -f /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz >/dev/null 2>&1 \
+    gunzip -f "/tmp/${rp_gz_file}" >/dev/null 2>&1 \
         || die "gunzip 실패: ko.gz 압축 해제 오류"
     
     # 3. redpill.ko 복사
-    sudo cp -vf /tmp/rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko \
+    sudo cp -vf "/tmp/${rp_file}" \
         /home/tc/custom-module/redpill.ko \
         || die "cp 실패: redpill.ko 복사 오류"
     
