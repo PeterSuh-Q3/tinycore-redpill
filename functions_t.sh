@@ -4768,6 +4768,7 @@ function getredpillko() {
 
     rp_file="rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko"
     rp_gz_file="${rp_file}.gz"
+    echo "${rp_gz_file}"
     # 1. ko.gz 파일 추출
     sudo unzip /mnt/${tcrppart}/rp-lkms${v}.zip \
         "${rp_gz_file}" \
