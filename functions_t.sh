@@ -4776,7 +4776,7 @@ function getredpillko() {
         || die "unzip 실패: rp-lkms${v}.zip 에서 ko.gz 추출 오류"
     
     # 2. gunzip 압축 해제
-    gunzip -f "/tmp/${rp_gz_file}" >/dev/null 2>&1 \
+    sudo gunzip -f "/tmp/${rp_gz_file}" >/dev/null 2>&1 \
         || die "gunzip 실패: ko.gz 압축 해제 오류"
     
     # 3. redpill.ko 복사
