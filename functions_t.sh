@@ -4767,7 +4767,7 @@ function getredpillko() {
     }
     
     # 1. ko.gz 파일 추출
-    unzip /mnt/${tcrppart}/rp-lkms${v}.zip \
+    sudo unzip /mnt/${tcrppart}/rp-lkms${v}.zip \
         "rp-${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-${redpillmake}.ko.gz" \
         -d /tmp >/dev/null 2>&1 \
         || die "unzip 실패: rp-lkms${v}.zip 에서 ko.gz 추출 오류"
