@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.0"
+rploaderver="1.2.9.1"
 build="master"
 redpillmake="prod"
 
@@ -235,6 +235,9 @@ function history() {
     1.2.8.8 Fixed missing firmware inclusion in PML method (initrd-dsm size increased by approximately 60~100MB)
     1.2.8.9 Separating and stabilizing lkm(redpill.ko) by platform and DSM version
     1.2.9.0 HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
+    1.2.9.1 Fixed HBA syno_block_info write failure error when using custom-modules
+            Correct display of HBA disk firmware version in Disk Manager
+            Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -685,6 +688,11 @@ EOF
 # Separating and stabilizing lkm(redpill.ko) by platform and DSM version
 # 2026.04.14 v1.2.9.0 
 # HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
+# 2026.04.19 v1.2.9.1 
+# Fixed HBA syno_block_info write failure error when using custom-modules
+# Correct display of HBA disk firmware version in Disk Manager
+# Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+
     
 function showlastupdate() {
     cat <<EOF
@@ -840,6 +848,11 @@ function showlastupdate() {
 
 # 2026.04.14 v1.2.9.0 
 # HBA controller support begins on Geminilake (DS920+), R1000 (DS923+), and V1000 (DS1621+)
+
+# 2026.04.19 v1.2.9.1 
+# Fixed HBA syno_block_info write failure error when using custom-modules
+# Correct display of HBA disk firmware version in Disk Manager
+# Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
 
 EOF
 }
