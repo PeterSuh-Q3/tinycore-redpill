@@ -4252,7 +4252,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
     #fi
     
-    USB_LINE="${USB_LINE} pcie_aspm=off"
+    USB_LINE="${USB_LINE} pcie_aspm=off modprobe.blacklist=qla2xxx,qla2xxx_scst"
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
