@@ -6132,15 +6132,13 @@ function my() {
   fi
   
   echo
-  
+
+  checkmachine  
   if [ "$noconfig" = "Y" ]; then                            
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
-      checkmachine
-      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_param}" = "N" ]; then
-          cecho p "Sataportmap,DiskIdxMap to blank for VIRTUAL MACHINE"
-          json="$(jq --arg var "" '.extra_cmdline.SataPortMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
-          json="$(jq --arg var "" '.extra_cmdline.DiskIdxMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json        
-          cat user_config.json
+      if [ "${prevent_param}" = "N" ]; then
+          cecho p "Remove Sataportmap,DiskIdxMap"
+          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json          
       fi
   else 
       cecho c "Before changing user_config.json" 
@@ -6153,8 +6151,8 @@ function my() {
           rploader satamap    
       fi    
       cecho y "After changing user_config.json"     
-      cat user_config.json        
   fi
+  cat user_config.json  
   
   echo
   echo
