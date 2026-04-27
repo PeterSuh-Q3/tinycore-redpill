@@ -4441,7 +4441,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
-
+    cat "${RAMDISK_PATH}/addons/synoinfo.conf"
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
