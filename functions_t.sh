@@ -4441,7 +4441,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
-    cat "${RAMDISK_PATH}/addons/synoinfo.conf"
+
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
@@ -4486,7 +4486,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+        sudo sed -i "/set default=\"*\"/cset default=\"1\"" /tmp/grub.cfg    
     else
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     fi
@@ -6132,13 +6132,15 @@ function my() {
   fi
   
   echo
-
-  checkmachine  
+  
   if [ "$noconfig" = "Y" ]; then                            
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
-      if [ "${prevent_param}" = "N" ]; then
-          cecho p "Remove Sataportmap,DiskIdxMap"
-          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json          
+      checkmachine
+      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_param}" = "N" ]; then
+          cecho p "Sataportmap,DiskIdxMap to blank for VIRTUAL MACHINE"
+          json="$(jq --arg var "" '.extra_cmdline.SataPortMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+          json="$(jq --arg var "" '.extra_cmdline.DiskIdxMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json        
+          cat user_config.json
       fi
   else 
       cecho c "Before changing user_config.json" 
@@ -6151,8 +6153,8 @@ function my() {
           rploader satamap    
       fi    
       cecho y "After changing user_config.json"     
+      cat user_config.json        
   fi
-  cat user_config.json  
   
   echo
   echo
