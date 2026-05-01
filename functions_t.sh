@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.1"
+rploaderver="1.2.9.2"
 build="master"
 redpillmake="prod"
 
@@ -238,6 +238,8 @@ function history() {
     1.2.9.1 Fixed HBA syno_block_info write failure error when using custom-modules
             Correct display of HBA disk firmware version in Disk Manager
             Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+    1.2.9.2 Support Insyde Bios Based Models
+            The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -692,6 +694,9 @@ EOF
 # Fixed HBA syno_block_info write failure error when using custom-modules
 # Correct display of HBA disk firmware version in Disk Manager
 # Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+# 2026.05.01 v1.2.9.2 
+# Support Insyde Bios Based Models
+# The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
 
     
 function showlastupdate() {
@@ -853,6 +858,10 @@ function showlastupdate() {
 # Fixed HBA syno_block_info write failure error when using custom-modules
 # Correct display of HBA disk firmware version in Disk Manager
 # Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+
+# 2026.05.01 v1.2.9.2 
+# Support Insyde Bios Based Models
+# The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
 
 EOF
 }
