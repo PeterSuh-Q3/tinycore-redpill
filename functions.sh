@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.1"
+rploaderver="1.2.9.2"
 build="master"
 redpillmake="prod"
 
@@ -238,6 +238,8 @@ function history() {
     1.2.9.1 Fixed HBA syno_block_info write failure error when using custom-modules
             Correct display of HBA disk firmware version in Disk Manager
             Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+    1.2.9.2 Support Insyde Bios Based Models
+            The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -692,6 +694,9 @@ EOF
 # Fixed HBA syno_block_info write failure error when using custom-modules
 # Correct display of HBA disk firmware version in Disk Manager
 # Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+# 2026.05.01 v1.2.9.2 
+# Support Insyde Bios Based Models
+# The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
 
     
 function showlastupdate() {
@@ -853,6 +858,10 @@ function showlastupdate() {
 # Fixed HBA syno_block_info write failure error when using custom-modules
 # Correct display of HBA disk firmware version in Disk Manager
 # Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
+
+# 2026.05.01 v1.2.9.2 
+# Support Insyde Bios Based Models
+# The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
 
 EOF
 }
@@ -4290,6 +4299,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
     fi
 
+    [ "${MODEL}" == "RS18016xs+" ] && writeConfigKey "synoinfo" "supportsas" "no"
+
     if [ "$WITHFRIEND" = "YES" ]; then
         echo "Creating tinycore friend entry"
         tcrpfriendentry | sudo tee --append /tmp/grub.cfg
@@ -4441,7 +4452,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
-
+    cat "${RAMDISK_PATH}/addons/synoinfo.conf"
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
@@ -4486,7 +4497,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        sudo sed -i "/set default=\"*\"/cset default=\"1\"" /tmp/grub.cfg    
+        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     else
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     fi
@@ -6132,15 +6143,13 @@ function my() {
   fi
   
   echo
-  
+
+  checkmachine  
   if [ "$noconfig" = "Y" ]; then                            
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
-      checkmachine
-      if [ "$MACHINE" = "VIRTUAL" ] && [ "${prevent_param}" = "N" ]; then
-          cecho p "Sataportmap,DiskIdxMap to blank for VIRTUAL MACHINE"
-          json="$(jq --arg var "" '.extra_cmdline.SataPortMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
-          json="$(jq --arg var "" '.extra_cmdline.DiskIdxMap = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json        
-          cat user_config.json
+      if [ "${prevent_param}" = "N" ]; then
+          cecho p "Remove Sataportmap,DiskIdxMap"
+          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json          
       fi
   else 
       cecho c "Before changing user_config.json" 
@@ -6153,8 +6162,8 @@ function my() {
           rploader satamap    
       fi    
       cecho y "After changing user_config.json"     
-      cat user_config.json        
   fi
+  cat user_config.json  
   
   echo
   echo
