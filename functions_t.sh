@@ -4300,11 +4300,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
     fi
 
-    if echo ${nosas5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-        writeConfigKey "synoinfo" "supportsas" "no"
-    else
-        writeConfigKey "synoinfo" "supportsas" "yes"
-    fi
+    #if echo ${nosas5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+    #    writeConfigKey "synoinfo" "supportsas" "no"
+    #else
+    #    writeConfigKey "synoinfo" "supportsas" "yes"
+    #fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
         echo "Creating tinycore friend entry"
