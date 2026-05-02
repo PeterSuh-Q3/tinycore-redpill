@@ -23,6 +23,7 @@ smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview"
 kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
+nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
 dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap"
 
 # 전역 변수로 플래그 설정 (한번 Y면 영구 유지)
@@ -4299,11 +4300,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
     fi
 
-    if [ "${MODEL}" == "RS18016xs+" ]; then
-        writeConfigKey "synoinfo" "supportsas" "no"
-    else
-        writeConfigKey "synoinfo" "supportsas" "yes"
-    fi
+    #if echo ${nosas5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+    #    writeConfigKey "synoinfo" "supportsas" "no"
+    #else
+    #    writeConfigKey "synoinfo" "supportsas" "yes"
+    #fi
 
     if [ "$WITHFRIEND" = "YES" ]; then
         echo "Creating tinycore friend entry"
