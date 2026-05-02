@@ -4461,6 +4461,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
+    [ ! -f "${RAMDISK_PATH}/etc.defaults/rc.sas" ] && sudo touch "${RAMDISK_PATH}/etc.defaults/rc.sas"
+
     #mark PML or not
     if [ "${BUS}" != "block" ]; then
         [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
