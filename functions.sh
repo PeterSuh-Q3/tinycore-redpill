@@ -24,7 +24,7 @@ smallfixnumber="0"
 kver3platforms="bromolow braswell avoton cedarview"
 kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
 nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
-dsm6notsupported="geminilake v1000 purley braswell denverton broadwellntbap"
+dsm6notsupported="broadwellntbap"
 
 # 전역 변수로 플래그 설정 (한번 Y면 영구 유지)
 R8168_YN="N"
@@ -4522,6 +4522,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
 
     sudo cp -vf $rdtemp/linuxrc.syno.impl /home/tc/linuxrc.syno.impl.${SYNOMODEL}
+    sudo cp -vf $rdtemp/usr/sbin/init.post /home/tc/init.post.${SYNOMODEL}
     sudo rm -rf $rdtemp /home/tc/friend /home/tc/cache/*.pat
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
