@@ -4522,6 +4522,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
     [ -f /mnt/${loaderdisk}3/initrd-dsm72 ] && rm /mnt/${loaderdisk}3/initrd-dsm72
 
     sudo cp -vf $rdtemp/linuxrc.syno.impl /home/tc/linuxrc.syno.impl.${SYNOMODEL}
+    sudo cp -vf $rdtemp/usr/sbin/init.post /home/tc/init.post.${SYNOMODEL}
     sudo rm -rf $rdtemp /home/tc/friend /home/tc/cache/*.pat
 
     if [[ $BIOS_CNT -eq 1 ]] && [ "$FRKRNL" = "YES" ]; then 
