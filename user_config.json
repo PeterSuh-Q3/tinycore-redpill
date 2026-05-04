@@ -16,7 +16,16 @@
     "ucode": "en_US",
     "loadermode": "FRIEND",
     "bay": "RACK_12_Bay",
-    "kver": "5.10.55"
+    "kver": "5.10.55",
+    "diskcount": "1",
+    "check_diskcnt": "false",
+    "i915mode": "1",
+    "nvmesystem": "false",
+    "vmtools": "false",
+    "modulename": "all-modules",
+    "mlmethod": "IML",
+    "tcbautoupd": "true",
+    "prevent_init": "OFF"    
   }, 
   "ipsettings": {
     "ipset": "",
