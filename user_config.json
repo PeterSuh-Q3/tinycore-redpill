@@ -44,10 +44,7 @@
     "DiskIdxMap": ""
   },
   "synoinfo": {
-    "maxdisks": "16",
-    "support_bde_internal_10g": "no",
-    "support_disk_compatibility": "no",
-    "support_memory_compatibility": "no"
+    "maxdisks": "16"
   },
   "ramdisk_copy": {}
 }
