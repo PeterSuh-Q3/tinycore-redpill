@@ -1330,8 +1330,6 @@ function getvarsmshell()
         exit 0
     fi
 
-    zeropadingver ${KVER}
-
     # Extract models for each platform and add them to the mdl file
     for platform in $platforms; do
       # Initialize MODELS array
@@ -1359,6 +1357,8 @@ function getvarsmshell()
         fi
       fi
     done    
+
+    zeropadingver ${KVER}    
     
     case ${MODEL} in
     DS224+)
@@ -6011,6 +6011,7 @@ function my() {
   cecho p "TARGET_REVISION is $TARGET_REVISION"
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
+  cecho c "ZPAD KERNEL VERSION is $ZPADKVER"
 
   if [ "$ZPADKVER" -le 4004059 ]; then
     if [ "${BUS}" != "block" ]; then
