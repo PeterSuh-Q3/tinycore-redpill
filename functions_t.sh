@@ -6011,6 +6011,7 @@ function my() {
   cecho p "TARGET_REVISION is $TARGET_REVISION"
   cecho g "SYNOMODEL is $SYNOMODEL"  
   cecho c "KERNEL VERSION is $KVER"  
+  cecho c "ZPAD KERNEL VERSION is $ZPADKVER"
 
   if [ "$ZPADKVER" -le 4004059 ]; then
     if [ "${BUS}" != "block" ]; then
