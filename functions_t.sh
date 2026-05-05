@@ -1330,8 +1330,6 @@ function getvarsmshell()
         exit 0
     fi
 
-    zeropadingver ${KVER}
-
     # Extract models for each platform and add them to the mdl file
     for platform in $platforms; do
       # Initialize MODELS array
@@ -1359,6 +1357,8 @@ function getvarsmshell()
         fi
       fi
     done    
+
+    zeropadingver ${KVER}    
     
     case ${MODEL} in
     DS224+)
