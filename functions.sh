@@ -4458,6 +4458,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}"
     done
     cat "${RAMDISK_PATH}/addons/synoinfo.conf"
+
+    #copy redoill lkm rp.ko.
+    sudo cp -vf /home/tc/custom-module/redpill.ko "${RAMDISK_PATH}/addons/rp.ko"
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
