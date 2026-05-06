@@ -1,4 +1,4 @@
-a5d9dcb7d5a65382d5b2cb007a7be5065313176f
+d6bf3b3e42f2fe68b36f0cb2d86404c5256c3530
 28de4ef642a132ebe12d74b6d3a2cbd69a97d982
 
     1.2.9.2 Support Insyde Bios Based Models
