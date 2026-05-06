@@ -1300,16 +1300,28 @@ function burnloader() {
   #  imgversion="v1.0.1.0"
   #fi
 
-  echo "Downloading TCRP-mshell ${imgversion} img file..."  
-  if [ -f /tmp/tinycore-redpill.${imgversion}.m-shell.img ]; then
-    echo "TCRP-mshell ${imgversion} img file already exists. Skip download..."  
+  dialog --title "IMG Size Selection" --menu "Select img file size to download:" 10 50 2 \
+    "2GB" "Standard 2GB image" \
+    "4GB" "Large 4GB image" 2>/tmp/imgsize_selection.txt
+  imgsize=$(cat /tmp/imgsize_selection.txt)
+  rm -f /tmp/imgsize_selection.txt
+
+  if [ "${imgsize}" = "4GB" ]; then
+    imgsuffix="m-shell-4GB"
   else
-    curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${imgversion}/tinycore-redpill.${imgversion}.m-shell.img.gz -o /tmp/tinycore-redpill.${imgversion}.m-shell.img.gz
-    gunzip /tmp/tinycore-redpill.${imgversion}.m-shell.img.gz
+    imgsuffix="m-shell"
   fi
 
-  echo "Please wait a moment. Burning ${imgversion} image is in progress..."  
-  sudo dd if=/tmp/tinycore-redpill.${imgversion}.m-shell.img of=${loaderdev} status=progress bs=4M
+  echo "Downloading TCRP-mshell ${imgversion} img file..."
+  if [ -f /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img ]; then
+    echo "TCRP-mshell ${imgversion} img file already exists. Skip download..."
+  else
+    curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${imgversion}/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz -o /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz
+    gunzip /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz
+  fi
+
+  echo "Please wait a moment. Burning ${imgversion} image is in progress..."
+  sudo dd if=/tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img of=${loaderdev} status=progress bs=4M
   echo "Burning Image ${imgversion} completed, press any key to continue..."
   read answer
   return 0
