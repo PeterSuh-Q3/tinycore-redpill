@@ -1,5 +1,5 @@
 878e9200e4db5e3c40d816237de79784f98a4a6b
-28de4ef642a132ebe12d74b6d3a2cbd69a97d982
+b596b269b142452e1d091e0f2ec8f872658d8721
 
-    1.2.9.2 Support Insyde Bios Based Models
-The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
+    1.2.9.3 Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
+Updating and stabilizing the latest version of the r8168 module
