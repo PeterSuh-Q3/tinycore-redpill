@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.2"
+rploaderver="1.2.9.3"
 build="master"
 redpillmake="prod"
 
@@ -241,6 +241,8 @@ function history() {
             Block synolanstatus to inhibit the ixgbe loop (about 50 seconds/30 times) in broadwellnk/broadwell/denverton.
     1.2.9.2 Support Insyde Bios Based Models
             The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
+    1.2.9.3 Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
+            Updating and stabilizing the latest version of the r8168 module
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -698,6 +700,9 @@ EOF
 # 2026.05.01 v1.2.9.2 
 # Support Insyde Bios Based Models
 # The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
+# 2026.05.07 v1.2.9.3 
+# Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
+# Updating and stabilizing the latest version of the r8168 module
 
     
 function showlastupdate() {
@@ -863,6 +868,10 @@ function showlastupdate() {
 # 2026.05.01 v1.2.9.2 
 # Support Insyde Bios Based Models
 # The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
+
+# 2026.05.07 v1.2.9.3 
+# Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
+# Updating and stabilizing the latest version of the r8168 module
 
 EOF
 }
