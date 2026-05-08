@@ -4516,7 +4516,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+        sudo sed -i "/set default=\"*\"/cset default=\"2\"" /tmp/grub.cfg    
     else
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     fi
