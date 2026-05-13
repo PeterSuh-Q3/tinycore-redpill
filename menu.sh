@@ -255,24 +255,23 @@ fi
 if [ "${offline}" = "NO" ]; then
     if [ "$oldver" = "test" ]; then
       cecho g "###############################  This is Test Mode  ############################"
-      curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models_t.json -o models.json
-      sha256sum models.json
-      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
-      curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+      curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models_t.json -o models.json
+      curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
+      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
     elif [ "$oldver" = "unknown" ]; then
-      curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json    
-      curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json    
+      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
       if [ $? -ne 0 ]; then
         echo "[!] extract_old_shell failed. Falling back to master functions.sh ..."
-        curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
-        curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
       fi
 
       get_dep_hashes "$oldver"
