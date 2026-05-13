@@ -2981,17 +2981,16 @@ function addrequiredexts() {
             exit 99
         fi
     done
-    if [ "${extension}" == "all-modules" ]; then
-        vkersion=${major}${minor}_${KVER}
-    else    
-        if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-            vkersion=${major}${minor}_${KVER}
-        else
-            vkersion=${KVER}
-        fi
-    fi
-
     for extension in ${EXTENSIONS}; do
+        if [ "${extension}" == "all-modules" ]; then
+            vkersion=${major}${minor}_${KVER}
+        else    
+            if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+                vkersion=${major}${minor}_${KVER}
+            else
+                vkersion=${KVER}
+            fi
+        fi
         echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
         platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
         # Add Use RR's custom kernel module
