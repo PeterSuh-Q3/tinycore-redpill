@@ -2982,22 +2982,13 @@ function addrequiredexts() {
         fi
     done
     for extension in ${EXTENSIONS}; do
-        if [ "${extension}" == "all-modules" ]; then
-            vkersion=${major}${minor}_${KVER}
-        else    
-            if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-                vkersion=${major}${minor}_${KVER}
-            else
-                vkersion=${KVER}
-            fi
-        fi
-        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
-        platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
+        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${major}.${minor}, ${KVER}  "
         # Add Use RR's custom kernel module
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && platkver="${platkver}_amdgpu"
-        echo "platkver = ${platkver}"
-        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
+        nkver=${KVER}
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
+        echo "nkver = ${nkver}"
+        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${major}${minor} ${nkver} ${extension}
         if [ $? -ne 0 ]; then
             echo "FAILED : Processing add_extensions failed check the output for any errors"
             rploader clean
