@@ -2984,7 +2984,7 @@ function addrequiredexts() {
     for extension in ${EXTENSIONS}; do
         echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${major}.${minor}, ${KVER}  "
         # Add Use RR's custom kernel module
-        nkver=${KVER}
+        nkver="$(echo ${KVER} | sed 's/\.//g')"
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
         echo "nkver = ${nkver}"
