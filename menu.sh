@@ -256,6 +256,7 @@ if [ "${offline}" = "NO" ]; then
     if [ "$oldver" = "test" ]; then
       cecho g "###############################  This is Test Mode  ############################"
       curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models_t.json -o models.json
+      sha256sum models.json
       curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
       curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
       chmod +x /home/tc/redpill-load/*.sh
