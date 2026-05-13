@@ -2982,11 +2982,11 @@ function addrequiredexts() {
         fi
     done
 
-    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
+    #if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         vkersion=${major}${minor}_${KVER}
-    else
-        vkersion=${KVER}
-    fi
+    #else
+    #    vkersion=${KVER}
+    #fi
 
     for extension in ${EXTENSIONS}; do
         echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
