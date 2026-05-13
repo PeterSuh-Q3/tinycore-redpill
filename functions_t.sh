@@ -6092,7 +6092,7 @@ function my() {
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
   
   echo  "download original bundled-exts.json file..."
-  if [ "$oldver" = "test" ]; then
+  if [ -f /tmp/test_mode ]; then
     cecho g "###############################  This is Test Mode  ############################"
     curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /home/tc/redpill-load/bundled-exts.json
   else
