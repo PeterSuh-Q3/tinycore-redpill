@@ -2981,21 +2981,14 @@ function addrequiredexts() {
             exit 99
         fi
     done
-
-    if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-        vkersion=${major}${minor}_${KVER}
-    else
-        vkersion=${KVER}
-    fi
-
     for extension in ${EXTENSIONS}; do
-        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${vkersion}  "
-        platkver="$(echo ${ORIGIN_PLATFORM}_${vkersion} | sed 's/\.//g')"
+        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${major}.${minor}, ${KVER}  "
         # Add Use RR's custom kernel module
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && platkver="${platkver}_custom"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && platkver="${platkver}_amdgpu"
-        echo "platkver = ${platkver}"
-        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${platkver} ${extension}
+        nkver="$(echo ${KVER} | sed 's/\.//g')"
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
+        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
+        echo "nkver = ${nkver}"
+        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${major}${minor} ${nkver} ${extension}
         if [ $? -ne 0 ]; then
             echo "FAILED : Processing add_extensions failed check the output for any errors"
             rploader clean
@@ -4516,7 +4509,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
+        sudo sed -i "/set default=\"*\"/cset default=\"2\"" /tmp/grub.cfg    
     else
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     fi
@@ -4775,7 +4768,7 @@ function getredpillko() {
         LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
-            redpillmake="dev"
+            [ "${DSMVER}" = "7.3" ] && redpillmake="dev"
             LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
               jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
             if [ -n "$LKM_PRERELEASE_TAG" ]; then
@@ -6089,7 +6082,12 @@ function my() {
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
   
   echo  "download original bundled-exts.json file..."
-  curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
+  if [ -f /tmp/test_mode ]; then
+    cecho g "###############################  This is Test Mode  ############################"
+    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /home/tc/redpill-load/bundled-exts.json
+  else
+    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
+  fi  
   
   if [ "${DMPM}" = "DDSML" ]; then
       jq 'del(.eudev, .aeudev)' \
