@@ -2987,13 +2987,14 @@ function addrequiredexts() {
         fi
     done
     for extension in ${EXTENSIONS}; do
-        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${major}.${minor}, ${KVER}  "
+        echo "Updating extension : ${extension} contents for platform, kernel : ${ORIGIN_PLATFORM}, ${DSMVER}, ${KVER}  "
         # Add Use RR's custom kernel module
+        DSMVER_NOTDOT="$(echo ${DSMVER} | sed 's/\.//g')"
         nkver="$(echo ${KVER} | sed 's/\.//g')"
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
         [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
         echo "nkver = ${nkver}"
-        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${major}${minor} ${nkver} ${extension}
+        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${DSMVER_NOTDOT} ${nkver} ${extension}
         if [ $? -ne 0 ]; then
             echo "FAILED : Processing add_extensions failed check the output for any errors"
             rploader clean
