@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.3"
+rploaderver="1.2.9.4"
 build="master"
 redpillmake="prod"
 
@@ -243,6 +243,7 @@ function history() {
             The only model supporting Intel 3rd Gen Official Modules (all-modules) Improvements for RS18016xs+ (bromlow, Kernel 3)        
     1.2.9.3 Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
             Updating and stabilizing the latest version of the r8168 module
+    1.2.9.4 mshell uses self-compiled modules, extending support for kernel 3-based modules
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -703,7 +704,8 @@ EOF
 # 2026.05.07 v1.2.9.3 
 # Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
 # Updating and stabilizing the latest version of the r8168 module
-
+# 2026.05.14 v1.2.9.4 
+# mshell uses self-compiled modules, extending support for kernel 3-based modules
     
 function showlastupdate() {
     cat <<EOF
@@ -872,6 +874,9 @@ function showlastupdate() {
 # 2026.05.07 v1.2.9.3 
 # Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
 # Updating and stabilizing the latest version of the r8168 module
+
+# 2026.05.14 v1.2.9.4 
+# mshell uses self-compiled modules, extending support for kernel 3-based modules
 
 EOF
 }
