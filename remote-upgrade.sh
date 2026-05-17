@@ -41,9 +41,12 @@ echo
 [ ! -d /mnt/p3 ] &&  mkdir /mnt/p3
 
 cd /dev/
-mount -t vfat synoboot1 /mnt/p1
-mount -t vfat synoboot2 /mnt/p2
-mount -t vfat synoboot3 /mnt/p3
+mount -o loop /dev/synoboot1 /mnt/p1
+mount -o loop /dev/synoboot2 /mnt/p2
+mount -o loop /dev/synoboot3 /mnt/p3
+#mount -t vfat synoboot1 /mnt/p1
+#mount -t vfat synoboot2 /mnt/p2
+#mount -t vfat synoboot3 /mnt/p3
 
 cecho yellow "Unzip the updatepack and upgrade the synoboot loader partition..."
 echo
