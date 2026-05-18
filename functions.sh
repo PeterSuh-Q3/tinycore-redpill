@@ -4457,7 +4457,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     RAMDISK_PATH="$rdtemp"
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"    
-    echo v${rploaderver} >"${RAMDISK_PATH}/addons/VERSION"
+    echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
     echo -n "."
     echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
     for KEY in "${!SYNOINFO[@]}"; do
