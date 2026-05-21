@@ -2991,8 +2991,6 @@ function addrequiredexts() {
         # Add Use RR's custom kernel module
         DSMVER_NOTDOT="$(echo ${DSMVER} | sed 's/\.//g')"
         nkver="$(echo ${KVER} | sed 's/\.//g')"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
         echo "nkver = ${nkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${DSMVER_NOTDOT} ${nkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -4291,12 +4289,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
-        if [[ "${MDLNAME}" == "custom-modules" || "${MDLNAME}" == "amdgpu-modules" ]]; then
+        if [ "${MDLNAME}" == "custom-modules" ]; then
             USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         fi
     fi
-    
-    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} fbcon=map:99 vga=keep"    
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
 
@@ -4433,8 +4429,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/custom-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/custom-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+            elif [ "${MDLNAME}" == "amd-modules" ]; then
+                sudo tar xvfz $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmwareamdgpu.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             else    
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
@@ -6295,8 +6295,8 @@ function my() {
 
   [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat
 
-  if [ "${MDLNAME}" == "custom-modules" ]; then
-      echo "Discover left space for custom-modules initrd-dsm ... "        
+  if [[ "${MLMETHOD}" = "PML" && "${MDLNAME}" != "all-modules" ]]; then
+      echo "Discover left space for ${MDLNAME} initrd-dsm ... "        
       SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
       SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
       SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
