@@ -419,16 +419,16 @@ function selectldrmode() {
     if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then
       # custom-modules + amd-modules 둘 다 가용
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
+                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
-                    "k" "${MSG28}, custom-modules(Persistent:PML)" \
                     "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)" \
-                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)")
+                    "k" "${MSG28}, custom-modules(Persistent:PML)")            
     else
       # r1000nk / v1000nk: custom-modules 없음, amd-modules 만
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
+                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
-                    "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)" \
-                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)")
+                    "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)")
     fi
   else
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
@@ -450,17 +450,17 @@ function selectldrmode() {
       MDLNAME="all-modules"
       MLMETHOD="IML"
       break
-    elif [ "${resp}" = "k" ]; then
-      MDLNAME="custom-modules"
-      MLMETHOD="PML"
+    elif [ "${resp}" = "m" ]; then
+      MDLNAME="amd-modules"
+      MLMETHOD="IML"
       break
     elif [ "${resp}" = "l" ]; then
       MDLNAME="amd-modules"
       MLMETHOD="PML"
       break
-    elif [ "${resp}" = "m" ]; then
-      MDLNAME="amd-modules"
-      MLMETHOD="IML"
+    elif [ "${resp}" = "k" ]; then
+      MDLNAME="custom-modules"
+      MLMETHOD="PML"
       break
     fi
   done
