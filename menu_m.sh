@@ -413,7 +413,7 @@ function selectldrmode() {
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]] && [[ "${REVISION}" -ge 86009 ]]; then  
     if [ "${platform}" == "epyc7002(DT)" ]; then  
-      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amdgpu-modules(Persistent:PML)")
+      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)" "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)")
     else
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)" "k" "${MSG28}, custom-modules(Persistent:PML)" )  
     fi
@@ -442,17 +442,30 @@ function selectldrmode() {
       MLMETHOD="PML"
       break
     elif [ "${resp}" = "l" ]; then
-      MDLNAME="amdgpu-modules"
+      MDLNAME="amd-modules"
       MLMETHOD="PML"
       break
-    #elif [ "${resp}" = "m" ]; then
-    #  [ "${LDRMODE}" = "JOT" ] && LDRMODE="FRIEND" || LDRMODE="JOT"
-    #  continue  # 레이블 갱신을 위해 루프 재진입
-    fi      
+    elif [ "${resp}" = "m" ]; then
+      MDLNAME="amd-modules"
+      MLMETHOD="IML"
+      break
+    fi
   done
   writeConfigKey "general" "loadermode" "${LDRMODE}"
   writeConfigKey "general" "modulename" "${MDLNAME}"
   writeConfigKey "general" "mlmethod" "${MLMETHOD}"
+
+  # bundled-exts.json 의 *-modules 정의를 선택된 MDLNAME 으로 치환
+  # (all-modules / amd-modules / custom-modules 중 하나만 유효)
+  BEX="/home/tc/redpill-load/bundled-exts.json"
+  if [ -f "${BEX}" ] && command -v jq >/dev/null 2>&1; then
+    jsonfile=$(jq --arg name "${MDLNAME}" '
+        del(.["all-modules"])
+      | del(.["amd-modules"])
+      | del(.["custom-modules"])
+      | . + {($name): ("https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/" + $name + "/rpext-index.json")}
+    ' "${BEX}") && echo "${jsonfile}" | jq . > "${BEX}"
+  fi
 }
 
 ###############################################################################
