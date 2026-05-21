@@ -456,16 +456,34 @@ function selectldrmode() {
   writeConfigKey "general" "mlmethod" "${MLMETHOD}"
 
   # bundled-exts.json 의 *-modules 정의를 선택된 MDLNAME 으로 치환
-  # (all-modules / amd-modules / custom-modules 중 하나만 유효)
-  BEX="/home/tc/redpill-load/bundled-exts.json"
-  if [ -f "${BEX}" ] && command -v jq >/dev/null 2>&1; then
-    jsonfile=$(jq --arg name "${MDLNAME}" '
-        del(.["all-modules"])
-      | del(.["amd-modules"])
-      | del(.["custom-modules"])
-      | . + {($name): ("https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/" + $name + "/rpext-index.json")}
-    ' "${BEX}") && echo "${jsonfile}" | jq . > "${BEX}"
-  fi
+  # 각 모듈 분기는 서로 다른 저장소를 가리킨다:
+  #   all-modules    → arpl-modules/main/rpext-index.json
+  #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
+  #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
+  syncBundledExtsModule "${MDLNAME}"
+}
+
+# bundled-exts.json 의 *-modules 키를 ${1} 로 통일한다.
+# selectldrmode() 와 functions_t.sh::my() 양쪽에서 호출해 두 경로의 동작을 일치시킨다.
+function syncBundledExtsModule() {
+  local mdlname="${1}"
+  local bex="/home/tc/redpill-load/bundled-exts.json"
+  [ -f "${bex}" ] || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+  local mdlurl
+  case "${mdlname}" in
+    all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/arpl-modules/main/rpext-index.json" ;;
+    amd-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
+    custom-modules) mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
+    *) return 0 ;;
+  esac
+  local tmp
+  tmp=$(jq --arg name "${mdlname}" --arg url "${mdlurl}" '
+      del(.["all-modules"])
+    | del(.["amd-modules"])
+    | del(.["custom-modules"])
+    | . + {($name): $url}
+  ' "${bex}") && echo "${tmp}" | jq . > "${bex}"
 }
 
 ###############################################################################

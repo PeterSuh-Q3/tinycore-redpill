@@ -6109,6 +6109,29 @@ function my() {
       exit 99
   fi
 
+  # bundled-exts.json 의 *-modules 키를 selectldrmode() 가 저장한 MDLNAME 으로 재적용.
+  # 위 curl 이 GitHub 원본으로 덮어썼으므로 여기서 다시 정정해야
+  # amd-modules / custom-modules 선택이 보존된다. 모듈별로 저장소가 다름:
+  #   all-modules    → arpl-modules/main/rpext-index.json
+  #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
+  #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
+  case "${MDLNAME}" in
+    all-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/arpl-modules/main/rpext-index.json" ;;
+    amd-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
+    custom-modules) _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
+    *) _MDLURL="" ;;
+  esac
+  if [ -n "${_MDLURL}" ] && [ -f /home/tc/redpill-load/bundled-exts.json ]; then
+    jsonfile=$(jq --arg name "${MDLNAME}" --arg url "${_MDLURL}" '
+        del(.["all-modules"])
+      | del(.["amd-modules"])
+      | del(.["custom-modules"])
+      | . + {($name): $url}
+    ' /home/tc/redpill-load/bundled-exts.json) && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+    cecho y "bundled-exts.json: *-modules entry set to ${MDLNAME}"
+  fi
+  unset _MDLURL
+
   #if [ "$MACHINE" = "VIRTUAL" ]; then
   #    jsonfile=$(jq 'del(.acpid)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #fi
