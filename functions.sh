@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.4"
+rploaderver="1.2.9.5"
 build="master"
 redpillmake="prod"
 
@@ -244,6 +244,7 @@ function history() {
     1.2.9.3 Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
             Updating and stabilizing the latest version of the r8168 module
     1.2.9.4 mshell uses self-compiled modules, extending support for kernel 3-based modules
+    1.2.9.5 amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -706,6 +707,8 @@ EOF
 # Updating and stabilizing the latest version of the r8168 module
 # 2026.05.14 v1.2.9.4 
 # mshell uses self-compiled modules, extending support for kernel 3-based modules
+# 2026.05.22 v1.2.9.5 
+# amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     
 function showlastupdate() {
     cat <<EOF
@@ -877,6 +880,9 @@ function showlastupdate() {
 
 # 2026.05.14 v1.2.9.4 
 # mshell uses self-compiled modules, extending support for kernel 3-based modules
+
+# 2026.05.22 v1.2.9.5 
+# amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
 
 EOF
 }
@@ -2991,8 +2997,6 @@ function addrequiredexts() {
         # Add Use RR's custom kernel module
         DSMVER_NOTDOT="$(echo ${DSMVER} | sed 's/\.//g')"
         nkver="$(echo ${KVER} | sed 's/\.//g')"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "custom-modules" ]] && nkver="${KVER}_custom"
-        [[ "${extension}" == "all-modules" && "${MDLNAME}" == "amdgpu-modules" ]] && nkver="${KVER}_amdgpu"
         echo "nkver = ${nkver}"
         cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${ORIGIN_PLATFORM} ${DSMVER_NOTDOT} ${nkver} ${extension}
         if [ $? -ne 0 ]; then
@@ -4291,12 +4295,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
-        if [[ "${MDLNAME}" == "custom-modules" || "${MDLNAME}" == "amdgpu-modules" ]]; then
+        if [ "${MDLNAME}" == "custom-modules" ]; then
             USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
         fi
     fi
-    
-    [ "${MDLNAME}" == "custom-modules" ] && USB_LINE="${USB_LINE} fbcon=map:99 vga=keep"    
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
 
@@ -4433,8 +4435,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
             if [ "${MDLNAME}" == "custom-modules" ]; then
-                sudo tar xvfz $rdtemp/exts/all-modules/modules-${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/all-modules/firmware-custom.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/custom-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/custom-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+            elif [ "${MDLNAME}" == "amd-modules" ]; then
+                sudo tar xvfz $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmwareamdgpu.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             else    
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
@@ -6109,6 +6115,29 @@ function my() {
       exit 99
   fi
 
+  # bundled-exts.json 의 *-modules 키를 selectldrmode() 가 저장한 MDLNAME 으로 재적용.
+  # 위 curl 이 GitHub 원본으로 덮어썼으므로 여기서 다시 정정해야
+  # amd-modules / custom-modules 선택이 보존된다. 모듈별로 저장소가 다름:
+  #   all-modules    → arpl-modules/main/rpext-index.json
+  #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
+  #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
+  case "${MDLNAME}" in
+    all-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/arpl-modules/main/rpext-index.json" ;;
+    amd-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
+    custom-modules) _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
+    *) _MDLURL="" ;;
+  esac
+  if [ -n "${_MDLURL}" ] && [ -f /home/tc/redpill-load/bundled-exts.json ]; then
+    jsonfile=$(jq --arg name "${MDLNAME}" --arg url "${_MDLURL}" '
+        del(.["all-modules"])
+      | del(.["amd-modules"])
+      | del(.["custom-modules"])
+      | . + {($name): $url}
+    ' /home/tc/redpill-load/bundled-exts.json) && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+    cecho y "bundled-exts.json: *-modules entry set to ${MDLNAME}"
+  fi
+  unset _MDLURL
+
   #if [ "$MACHINE" = "VIRTUAL" ]; then
   #    jsonfile=$(jq 'del(.acpid)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #fi
@@ -6272,8 +6301,8 @@ function my() {
 
   [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat
 
-  if [ "${MDLNAME}" == "custom-modules" ]; then
-      echo "Discover left space for custom-modules initrd-dsm ... "        
+  if [[ "${MLMETHOD}" = "PML" && "${MDLNAME}" != "all-modules" ]]; then
+      echo "Discover left space for ${MDLNAME} initrd-dsm ... "        
       SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
       SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
       SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
