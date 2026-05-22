@@ -1,4 +1,4 @@
-1f7afcd0c426eac20d2204dfe6acb4d03ea330a8
-d95b13ded94ca15b441c6dec359c66b933417cfc
+a6899c5f23180f6007756d6ddbfb38bbc0e1e41c
+17dc46f4db0e8cded80df2a1c332a611160006e9
 
-    1.2.9.4 mshell uses self-compiled modules, extending support for kernel 3-based modules
+    1.2.9.5 amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
