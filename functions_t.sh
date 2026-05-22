@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.4"
+rploaderver="1.2.9.5"
 build="master"
 redpillmake="prod"
 
@@ -244,6 +244,7 @@ function history() {
     1.2.9.3 Fixed the conflict issue between Realtek wrapper rxtx and the vanilla version (with pilot sa6400)
             Updating and stabilizing the latest version of the r8168 module
     1.2.9.4 mshell uses self-compiled modules, extending support for kernel 3-based modules
+    1.2.9.5 amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -706,6 +707,8 @@ EOF
 # Updating and stabilizing the latest version of the r8168 module
 # 2026.05.14 v1.2.9.4 
 # mshell uses self-compiled modules, extending support for kernel 3-based modules
+# 2026.05.22 v1.2.9.5 
+# amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     
 function showlastupdate() {
     cat <<EOF
@@ -877,6 +880,9 @@ function showlastupdate() {
 
 # 2026.05.14 v1.2.9.4 
 # mshell uses self-compiled modules, extending support for kernel 3-based modules
+
+# 2026.05.22 v1.2.9.5 
+# amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
 
 EOF
 }
