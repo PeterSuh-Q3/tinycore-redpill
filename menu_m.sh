@@ -476,7 +476,7 @@ function selectldrmode() {
   curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
   
   if [ "$curZpadkver" -ge 4004302 ]; then
-    if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then
+    if [[ "${origin_plat}" == "epyc7002" || "${origin_plat}" == "geminilakenk" ]]; then  
       # custom-modules + amd-modules 둘 다 가용
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
                     "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)" \
