@@ -406,14 +406,24 @@ function seleudev() {
 
 }
 
+function resolveLiveKver() {
+    local synomodel synoversion
+    synomodel=$(readConfigKey "general" "model")
+    synoversion=$(readConfigKey "general" "version")
+    ( getvarsmshell "${synomodel}-${synoversion}" >/dev/null 2>&1; echo "${KVER}|${ORIGIN_PLATFORM}" )
+}
+
 # ── 새로운 헬퍼 함수 추가 ──────────────────────────────────────────
 function checkAndResetModuleName() {
     local curMdlName
     curMdlName=$(readConfigKey "general" "modulename")
 
-    local kver
-    kver=$(readConfigKey "general" "kver")
-
+    # Derive the kernel version of the *currently selected* model live.
+    local _gv kver origin_plat
+    _gv="$(resolveLiveKver)"
+    kver="${_gv%%|*}"
+    origin_plat="${_gv##*|}"
+    
     # kver = "5.10.55" → ZPADKVER = "5010055"
     local curZpadkver
     curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
@@ -421,7 +431,7 @@ function checkAndResetModuleName() {
     local supported=false
 
     if [ "${curZpadkver}" -ge 4004302 ]; then
-        if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then    
+        if [[ "${origin_plat}" == "epyc7002" || "${origin_plat}" == "geminilakenk" ]]; then
             # amd-modules, custom-modules, all-modules 모두 지원
             supported=true
         else
@@ -438,7 +448,7 @@ function checkAndResetModuleName() {
     fi
 
     if [ "${supported}" = "false" ]; then
-        echo "⚠ '${curMdlName}' is not supported (kver=${kver}, platform=${platform})"
+        echo "⚠ '${curMdlName}' is not supported (kver=${kver}, platform=${origin_plat})"
         echo "  → Resetting to all-modules (IML)..."
         MDLNAME="all-modules"
         MLMETHOD="IML"
@@ -455,8 +465,11 @@ function selectldrmode() {
   #eval "MSG29=\"\${MSG${tz}29}\""  
   # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
-  local kver
-  kver=$(readConfigKey "general" "kver")
+  # Derive the kernel version of the *currently selected* model live.
+  local _gv kver origin_plat
+  _gv="$(resolveLiveKver)"
+  kver="${_gv%%|*}"
+  origin_plat="${_gv##*|}"
 
   # kver = "5.10.55" → ZPADKVER = "5010055"
   local curZpadkver
