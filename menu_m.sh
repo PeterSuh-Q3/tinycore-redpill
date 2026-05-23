@@ -7,6 +7,7 @@ set -u # Unbound variable errors are not allowed
 . /home/tc/i18n.h
 . /home/tc/dts_mapping.sh
 #####################################################################################################
+export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
 kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"

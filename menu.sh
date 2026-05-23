@@ -5,6 +5,7 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES ######################################################################################
 . /home/tc/functions.sh
 #####################################################################################################
+export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
 
 # lock
