@@ -406,18 +406,59 @@ function seleudev() {
 
 }
 
+# ── 새로운 헬퍼 함수 추가 ──────────────────────────────────────────
+function checkAndResetModuleName() {
+    # 현재 설정값 다시 읽기
+    local curMdlName
+    curMdlName=$(readConfigKey "general" "modulename")
+    local curPlatform
+    curPlatform=$(jq -r -e '.general.model' "${userconfigfile}" 2>/dev/null | \
+                  getvarsmshell 2>/dev/null || echo "")
+    local curZpadkver
+    curZpadkver=$(echo "${BUILD}" | cut -d'-' -f2 | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}' 2>/dev/null || echo "0")
+
+    # 지원 여부 판단
+    local supported=false
+
+    if [ "${curZpadkver}" -ge 4004302 ]; then
+        if [ "${curPlatform}" = "epyc7002DT" ] || [ "${curPlatform}" = "geminilakenkDT" ]; then
+            # amd-modules, custom-modules, all-modules 모두 지원
+            supported=true
+        else
+            # all-modules, amd-modules만 지원 (custom-modules 불가)
+            if [ "${curMdlName}" != "custom-modules" ]; then
+                supported=true
+            fi
+        fi
+    else
+        # 구버전: all-modules만 지원
+        if [ "${curMdlName}" = "all-modules" ]; then
+            supported=true
+        fi
+    fi
+
+    # 비지원 시 all-modules(IML)로 초기화
+    if [ "${supported}" = "false" ]; then
+        echo "⚠ '${curMdlName}' is not supported for this model/version."
+        echo "  → Resetting to all-modules (IML)..."
+        MDLNAME="all-modules"
+        MLMETHOD="IML"
+        writeConfigKey "general" "modulename" "${MDLNAME}"
+        writeConfigKey "general" "mlmethod"   "${MLMETHOD}"
+        syncBundledExtsModule "${MDLNAME}"
+    fi
+}
+
 ###############################################################################
 # Shows available between FRIEND and JOT
 function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   #eval "MSG29=\"\${MSG${tz}29}\""  
-  REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
-  synomodel="$(jq -r -e '.general.model' $userconfigfile)"
-  synoversion="$(jq -r -e '.general.version' $userconfigfile)"
-  getvarsmshell "${synomodel}-${synoversion}"  
   # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
-  if [ "$ZPADKVER" -ge 4004302 ]; then
+  local curZpadkver
+  curZpadkver=$(echo "${BUILD}" | cut -d'-' -f2 | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}' 2>/dev/null || echo "0")
+  if [ "$curZpadkver" -ge 4004302 ]; then
     if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then
       # custom-modules + amd-modules 둘 다 가용
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
@@ -543,6 +584,8 @@ done
 
 writeConfigKey "general" "version" "${BUILD}"
 
+checkAndResetModuleName
+
 }
 
 ###############################################################################
@@ -634,6 +677,9 @@ function modelMenu() {
       MDLNAME="all-modules"
       writeConfigKey "general" "modulename" "${MDLNAME}"
   fi
+
+  checkAndResetModuleName
+  
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
