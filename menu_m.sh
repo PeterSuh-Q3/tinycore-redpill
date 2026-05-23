@@ -412,11 +412,12 @@ function selectldrmode() {
   eval "MSG28=\"\${MSG${tz}28}\""
   #eval "MSG29=\"\${MSG${tz}29}\""  
   REVISION=$(echo "${BUILD}" | cut -d'-' -f2)
-  # 5.10.55 / 4.4.302 platforms (REVISION >= 81180) 에 대해 amd-modules / custom-modules 옵션 노출.
+  synomodel="$(jq -r -e '.general.model' $userconfigfile)"
+  synoversion="$(jq -r -e '.general.version' $userconfigfile)"
+  getvarsmshell "${synomodel}-${synoversion}"  
+  # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
-  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "geminilake(DT)" || "${platform}" == "apollolake" || "${platform}" == "r1000(DT)" || "${platform}" == "v1000(DT)" || \
-        "${platform}" == "r1000nk(DT)"  || "${platform}" == "v1000nk(DT)" ]] && \
-     [[ "${REVISION}" -ge 81180 ]]; then
+  if [ "$ZPADKVER" -ge 4004302 ]; then
     if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then
       # custom-modules + amd-modules 둘 다 가용
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
