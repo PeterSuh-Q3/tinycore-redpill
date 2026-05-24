@@ -1,4 +1,9 @@
 name: Issues
+
+permissions:
+  contents: read
+  issues: write
+  
 on:
   issues:
     types: [opened, reopened]
