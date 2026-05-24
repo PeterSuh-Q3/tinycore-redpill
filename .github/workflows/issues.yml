@@ -351,7 +351,7 @@ jobs:
           <!-- workflow:build-success -->
           Hi @${{ github.event.issue.user.login }}.
 
-          RR-${{ env.model }} build success, please download the attachment from the link below (attachments are only kept for 5 days).
+          MSHELL-${{ env.model }} build success, please download the attachment from the link below (attachments are only kept for 5 days).
 
           ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EOF
