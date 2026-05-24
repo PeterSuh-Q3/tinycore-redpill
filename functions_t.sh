@@ -6301,21 +6301,22 @@ function my() {
 
   [ -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat ] && sudo rm -f /mnt/${tcrppart}/auxfiles/sa6400_86009.pat
 
-  if [[ "${MLMETHOD}" = "PML" && "${MDLNAME}" != "all-modules" ]]; then
-      echo "Discover left space for ${MDLNAME} initrd-dsm ... "        
-      SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
-      SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-      SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
-      echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
-  
-      SPACELEFT_MB=$(df -BM --output=avail /dev/"${loaderdisk}"3 | tail -1 | sed 's/M//')
-      if [ "${SPACELEFT_MB%.*}" -le 800 ]; then  # 800MB 기준
-          echo "Insufficient space (${SPACELEFT_MB}MB), cleaning up... Space has been freed up. Now, please rebuild."
-          sudo rm -rf /mnt/${tcrppart}/auxfiles/*.pat
-          exit 99
-      fi    
-  fi    
-  
+  if [ "${BUS}" != "block" ]; then
+    if [[ "${MLMETHOD}" = "PML" && "${MDLNAME}" != "all-modules" ]]; then
+        echo "Discover left space for ${MDLNAME} initrd-dsm ... "        
+        SPACELEFT=$(df --block-size=1 | awk '/'${loaderdisk}'3/{print $4}') # Check disk space left    
+        SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+        SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
+        echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+    
+        SPACELEFT_MB=$(df -BM --output=avail /dev/"${loaderdisk}"3 | tail -1 | sed 's/M//')
+        if [ "${SPACELEFT_MB%.*}" -le 800 ]; then  # 800MB 기준
+            echo "Insufficient space (${SPACELEFT_MB}MB), cleaning up... Space has been freed up. Now, please rebuild."
+            sudo rm -rf /mnt/${tcrppart}/auxfiles/*.pat
+            exit 99
+        fi    
+    fi    
+  fi  
   if [ -f ${patfile} ]; then
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
       cecho b "Downloadng Skipped!!!"
