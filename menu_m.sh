@@ -461,8 +461,10 @@ function checkAndResetModuleName() {
 ###############################################################################
 # Shows available between FRIEND and JOT
 function selectldrmode() {
-  eval "MSG28=\"\${MSG${tz}28}\""
+  #eval "MSG28=\"\${MSG${tz}28}\""
   #eval "MSG29=\"\${MSG${tz}29}\""  
+  MSG28="Intel iGPU i915 DRM Support"
+  MSG29="AMD dGPU/APU DRM Support"
   # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
   # Derive the kernel version of the *currently selected* model live.
@@ -479,16 +481,16 @@ function selectldrmode() {
     if [[ "${origin_plat}" == "epyc7002" || "${origin_plat}" == "geminilakenk" ]]; then  
       # custom-modules + amd-modules 둘 다 가용
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)" \
+                    "m" "${MSG29}, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
-                    "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)" \
+                    "l" "${MSG29}, amd-modules(Persistent:PML)" \
                     "k" "${MSG28}, custom-modules(Persistent:PML)")            
     else
       # r1000nk / v1000nk: custom-modules 없음, amd-modules 만
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                    "m" "AMD GPU DRM Support, amd-modules(In-Memory:IML)" \
+                    "m" "${MSG29}, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
-                    "l" "AMD GPU DRM Support, amd-modules(Persistent:PML)")
+                    "l" "${MSG29}, amd-modules(Persistent:PML)")
     fi
   else
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
