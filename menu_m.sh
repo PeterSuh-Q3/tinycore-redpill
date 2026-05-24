@@ -12,7 +12,7 @@ export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/s
 if [ ! -f "/etc/init.d/tc-functions" ]; then
   sudo /usr/local/bin/curl -kL https://raw.githubusercontent.com/tinycorelinux/Core-scripts/refs/heads/master/etc/init.d/tc-functions -o /etc/init.d/tc-functions
   source /etc/init.d/tc-functions
-  backuploader 
+  sudo filetool.sh -b 
   exit
 fi  
 
