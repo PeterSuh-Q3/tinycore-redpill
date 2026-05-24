@@ -3,7 +3,7 @@ name: Issues
 permissions:
   contents: read
   issues: write
-  
+
 on:
   issues:
     types: [opened, reopened]
@@ -25,103 +25,133 @@ jobs:
         shell: python
         run: |
           # -*- coding: utf-8 -*-
-          import json, subprocess, sys
-          def set_output(name, value):
-            subprocess.call(["echo '{}={}' >> $GITHUB_ENV".format(name, value)], shell=True)
+          import json
+          import os
+
+          def set_env(name, value):
+              with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+                  f.write(f"{name}={value}\n")
+
+          def set_multiline_env(name, value):
+              with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+                  f.write(f"{name}<<EOF\n{value}\nEOF\n")
+
           issuetitle = ${{ toJSON(github.event.issue.title) }};
           issuebody = ${{ toJSON(github.event.issue.body) }};
 
-          json_error_message = None
-          iscustom = 'false'
-          warinfo = 'false'
-          model = ''
-          version = ''
-          mac1 = ''
-          mac2 = ''
-          mac3 = ''
-          mac4 = ''
-          mac5 = ''
-          mac6 = ''
-          mac7 = ''
-          mac8 = ''
-          sn = ''
-          format = ''
-          language = ''
+          json_error_message = ""
+          json_error = "false"
+          iscustom = "false"
+          warinfo = "false"
+          model = ""
+          version = ""
+          mac1 = ""
+          mac2 = ""
+          mac3 = ""
+          mac4 = ""
+          mac5 = ""
+          mac6 = ""
+          mac7 = ""
+          mac8 = ""
+          sn = ""
+          format = ""
+          language = ""
+
           try:
-              if issuetitle.lower().startswith('custom'):
+              if issuetitle.lower().startswith("custom"):
                   jsonbody = json.loads(issuebody)
-                  iscustom = 'true'
-                  model = jsonbody.get('model', '')
-                  version = jsonbody.get('version', '')
-                  mac1 = jsonbody.get('mac1', '')
-                  mac2 = jsonbody.get('mac2', '')
-                  mac3 = jsonbody.get('mac3', '')
-                  mac4 = jsonbody.get('mac4', '')
-                  mac5 = jsonbody.get('mac5', '')
-                  mac6 = jsonbody.get('mac6', '')
-                  mac7 = jsonbody.get('mac7', '')
-                  mac8 = jsonbody.get('mac8', '')
-                  sn = jsonbody.get('sn', '')
-                  format = jsonbody.get('format', '')
-                  language = jsonbody.get('language', '')
+                  iscustom = "true"
+                  model = jsonbody.get("model", "")
+                  version = jsonbody.get("version", "")
+                  mac1 = jsonbody.get("mac1", "")
+                  mac2 = jsonbody.get("mac2", "")
+                  mac3 = jsonbody.get("mac3", "")
+                  mac4 = jsonbody.get("mac4", "")
+                  mac5 = jsonbody.get("mac5", "")
+                  mac6 = jsonbody.get("mac6", "")
+                  mac7 = jsonbody.get("mac7", "")
+                  mac8 = jsonbody.get("mac8", "")
+                  sn = jsonbody.get("sn", "")
+                  format = jsonbody.get("format", "")
+                  language = jsonbody.get("language", "")
 
           except json.JSONDecodeError as e:
-              # JSON 구문 오류 시 영문 에러 메시지 작성
-              iscustom = 'false'
+              json_error = "true"
+              iscustom = "false"
               json_error_message = (
-                  f"There is a syntax error in the submitted JSON body.\n"
+                  "There is a syntax error in the submitted JSON body.\n"
                   f"- Error Location: Line {e.lineno}, Column {e.colno}\n"
                   f"- Error Reason: {e.msg}\n\n"
-                  f"Please check for missing commas (,) or mismatched quotes (\") and resubmit the issue."
+                  "Please check for missing commas (,) or mismatched quotes (\") and resubmit the issue."
               )
-              # 1. 터미널이나 깃허브 액션 로그에 에러 원인 출력
-              print(json_error_message, file=sys.stderr)
-              
-              # 2. 워크플로우를 강제로 실패(Fail) 처리
-              sys.exit(1) 
-          
-          except ValueError as e:
-              # JSONDecodeError 이외의 예상치 못한 값 에러 대비
+
+          except ValueError:
               pass
-          
-          # json 구문 오류가 없었고, custom 이슈가 아닌 경우에만 아래 로직 실행
-          if iscustom == 'false' and json_error_message is None:
-              if issuebody.find('DMI') < 0 and issuebody.find('CPU') < 0 and issuebody.find('NIC') < 0:
-                  warinfo = 'true'    
-                  
-          set_output("iscustom", iscustom)
-          set_output("warinfo", warinfo)  
 
-          set_output("model", model)
-          set_output("version", version)
-          set_output("mac1", mac1)
-          set_output("mac2", mac2)
-          set_output("mac3", mac3)
-          set_output("mac4", mac4)
-          set_output("mac5", mac5)
-          set_output("mac6", mac6)
-          set_output("mac7", mac7)
-          set_output("mac8", mac8)
-          set_output("sn", sn)
-          set_output("format", format)
-          set_output("language", language)
+          if iscustom == "false" and json_error == "false":
+              if issuebody.find("DMI") < 0 and issuebody.find("CPU") < 0 and issuebody.find("NIC") < 0:
+                  warinfo = "true"
 
-      - name: Update Comment Labels
+          set_env("iscustom", iscustom)
+          set_env("warinfo", warinfo)
+          set_env("json_error", json_error)
+
+          set_env("model", model)
+          set_env("version", version)
+          set_env("mac1", mac1)
+          set_env("mac2", mac2)
+          set_env("mac3", mac3)
+          set_env("mac4", mac4)
+          set_env("mac5", mac5)
+          set_env("mac6", mac6)
+          set_env("mac7", mac7)
+          set_env("mac8", mac8)
+          set_env("sn", sn)
+          set_env("format", format)
+          set_env("language", language)
+
+          if json_error_message:
+              set_multiline_env("JSON_ERROR_MESSAGE", json_error_message)
+
+      - name: Comment JSON syntax error
+        if: env.json_error == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "$(cat <<'EOF'
+          Hi @${{ github.event.issue.user.login }}.
+
+          Your submitted `custom` issue body contains invalid JSON.
+
+          ${{ env.JSON_ERROR_MESSAGE }}
+          EOF
+          )"
+
+      - name: Fail on invalid JSON
+        if: env.json_error == 'true'
+        run: |
+          echo "Invalid JSON detected in issue body."
+          exit 1
+
+      - name: Add issue labels
         if: env.iscustom == 'true'
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'add-labels'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
-          labels: 'custom,${{ env.model }}'
-          
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --add-label "custom" \
+            --add-label "${{ env.model }}"
+
       - name: build tinycore-redpill loader with lastest img
         id: build-loader
         if: env.iscustom == 'true'
         run: |
-          path=`pwd`        
+          path=`pwd`
           userconfigfile="/home/tc/user_config.json"
-          
+
           sudo apt-get update
           sudo apt-get install grub2 pciutils qemu-utils cpio kmod ncurses-bin jq
 
@@ -130,12 +160,12 @@ jobs:
           sudo cp -rf ./* /home/tc
           sudo chmod +x /home/tc/writekey.sh
           ls -ltr /home/tc
-          
+
           LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
           TAG="${LATESTURL##*/}"
           echo "TAG is ${TAG}"
           curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
-          gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
+          gunzip tinycore-redpill.${TAG}.m-shell.img.gz
           pwd
           ls -ltr
           echo "TAG=${TAG}" >> $GITHUB_OUTPUT
@@ -168,18 +198,18 @@ jobs:
             echo "set mac2: ${{ env.mac2 }}"
             sudo ./writekey.sh "extra_cmdline" "mac2" "${{ env.mac2 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "2" $userconfigfile
-          fi          
+          fi
           if [ -n "${{ env.mac3 }}" ]; then
             echo "set mac3: ${{ env.mac3 }}"
             sudo ./writekey.sh "extra_cmdline" "mac3" "${{ env.mac3 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "3" $userconfigfile
-          fi          
+          fi
           if [ -n "${{ env.mac4 }}" ]; then
             echo "set mac4: ${{ env.mac4 }}"
             sudo ./writekey.sh "extra_cmdline" "mac4" "${{ env.mac4 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "4" $userconfigfile
-          fi          
-          
+          fi
+
           if [ -n "${{ env.mac5 }}" ]; then
             echo "set mac5: ${{ env.mac5 }}"
             sudo ./writekey.sh "extra_cmdline" "mac5" "${{ env.mac5 }}" $userconfigfile
@@ -189,18 +219,18 @@ jobs:
             echo "set mac6: ${{ env.mac6 }}"
             sudo ./writekey.sh "extra_cmdline" "mac6" "${{ env.mac6 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "6" $userconfigfile
-          fi          
+          fi
           if [ -n "${{ env.mac7 }}" ]; then
             echo "set mac7: ${{ env.mac7 }}"
             sudo ./writekey.sh "extra_cmdline" "mac7" "${{ env.mac7 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "7" $userconfigfile
-          fi          
+          fi
           if [ -n "${{ env.mac8 }}" ]; then
             echo "set mac8: ${{ env.mac8 }}"
             sudo ./writekey.sh "extra_cmdline" "mac8" "${{ env.mac8 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "8" $userconfigfile
-          fi          
-          
+          fi
+
           if [ -n "${{ env.sn }}" ]; then
             echo "set sn: ${{ env.sn }}"
             sudo ./writekey.sh "extra_cmdline" "sn" "${{ env.sn }}" $userconfigfile
@@ -218,12 +248,11 @@ jobs:
           ls -ltr ./functions.sh
           sudo ./functions.sh my ${{ env.model }}-${{ env.version }} noconfig fri
           sudo cat /home/tc/user_config.json
-          
+
           ls -ltr /mnt/${loaderdisk}p1
           ls -ltr /mnt/${loaderdisk}p2
           ls -ltr /mnt/${loaderdisk}p3
 
-          #make target img
           cd ${path}/
           dd if=/dev/zero of=tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img bs=1M seek=2048 count=0
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img
@@ -234,26 +263,24 @@ jobs:
           echo "LOOPZ = ${LOOPZ}"
           sudo fdisk -l ${LOOPZ}
 
-          #sudo mkfs.vfat -F16 ${LOOPZ}p1
-          #sudo mkfs.vfat -F16 ${LOOPZ}p2
           sudo mkfs.vfat -i 6234C863 -F16 ${LOOPZ}p3
-          
+
           sudo dd if="${LOOPX}p1" of="${LOOPZ}p1"
           sudo mkdir -p /mnt/tarp1
           sudo mount ${LOOPZ}p1 /mnt/tarp1
           sudo grub-install --target=x86_64-efi --boot-directory="/mnt/tarp1/boot" --efi-directory="/mnt/tarp1" --removable
           sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
-          
+
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
-          
+
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
           cd /mnt/${loaderdisk}p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
           cd ${path}/
           ls -ltr /mnt/tarp3
-         
+
           sudo umount /mnt/tarp3
-          
+
           sudo losetup -d ${LOOPZ}
           sudo umount /mnt/${loaderdisk}p1
           sudo umount /mnt/${loaderdisk}p2
@@ -262,22 +289,17 @@ jobs:
 
           cd ${path}/
           ls -ltr ${path}/
-          
-          # env.format 값이 지정되지 않은 경우 img와 vmdk 둘 다 생성
+
           if [ -z "${{ env.format }}" ]; then
-            # img 형식 생성
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
-          
-            # vmdk 형식 생성
+
             qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
           else
-            # format 값이 img인 경우
             if [ "${{ env.format }}" = "img" ]; then
               gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
             fi
-          
-            # format 값이 vmdk인 경우
+
             if [ "${{ env.format }}" = "vmdk" ]; then
               qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
               gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
@@ -285,7 +307,7 @@ jobs:
           fi
 
           ls -ltr /opt/output
-          
+
       - name: Upload to Artifact
         if: env.iscustom == 'true' && success()
         uses: actions/upload-artifact@v4
@@ -293,25 +315,26 @@ jobs:
           name: MshellImage-${{ steps.build-loader.outputs.TAG }}-${{ env.model }}-${{ env.version }}
           path: /opt/output
 
-      - name: Update Comment Success
+      - name: Comment build success
         if: env.iscustom == 'true' && success()
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'update-comment'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ steps.comment.outputs.comment-id }}
-          update-mode: replace
-          body: |
-            Hi @${{ github.event.issue.user.login }}.  
-            RR-${{ env.model }} build success, please download the attachment from the below link (Attachments are only kept for 5 days).
-            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}  
-            ----
-          emoji: hooray
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "$(cat <<'EOF'
+          Hi @${{ github.event.issue.user.login }}.
 
-      - name: Close Issues
+          RR-${{ env.model }} build success, please download the attachment from the link below (attachments are only kept for 5 days).
+
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          )"
+
+      - name: Close issue
         if: env.iscustom == 'true' && success()
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'close-issue'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue close ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }}
