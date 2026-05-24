@@ -10,9 +10,9 @@ set -u # Unbound variable errors are not allowed
 export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
 if [ ! -f "/etc/init.d/tc-functions" ]; then
-  sudo /usr/local/bin/curl -kL https://raw.githubusercontent.com/tinycorelinux/Core-scripts/refs/heads/master/etc/init.d/tc-functions -o /etc/init.d/tc-functions 
+  sudo /usr/local/bin/curl -kL https://raw.githubusercontent.com/tinycorelinux/Core-scripts/refs/heads/master/etc/init.d/tc-functions -o /etc/init.d/tc-functions
+  source /etc/init.d/tc-functions
   backuploader 
-  restart
 fi  
 
 kver3explatforms="bromolow braswell cedarview"
