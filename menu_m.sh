@@ -13,6 +13,7 @@ if [ ! -f "/etc/init.d/tc-functions" ]; then
   sudo /usr/local/bin/curl -kL https://raw.githubusercontent.com/tinycorelinux/Core-scripts/refs/heads/master/etc/init.d/tc-functions -o /etc/init.d/tc-functions
   source /etc/init.d/tc-functions
   backuploader 
+  exit
 fi  
 
 kver3explatforms="bromolow braswell cedarview"
