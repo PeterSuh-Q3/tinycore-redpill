@@ -113,14 +113,28 @@ jobs:
           if json_error_message:
               set_multiline_env("JSON_ERROR_MESSAGE", json_error_message)
 
-      - name: Comment JSON syntax error
+      - name: Check existing JSON error comment
         if: env.json_error == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | .body' \
+            | grep -Fq '<!-- workflow:json-error -->'; then
+            echo "JSON_ERROR_COMMENT_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "JSON_ERROR_COMMENT_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Comment JSON syntax error
+        if: env.json_error == 'true' && env.JSON_ERROR_COMMENT_EXISTS != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh issue comment ${{ github.event.issue.number }} \
             --repo ${{ github.repository }} \
             --body "$(cat <<'EOF'
+          <!-- workflow:json-error -->
           Hi @${{ github.event.issue.user.login }}.
 
           Your submitted `custom` issue body contains invalid JSON.
@@ -209,7 +223,6 @@ jobs:
             sudo ./writekey.sh "extra_cmdline" "mac4" "${{ env.mac4 }}" $userconfigfile
             sudo ./writekey.sh "extra_cmdline" "netif_num" "4" $userconfigfile
           fi
-
           if [ -n "${{ env.mac5 }}" ]; then
             echo "set mac5: ${{ env.mac5 }}"
             sudo ./writekey.sh "extra_cmdline" "mac5" "${{ env.mac5 }}" $userconfigfile
@@ -292,7 +305,6 @@ jobs:
 
           if [ -z "${{ env.format }}" ]; then
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
-
             qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
           else
@@ -315,14 +327,28 @@ jobs:
           name: MshellImage-${{ steps.build-loader.outputs.TAG }}-${{ env.model }}-${{ env.version }}
           path: /opt/output
 
-      - name: Comment build success
+      - name: Check existing success comment
         if: env.iscustom == 'true' && success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | .body' \
+            | grep -Fq '<!-- workflow:build-success -->'; then
+            echo "SUCCESS_COMMENT_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "SUCCESS_COMMENT_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Comment build success
+        if: env.iscustom == 'true' && success() && env.SUCCESS_COMMENT_EXISTS != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh issue comment ${{ github.event.issue.number }} \
             --repo ${{ github.repository }} \
             --body "$(cat <<'EOF'
+          <!-- workflow:build-success -->
           Hi @${{ github.event.issue.user.login }}.
 
           RR-${{ env.model }} build success, please download the attachment from the link below (attachments are only kept for 5 days).
