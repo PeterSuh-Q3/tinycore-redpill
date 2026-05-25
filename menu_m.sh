@@ -2100,6 +2100,12 @@ select_and_run_menu() {
     
     # TAG / DATE / DESC_EN / DESC_KR
     local TAGS=(
+        "v1.2.9.2" "2026-05-01" "Supports Insyde BIOS-based models in lkm"                            "lkm에서 Insyde BIOS 기반 모델 지원"
+        "v1.2.9.1" "2026-04-19" "Correct display of HBA disk firmware version in Disk Manager"        "디스크 관리자 HBA 디스크 펌웨어 버전 정상 표시"
+        "v1.2.9.0" "2026-04-14" "HBA controller support begins on geminilake, r1000, v1000"           "Geminilake, R1000, V1000 HBA 컨트롤러 지원 시작"    
+        "v1.2.8.9" "2026-04-12" "Separating and stabilizing lkm by platform and DSM ver"              "플랫폼 및 DSM 버전에 따른 lkm 분리 및 안정화"
+        "v1.2.8.8" "2026-04-03" "Fixed missing firmware inclusion in PML method"                      "PML 메서드에서 펌웨어 포함이 누락된 문제를 수정"
+        "v1.2.8.7" "2026.03.28" "Change loading method for the last Junior Grub boot entry"           "비활성화된 Junior Grub 부팅 항목의 로딩 방식을 변경"
         "v1.2.8.6" "2026-03-25" "Added menu to block automatic updates for TCB / FKC"                 "TCB/FKC 자동 업데이트를 차단하는 메뉴를 추가"    
         "v1.2.8.5" "2026-03-24" "Added menu to revert to previous version build"                      "이전 버전으로 되돌리는 메뉴를 추가"    
         "v1.2.8.4" "2026-03-20" "Supports two distinct menus for IML / PML module loading"            "IML / PML 두 가지 모듈 로딩 메뉴 지원"
