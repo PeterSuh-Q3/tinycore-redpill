@@ -262,8 +262,11 @@ if [ "${offline}" = "NO" ]; then
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
       /bin/cp -vf /home/tc/redpill-load/bundled-exts_t.json /home/tc/redpill-load/bundled-exts.json
+
+      gitdownload
     elif [ "$oldver" = "unknown" ]; then
-      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+      echo "this is unknown parameter, exit menu now !!!"
+      exit 1
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
@@ -313,12 +316,6 @@ if [ "${offline}" = "NO" ]; then
       echo "[!] functions.sh not found, cannot source."
       exit 1
     fi
-fi
-
-if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
-    echo "OFFLINE BUILD PREPARED ..."
-else
-    gitdownload
 fi
 
 if [ ! -f /home/tc/menu_m.sh ]; then
