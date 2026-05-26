@@ -25,13 +25,15 @@ jobs:
           note=$(grep -m1 -A$((${{github.event.inputs.board}} - 1)) "${vers} " functions.sh | head -n ${{github.event.inputs.board}} | sed 's/^[[:space:]]*//')          
           #note=`cat functions.sh | grep "${vers} " | head -n 1`
           
-          # ===== 여기부터 추가: addons / modules 최신 해시 얻기 =====
+          # ===== 여기부터 추가: addons / modules / load 최신 해시 얻기 =====
           ADDONS_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-addons.git HEAD | awk '{print $1}')
           MODULES_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD | awk '{print $1}')
+          LOAD_SHA=$(git ls-remote https://github.com/PeterSuh-Q3/redpill-load.git HEAD | awk '{print $1}')
           
           {
             echo "${ADDONS_SHA}"
             echo "${MODULES_SHA}"
+            echo "${LOAD_SHA}"
             echo
             echo "    ${note}"
           } > RELEASE_NOTES.md
