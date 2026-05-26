@@ -240,7 +240,6 @@ else
 fi
 
 if [ -z "${1-}" ]; then
-  echo "why ${1-}" 
   [ -f /tmp/test_mode ] && rm -f /tmp/test_mode
   oldver="unknown"  # 또는 원하는 기본값
 else
@@ -272,8 +271,8 @@ if [ "${offline}" = "NO" ]; then
 
       gitdownload
     elif [ "$oldver" = "unknown" ]; then
-      echo "this is unknown parameter, exit menu now !!!"
-      exit 1
+      #echo "this is normal case not unknown parameter !!!"
+      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
