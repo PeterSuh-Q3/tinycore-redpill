@@ -231,7 +231,6 @@ else
         read answer
         exit 99
     fi
-    gitdownload
 fi
 
 if [ -z "${1-}" ]; then
@@ -315,6 +314,13 @@ if [ "${offline}" = "NO" ]; then
       exit 1
     fi
 fi
+
+if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]; then
+    echo "OFFLINE BUILD PREPARED ..."
+else
+    gitdownload
+fi
+
 if [ ! -f /home/tc/menu_m.sh ]; then
   echo "[!] menu_m.sh not found, cannot execute."
   exit 1
