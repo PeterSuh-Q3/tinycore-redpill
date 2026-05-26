@@ -152,17 +152,23 @@ function get_dep_hashes() {
   local MODULES_HASH
   MODULES_HASH=$(echo "${BODY}" | sed -n '2p' | tr -d '[:space:]')
 
-  if [ -z "${ADDONS_HASH}" ] || [ -z "${MODULES_HASH}" ]; then
+  # 세 번째 라인 = redpill-load 해시
+  local LOAD_HASH
+  LOAD_HASH=$(echo "${BODY}" | sed -n '3p' | tr -d '[:space:]')
+
+  if [ -z "${ADDONS_HASH}" ] || [ -z "${MODULES_HASH}" ] || [ -z "${LOAD_HASH}" ]; then
     echo "[!] Hash values are empty. Check release notes format."
     return 1
   fi
 
   echo "[*] tcrp-addons  hash : ${ADDONS_HASH}"
   echo "[*] tcrp-modules hash : ${MODULES_HASH}"
+  echo "[*] redpill-load hash : ${LOAD_HASH}"
 
   # 전역 변수로 export (호출부에서 사용 가능)
   addons_hash="${ADDONS_HASH}"
   modules_hash="${MODULES_HASH}"
+  load_hash="${LOAD_HASH}"
 }
 
 if [ $(/sbin/blkid | grep "6234-C863" | wc -l) -ge 2 ]; then
@@ -280,6 +286,7 @@ if [ "${offline}" = "NO" ]; then
 
       echo "addons  : ${addons_hash}"
       echo "modules : ${modules_hash}"
+      echo "load    : ${load_hash}"
       
       #/dev/shm 공간 2.5GB 확보, 메뉴빌드전 6GB 이상요구, 3GB /dev/shm 확보완료.
       #sudo umount /dev/shm
@@ -288,8 +295,6 @@ if [ "${offline}" = "NO" ]; then
       rm -rf /dev/shm/tcrp-addons
       mkdir -p /dev/shm/tcrp-addons
       git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-      
-      # oldver 가 유효한 버전인 경우 처리
       cd /dev/shm/tcrp-addons
       git fetch origin "${addons_hash}"
       git checkout "${addons_hash}"
@@ -300,6 +305,13 @@ if [ "${offline}" = "NO" ]; then
       cd /dev/shm/tcrp-modules
       git fetch origin "${modules_hash}"
       git checkout "${modules_hash}"
+
+      rm -rf /home/tc/redpill-load
+      mkdir -p /home/tc/redpill-load
+      git clone --depth=1 "https://github.com/PeterSuh-Q3/redpill-load.git" /home/tc/redpill-load
+      cd /home/tc/redpill-load
+      git fetch origin "${load_hash}"
+      git checkout "${load_hash}"
   
       df -h /dev/shm
       cd /home/tc
