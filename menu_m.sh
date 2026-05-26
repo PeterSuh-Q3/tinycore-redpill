@@ -540,7 +540,7 @@ function selectldrmode() {
 
   # bundled-exts.json 의 *-modules 정의를 선택된 MDLNAME 으로 치환
   # 각 모듈 분기는 서로 다른 저장소를 가리킨다:
-  #   all-modules    → arpl-modules/main/rpext-index.json
+  #   all-modules    → tcrp-modules/master/all-modules/rpext-index.json
   #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
   #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
   syncBundledExtsModule "${MDLNAME}"
@@ -555,7 +555,7 @@ function syncBundledExtsModule() {
   command -v jq >/dev/null 2>&1 || return 0
   local mdlurl
   case "${mdlname}" in
-    all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/arpl-modules/main/rpext-index.json" ;;
+    all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
     amd-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
     custom-modules) mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
     *) return 0 ;;
