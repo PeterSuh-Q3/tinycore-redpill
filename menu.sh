@@ -240,6 +240,7 @@ else
 fi
 
 if [ -z "${1-}" ]; then
+  echo "why ${1-}" 
   [ -f /tmp/test_mode ] && rm -f /tmp/test_mode
   oldver="unknown"  # 또는 원하는 기본값
 else
