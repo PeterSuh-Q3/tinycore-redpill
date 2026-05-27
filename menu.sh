@@ -5,8 +5,10 @@ set -u # Unbound variable errors are not allowed
 ##### INCLUDES ######################################################################################
 . /home/tc/functions.sh
 #####################################################################################################
-export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
-
+if grep -q 'arpl' ~/.profile; then
+  sed -i '/arpl/d' ~/.profile
+  export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+fi
 # lock
 #exec 304>"/tmp/menu.lock"
 #flock -n 304 || {
