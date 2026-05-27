@@ -2,4 +2,4 @@
 c6feadd6599a913747c85c5fa72033807d14173c
 6597f60d5254bf62da01670145368d9cf5970742
 
-    1.2.9.7 Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
+    1.2.9.8 Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
