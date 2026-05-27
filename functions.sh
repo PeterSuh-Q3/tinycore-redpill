@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.6"
+rploaderver="1.2.9.7"
 build="master"
 redpillmake="prod"
 
@@ -246,6 +246,7 @@ function history() {
     1.2.9.4 mshell uses self-compiled modules, extending support for kernel 3-based modules
     1.2.9.5 amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     1.2.9.6 AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
+    1.2.9.7 Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -712,6 +713,8 @@ EOF
 # amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
 # 2026.05.25 v1.2.9.6
 # AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
+# 2026.05.27 v1.2.9.7 
+# Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
     
 function showlastupdate() {
     cat <<EOF
@@ -889,6 +892,9 @@ function showlastupdate() {
 
 # 2026.05.25 v1.2.9.6
 # AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
+
+# 2026.05.27 v1.2.9.7 
+# Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
 
 EOF
 }
