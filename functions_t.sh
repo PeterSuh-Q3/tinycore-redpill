@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.7"
+rploaderver="1.2.9.8"
 build="master"
 redpillmake="prod"
 
@@ -12,7 +12,11 @@ modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build
 timezone="UTC"
 ntpserver="pool.ntp.org"
 userconfigfile="/home/tc/user_config.json"
-configfile="/home/tc/redpill-load/config/pats.json" 
+# pats.json is kept at a persistent location (/home/tc) so that a redpill-load
+# directory clean/re-clone (e.g. after a failed build) does not remove the DSM
+# version source. It is mirrored into redpill-load/config for the loader build.
+configfile="/home/tc/pats.json"
+configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
@@ -247,6 +251,7 @@ function history() {
     1.2.9.5 amd-modules begins supporting AMD GPU DRM (H/W transcoding) - Available only on Kernel 5 platforms
     1.2.9.6 AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
     1.2.9.7 Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
+    1.2.9.8 Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -2931,7 +2936,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
         msgnormal "Pat file md5sum is : $os_md5"
 
         echo -n "Checking config file existence -> "
-        if [ -f "/home/tc/redpill-load/config/pats.json" ]; then
+        if [ -f "${configfile}" ]; then
             echo "OK"
         else
             echo "No config file(pats.json) found, The download may be corrupted or may not be run the original repo. Please re-download from original repo."
@@ -6248,14 +6253,16 @@ function my() {
   pats_t_url="https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json"
   if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
     curl -skL# $pats_t_url -o $configfile
-  else  
+  else
     if [ -f /tmp/test_mode ]; then
-        cecho g "###############################  This is Test Mode  ############################"        
+        cecho g "###############################  This is Test Mode  ############################"
         curl -skL# $pats_t_url -o $configfile
     else
         [ "${BUS}" == "block" ] && curl -skL# $pats_t_url -o $configfile || curl -skL# $pats_url -o $configfile
-    fi    
-  fi  
+    fi
+  fi
+  # mirror the persistent copy into redpill-load/config for the loader build
+  [ -s "$configfile" ] && [ -d /home/tc/redpill-load/config ] && cp -f "$configfile" "$configfile_loader"
 
   URL=$(jq -e -r ".\"${MODEL}\" | to_entries | map(select(.key | startswith(\"${BUILD}\"))) | map(.value.url) | .[0]" "${configfile}")
   cecho y "$URL"

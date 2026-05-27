@@ -19,7 +19,10 @@ fi
 
 kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
-configfile="/home/tc/redpill-load/config/pats.json"
+# pats.json is kept at a persistent location (/home/tc) so a redpill-load
+# clean/re-clone after a failed build does not wipe the DSM version source.
+configfile="/home/tc/pats.json"
+configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 # Function to be called on Ctrl+C or ESC
 function ctrl_c() {
@@ -2576,9 +2579,11 @@ echo  "download original pats.json file..."
 [ -f /tmp/test_mode ] && VERBOSE_MODE=ON
 if { [[ "$MACHINE" = "VIRTUAL" && "$HYPERVISOR" = "KVM" ]] || [ -f /tmp/test_mode ]; }; then
   curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats_t.json -o $configfile
-else  
+else
   curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/config/pats.json -o $configfile
-fi  
+fi
+# mirror the persistent copy into redpill-load/config for the loader build
+[ -s "$configfile" ] && [ -d /home/tc/redpill-load/config ] && cp -f "$configfile" "$configfile_loader"
 
 if [ $tcrppart == "mmc3" ]; then
     tcrppart="mmcblk0p3"
