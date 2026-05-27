@@ -720,6 +720,8 @@ EOF
 # AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
 # 2026.05.27 v1.2.9.7 
 # Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
+# 2026.05.27 v1.2.9.8
+# Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
     
 function showlastupdate() {
     cat <<EOF
@@ -900,6 +902,9 @@ function showlastupdate() {
 
 # 2026.05.27 v1.2.9.7 
 # Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
+
+# 2026.05.27 v1.2.9.8
+# Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
 
 EOF
 }
