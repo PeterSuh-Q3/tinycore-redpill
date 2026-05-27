@@ -1,5 +1,5 @@
-24b9c16bdb89ce44395d06d80997493bb7030596
-ccedc1dd95091358b48212c9b93b0c9876a3eb65
+2599b8ced31c669d63a57429787c9025d932fd70
+c6feadd6599a913747c85c5fa72033807d14173c
 6597f60d5254bf62da01670145368d9cf5970742
 
-    1.2.9.6 AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
+    1.2.9.7 Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
