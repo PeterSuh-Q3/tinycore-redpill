@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.8"
+rploaderver="1.2.9.9"
 build="master"
 redpillmake="prod"
 
@@ -252,6 +252,8 @@ function history() {
     1.2.9.6 AMD GPU DRM Kernel 4.4.302 Full Platform Support Started in amd-modules
     1.2.9.7 Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
     1.2.9.8 Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
+    1.2.9.9 Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
+            (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -722,6 +724,10 @@ EOF
 # Intel iGPU i915 DRM Kernel 4.4.302 All Platform Supports in all-modules
 # 2026.05.27 v1.2.9.8
 # Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
+# 2026.06.02 v1.2.9.9 
+# Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
+# (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
+
     
 function showlastupdate() {
     cat <<EOF
@@ -905,6 +911,10 @@ function showlastupdate() {
 
 # 2026.05.27 v1.2.9.8
 # Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
+
+# 2026.06.02 v1.2.9.9 
+# Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
+# (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
 
 EOF
 }
