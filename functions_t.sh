@@ -4513,6 +4513,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     #copy redoill lkm rp.ko.
     sudo cp -vf /home/tc/custom-module/redpill.ko "${RAMDISK_PATH}/addons/rp.ko"
+
+    #copy bmi2_emul.ko for BMI2 instruction emulation on Ivy Bridge / J4125 (5.10.55+)
+    if [ -f /home/tc/redpill-load/src/bmi2_emul/bmi2_emul.ko ]; then
+        sudo mkdir -p "${RAMDISK_PATH}/usr/lib/modules"
+        sudo cp -vf /home/tc/redpill-load/src/bmi2_emul/bmi2_emul.ko "${RAMDISK_PATH}/usr/lib/modules/bmi2_emul.ko"
+    fi
+
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
