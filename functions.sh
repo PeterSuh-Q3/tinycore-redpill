@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.2.9.9"
+rploaderver="1.3.0.0"
 build="master"
 redpillmake="prod"
 
@@ -254,6 +254,7 @@ function history() {
     1.2.9.8 Keep pats.json at persistent /home/tc so a redpill-load clean no longer empties the DSM version (BUILD)
     1.2.9.9 Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
             (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
+    1.3.0.0 Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -727,7 +728,8 @@ EOF
 # 2026.06.02 v1.2.9.9 
 # Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
 # (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
-
+# 2026.06.03 v1.3.0.0 
+# Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
     
 function showlastupdate() {
     cat <<EOF
@@ -915,6 +917,9 @@ function showlastupdate() {
 # 2026.06.02 v1.2.9.9 
 # Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
 # (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
+
+# 2026.06.03 v1.3.0.0 
+# Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
 
 EOF
 }
