@@ -262,6 +262,7 @@ fi
 if [ "${offline}" = "NO" ]; then
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json    
     if [ "$oldver" = "test" ]; then
+      gitdownload
       cecho g "###############################  This is Test Mode  ############################"
       curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
@@ -270,8 +271,6 @@ if [ "${offline}" = "NO" ]; then
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
       /bin/cp -vf /home/tc/redpill-load/bundled-exts_t.json /home/tc/redpill-load/bundled-exts.json
-
-      gitdownload
     elif [ "$oldver" = "unknown" ]; then
       #echo "this is normal case not unknown parameter !!!"
       curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
