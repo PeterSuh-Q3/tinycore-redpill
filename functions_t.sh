@@ -4489,7 +4489,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
         # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
         # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
-        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ]; then
+        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ] && \
+           { [ "${MDLNAME}" = "all-modules" ] || strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; }; then
             _USB_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
             [ -z "${_USB_TGZ}" ] && _USB_TGZ=$(ls $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
             if [ -n "${_USB_TGZ}" ]; then
