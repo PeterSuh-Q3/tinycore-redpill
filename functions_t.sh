@@ -4495,7 +4495,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             [ -z "${_USB_TGZ}" ] && _USB_TGZ=$(ls $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
             if [ -n "${_USB_TGZ}" ]; then
                 echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_USB_TGZ}"
-                _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko"
+                _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko"
                 _TMPUSB=$(mktemp -d)
                 sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
                 for _MOD in ${_USB_MODS}; do
