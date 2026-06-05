@@ -4476,13 +4476,35 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
                 sudo tar xvfz $rdtemp/exts/custom-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             elif [ "${MDLNAME}" == "amd-modules" ]; then
                 sudo tar xvfz $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/amd-modules/firmwareamdgpu.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-            else    
+            else
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
+                sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-            fi    
+            fi
+
+            # [BMI2-fix] Kernel 5.x + all-modules: extract USB modules from all-modules tgz
+            # and force-overwrite vanilla DSM modules in /lib/modules/ to prevent
+            # BMI2 opcode crashes on Ivy Bridge (no-BMI2) CPUs.
+            # The vanilla Synology usbcore.ko is compiled for modern CPUs (BMI2 enabled)
+            # and must be replaced before DSM init loads it.
+            if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}"; then
+                _ALLMOD_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
+                if [ -n "${_ALLMOD_TGZ}" ]; then
+                    echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_ALLMOD_TGZ}"
+                    _USB_MODS="usbcore.ko usb-common.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko"
+                    _TMPUSB=$(mktemp -d)
+                    sudo tar xfz "${_ALLMOD_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+                    for _MOD in ${_USB_MODS}; do
+                        if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                            sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
+                            echo "[BMI2-fix] Replaced: ${_MOD}"
+                        fi
+                    done
+                    rm -rf "${_TMPUSB}"
+                fi
+            fi
         fi
     fi    
     sudo chmod +x $rdtemp/usr/sbin/modprobe    
