@@ -4484,29 +4484,30 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             fi
 
-            # [BMI2-fix] Kernel 5.x + all-modules: extract USB modules from all-modules tgz
-            # and force-overwrite vanilla DSM modules in /lib/modules/ to prevent
-            # BMI2 opcode crashes on Ivy Bridge (no-BMI2) CPUs.
-            # The vanilla Synology usbcore.ko is compiled for modern CPUs (BMI2 enabled)
-            # and must be replaced before DSM init loads it.
-            if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}"; then
-                _ALLMOD_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
-                if [ -n "${_ALLMOD_TGZ}" ]; then
-                    echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_ALLMOD_TGZ}"
-                    _USB_MODS="usbcore.ko usb-common.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko"
-                    _TMPUSB=$(mktemp -d)
-                    sudo tar xfz "${_ALLMOD_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
-                    for _MOD in ${_USB_MODS}; do
-                        if [ -f "${_TMPUSB}/${_MOD}" ]; then
-                            sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
-                            echo "[BMI2-fix] Replaced: ${_MOD}"
-                        fi
-                    done
-                    rm -rf "${_TMPUSB}"
-                fi
-            fi
         fi
-    fi    
+    fi
+
+    # [BMI2-fix] Kernel 5.x (PML+IML 공통): all-modules tgz에서 USB 8개 모듈을 추출해
+    # ramdisk의 /usr/lib/modules/ 에 강제 교체한다.
+    # Synology 바닐라 usbcore.ko는 BMI2 지원 CPU 타겟으로 컴파일되어 있어
+    # Ivy Bridge (no-BMI2) 에서 DSM init 초기 로드 시 Invalid Opcode 크래시 발생.
+    # PML/IML 어느 방식이든 ramdisk 안의 바닐라 모듈이 먼저 로드되므로 반드시 교체 필요.
+    if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}"; then
+        _ALLMOD_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
+        if [ -n "${_ALLMOD_TGZ}" ]; then
+            echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_ALLMOD_TGZ}"
+            _USB_MODS="usbcore.ko usb-common.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko"
+            _TMPUSB=$(mktemp -d)
+            sudo tar xfz "${_ALLMOD_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+            for _MOD in ${_USB_MODS}; do
+                if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                    sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
+                    echo "[BMI2-fix] Replaced: ${_MOD}"
+                fi
+            done
+            rm -rf "${_TMPUSB}"
+        fi
+    fi
     sudo chmod +x $rdtemp/usr/sbin/modprobe    
 
     # add dummy loop0 test
