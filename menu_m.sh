@@ -541,7 +541,8 @@ function selectldrmode() {
                   "l" "${MSG29}, amd-modules(Persistent:PML)")
   else
     # ③ 커널 < 4.4.302 (커널 3.x): all-modules 만
-    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
+    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
+                  "f" "${MSG28}, all-modules(Persistent:PML)")
   fi
   # ─────────────────────────────────────────────────────────────────────────────
   
