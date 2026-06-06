@@ -19,6 +19,15 @@ fi
 
 kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
+
+# ── BMI2 CPU capability detection ─────────────────────────────────────────────
+# all-modules / amd-modules 릴리즈에는 BMI2(mulx 등) 명령이 포함된 모듈이 있으므로
+# BMI2 미지원 CPU(Ivy Bridge 이하 등)에서는 해당 모듈 선택을 제한한다.
+HAS_BMI2="n"
+if grep -qw "bmi2" /proc/cpuinfo 2>/dev/null; then
+    HAS_BMI2="y"
+fi
+# ───────────────────────────────────────────────────────────────────────────────
 # pats.json is kept at a persistent location (/home/tc) so a redpill-load
 # clean/re-clone after a failed build does not wipe the DSM version source.
 configfile="/home/tc/pats.json"
@@ -442,14 +451,16 @@ function checkAndResetModuleName() {
     local supported=false
 
     if [ "${curZpadkver}" -ge 4004302 ]; then
-        if [[ "${origin_plat}" == "epyc7002" || "${origin_plat}" == "geminilakenk" ]]; then
-            # amd-modules, custom-modules, all-modules 모두 지원
-            supported=true
-        else
-            # custom-modules만 불가
-            if [ "${curMdlName}" != "custom-modules" ]; then
+        # kver >= 4.4.302 (커널 5.10.55 포함)
+        if [ "${curZpadkver}" -ge 5010055 ] && [ "${HAS_BMI2}" = "n" ]; then
+            # 커널 5.10.55 이상 + BMI2 미지원 CPU: custom-modules만 허용
+            if [ "${curMdlName}" = "custom-modules" ]; then
                 supported=true
             fi
+        else
+            # BMI2 있거나 커널 4.4.302: 4개 플랫폼 모두 custom-modules 지원
+            # (all-modules / amd-modules 는 항상 지원)
+            supported=true
         fi
     else
         # kver < 4.4.302: all-modules만 지원
@@ -459,7 +470,7 @@ function checkAndResetModuleName() {
     fi
 
     if [ "${supported}" = "false" ]; then
-        echo "⚠ '${curMdlName}' is not supported (kver=${kver}, platform=${origin_plat})"
+        echo "⚠ '${curMdlName}' is not supported (kver=${kver}, platform=${origin_plat}, bmi2=${HAS_BMI2})"
         echo "  → Resetting to all-modules (IML)..."
         MDLNAME="all-modules"
         MLMETHOD="IML"
@@ -489,19 +500,19 @@ function selectldrmode() {
   curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
   
   if [ "$curZpadkver" -ge 4004302 ]; then
-    if [[ "${origin_plat}" == "epyc7002" || "${origin_plat}" == "geminilakenk" ]]; then  
-      # custom-modules + amd-modules 둘 다 가용
+    if [ "${curZpadkver}" -ge 5010055 ] && [ "${HAS_BMI2}" = "n" ]; then
+      # 커널 5.10.55 이상 + BMI2 미지원 CPU:
+      # all-modules / amd-modules 에 BMI2 명령 포함 모듈이 있으므로 선택 불가.
+      # 4개 플랫폼 모두 custom-modules(PML) 만 노출.
+      menu_options=("k" "${MSG28}, custom-modules(Persistent:PML)")
+    else
+      # BMI2 지원 CPU 또는 커널 4.4.302:
+      # 4개 플랫폼 모두 custom-modules 포함 전체 메뉴 노출.
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
                     "m" "${MSG29}, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
                     "l" "${MSG29}, amd-modules(Persistent:PML)" \
-                    "k" "${MSG28}, custom-modules(Persistent:PML)")            
-    else
-      # r1000nk / v1000nk: custom-modules 없음, amd-modules 만
-      menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                    "m" "${MSG29}, amd-modules(In-Memory:IML)" \
-                    "f" "${MSG28}, all-modules(Persistent:PML)" \
-                    "l" "${MSG29}, amd-modules(Persistent:PML)")
+                    "k" "${MSG28}, custom-modules(Persistent:PML)")
     fi
   else
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
