@@ -457,23 +457,30 @@ function checkAndResetModuleName() {
     curDsmMinor=$(echo "${curBuild}" | cut -d'.' -f2 | cut -d'-' -f1)
     curZpadDsm=$(printf "%03d%03d" "${curDsmMajor:-0}" "${curDsmMinor:-0}")
 
-    if [ "${curZpadkver}" -ge 4004302 ]; then
-        # kver >= 4.4.302 (커널 5.10.55 포함)
-        if [ "${curZpadkver}" -ge 5010055 ] && [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-            # 커널 5.10.55 이상 + DSM 7.3.0 이상 + BMI2 미지원 CPU: custom-modules만 허용
+    # ── 커널 구간 3단계 분기 ────────────────────────────────────────────────────
+    if [ "${curZpadkver}" -ge 5010055 ]; then
+        # ① 커널 >= 5.10.55
+        if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
+            # DSM >= 7.3.0 + BMI2 미지원: custom-modules만 허용
             if [ "${curMdlName}" = "custom-modules" ]; then
                 supported=true
             fi
         else
-            # BMI2 있거나 DSM < 7.3 이거나 커널 4.4.302: 4개 플랫폼 모두 지원
+            # BMI2 있거나 DSM < 7.3: all/amd/custom 모두 허용
+            supported=true
+        fi
+    elif [ "${curZpadkver}" -ge 4004302 ]; then
+        # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원
+        if [ "${curMdlName}" != "custom-modules" ]; then
             supported=true
         fi
     else
-        # kver < 4.4.302: all-modules만 지원
+        # ③ 커널 < 4.4.302: all-modules만 지원
         if [ "${curMdlName}" = "all-modules" ]; then
             supported=true
         fi
     fi
+    # ─────────────────────────────────────────────────────────────────────────
 
     if [ "${supported}" = "false" ]; then
         echo "⚠ '${curMdlName}' is not supported (kver=${kver}, dsm=${curBuild}, bmi2=${HAS_BMI2})"
@@ -512,24 +519,31 @@ function selectldrmode() {
   _dsmMin=$(echo "${_build}" | cut -d'.' -f2 | cut -d'-' -f1)
   curZpadDsm=$(printf "%03d%03d" "${_dsmMaj:-0}" "${_dsmMin:-0}")
 
-  if [ "$curZpadkver" -ge 4004302 ]; then
-    if [ "${curZpadkver}" -ge 5010055 ] && [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-      # 커널 5.10.55 이상 + DSM 7.3.0 이상 + BMI2 미지원 CPU:
-      # all-modules / amd-modules 에 BMI2 명령 포함 모듈이 있으므로 선택 불가.
-      # 4개 플랫폼 모두 custom-modules(PML) 만 노출.
+  # ── 커널 구간 3단계 분기 ──────────────────────────────────────────────────────
+  if [ "${curZpadkver}" -ge 5010055 ]; then
+    # ① 커널 >= 5.10.55
+    if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
+      # DSM >= 7.3.0 + BMI2 미지원: custom-modules 만 노출
       menu_options=("k" "${MSG28}, custom-modules(Persistent:PML)")
     else
-      # BMI2 지원 CPU 또는 DSM < 7.3 이거나 커널 4.4.302:
-      # 4개 플랫폼 모두 custom-modules 포함 전체 메뉴 노출.
+      # BMI2 있거나 DSM < 7.3: 전체 메뉴 (custom-modules 포함)
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
                     "m" "${MSG29}, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
                     "l" "${MSG29}, amd-modules(Persistent:PML)" \
                     "k" "${MSG28}, custom-modules(Persistent:PML)")
     fi
+  elif [ "${curZpadkver}" -ge 4004302 ]; then
+    # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원
+    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
+                  "m" "${MSG29}, amd-modules(In-Memory:IML)" \
+                  "f" "${MSG28}, all-modules(Persistent:PML)" \
+                  "l" "${MSG29}, amd-modules(Persistent:PML)")
   else
+    # ③ 커널 < 4.4.302 (커널 3.x): all-modules 만
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" "f" "${MSG28}, all-modules(Persistent:PML)")
   fi
+  # ─────────────────────────────────────────────────────────────────────────────
   
   while true; do
     dialog --clear --backtitle "`backtitle`" \
