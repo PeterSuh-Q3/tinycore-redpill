@@ -5563,7 +5563,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                 # +65 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                             else
@@ -5577,7 +5577,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                 partsize="12800K"
                             else
                                 partsize="13M"
@@ -5610,7 +5610,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                     # +65 sectors 
                                     [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                                 else
@@ -6287,8 +6287,9 @@ function my() {
       cat user_config.json
       echo "y"|rploader identifyusb
   
-      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
-          cecho p "Device Tree based model does not need SataPortMap setting...."     
+      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
+         [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
+          cecho p "Device Tree based model does not need SataPortMap setting...."
       else    
           rploader satamap    
       fi    

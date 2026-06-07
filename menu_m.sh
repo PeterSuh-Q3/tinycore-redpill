@@ -732,7 +732,7 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" ]]; then  
+  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "v1000nk(DT)" || "${platform}" == "r1000nk(DT)" ]]; then
       echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
   else
       MDLNAME="all-modules"
