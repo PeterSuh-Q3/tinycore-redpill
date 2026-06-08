@@ -3,4 +3,4 @@
 c157d1ced5435b32ad0c54124822b1ecaa99b937
 
     1.3.0.1 Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module
-selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
+    selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
