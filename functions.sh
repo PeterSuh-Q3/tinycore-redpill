@@ -4856,30 +4856,81 @@ function getredpillko() {
     TAG=""
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
-        LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
+
+        # TAG 해석: test_mode 시 pre-release 우선 조회
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
             [ "${DSMVER}" = "7.3" ] && redpillmake="dev"
-            LKM_PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+            LKM_PRERELEASE_TAG=$(curl --connect-timeout 10 -s "https://api.github.com/repos/$REPO/releases" | \
               jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
             if [ -n "$LKM_PRERELEASE_TAG" ]; then
                 echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
                 TAG="$LKM_PRERELEASE_TAG"
-            else
-                echo "Pre-release tag not found, use latest"
-                TAG="${LATESTURL##*/}"
-            fi            
-        else        
+            fi
+        fi
+
+        # TAG 미확정 시 GitHub API로 latest 조회 (안정적)
+        if [ -z "${TAG}" ]; then
+            TAG=$(curl --connect-timeout 10 -skL \
+              "https://api.github.com/repos/${REPO}/releases/latest" \
+              | jq -r '.tag_name')
+        fi
+
+        # API 실패 시 redirect URL 방식으로 fallback
+        if [ -z "${TAG}" ] || [ "${TAG}" = "null" ]; then
+            echo "API tag resolution failed, trying redirect fallback..."
+            LATESTURL=$(curl --connect-timeout 10 -skL -w '%{url_effective}' -o /dev/null \
+              "https://github.com/${REPO}/releases/latest")
             TAG="${LATESTURL##*/}"
-        fi    
+        fi
+
+        # TAG 최종 검증
+        if [ -z "${TAG}" ] || [ "${TAG}" = "null" ] || [ "${TAG}" = "latest" ]; then
+            echo "[ERROR] Failed to resolve latest release tag for ${REPO}" >&2
+            return 1
+        fi
+
         echo "TAG is ${TAG}"
         updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
+
+        # 다운로드: --retry 3, connect-timeout 15s, max-time 120s, HTTP 오류 검증
+        local ZIP_PATH="/mnt/${tcrppart}/rp-lkms${v}.zip"
+        local DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/rp-lkms.zip"
+        echo "Downloading: ${DOWNLOAD_URL}"
+
         #RR_VER="26.3.1"
         #STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms-${RR_VER}.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
-        STATUS=`sudo curl --connect-timeout 5 -skL -w "%{http_code}" "https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/download/${TAG}/rp-lkms.zip" -o "/mnt/${tcrppart}/rp-lkms${v}.zip"`
+        STATUS=$(sudo curl \
+            --connect-timeout 15 \
+            --max-time 120 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            -skL -w "%{http_code}" \
+            "${DOWNLOAD_URL}" \
+            -o "${ZIP_PATH}")
+
+        # HTTP 상태코드 검증
+        if [ "${STATUS}" != "200" ]; then
+            echo "[ERROR] rp-lkms.zip 다운로드 실패 (HTTP ${STATUS})" >&2
+            echo "[ERROR] URL: ${DOWNLOAD_URL}" >&2
+            sudo rm -f "${ZIP_PATH}"
+            return 1
+        fi
+
+        # 파일 크기 검증 (손상된 파일 방어)
+        local ZIPSIZE
+        ZIPSIZE=$(stat -c%s "${ZIP_PATH}" 2>/dev/null || echo 0)
+        if [ "${ZIPSIZE}" -lt 10240 ]; then
+            echo "[ERROR] rp-lkms.zip 크기 이상 (${ZIPSIZE} bytes) - 손상된 파일" >&2
+            sudo rm -f "${ZIP_PATH}"
+            return 1
+        fi
+
+        echo "Download OK: ${ZIPSIZE} bytes (HTTP ${STATUS})"
     else
-        echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."        
-    fi    
+        echo "Unzipping ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
+    fi
 
     sudo rm -f /home/tc/custom-module/*.gz
     sudo rm -f /home/tc/custom-module/*.ko
