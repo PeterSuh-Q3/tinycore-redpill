@@ -175,10 +175,13 @@ jobs:
           sudo chmod +x /home/tc/writekey.sh
           ls -ltr /home/tc
 
-          LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
-          TAG="${LATESTURL##*/}"
+          TAG="$(curl --connect-timeout 5 -skL "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases/latest" | jq -r '.tag_name')"
+          if [ -z "${TAG}" ] || [ "${TAG}" = "null" ]; then
+            echo "Failed to resolve latest release tag."
+            exit 1
+          fi
           echo "TAG is ${TAG}"
-          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
+          curl -kfL# -o tinycore-redpill.${TAG}.m-shell.img.gz https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
           gunzip tinycore-redpill.${TAG}.m-shell.img.gz
           pwd
           ls -ltr
