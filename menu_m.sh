@@ -2218,12 +2218,64 @@ select_and_run_menu() {
 function addon_gitdown()
 {
 # add git download 2023.10.18
+# Improved: timeout / retry / mirror-rotation 2025.06.09
+ 
+  local MAX_RETRY=4          # 최대 재시도 횟수 (미러 × 2)
+  local HARD_TIMEOUT=90      # git clone 최대 허용 시간(초) - 이 시간 초과 시 강제 중단
+  local LOW_SPEED=1024       # 저속 판정 임계값 (bytes/sec)
+  local LOW_SPEED_TIME=20    # 저속 지속 허용 시간(초) - 이 속도 미만 지속 시 중단
+  local WAIT_SEC=5           # 재시도 간 대기 시간(초)
+ 
+  # 미러 목록: 순서대로 번갈아 시도
+  local mirrors=(
+    "https://github.com/PeterSuh-Q3/tcrp-addons.git"
+  )
+  local mirror_count=${#mirrors[@]}
+ 
   rm -rf /dev/shm/tcrp-addons
   mkdir -p /dev/shm/tcrp-addons
-  git clone --depth 1 --filter=blob:none "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  if [ $? -ne 0 ]; then
-    git clone --depth 1 --filter=blob:none "https://gitea.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
-  fi    
+ 
+  local attempt mirror_idx mirror ret
+  for (( attempt=1; attempt<=MAX_RETRY; attempt++ )); do
+ 
+    # 시도 횟수에 따라 미러를 순환 (0→GitHub, 1→Gitea, 2→GitHub, ...)
+    mirror_idx=$(( (attempt - 1) % mirror_count ))
+    mirror="${mirrors[$mirror_idx]}"
+ 
+    echo "[addon_gitdown] Attempt ${attempt}/${MAX_RETRY} → ${mirror}"
+ 
+    # GIT_HTTP_LOW_SPEED_*: 지정 속도 미만이 지정 시간 이상 지속되면 중단
+    # timeout: 전체 작업 최대 시간 하드 캡
+    GIT_HTTP_LOW_SPEED_LIMIT=${LOW_SPEED} \
+    GIT_HTTP_LOW_SPEED_TIME=${LOW_SPEED_TIME} \
+      timeout ${HARD_TIMEOUT} \
+      git clone --depth 1 --filter=blob:none "${mirror}" /dev/shm/tcrp-addons
+    ret=$?
+ 
+    if [ ${ret} -eq 0 ]; then
+      echo "[addon_gitdown] Download succeeded on attempt ${attempt}."
+      return 0
+    fi
+ 
+    # timeout(124) 또는 git 오류 구분 메시지
+    if [ ${ret} -eq 124 ]; then
+      echo "[addon_gitdown] Attempt ${attempt} timed out after ${HARD_TIMEOUT}s."
+    else
+      echo "[addon_gitdown] Attempt ${attempt} failed (exit=${ret})."
+    fi
+ 
+    # 다음 시도 전 임시 디렉터리 초기화
+    rm -rf /dev/shm/tcrp-addons
+    mkdir -p /dev/shm/tcrp-addons
+ 
+    if [ ${attempt} -lt ${MAX_RETRY} ]; then
+      echo "[addon_gitdown] Waiting ${WAIT_SEC}s before next attempt..."
+      sleep ${WAIT_SEC}
+    fi
+  done
+ 
+  echo "[addon_gitdown] !! All ${MAX_RETRY} attempts failed. Check network and retry."
+  return 1
 }
 
 # ON/OFF 라벨 반환
