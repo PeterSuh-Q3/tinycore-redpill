@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.0"
+rploaderver="1.3.0.1"
 build="master"
 redpillmake="prod"
 
@@ -255,6 +255,8 @@ function history() {
     1.2.9.9 Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
             (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
     1.3.0.0 Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
+    1.3.0.1 Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module
+            selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -728,9 +730,12 @@ EOF
 # 2026.06.02 v1.2.9.9 
 # Complete independence from dependencies on other loader modules, MSHELL module secures its own source tree 
 # (Integrated Module Pack, i915 DRM, amdgpu DRM, etc.)
-# 2026.06.03 v1.3.0.0 
+# 2026.06.03 v1.3.0.0
 # Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
-    
+# 2026.06.07 v1.3.0.1
+# Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
+# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
+
 function showlastupdate() {
     cat <<EOF
 
@@ -920,6 +925,10 @@ function showlastupdate() {
 
 # 2026.06.03 v1.3.0.0 
 # Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
+
+# 2026.06.07 v1.3.0.1
+# Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
+# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
 
 EOF
 }
@@ -4476,15 +4485,38 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
                 sudo tar xvfz $rdtemp/exts/custom-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             elif [ "${MDLNAME}" == "amd-modules" ]; then
                 sudo tar xvfz $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                
+                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/amd-modules/firmwareamdgpu.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-            else    
+            else
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1                    
+                sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-            fi    
+            fi
+
         fi
-    fi    
+
+        # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
+        # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
+        # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
+        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ] && \
+           strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; then
+            _USB_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
+            [ -z "${_USB_TGZ}" ] && _USB_TGZ=$(ls $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
+            if [ -n "${_USB_TGZ}" ]; then
+                echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_USB_TGZ}"
+                _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
+                _TMPUSB=$(mktemp -d)
+                sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+                for _MOD in ${_USB_MODS}; do
+                    if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
+                        echo "[BMI2-fix] Replaced: ${_MOD}"
+                    fi
+                done
+                rm -rf "${_TMPUSB}"
+            fi
+        fi
+    fi
     sudo chmod +x $rdtemp/usr/sbin/modprobe    
 
     # add dummy loop0 test
@@ -4513,6 +4545,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     #copy redoill lkm rp.ko.
     sudo cp -vf /home/tc/custom-module/redpill.ko "${RAMDISK_PATH}/addons/rp.ko"
+
+    #copy bmi2_emul.ko for BMI2 instruction emulation on Ivy Bridge / J4125 (5.10.55+)
+    #if [ -f /home/tc/redpill-load/src/bmi2_emul/bmi2_emul.ko ]; then
+    #    sudo mkdir -p "${RAMDISK_PATH}/usr/lib/modules"
+    #    sudo cp -vf /home/tc/redpill-load/src/bmi2_emul/bmi2_emul.ko "${RAMDISK_PATH}/usr/lib/modules/bmi2_emul.ko"
+    #fi
+
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
@@ -4559,7 +4598,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        sudo sed -i "/set default=\"*\"/cset default=\"2\"" /tmp/grub.cfg    
+        sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     else
         sudo sed -i "/set default=\"*\"/cset default=\"0\"" /tmp/grub.cfg    
     fi
@@ -5524,7 +5563,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             # +1 sectors 
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                 # +65 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                             else
@@ -5538,7 +5577,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         if [ $TB2T_CNT -ge 1 ]; then
                             echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                 partsize="12800K"
                             else
                                 partsize="13M"
@@ -5571,7 +5610,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 # +1 sectors 
                                 [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                             else
-                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ]; then
+                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                     # +65 sectors 
                                     [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
                                 else
@@ -6248,8 +6287,9 @@ function my() {
       cat user_config.json
       echo "y"|rploader identifyusb
   
-      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ]; then
-          cecho p "Device Tree based model does not need SataPortMap setting...."     
+      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
+         [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
+          cecho p "Device Tree based model does not need SataPortMap setting...."
       else    
           rploader satamap    
       fi    
