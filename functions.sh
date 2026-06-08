@@ -2472,26 +2472,28 @@ function getBus() {
 
 ###############################################################################
 # git clone redpill-load
+function gitclone() {
+    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+}
+
 function gitdownload() {
 
-    git config --global http.sslVerify false   
-
+    cd /home/tc
+    git config --global http.sslVerify false    
     if [ -d "/home/tc/redpill-load" ]; then
-        cecho y "Loader sources already downloaded, pulling latest !!!"
+        cecho y "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
         git pull
         if [ $? -ne 0 ]; then
-           cd /home/tc    
-           rploader clean 
-           git clone -b master --single-branch https://github.com/PeterSuh-Q3/redpill-load.git
-           #git clone -b master --single-branch https://giteas.duckdns.org/PeterSuh-Q3/redpill-load.git
+           cd /home/tc
+           rploader clean
+           gitclone    
         fi   
         cd /home/tc
     else
-        git clone -b master --single-branch https://github.com/PeterSuh-Q3/redpill-load.git
-        #git clone -b master --single-branch https://giteas.duckdns.org/PeterSuh-Q3/redpill-load.git
+        gitclone
     fi
-
+    
 }
 
 function _pat_process() {
