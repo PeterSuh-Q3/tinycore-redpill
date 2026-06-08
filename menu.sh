@@ -25,7 +25,7 @@ function check_internet() {
 }
 
 function gitclone() {
-    git clone -b master --single-branch --depth=1 https://github.com/PeterSuh-Q3/redpill-load.git
+    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
 }
 
 function gitdownload() {
@@ -295,21 +295,21 @@ if [ "${offline}" = "NO" ]; then
       
       rm -rf /dev/shm/tcrp-addons
       mkdir -p /dev/shm/tcrp-addons
-      git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
+      git clone --depth 1 --filter=blob:none "https://github.com/PeterSuh-Q3/tcrp-addons.git" /dev/shm/tcrp-addons
       cd /dev/shm/tcrp-addons
       git fetch origin "${addons_hash}"
       git checkout "${addons_hash}"
   
       rm -rf /dev/shm/tcrp-modules
       mkdir -p /dev/shm/tcrp-modules
-      git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
+      git clone --depth 1 --filter=blob:none "https://github.com/PeterSuh-Q3/tcrp-modules.git" /dev/shm/tcrp-modules
       cd /dev/shm/tcrp-modules
       git fetch origin "${modules_hash}"
       git checkout "${modules_hash}"
 
       rm -rf /home/tc/redpill-load
       mkdir -p /home/tc/redpill-load
-      git clone --depth=1 "https://github.com/PeterSuh-Q3/redpill-load.git" /home/tc/redpill-load
+      git clone --depth 1 --filter=blob:none "https://github.com/PeterSuh-Q3/redpill-load.git" /home/tc/redpill-load
       cd /home/tc/redpill-load
       git fetch origin "${load_hash}"
       git checkout "${load_hash}"
