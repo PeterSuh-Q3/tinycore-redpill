@@ -1,6 +1,6 @@
 2599b8ced31c669d63a57429787c9025d932fd70
-59406c7f5d994af9362d58de24d7cfa5646ec6cf
-6c37321c2c9d5f7112c71cf242c894dd1a9990f8
+6e4ad7fbd3a83e6b0ffc3e91c123687a90a63190
+a958169e7eb292104eee58da2d3f9296d4b3e9a8
 
-    1.3.0.1 Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module
-selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
+    1.3.0.2 redpill addons git clone stabilization
+The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
