@@ -3,4 +3,4 @@
 a958169e7eb292104eee58da2d3f9296d4b3e9a8
 
     1.3.0.2 redpill addons git clone stabilization
-The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+    The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
