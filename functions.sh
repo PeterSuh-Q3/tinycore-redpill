@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.1"
+rploaderver="1.3.0.2"
 build="master"
 redpillmake="prod"
 
@@ -257,6 +257,8 @@ function history() {
     1.3.0.0 Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
     1.3.0.1 Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module
             selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
+    1.3.0.2 redpill addons git clone stabilization
+            The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -735,6 +737,9 @@ EOF
 # 2026.06.07 v1.3.0.1
 # Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
 # custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
+# 2026.06.10 v1.3.0.2 
+# redpill addons git clone stabilization
+# The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
 
 function showlastupdate() {
     cat <<EOF
@@ -929,6 +934,10 @@ function showlastupdate() {
 # 2026.06.07 v1.3.0.1
 # Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
 # custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
+
+# 2026.06.10 v1.3.0.2 
+# redpill addons git clone stabilization
+# The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
 
 EOF
 }
