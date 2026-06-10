@@ -500,6 +500,7 @@ function selectldrmode() {
   #eval "MSG29=\"\${MSG${tz}29}\""  
   MSG28="Intel iGPU i915 DRM Support"
   MSG29="AMD dGPU/APU DRM Support"
+  MSG99="Intel i915 + AMD dGPU/APU DRM"
   # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
   # Derive the kernel version of the *currently selected* model live.
@@ -524,14 +525,14 @@ function selectldrmode() {
     # ① 커널 >= 5.10.55
     if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
       # DSM >= 7.3.0 + BMI2 미지원: custom-modules 만 노출
-      menu_options=("k" "${MSG28}, custom-modules(Persistent:PML)")
+      menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)")
     else
       # BMI2 있거나 DSM < 7.3: 전체 메뉴 (custom-modules 포함)
       menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
                     "m" "${MSG29}, amd-modules(In-Memory:IML)" \
                     "f" "${MSG28}, all-modules(Persistent:PML)" \
                     "l" "${MSG29}, amd-modules(Persistent:PML)" \
-                    "k" "${MSG28}, custom-modules(Persistent:PML)")
+                    "k" "${MSG99}, custom-modules(Persistent:PML)")
     fi
   elif [ "${curZpadkver}" -ge 4004302 ]; then
     # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원
@@ -2807,7 +2808,13 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
-  [ "${MDLNAME}" = "all-modules" ] && drmmode="Intel DRM" || drmmode="AMD DRM"
+  if [ "${MDLNAME}" = "all-modules" ]; then
+    drmmode="Intel DRM" 
+  elif [ "${MDLNAME}" = "amd-modules" ]; then  
+    drmmode="AMD DRM"
+  elif [ "${MDLNAME}" = "custom-modules" ]; then  
+    drmmode="i915+AMD DRM"
+  fi  
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
