@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.2"
+rploaderver="1.3.0.3"
 build="master"
 redpillmake="prod"
 
@@ -259,6 +259,7 @@ function history() {
             selection to custom-modules only (all 4 platforms). custom-modules now supported on all platforms.
     1.3.0.2 redpill addons git clone stabilization
             The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+    1.3.0.3 i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -740,6 +741,8 @@ EOF
 # 2026.06.10 v1.3.0.2 
 # redpill addons git clone stabilization
 # The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+# 2026.06.12 v1.3.0.3 
+# i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
 
 function showlastupdate() {
     cat <<EOF
@@ -938,6 +941,9 @@ function showlastupdate() {
 # 2026.06.10 v1.3.0.2 
 # redpill addons git clone stabilization
 # The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+
+# 2026.06.12 v1.3.0.3 
+# i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
 
 EOF
 }
