@@ -2804,8 +2804,11 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 while true; do
+  local _gv kver origin_plat
+  _gv="$(resolveLiveKver)"
+  kver="${_gv%%|*}"
   if [ "${MDLNAME}" = "all-modules" ]; then
-    if echo ${kver5explatforms} | grep -qw ${platform}; then
+    if [[ "$kver" = "5.10.55" || "$kver" = "4.4.302" ]]; then
       drmmode="i915+AMD dual DRM"
     else
       drmmode="Intel DRM" 
