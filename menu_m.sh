@@ -2803,8 +2803,8 @@ writeConfigKey "general" "bay" "${bay}"
 chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
+local _gv kver origin_plat
 while true; do
-  local _gv kver origin_plat
   _gv="$(resolveLiveKver)"
   kver="${_gv%%|*}"
   if [ "${MDLNAME}" = "all-modules" ]; then
