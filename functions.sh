@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.3"
+rploaderver="1.3.0.4"
 build="master"
 redpillmake="prod"
 
@@ -260,6 +260,9 @@ function history() {
     1.3.0.2 redpill addons git clone stabilization
             The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
     1.3.0.3 i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+    1.3.0.4 Delivered a Linux 5.4 LTS OOT backport of i915 and amdgpu as a unified dual-DRM build, 
+            enabling Intel iGPU (up to GEN11/Ice Lake) and AMD dGPU (Polaris~RDNA1) to coexist on DSM 4.4.302 without kernel rebuilding.
+            Full coverage across 10 platforms × DSM 7.2/7.3 (20 builds), sharing a single `drm.ko` to eliminate ABI conflicts between drivers.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -743,6 +746,10 @@ EOF
 # The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
 # 2026.06.12 v1.3.0.3 
 # i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+# 2026.06.15 v1.3.0.4 
+# Delivered a Linux 5.4 LTS OOT backport of i915 and amdgpu as a unified dual-DRM build, 
+# enabling Intel iGPU (up to GEN11/Ice Lake) and AMD dGPU (Polaris~RDNA1) to coexist on DSM 4.4.302 without kernel rebuilding.
+# Full coverage across 10 platforms × DSM 7.2/7.3 (20 builds), sharing a single `drm.ko` to eliminate ABI conflicts between drivers.
 
 function showlastupdate() {
     cat <<EOF
@@ -944,6 +951,11 @@ function showlastupdate() {
 
 # 2026.06.12 v1.3.0.3 
 # i915 + amdgpu Dual DRM & Expanded AMD Chipset Support in all-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
+
+# 2026.06.15 v1.3.0.4 
+# Delivered a Linux 5.4 LTS OOT backport of i915 and amdgpu as a unified dual-DRM build, 
+# enabling Intel iGPU (up to GEN11/Ice Lake) and AMD dGPU (Polaris~RDNA1) to coexist on DSM 4.4.302 without kernel rebuilding.
+# Full coverage across 10 platforms × DSM 7.2/7.3 (20 builds), sharing a single `drm.ko` to eliminate ABI conflicts between drivers.
 
 EOF
 }
