@@ -533,13 +533,11 @@ function selectldrmode() {
                     "k" "${MSG99}, custom-modules(Persistent:PML)")
     fi
   elif [ "${curZpadkver}" -ge 4004302 ]; then
-    # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원
-    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                  "m" "${MSG29}, amd-modules(In-Memory:IML)" \
-                  "f" "${MSG28}, all-modules(Persistent:PML)" \
-                  "l" "${MSG29}, amd-modules(Persistent:PML)")
+    # ② 커널 4.4.302 이상 ~ 5.10.55 미만: dual DRM all-modules 지원
+    menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
+                  "f" "${MSG99}, all-modules(Persistent:PML)" 
   else
-    # ③ 커널 < 4.4.302 (커널 3.x): all-modules 만
+    # ③ 커널 < 4.4.302 (커널 4.4.180 이하 커널 3.x): all-modules 만
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
                   "f" "${MSG28}, all-modules(Persistent:PML)")
   fi
