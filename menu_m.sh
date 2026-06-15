@@ -535,7 +535,7 @@ function selectldrmode() {
   elif [ "${curZpadkver}" -ge 4004302 ]; then
     # ② 커널 4.4.302 이상 ~ 5.10.55 미만: dual DRM all-modules 지원
     menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
-                  "f" "${MSG99}, all-modules(Persistent:PML)" 
+                  "f" "${MSG99}, all-modules(Persistent:PML)") 
   else
     # ③ 커널 < 4.4.302 (커널 4.4.180 이하 커널 3.x): all-modules 만
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
