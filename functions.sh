@@ -4349,7 +4349,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     if [ "$KVER" == "4.4.302" ]; then
-        USB_LINE="${USB_LINE} i915.enable_guc=2"
+        USB_LINE="${USB_LINE} i915.enable_guc=0"
     fi
 
     #if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
