@@ -4344,6 +4344,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         USB_LINE="${USB_LINE} nox2apic"
     fi
 
+    if echo "apollolake geminilake geminilakenk" | grep -wq "${ORIGIN_PLATFORM}"; then
+        USB_LINE="${USB_LINE} intel_iommu=igfx_off"
+    fi
+
     #if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
     #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
     #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
