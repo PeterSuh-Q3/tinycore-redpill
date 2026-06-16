@@ -4348,6 +4348,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         USB_LINE="${USB_LINE} intel_iommu=igfx_off"
     fi
 
+    if [ "$KVER" == "4.4.302" ]; then
+        USB_LINE="${USB_LINE} i915.enable_guc=2"
+    fi
+
     #if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
     #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
     #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
