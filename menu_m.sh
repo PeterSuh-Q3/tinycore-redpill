@@ -624,7 +624,7 @@ echo "${versions[@]}"
 
 # 3. TAG-ITEM 쌍 만들기
 menu_items=()
-tags=(a b c d e f g h i j)
+tags=(a b c d e f g h i j k)
 for i in "${!versions[@]}"; do
   menu_items+=("${tags[$i]}" "${versions[$i]}")
 done
