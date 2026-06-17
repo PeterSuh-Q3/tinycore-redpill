@@ -612,8 +612,8 @@ function syncBundledExtsModule() {
 # Shows available dsm verwsion 
 function selectversion () {
 
-# 1. 최대 10개 결과 추출 (공백 한 개로 join)
-pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | .[:10] | reverse | join(\" \")" "${configfile}")
+# 1. 최신순으로 최대 11개 결과 추출 (공백 한 개로 join)
+pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(.[0:11]) | reverse | .[:11] | join(\" \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
 # 2. 배열 변환
