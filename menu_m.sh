@@ -501,6 +501,7 @@ function selectldrmode() {
   MSG28="Intel iGPU i915 DRM Support"
   MSG29="AMD dGPU/APU DRM Support"
   MSG99="i915 + AMDGPU dual DRM"
+  MSGND="No DRM (general modules, no GPU)"
   # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
   # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
   # Derive the kernel version of the *currently selected* model live.
@@ -521,25 +522,31 @@ function selectldrmode() {
   curZpadDsm=$(printf "%03d%03d" "${_dsmMaj:-0}" "${_dsmMin:-0}")
 
   # ── 커널 구간 3단계 분기 ──────────────────────────────────────────────────────
+  # nodrm-modules(In-Memory:IML) 는 DRM/GPU 스택을 제외한 일반 모듈팩으로
+  # 모든 커널(3.x / 4.4.x / 5.10.x)에 공통 대응하므로 전 분기에 노출한다.
   if [ "${curZpadkver}" -ge 5010055 ]; then
     # ① 커널 >= 5.10.55
     if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-      # DSM >= 7.3.0 + BMI2 미지원: custom-modules 만 노출
-      menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)")
+      # DSM >= 7.3.0 + BMI2 미지원: custom-modules + nodrm 만 노출
+      menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)" \
+                    "n" "${MSGND}, nodrm-modules(In-Memory:IML)")
     else
       # BMI2 있거나 DSM < 7.3: 전체 메뉴 (custom-modules 포함)
       menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
                     "f" "${MSG99}, all-modules(Persistent:PML)" \
-                    "k" "${MSG99}, custom-modules(Persistent:PML)")
+                    "k" "${MSG99}, custom-modules(Persistent:PML)" \
+                    "n" "${MSGND}, nodrm-modules(In-Memory:IML)")
     fi
   elif [ "${curZpadkver}" -ge 4004302 ]; then
     # ② 커널 4.4.302 이상 ~ 5.10.55 미만: dual DRM all-modules 지원
     menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
-                  "f" "${MSG99}, all-modules(Persistent:PML)") 
+                  "f" "${MSG99}, all-modules(Persistent:PML)" \
+                  "n" "${MSGND}, nodrm-modules(In-Memory:IML)")
   else
     # ③ 커널 < 4.4.302 (커널 4.4.180 이하 커널 3.x): all-modules 만
     menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                  "f" "${MSG28}, all-modules(Persistent:PML)")
+                  "f" "${MSG28}, all-modules(Persistent:PML)" \
+                  "n" "${MSGND}, nodrm-modules(In-Memory:IML)")
   fi
   # ─────────────────────────────────────────────────────────────────────────────
   
@@ -571,6 +578,10 @@ function selectldrmode() {
       MDLNAME="custom-modules"
       MLMETHOD="PML"
       break
+    elif [ "${resp}" = "n" ]; then
+      MDLNAME="nodrm-modules"
+      MLMETHOD="IML"
+      break
     fi
   done
   writeConfigKey "general" "loadermode" "${LDRMODE}"
@@ -597,6 +608,7 @@ function syncBundledExtsModule() {
     all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
     amd-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
     custom-modules) mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
+    nodrm-modules)  mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/nodrm-modules/rpext-index.json" ;;
     *) return 0 ;;
   esac
   local tmp
@@ -604,6 +616,7 @@ function syncBundledExtsModule() {
       del(.["all-modules"])
     | del(.["amd-modules"])
     | del(.["custom-modules"])
+    | del(.["nodrm-modules"])
     | . + {($name): $url}
   ' "${bex}") && echo "${tmp}" | jq . > "${bex}"
 }
@@ -2813,11 +2826,13 @@ while true; do
     else
       drmmode="Intel DRM" 
     fi  
-  elif [ "${MDLNAME}" = "amd-modules" ]; then  
+  elif [ "${MDLNAME}" = "amd-modules" ]; then
     drmmode="AMD DRM"
-  elif [ "${MDLNAME}" = "custom-modules" ]; then  
+  elif [ "${MDLNAME}" = "custom-modules" ]; then
     drmmode="i915+AMD dual DRM"
-  fi  
+  elif [ "${MDLNAME}" = "nodrm-modules" ]; then
+    drmmode="No DRM"
+  fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
