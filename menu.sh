@@ -268,9 +268,9 @@ else
       if [ ${attempt} -eq 1 ]; then
         timeout=30
         # 이미 연결돼 있으면 link-kick 없이 즉시 통과
+        # (getlatestmshell 은 루프 종료 후 net_ok 블록에서 1회만 호출)
         if check_internet; then
           net_ok="true"
-          [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
           break
         fi
         # 1차도 실패 시점이면 선제 link-kick 으로 느린 NIC 협상을 앞당김
