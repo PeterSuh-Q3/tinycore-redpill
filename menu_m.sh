@@ -2829,7 +2829,7 @@ writeConfigKey "general" "bay" "${bay}"
 chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
-local _gv kver origin_plat
+_gv=""; kver=""; origin_plat=""; drmmode=""
 while true; do
   _gv="$(resolveLiveKver)"
   kver="${_gv%%|*}"
@@ -2837,14 +2837,16 @@ while true; do
     if [[ "$kver" = "5.10.55" || "$kver" = "4.4.302" ]]; then
       drmmode="i915+AMD dual DRM"
     else
-      drmmode="Intel DRM" 
-    fi  
+      drmmode="Intel DRM"
+    fi
   elif [ "${MDLNAME}" = "amd-modules" ]; then
     drmmode="AMD DRM"
   elif [ "${MDLNAME}" = "custom-modules" ]; then
     drmmode="i915+AMD dual DRM"
   elif [ "${MDLNAME}" = "anodrm-modules" ]; then
     drmmode="No DRM"
+  else
+    drmmode="Unknown DRM"
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
