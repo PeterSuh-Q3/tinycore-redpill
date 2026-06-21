@@ -258,12 +258,25 @@ if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]
 else
     # 인터넷 체크: 1차 30초 시도, 실패 시 NIC 강제 link-kick 후
     # 20초 단위로 최대 2회 더 재시도(총 3회). 베어메탈의 느린 NIC 대응.
+    # 1차 진입 직후 1회 즉시 체크 → 이미 되면 link-kick 자체를 건너뛰어
+    # 가상랜에 불필요한 단절/지연을 주지 않고, 안 될 때만 선제 link-kick
+    # 으로 베어메탈의 30초 대기를 줄인다.
     net_ok="false"
     attempt=1
     max_attempt=3
     while [ ${attempt} -le ${max_attempt} ]; do
       if [ ${attempt} -eq 1 ]; then
         timeout=30
+        # 이미 연결돼 있으면 link-kick 없이 즉시 통과
+        if check_internet; then
+          net_ok="true"
+          [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
+          break
+        fi
+        # 1차도 실패 시점이면 선제 link-kick 으로 느린 NIC 협상을 앞당김
+        echo ""
+        echo ">>> Internet not ready. Pre-kicking NIC then waiting ${timeout}s (attempt ${attempt}/${max_attempt})..."
+        nic_link_kick
       else
         timeout=20
         echo ""
