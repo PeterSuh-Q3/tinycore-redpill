@@ -1878,7 +1878,12 @@ function build-pre-option() {
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
-    eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                            > "${TMP_PATH}/menud"
+    # DT (Device-tree) 모델은 sata_remap 미지원 → SataPort remap 메뉴 비노출
+    if echo "${platform}" | grep -q "(DT)"; then
+      : > "${TMP_PATH}/menud"
+    else
+      eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                          > "${TMP_PATH}/menud"
+    fi
     eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
     eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
     eval "echo \"e \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
