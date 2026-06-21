@@ -24,6 +24,49 @@ function check_internet() {
   return $?
 }
 
+# 바이너리 풀경로 해석. TinyCore 는 ip/ethtool 이 /usr/local/sbin 에 있는데
+# sudo secure_path 에는 그 경로가 빠져 있어 이름만으론 'command not found'
+# 로 조용히 실패한다. 모든 후보 경로를 직접 뒤져 절대경로를 반환한다.
+function _find_bin() {
+  local name="$1" p
+  for p in /usr/local/sbin /usr/local/bin /sbin /usr/sbin /bin /usr/bin; do
+    [ -x "${p}/${name}" ] && { echo "${p}/${name}"; return 0; }
+  done
+  return 1
+}
+
+# 베어메탈 물리 NIC 는 가상랜 대비 링크 협상(auto-negotiation)/DHCP 응답이
+# 느린 경우가 많다. 물리 인터페이스를 강제로 link down/up 시켜 재협상을
+# 유발하고, DHCP 임대를 갱신해 인터넷 체크 성공 확률을 높인다.
+function nic_link_kick() {
+  local ifaces dev IP ETHTOOL IFCONFIG UDHCPC
+  IP=$(_find_bin ip)
+  ETHTOOL=$(_find_bin ethtool)
+  IFCONFIG=$(_find_bin ifconfig)
+  UDHCPC=$(_find_bin udhcpc)
+  # loopback/가상 인터페이스 제외, 물리 NIC 만 대상
+  ifaces=$(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en|em|p[0-9]+p)')
+  [ -z "${ifaces}" ] && return 0
+  for dev in ${ifaces}; do
+    echo "Kicking NIC '${dev}' (link down/up + DHCP renew) to wake slow bare-metal link..."
+    if [ -n "${IP}" ]; then
+      sudo "${IP}" link set "${dev}" down 2>/dev/null
+      sleep 1
+      sudo "${IP}" link set "${dev}" up   2>/dev/null
+    elif [ -n "${IFCONFIG}" ]; then
+      sudo "${IFCONFIG}" "${dev}" down 2>/dev/null
+      sleep 1
+      sudo "${IFCONFIG}" "${dev}" up   2>/dev/null
+    fi
+    # 일부 PHY 는 down/up 만으로 부족 → autoneg 재시작 시도(있을 때만)
+    [ -n "${ETHTOOL}" ] && sudo "${ETHTOOL}" -r "${dev}" 2>/dev/null
+    # DHCP 재요청(udhcpc 가 있을 때만, 백그라운드로)
+    [ -n "${UDHCPC}" ] && sudo "${UDHCPC}" -i "${dev}" -n -q -t 3 -T 3 2>/dev/null &
+  done
+  # 링크업 후 캐리어 안정화 대기
+  sleep 3
+}
+
 function gitclone() {
     git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
 }
@@ -213,23 +256,43 @@ if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]
     echo "Go directly to the menu. Press any key to continue..."
     read answer
 else
-    # Record the start time.
-    start_time=$(date +%s)
-    while true; do
-      if check_internet; then
-        [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
-        break
+    # 인터넷 체크: 1차 30초 시도, 실패 시 NIC 강제 link-kick 후
+    # 20초 단위로 최대 2회 더 재시도(총 3회). 베어메탈의 느린 NIC 대응.
+    net_ok="false"
+    attempt=1
+    max_attempt=3
+    while [ ${attempt} -le ${max_attempt} ]; do
+      if [ ${attempt} -eq 1 ]; then
+        timeout=30
+      else
+        timeout=20
+        echo ""
+        echo ">>> Internet not ready. Retry ${attempt}/${max_attempt} for ${timeout}s (after NIC link-kick)..."
+        nic_link_kick
       fi
-      # Calculate the elapsed time and exit the loop if it exceeds 15 seconds.
-      current_time=$(date +%s)
-      elapsed=$(( current_time - start_time ))
-      if [ $elapsed -ge 30 ]; then
-        echo "Internet connection wait time exceeded 30 seconds"
-        break
-      fi
-      sleep 2
-      echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)..."
+      start_time=$(date +%s)
+      while true; do
+        if check_internet; then
+          net_ok="true"
+          break
+        fi
+        current_time=$(date +%s)
+        elapsed=$(( current_time - start_time ))
+        if [ ${elapsed} -ge ${timeout} ]; then
+          echo "Internet connection wait time exceeded ${timeout} seconds (attempt ${attempt}/${max_attempt})"
+          break
+        fi
+        sleep 2
+        echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)... [attempt ${attempt}/${max_attempt}]"
+      done
+      [ "${net_ok}" = "true" ] && break
+      attempt=$(( attempt + 1 ))
     done
+    if [ "${net_ok}" = "true" ]; then
+      [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
+    else
+      echo "Internet connection failed after ${max_attempt} attempts."
+    fi
     echo -n "Checking GitHub Access -> "
     curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
     if [ $? -eq 0 ]; then
