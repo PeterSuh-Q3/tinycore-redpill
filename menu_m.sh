@@ -1893,7 +1893,15 @@ function build-pre-option() {
     b) remapsata     ;    NEXT="z" ;;
     c) storagepanel;      NEXT="z" ;;    
     d) 
-      if [ "${NVMES}" = "false" ]; then 
+      if [ "${NVMES}" = "false" ]; then
+        dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
+          "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
+This configuration is NOT officially supported and may cause data loss or boot failure.\n\n\
+\Z1\ZbFor a STABLE setup, it is STRONGLY RECOMMENDED to install at least ONE additional SATA disk.\Zn\n\n\
+Do you really want to continue enabling nvmesystem?" 0 0
+        if [ $? -ne 0 ]; then
+          continue
+        fi
         if add-addon "nvmesystem"; then
           NVMES="true"
           BLOCK_DDSML="Y"
