@@ -2920,8 +2920,18 @@ while true; do
   eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
+  # 화면 크기에 맞춰 박스를 1행(backtitle 아래)부터 꽉 차게 그려 중앙배치
+  # 여백/그림자 제거. (footer 버튼행은 dialog --menu 구조상 필수라 제거 불가,
+  # 빈 여백만 최소화하고 그만큼 리스트 표시 행을 늘림)
+  SCR_H=$(tput lines 2>/dev/null); SCR_W=$(tput cols 2>/dev/null)
+  [ -z "${SCR_H}" ] && SCR_H=$(stty size 2>/dev/null | awk '{print $1}')
+  [ -z "${SCR_W}" ] && SCR_W=$(stty size 2>/dev/null | awk '{print $2}')
+  [ -z "${SCR_H}" ] && SCR_H=24; [ -z "${SCR_W}" ] && SCR_W=80
+  BOX_H=$(( SCR_H - 1 )); [ ${BOX_H} -lt 10 ] && BOX_H=10   # backtitle(0행) 보존
+  MENU_H=$(( BOX_H - 8 )); [ ${MENU_H} -lt 3 ] && MENU_H=3
   dialog --clear --default-item ${NEXT} --backtitle "`backtitle`" --colors \
-    --menu "${result}" 0 0 0 --file "${TMP_PATH}/menu" \
+    --begin 1 0 --no-shadow \
+    --menu "${result}" ${BOX_H} ${SCR_W} ${MENU_H} --file "${TMP_PATH}/menu" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && break
   case `<"${TMP_PATH}/resp"` in
