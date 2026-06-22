@@ -2883,10 +2883,12 @@ while true; do
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
-  eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""     > "${TMP_PATH}/menu" 
-  eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""   >> "${TMP_PATH}/menu"
+  # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
+  echo '1 "===== Main ====="'                              > "${TMP_PATH}/menu"
+  eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
+  eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""     >> "${TMP_PATH}/menu"
   if [ -n "${MODEL}" ]; then
-    eval "echo \"j \\\"\${MSG${tz}05} (${BUILD})\\\"\""  >> "${TMP_PATH}/menu"  
+    eval "echo \"j \\\"\${MSG${tz}05} (${BUILD})\\\"\""  >> "${TMP_PATH}/menu"
     eval "echo \"s \\\"\${MSG${tz}03}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"a \\\"\${MSG${tz}04} 1\\\"\""           >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ] && eval "echo \"f \\\"\${MSG${tz}04} 2\\\"\""         >> "${TMP_PATH}/menu"
@@ -2897,16 +2899,22 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"    
-    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"      
+    eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
+    eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
   fi
-  eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"  
-  [ "$FRKRNL" = "YES" ] && 
+  [ "$FRKRNL" = "YES" ] && \
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"  
+
+  # ===== Environment ===== (설정/환경 옵션)
+  echo '2 "===== Environment ====="'                     >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
+
+  # ===== Misc ===== (유지보수/시스템)
+  echo '3 "===== Misc ====="'                            >> "${TMP_PATH}/menu"
+  eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"w \\\"Rebuild Previous Version\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
@@ -2917,7 +2925,11 @@ while true; do
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && break
   case `<"${TMP_PATH}/resp"` in
-    c) seleudev;        NEXT="m" ;;  
+    # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
+    1) NEXT="c" ;;   # ===== Main =====        → c
+    2) NEXT="u" ;;   # ===== Environment ===== → u
+    3) NEXT="n" ;;   # ===== Misc =====        → n
+    c) seleudev;        NEXT="m" ;;
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
     s) serialMenu;      NEXT="a" ;;
