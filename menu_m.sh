@@ -1994,7 +1994,40 @@ function sortnetif() {
     fi
     IDX=$((${IDX} + 1))
   done
-  sudo timeout 10s udhcpc
+  # ── 멀티 NIC default route metric 차등 ────────────────────────────────
+  # 기존: eth0 에 단발 udhcpc 만 수행 → DHCP 안 되는 NIC 이 있어도 그 포트로
+  #       default route 가 걸려 인터넷이 새는 문제.
+  # 개선: 인터페이스별로 개별 DHCP 시도 후, 성공한 NIC 은 낮은 metric(우선
+  #       순위 높음), 실패한 NIC 은 높은 metric(우선순위 낮음)을 default
+  #       route 에 부여한다. 실패 NIC 은 default route 자체가 없거나 큰
+  #       metric 이라 정상 NIC 이 항상 우선 선택된다. (sortnetif 은 NIC 이
+  #       2개 이상일 때만 여기까지 도달 — 위에서 단일 NIC 은 early return)
+  IDX=0
+  for ETH in $(ls /sys/class/net/ 2>/dev/null | grep -E '^eth' | sort); do
+    # 재취득 전 해당 NIC 의 stale default route 제거
+    while sudo ip route del default dev ${ETH} 2>/dev/null; do :; done
+    echo "DHCP request on ${ETH} ..."
+    if sudo timeout 12s udhcpc -i ${ETH} -n -q -t 4 -T 2 >/dev/null 2>&1; then
+      METRIC=$(( 100 + IDX ))      # 성공 → 우선순위 높음
+      STATE="OK"
+    else
+      METRIC=$(( 1000 + IDX ))     # 실패 → 우선순위 낮음
+      STATE="FAIL"
+    fi
+    # udhcpc 가 추가한 default route 의 gateway 를 읽어 metric 을 재지정.
+    # (DHCP 실패 시 gateway 가 없으므로 default route 미생성 = 최저 우선순위)
+    GW=$(sudo ip route show default dev ${ETH} 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="via"){print $(i+1); exit}}')
+    if [ -n "${GW}" ]; then
+      while sudo ip route del default dev ${ETH} 2>/dev/null; do :; done
+      sudo ip route add default via ${GW} dev ${ETH} metric ${METRIC} 2>/dev/null
+      echo "  ${ETH}: DHCP ${STATE} -> default via ${GW} metric ${METRIC} ($([ ${STATE} = OK ] && echo 'priority HIGH' || echo 'priority LOW'))"
+    else
+      echo "  ${ETH}: DHCP ${STATE} -> no default route (priority LOWEST)"
+    fi
+    IDX=$(( IDX + 1 ))
+  done
+  echo "=== resulting default routes (lower metric = preferred) ==="
+  sudo ip route show default 2>/dev/null
   rm -f /tmp/ethlist
 }
 
