@@ -2606,7 +2606,16 @@ tz="ZZ"
 load_zz
 
 if [ "$FRKRNL" = "NO" ] && [ "${ucode}" != "${config_ucode}" ]; then
-  urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh
+  # 언어 변경 감지 시: 새 urxvt 창을 덧띄우지 않고 현재 창(이미 UTF-8 +
+  # unifont 폴백으로 CJK 렌더 가능)에서 exec 로 프로세스를 교체한다.
+  # 새 LANG/LC_ALL 로 menu.sh 가 fresh 재시작되어 gettext 카탈로그가
+  # 새 언어로 로드되고, 창은 단일 유지되어 창 누적(trick) 이 사라진다.
+  # 단, X(urxvt) 안에서 실행 중일 때만 exec; 아니면 기존 urxvt 방식 폴백.
+  if [ -n "${DISPLAY}" ] && [ -n "${WINDOWID}" ]; then
+    exec /home/tc/menu.sh
+  else
+    urxvt -geometry 78x32+10+0 -fg orange -title "TCRP-mshell urxvt Menu" -e /home/tc/menu.sh
+  fi
 fi
 
 # Download ethtool
