@@ -2884,7 +2884,7 @@ while true; do
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
-  echo '1 "===== Main ====="'                              > "${TMP_PATH}/menu"
+  echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
   eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""     >> "${TMP_PATH}/menu"
   if [ -n "${MODEL}" ]; then
@@ -2906,13 +2906,13 @@ while true; do
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
 
   # ===== Environment ===== (설정/환경 옵션)
-  echo '2 "===== Environment ====="'                     >> "${TMP_PATH}/menu"
+  echo '2 "=============== Environment ==============="'                     >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
 
   # ===== Misc ===== (유지보수/시스템)
-  echo '3 "===== Misc ====="'                            >> "${TMP_PATH}/menu"
+  echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
