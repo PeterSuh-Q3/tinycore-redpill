@@ -2611,7 +2611,7 @@ if [ "$FRKRNL" = "NO" ] && [ "${ucode}" != "${config_ucode}" ]; then
   # 새 LANG/LC_ALL 로 menu.sh 가 fresh 재시작되어 gettext 카탈로그가
   # 새 언어로 로드되고, 창은 단일 유지되어 창 누적(trick) 이 사라진다.
   # 단, X(urxvt) 안에서 실행 중일 때만 exec; 아니면 기존 urxvt 방식 폴백.
-  if [ -n "${DISPLAY}" ] && [ -n "${WINDOWID}" ]; then
+  if [ -n "${DISPLAY:-}" ] && [ -n "${WINDOWID:-}" ]; then
     exec /home/tc/menu.sh
   else
     urxvt -geometry 78x32+10+0 -fg orange -title "TCRP-mshell urxvt Menu" -e /home/tc/menu.sh
