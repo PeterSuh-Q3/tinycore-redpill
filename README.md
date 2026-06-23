@@ -152,6 +152,12 @@ A typical build process starts with:
 
     (This function is provided only when using the latest version of M SHELL.)
 
+![RebootToTcrp task](guide_img/2023-06-1211_40_39.thumb.png.ae540d35a7bbc63b32b6c5464e10b5d1.png)
+
+![Run task](guide_img/2023-06-1211_40_57.thumb.png.e94929f3172112ca9bb56bf68d6af4e1.png)
+
+![Run Result](guide_img/2023-06-1211_50_05.thumb.png.7da0b2c7b6d28d617e55fdb9431a6de9.png)
+
 
 2. You must be able to access TCRP Linux via SSH.
 
