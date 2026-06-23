@@ -142,6 +142,34 @@ A typical build process starts with:
 
 -------------------------------------------------------------------------------
 
+ - Changing the GNU GRUB Boot Order without a Physical Keyboard (Reboot to TCRP)
+
+1. You can change the GNU GRUB boot order by manually executing "RebootToTcrp" of the custom Task Scheduler
+
+    (DSM > Control Panel > Task Scheduler) as shown below, without using a physical keyboard.
+
+    After this execution, the GNU GRUB boot menu automatically enters "Tiny Core Image Build".
+
+    (This function is provided only when using the latest version of M SHELL.)
+
+
+2. You must be able to access TCRP Linux via SSH.
+
+    The IP address is usually the same as the first IP assigned to DSM when using a real MAC address.
+
+    For more secure processing, please assign the above real MAC address and a static IP to the router.
+
+
+3. Connect to TCRP Linux with the information below through an SSH tool.
+
+    userid   : tc
+    password : P@ssw0rd
+
+
+4. Run ./menu.sh to rebuild the loader.
+
+-------------------------------------------------------------------------------
+
  - GitHub ACTIONS-COOL Loader Auto Build Feature Distribution (Using Issues)
 
 1. You must have a GitHub account.
