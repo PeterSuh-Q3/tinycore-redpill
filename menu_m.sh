@@ -2456,19 +2456,26 @@ echo "current ucode = ${ucode}"
 
 config_ucode="${ucode}"
 
-country=$(curl -s ipinfo.io | grep country | awk '{print $2}' | cut -c 2-3 )
+# ipinfo.io 는 http→https 301 리다이렉트하므로 https 로 직접 조회한다.
+# (기존 http 요청은 301 빈 본문이 와서 country 가 비어버려, lcode 와
+#  불일치로 판정되어 ko_KR 처럼 이미 일치하는 언어에서도 오프롬프트 발생)
+country=$(curl -s -m 8 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
 
-if [ -z "${ucode}" ]; then 
-  lcode="${country}"
-else
-  if [ "${lcode}" != "${country}" ]; then
+if [ -z "${ucode}" ]; then
+  # 저장된 언어가 없으면(최초 실행) 감지된 국가를 채택
+  [ -n "${country}" ] && lcode="${country}"
+elif [ "${ucode}" = "en_US" ]; then
+  # 기본값(en_US)일 때만 변경 여부를 묻는다. 유효한 다른 국가가 감지된 경우만.
+  # 무입력 시 N 으로 넘어가 en_US 가 그대로 유지된다.
+  if [ -n "${country}" ] && [ "${lcode}" != "${country}" ]; then
     answer=""
     read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "N"
-    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
+    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
       lcode="${country}"
     fi
-  fi    
+  fi
 fi
+# ucode 가 이미 en_US 가 아닌 특정 언어(예: ko_KR)면 그대로 존중 → 프롬프트 없음
 
 tz="${lcode}"
 
