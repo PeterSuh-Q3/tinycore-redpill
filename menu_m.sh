@@ -449,6 +449,8 @@ function checkAndResetModuleName() {
     curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
 
     local supported=false
+    # 미지원 시 되돌릴 기본 fallback (분기별로 아래에서 덮어씀)
+    local fallbackMdl="all-modules" fallbackMethod="IML"
 
     # DSM 버전 추출: BUILD 형식 "7.3-69057" → major=7 minor=3 → ZPADDSM=007003
     local curBuild curDsmMajor curDsmMinor curZpadDsm
@@ -461,7 +463,10 @@ function checkAndResetModuleName() {
     if [ "${curZpadkver}" -ge 5010055 ]; then
         # ① 커널 >= 5.10.55
         if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-            # DSM >= 7.3.0 + BMI2 미지원: custom-modules만 허용
+            # DSM >= 7.3.0 + BMI2 미지원: custom-modules만 허용.
+            # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
+            # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
+            fallbackMdl="custom-modules"; fallbackMethod="PML"
             if [ "${curMdlName}" = "custom-modules" ]; then
                 supported=true
             fi
@@ -470,12 +475,12 @@ function checkAndResetModuleName() {
             supported=true
         fi
     elif [ "${curZpadkver}" -ge 4004302 ]; then
-        # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원
+        # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원 → all-modules fallback
         if [ "${curMdlName}" != "custom-modules" ]; then
             supported=true
         fi
     else
-        # ③ 커널 < 4.4.302: all-modules만 지원
+        # ③ 커널 < 4.4.302: all-modules만 지원 → all-modules fallback
         if [ "${curMdlName}" = "all-modules" ]; then
             supported=true
         fi
@@ -484,9 +489,9 @@ function checkAndResetModuleName() {
 
     if [ "${supported}" = "false" ]; then
         echo "⚠ '${curMdlName}' is not supported (kver=${kver}, dsm=${curBuild}, bmi2=${HAS_BMI2})"
-        echo "  → Resetting to all-modules (IML)..."
-        MDLNAME="all-modules"
-        MLMETHOD="IML"
+        echo "  → Resetting to ${fallbackMdl} (${fallbackMethod})..."
+        MDLNAME="${fallbackMdl}"
+        MLMETHOD="${fallbackMethod}"
         writeConfigKey "general" "modulename" "${MDLNAME}"
         writeConfigKey "general" "mlmethod"   "${MLMETHOD}"
         syncBundledExtsModule "${MDLNAME}"
