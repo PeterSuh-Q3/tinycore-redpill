@@ -2062,7 +2062,11 @@ EOF
   STAT="System partition : ${PART}\nPartition size    : ${PMIB} MiB\nmd0 (RAID) size   : ${MMIB} MiB\nFilesystem size   : ${FSTOTAL:-?} MiB (used ${FSUSED:-?}, ${FSPCT:-?})\nFS free vs part.   : ${UNUSED} MiB"
 
   # Filesystem already (nearly) fills the partition -> just report.
-  if [ "${UNUSED:-0}" -le 100 ]; then
+  # RAID superblock + alignment overhead means the ext4 never reaches the exact
+  # partition size (~200 MiB short on an 8GB partition), so treat it as fully
+  # expanded once it is within 768 MiB of the partition OR already > 7.5 GiB.
+  # This avoids re-prompting the user to expand an already-maxed md0.
+  if [ "${UNUSED:-0}" -le 768 ] || [ "${FSTOTAL:-0}" -ge 7680 ]; then
     dialog --backtitle "$(backtitle)" --colors --title "Check System Partition(md0)" \
       --msgbox "${STAT}\n\nFilesystem already (nearly) fills the partition.\nNo expansion needed." 0 0
     return
