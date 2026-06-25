@@ -637,8 +637,35 @@ echo "PAT VERSIONS : $pat_versions"
 # 2. 배열 변환
 IFS=' ' read -ra versions <<< "$pat_versions"
 
+# 2-1. BMI2 미지원 CPU 에서는 DSM 7.4.0 이상 버전을 선택 목록에서 제외한다.
+#      (all/amd-modules 의 BMI2(mulx 등) 명령 미지원으로 부팅 불가)
+#      현재 시놀로지가 DSM 7.4 용 GPL 커널 소스를 아직 공개하지 않아
+#      BMI2 명령을 제거한 custom-modules(PML) 커널을 빌드할 수 없으므로,
+#      GPL 이 공개되기 전까지 BMI2 미지원 CPU 에서는 7.4 이상을 원천 차단한다.
+if [ "${HAS_BMI2}" = "n" ]; then
+  filtered=()
+  for v in "${versions[@]}"; do
+    vMaj=$(echo "${v}" | cut -d'.' -f1)
+    vMin=$(echo "${v}" | cut -d'.' -f2 | cut -d'-' -f1)
+    vZpadDsm=$(printf "%03d%03d" "${vMaj:-0}" "${vMin:-0}")
+    if [ "${vZpadDsm}" -ge 7004 ]; then
+      echo "Excluding ${v} (DSM >= 7.4.0 requires BMI2 CPU)"
+      continue
+    fi
+    filtered+=("${v}")
+  done
+  versions=("${filtered[@]}")
+fi
+
 # 결과 출력 (공백 구분)
 echo "${versions[@]}"
+
+# 선택 가능한 버전이 하나도 없으면(BMI2 미지원 + 7.4 이상만 존재) 안내 후 종료
+if [ "${#versions[@]}" -eq 0 ]; then
+  dialog --clear --backtitle "$(backtitle)" \
+    --msgbox "No selectable DSM version for this CPU.\nDSM 7.4.0+ needs a BMI2-capable CPU (Synology has not released the DSM 7.4 GPL kernel source yet)." 9 70
+  return
+fi
 
 # 3. TAG-ITEM 쌍 만들기
 menu_items=()
