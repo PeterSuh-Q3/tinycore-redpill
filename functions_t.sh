@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.6"
+rploaderver="1.3.0.7"
 build="master"
 redpillmake="prod"
 
@@ -2012,6 +2012,98 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
   
 fi
 
+}
+
+###############################################################################
+# Check whether md0 (DSM system partition) uses the whole partition, and offer
+# to expand it when under-utilized. A legacy ~2.4GB md0 sitting on an 8GB
+# partition cannot hold the DSM 7.4 rootfs and makes upgrades fail at ~56%
+# ("file corrupt"). This grows the RAID + ext4 to the full partition size.
+function checkExpandMd0() {
+
+  DSMROOTS="$(findDSMRoot)"
+  if [ -z "${DSMROOTS}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --aspect 50 \
+      --title "Check/Expand System Partition(md0)" \
+      --msgbox "No DSM system partition(md0) found!\nDSM must be installed and all disks inserted before continuing." 0 0
+    return
+  fi
+
+  PART="$(echo ${DSMROOTS} | awk '{print $1}')"
+
+  # Partition size (the upper bound md0 can grow to).
+  PSIZE=$(sudo blockdev --getsize64 "${PART}" 2>/dev/null)
+  PMIB=$(( PSIZE / 1024 / 1024 ))
+
+  # Assemble md0 from the EXISTING superblock so we read the real current size
+  # (do not use mdadm -C here: it would reset the array to the full partition).
+  sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+  sudo mdadm -A --run /dev/md0 ${DSMROOTS} >/dev/null 2>&1
+  if [ ! -e /dev/md0 ]; then
+    dialog --backtitle "$(backtitle)" --colors --title "Check/Expand System Partition(md0)" \
+      --msgbox "Failed to assemble md0 from ${DSMROOTS}." 0 0
+    return
+  fi
+  MSIZE=$(sudo blockdev --getsize64 /dev/md0 2>/dev/null)
+  MMIB=$(( MSIZE / 1024 / 1024 ))
+  UNUSED=$(( PMIB - MMIB ))
+
+  # Filesystem usage (mount read-only just to read df).
+  sudo mkdir -p "${TMP_PATH}/mdX"
+  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
+  sudo mount -t "${T:-ext4}" -o ro /dev/md0 "${TMP_PATH}/mdX" 2>/dev/null
+  FSINFO="$(df -m "${TMP_PATH}/mdX" 2>/dev/null | awk 'NR==2{printf "%s/%s MiB used (%s)", $3, $2, $5}')"
+  sudo umount "${TMP_PATH}/mdX" 2>/dev/null
+
+  STAT="System partition : ${PART}\nPartition size    : ${PMIB} MiB\nmd0 (RAID) size   : ${MMIB} MiB\nUnused in part.   : ${UNUSED} MiB\nFilesystem        : ${FSINFO}"
+
+  # Already (nearly) full -> just report.
+  if [ "${UNUSED}" -le 100 ]; then
+    sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+    dialog --backtitle "$(backtitle)" --colors --title "Check System Partition(md0)" \
+      --msgbox "${STAT}\n\nmd0 already uses (nearly) the whole partition.\nNo expansion needed." 0 0
+    return
+  fi
+
+  dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
+    --yesno "${STAT}\n\nmd0 is NOT using the full partition (${UNUSED} MiB free).\nA legacy 2.4GB md0 makes DSM 7.4 upgrades fail at ~56% (file corrupt).\n\nExpand md0 + filesystem to the whole partition now?" 0 0
+  if [ $? -ne 0 ]; then
+    sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+    return
+  fi
+
+  # resize2fs is not in the base Tinycore image. Pull e2fsprogs and PERSIST it
+  # into the loader's tce store (cde/optional + onboot.lst + backuploader),
+  # mirroring the gettext/rxvt permanent-install pattern in menu_m.sh, so it
+  # survives reboots. Falls back to a session-only load when no persistent store.
+  if [ "$(which resize2fs)_" = "_" ]; then
+    echo "Loading e2fsprogs (resize2fs) ..."
+    tce-load -wi e2fsprogs
+    if [ $? -eq 0 ] && [ "$FRKRNL" = "NO" ] && [ -d "/mnt/${tcrppart}/cde/optional" ] \
+       && [ "$(grep -c e2fsprogs "/mnt/${tcrppart}/cde/onboot.lst" 2>/dev/null)" -eq 0 ]; then
+      echo "Permanent installation of e2fsprogs ..."
+      sudo cp -f /tmp/tce/optional/* "/mnt/${tcrppart}/cde/optional"
+      sudo echo "" >> "/mnt/${tcrppart}/cde/onboot.lst"
+      sudo echo "e2fsprogs.tcz" >> "/mnt/${tcrppart}/cde/onboot.lst"
+      backuploader
+    fi
+  fi
+
+  clear
+  echo "Growing md0 array to the full partition ..."
+  sudo mdadm --grow /dev/md0 --size=max
+  echo "Checking filesystem (e2fsck) ..."
+  sudo e2fsck -f -y /dev/md0
+  echo "Resizing filesystem (resize2fs) ..."
+  sudo resize2fs /dev/md0
+  sudo sync
+  NEW=$(sudo blockdev --getsize64 /dev/md0 2>/dev/null)
+  NEWMIB=$(( NEW / 1024 / 1024 ))
+  sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+
+  dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
+    --msgbox "Expansion complete.\n\nmd0 size : ${MMIB} MiB -> ${NEWMIB} MiB\nPartition: ${PMIB} MiB" 0 0
+  return
 }
 
 ###############################################################################

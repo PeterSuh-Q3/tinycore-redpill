@@ -1867,6 +1867,7 @@ function synopart() {
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
   eval "MSG68=\"\${MSG${tz}68}\""
+  MSG69="Check / Expand System Partition (md0) Capacity"
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
@@ -1876,7 +1877,8 @@ function synopart() {
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"f \\\"${MSG65}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
-    eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"    
+    eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"i \\\"${MSG69}\\\"\""                  >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 0 --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/respc
@@ -1896,7 +1898,8 @@ function synopart() {
        get_tinycore9
        default_resp="g"
        ;;
-    h) CleanSystemPart format; default_resp="h" ;;  
+    h) CleanSystemPart format; default_resp="h" ;;
+    i) checkExpandMd0; default_resp="i" ;;
     *) return;;
     esac
     
