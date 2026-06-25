@@ -265,7 +265,7 @@ function history() {
             Full coverage across 10 platforms × DSM 7.2/7.3 (20 builds), sharing a single `drm.ko` to eliminate ABI conflicts between drivers.
     1.3.0.5 Add Support DSM 7.4.0-90075 Official Version
     1.3.0.6 Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
-    1.3.0.7 Added "Check / Expand System Partition(md0) Capacity" menu (grows a legacy 2.4GB md0 to the full partition for DSM 7.4 upgrades).
+    1.3.0.7 Added Check/Expand System Partition(md0) Capacity menu, grows a legacy 2.4GB md0 to the full partition for DSM 7.4 upgrades.
     --------------------------------------------------------------------------------------
 EOF
 }
