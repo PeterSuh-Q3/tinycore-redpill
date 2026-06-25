@@ -2031,47 +2031,40 @@ function checkExpandMd0() {
   fi
 
   PART="$(echo ${DSMROOTS} | awk '{print $1}')"
-
-  # Partition size (the upper bound md0 can grow to).
   PSIZE=$(sudo blockdev --getsize64 "${PART}" 2>/dev/null)
   PMIB=$(( PSIZE / 1024 / 1024 ))
 
-  # Assemble md0 from the EXISTING superblock so we read the real current size
-  # (do not use mdadm -C here: it would reset the array to the full partition).
-  sudo mdadm --stop /dev/md0 >/dev/null 2>&1
-  sudo mdadm -A --run /dev/md0 ${DSMROOTS} >/dev/null 2>&1
-  if [ ! -e /dev/md0 ]; then
+  # Assemble + mount md0 with the SAME method the other menus use (open_md0,
+  # i.e. mdadm -C --force). open_md0 has no --size, so it re-creates the array
+  # at the FULL partition size: after this the RAID already spans the whole
+  # partition and only the ext4 filesystem may still be smaller (resize2fs).
+  open_md0
+  if ! mount 2>/dev/null | grep -q "${TMP_PATH}/mdX"; then
+    close_md0 2>/dev/null
     dialog --backtitle "$(backtitle)" --colors --title "Check/Expand System Partition(md0)" \
-      --msgbox "Failed to assemble md0 from ${DSMROOTS}." 0 0
+      --msgbox "Failed to assemble/mount md0 from ${DSMROOTS}." 0 0
     return
   fi
   MSIZE=$(sudo blockdev --getsize64 /dev/md0 2>/dev/null)
   MMIB=$(( MSIZE / 1024 / 1024 ))
-  UNUSED=$(( PMIB - MMIB ))
+  read FSTOTAL FSUSED FSPCT <<EOF
+$(df -m "${TMP_PATH}/mdX" 2>/dev/null | awk 'NR==2{print $2, $3, $5}')
+EOF
+  close_md0
 
-  # Filesystem usage (mount read-only just to read df).
-  sudo mkdir -p "${TMP_PATH}/mdX"
-  T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
-  sudo mount -t "${T:-ext4}" -o ro /dev/md0 "${TMP_PATH}/mdX" 2>/dev/null
-  FSINFO="$(df -m "${TMP_PATH}/mdX" 2>/dev/null | awk 'NR==2{printf "%s/%s MiB used (%s)", $3, $2, $5}')"
-  sudo umount "${TMP_PATH}/mdX" 2>/dev/null
+  UNUSED=$(( PMIB - ${FSTOTAL:-0} ))
+  STAT="System partition : ${PART}\nPartition size    : ${PMIB} MiB\nmd0 (RAID) size   : ${MMIB} MiB\nFilesystem size   : ${FSTOTAL:-?} MiB (used ${FSUSED:-?}, ${FSPCT:-?})\nFS free vs part.   : ${UNUSED} MiB"
 
-  STAT="System partition : ${PART}\nPartition size    : ${PMIB} MiB\nmd0 (RAID) size   : ${MMIB} MiB\nUnused in part.   : ${UNUSED} MiB\nFilesystem        : ${FSINFO}"
-
-  # Already (nearly) full -> just report.
-  if [ "${UNUSED}" -le 100 ]; then
-    sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+  # Filesystem already (nearly) fills the partition -> just report.
+  if [ "${UNUSED:-0}" -le 100 ]; then
     dialog --backtitle "$(backtitle)" --colors --title "Check System Partition(md0)" \
-      --msgbox "${STAT}\n\nmd0 already uses (nearly) the whole partition.\nNo expansion needed." 0 0
+      --msgbox "${STAT}\n\nFilesystem already (nearly) fills the partition.\nNo expansion needed." 0 0
     return
   fi
 
   dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
-    --yesno "${STAT}\n\nmd0 is NOT using the full partition (${UNUSED} MiB free).\nA legacy 2.4GB md0 makes DSM 7.4 upgrades fail at ~56% (file corrupt).\n\nExpand md0 + filesystem to the whole partition now?" 0 0
-  if [ $? -ne 0 ]; then
-    sudo mdadm --stop /dev/md0 >/dev/null 2>&1
-    return
-  fi
+    --yesno "${STAT}\n\nThe filesystem uses only ${FSTOTAL} MiB of the ${PMIB} MiB partition.\nA legacy 2.4GB md0 makes DSM 7.4 upgrades fail at ~56% (file corrupt).\n\nExpand the filesystem to the whole partition now?" 0 0
+  [ $? -ne 0 ] && return
 
   # resize2fs is not in the base Tinycore image. Pull e2fsprogs and PERSIST it
   # into the loader's tce store (cde/optional + onboot.lst + backuploader),
@@ -2091,19 +2084,20 @@ function checkExpandMd0() {
   fi
 
   clear
-  echo "Growing md0 array to the full partition ..."
-  sudo mdadm --grow /dev/md0 --size=max
+  echo "Assembling md0 at full partition size ..."
+  open_md0                                  # mdadm -C --force => array spans whole partition
+  sudo umount "${TMP_PATH}/mdX" 2>/dev/null # offline resize
   echo "Checking filesystem (e2fsck) ..."
   sudo e2fsck -f -y /dev/md0
   echo "Resizing filesystem (resize2fs) ..."
   sudo resize2fs /dev/md0
   sudo sync
-  NEW=$(sudo blockdev --getsize64 /dev/md0 2>/dev/null)
-  NEWMIB=$(( NEW / 1024 / 1024 ))
-  sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+  sudo mount /dev/md0 "${TMP_PATH}/mdX" 2>/dev/null
+  NEWFS=$(df -m "${TMP_PATH}/mdX" 2>/dev/null | awk 'NR==2{print $2}')
+  close_md0
 
   dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
-    --msgbox "Expansion complete.\n\nmd0 size : ${MMIB} MiB -> ${NEWMIB} MiB\nPartition: ${PMIB} MiB" 0 0
+    --msgbox "Expansion complete.\n\nFilesystem : ${FSTOTAL} MiB -> ${NEWFS:-?} MiB\nPartition  : ${PMIB} MiB" 0 0
   return
 }
 
