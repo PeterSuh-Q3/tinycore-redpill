@@ -2,4 +2,4 @@
 eb0ad7dbc2eabbbbb83a97a874b7f35763277a12
 aea4a403638b1377202984fb8aa576e41dcb59f0
 
-    1.3.0.6 Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
+    1.3.0.7 Added Check/Expand System Partition(md0) Capacity menu, grows a legacy 2.4GB md0 to the full partition for DSM 7.4 upgrades.
