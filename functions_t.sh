@@ -755,8 +755,11 @@ EOF
 # Full coverage across 10 platforms × DSM 7.2/7.3 (20 builds), sharing a single `drm.ko` to eliminate ABI conflicts between drivers.
 # 2026.06.17 v1.3.0.5 
 # Add Support DSM 7.4.0-90075 Official Version
-# 2026.06.19 v1.3.0.6 
+# 2026.06.19 v1.3.0.6
 # Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
+# 2026.06.25 v1.3.0.7
+# Added "Check / Expand System Partition(md0) Capacity" menu under Syno disk and partition handling.
+# Detects a legacy 2.4GB md0 on an 8GB partition (blocks DSM 7.4 upgrade at ~56% file-corrupt) and grows md0 + ext4 to the full partition.
 
 function showlastupdate() {
     cat <<EOF
@@ -967,8 +970,11 @@ function showlastupdate() {
 # 2026.06.17 v1.3.0.5 
 # Add Support DSM 7.4.0-90075 Official Version
 
-# 2026.06.19 v1.3.0.6 
+# 2026.06.19 v1.3.0.6
 # Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
+
+# 2026.06.25 v1.3.0.7
+# Added "Check / Expand System Partition(md0) Capacity" menu (grows a legacy 2.4GB md0 to the full 8GB partition for DSM 7.4 upgrades).
 
 EOF
 }
