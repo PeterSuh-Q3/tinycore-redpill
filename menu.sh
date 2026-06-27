@@ -3,6 +3,31 @@
 set -u # Unbound variable errors are not allowed
 
 ##### INCLUDES ######################################################################################
+# GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
+# 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
+# 검증 실패 시 기존 파일을 보존(덮어쓰지 않음).
+function safe_fetch() {
+    local _url="$1" _dest="$2" _sentinel="$3"
+    local _tmp="/dev/shm/.safe_fetch.$$"
+    if curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
+       && [ -s "${_tmp}" ] \
+       && grep -q "${_sentinel}" "${_tmp}" \
+       && bash -n "${_tmp}" 2>/dev/null; then
+        mv -f "${_tmp}" "${_dest}"
+        chmod +x "${_dest}" 2>/dev/null
+        return 0
+    fi
+    echo "[!] safe_fetch: invalid/failed download, keeping existing ${_dest} (${_url})"
+    rm -f "${_tmp}"
+    return 1
+}
+
+# functions.sh 가 비었거나(이전 GitHub 오류 다운로드로 깨짐) 문법이 깨졌으면 소싱 전 안전 재다운로드.
+# (getloaderdisk 등 함수가 정의되지 않아 이후 'command not found'/'unbound variable' 로 죽는 것을 방지)
+if [ ! -s /home/tc/functions.sh ] || ! grep -q 'rploaderver=' /home/tc/functions.sh 2>/dev/null || ! bash -n /home/tc/functions.sh 2>/dev/null; then
+    echo "[!] /home/tc/functions.sh missing or corrupt - re-fetching from master..."
+    safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
+fi
 . /home/tc/functions.sh
 #####################################################################################################
 if grep -q 'arpl' ~/.profile; then
@@ -336,12 +361,12 @@ else
 fi  
 
 if [ "${offline}" = "NO" ]; then
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json    
+    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
     if [ "$oldver" = "test" ]; then
       gitdownload
       cecho g "###############################  This is Test Mode  ############################"
-      curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
-      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
@@ -350,14 +375,14 @@ if [ "${offline}" = "NO" ]; then
     elif [ "$oldver" = "unknown" ]; then
       gitdownload
       #echo "this is normal case not unknown parameter !!!"
-      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
       if [ $? -ne 0 ]; then
         echo "[!] extract_old_shell failed. Falling back to master functions.sh ..."
-        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
-        curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
       fi
 
       get_dep_hashes "$oldver"
