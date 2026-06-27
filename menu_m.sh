@@ -380,7 +380,7 @@ function seleudev() {
 
   checkforsas
 
-  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo ${kver5explatforms} | grep -qw ${platform}; then
+  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo ${kver5explatforms} | grep -qw ${platform} || [[ "${platform}" == *"(DT)"* ]]; then
     menu_options=("e" "${MSG26}" "f" "${MSG40}")
   elif [ ${BLOCK_EUDEV} = "Y" ]; then  
     menu_options=("d" "${MSG27}" "f" "${MSG40}")
@@ -794,7 +794,7 @@ function modelMenu() {
   BUILD=$(jq -r ".\"${MODEL}\" | keys | max | .[:11]" "${configfile}")
   writeConfigKey "general" "version" "${BUILD}"  
 
-  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo ${kver5explatforms} | grep -qw ${platform}; then
+  if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo ${kver5explatforms} | grep -qw ${platform} || [[ "${platform}" == *"(DT)"* ]]; then
     if [ "$HBADETECT" = "ON" ]; then
         DMPM="DDSML+EUDEV"
     else
