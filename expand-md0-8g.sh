@@ -27,11 +27,15 @@ log "===== md0 2.4G -> 8G in-place 확장 on ${DISK} ====="
 
 # resize2fs(e2fsprogs) 선확보 - TinyCore 기본 이미지엔 없을 수 있음
 if [ -z "$(which resize2fs 2>/dev/null)" ]; then
-  log "e2fsprogs 설치 (resize2fs)"
-  tce-load -wi e2fsprogs >/dev/null 2>&1 || true
+  log "e2fsprogs 설치 시도 (로컬 캐시)"
+  tce-load -i e2fsprogs 2>/dev/null || true
+  if [ -z "$(which resize2fs 2>/dev/null)" ]; then
+    log "e2fsprogs 설치 시도 (네트워크)"
+    tce-load -wi e2fsprogs || true
+  fi
 fi
 RESIZE2FS=$(which resize2fs 2>/dev/null)
-[ -n "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 (e2fsprogs 설치 실패)"; exit 1; }
+[ -n "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 — 'tce-load -wi e2fsprogs' 를 수동으로 실행 후 재시도"; exit 1; }
 
 # P1_START 자동 감지: 실제 p1 시작 섹터를 읽어 재파티션 시 그대로 유지
 # (하드코딩하면 ext4 data-offset=0 기반 보존이 깨짐)
