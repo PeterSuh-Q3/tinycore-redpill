@@ -60,6 +60,7 @@ log "OLD sdb3=${OLD_P3_START}  NEW=${P3_START}  total=${TOTAL}  newdata=${P3_SIZ
 [ ${P3_START} -gt ${OLD_P3_START} ] || { log "ERROR: 이동 방향 오류(이미 8G?)"; exit 1; }
 
 log "--- Phase 1: btrfs -> LV -> PV -> md2 축소 ---"
+$MDADM --stop /dev/md2 2>/dev/null || true
 $MDADM --assemble --run /dev/md2 ${DISK}3
 $LVM vgchange -ay ${VG}
 mkdir -p /mnt/d2; mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
@@ -88,6 +89,13 @@ $MDADM --stop /dev/md0 2>/dev/null || true
 SB_OFF_OLD=$(( (OLD_P1_SIZE & ~8191) - 8192 ))
 log "md0 슈퍼블록 백업 (${DISK}1 offset ${SB_OFF_OLD} sectors)"
 dd if=${DISK}1 of=/tmp/md0_sb.bin bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
+# md 0.90 magic = 0xa92b4efc (little-endian: fc 4e 2b a9)
+SB_MAGIC=$(od -A n -t x1 -N 4 /tmp/md0_sb.bin 2>/dev/null | tr -d ' \n')
+[ "${SB_MAGIC}" = "fc4e2ba9" ] || {
+    log "ERROR: md0 슈퍼블록 magic 불일치 (got=${SB_MAGIC}, expected=fc4e2ba9)"
+    log "       슈퍼블록 위치가 틀렸거나 md0 가 이미 손상됨 — 중단"
+    exit 1
+}
 
 log "--- Phase 2: 데이터 우측 역방향 이동 (겹침 안전: 높은 섹터부터) ---"
 MOVE_LEN=$(( MD2_SHRINK_MiB*1024*2 + 65536 ))
@@ -119,7 +127,8 @@ SB_OFF_NEW=$(( (P1_SIZE & ~8191) - 8192 ))
 log "md0 슈퍼블록 복원 (${DISK}1 new offset ${SB_OFF_NEW} sectors)"
 dd if=/tmp/md0_sb.bin of=${DISK}1 bs=512 seek=${SB_OFF_NEW} count=8 conv=notrunc 2>/dev/null
 sync
-$MDADM -A --run --update=devicesize /dev/md0 ${DISK}1
+$MDADM -A --run --update=devicesize /dev/md0 ${DISK}1 || \
+    $MDADM -A --run --update=devicesize --force /dev/md0 ${DISK}1
 $MDADM --grow /dev/md0 --size=max
 $E2FSCK -f -y /dev/md0 || true
 $RESIZE2FS /dev/md0
