@@ -51,6 +51,8 @@ P3_START=$(( P2_START + P2_SIZE ))
 log "P1_START=${P1_START} (자동감지)  P2_START=${P2_START}  P3_START=${P3_START}"
 
 $SFDISK -l ${DISK} 2>/dev/null | grep "${DISK}[123]"
+OLD_P1_SIZE=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}1 .*size=[[:space:]]*\([0-9]*\).*#\1#p")
+[ -n "${OLD_P1_SIZE}" ] || { log "ERROR: ${DISK}1 크기를 읽을 수 없음"; exit 1; }
 OLD_P3_START=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}3 .*start=[[:space:]]*\([0-9]*\).*#\1#p")
 TOTAL=$($BLOCKDEV --getsz ${DISK}); P3_SIZE=$(( TOTAL - P3_START ))
 log "OLD sdb3=${OLD_P3_START}  NEW=${P3_START}  total=${TOTAL}  newdata=${P3_SIZE} sec"
@@ -80,6 +82,12 @@ $MDADM --stop /dev/md2
 swapoff ${DISK}2 2>/dev/null || true
 $MDADM --stop /dev/md1 2>/dev/null || true
 $MDADM --stop /dev/md0 2>/dev/null || true
+# md0 0.90 슈퍼블록 백업: 0.90 슈퍼블록은 파티션 끝에 위치.
+# 재파티션으로 파티션이 커지면 슈퍼블록이 중간에 묻혀 mdadm 이 새 끝에서 찾지 못함.
+# 공식: offset = ((old_size & ~8191) - 8192) sectors from partition start
+SB_OFF_OLD=$(( (OLD_P1_SIZE & ~8191) - 8192 ))
+log "md0 슈퍼블록 백업 (${DISK}1 offset ${SB_OFF_OLD} sectors)"
+dd if=${DISK}1 of=/tmp/md0_sb.bin bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
 
 log "--- Phase 2: 데이터 우측 역방향 이동 (겹침 안전: 높은 섹터부터) ---"
 MOVE_LEN=$(( MD2_SHRINK_MiB*1024*2 + 65536 ))
@@ -103,11 +111,15 @@ EOF
 partprobe ${DISK} 2>/dev/null || $BLOCKDEV --rereadpt ${DISK} 2>/dev/null || true
 $SFDISK -l ${DISK} 2>/dev/null | grep "${DISK}[123]"
 
-log "--- Phase 4: md0 파티션 확장 후 grow + resize2fs ---"
-# --create 를 사용하면 슈퍼블록의 'this device' 가 TinyCore 디바이스 번호(sdb1=8:17)로
-# 기록되어, DSM 부팅 시 sata1p1(8:1)와 불일치 → 주니어 모드 진입 → 이식 불가.
-# 원본 슈퍼블록을 그대로 유지한 채 grow 만 수행하면 이 문제가 발생하지 않는다.
-$MDADM -A --run /dev/md0 ${DISK}1
+log "--- Phase 4: md0 슈퍼블록 복원 + 조립 + grow + resize2fs ---"
+# 0.90 슈퍼블록을 새 파티션 끝 위치에 복원한 후 --update=devicesize 로 조립.
+# --create 미사용: TinyCore 디바이스 번호(sdb1=8:17)가 기록되면
+# DSM 부팅 시 sata1p1(8:1)과 불일치 → 주니어 모드 → 이식 불가.
+SB_OFF_NEW=$(( (P1_SIZE & ~8191) - 8192 ))
+log "md0 슈퍼블록 복원 (${DISK}1 new offset ${SB_OFF_NEW} sectors)"
+dd if=/tmp/md0_sb.bin of=${DISK}1 bs=512 seek=${SB_OFF_NEW} count=8 conv=notrunc 2>/dev/null
+sync
+$MDADM -A --run --update=devicesize /dev/md0 ${DISK}1
 $MDADM --grow /dev/md0 --size=max
 $E2FSCK -f -y /dev/md0 || true
 $RESIZE2FS /dev/md0
