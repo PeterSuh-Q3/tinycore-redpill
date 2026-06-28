@@ -16,11 +16,10 @@ E2FSCK=/sbin/e2fsck; BLOCKDEV=/usr/local/sbin/blockdev
 
 ### ===== 설정 =====
 DISK=/dev/sdb
-P1_START=2048;     P1_SIZE=16777216     # sda1 시스템 8.00 GiB (16,777,216 sectors = 정품 동일)
-P2_START=16779264; P2_SIZE=4194304      # sda2 swap 2.00 GiB
-P3_START=20973568                        # sda3 데이터 (나머지)
+P1_SIZE=16777216   # 시스템 파티션 목표 크기 8.00 GiB (sectors)
+P2_SIZE=4194304    # swap 2.00 GiB (sectors)
 VG=vg1; LV=volume_1
-CHUNK_SECTORS=524288                      # 256 MiB 이동 청크
+CHUNK_SECTORS=524288   # 256 MiB 이동 청크
 
 ts(){ date +%H:%M:%S; }
 log(){ echo "[$(ts)] $*"; }
@@ -33,6 +32,19 @@ if [ ! -x "${RESIZE2FS}" ]; then
   tce-load -wi e2fsprogs >/dev/null 2>&1 || true
 fi
 [ -x "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 (e2fsprogs 설치 실패)"; exit 1; }
+
+# P1_START 자동 감지: 실제 p1 시작 섹터를 읽어 재파티션 시 그대로 유지
+# (하드코딩하면 ext4 data-offset=0 기반 보존이 깨짐)
+P1_START=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}1 .*start=[[:space:]]*\([0-9]*\).*#\1#p")
+[ -n "${P1_START}" ] || { log "ERROR: ${DISK}1 파티션을 찾을 수 없음"; exit 1; }
+# 알려진 Synology 레이아웃 값만 허용 (2048 = DSM ≤7.0, 8192 = DSM ≥7.1)
+case "${P1_START}" in
+  2048|8192) ;;
+  *) log "ERROR: 예상치 못한 P1_START=${P1_START} — Synology 표준(2048/8192) 아님"; exit 1 ;;
+esac
+P2_START=$(( P1_START + P1_SIZE ))
+P3_START=$(( P2_START + P2_SIZE ))
+log "P1_START=${P1_START} (자동감지)  P2_START=${P2_START}  P3_START=${P3_START}"
 
 $SFDISK -l ${DISK} 2>/dev/null | grep "${DISK}[123]"
 OLD_P3_START=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}3 .*start=[[:space:]]*\([0-9]*\).*#\1#p")
