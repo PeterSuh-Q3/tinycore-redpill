@@ -44,7 +44,7 @@ log "OLD sdb3=${OLD_P3_START}  NEW=${P3_START}  total=${TOTAL}  newdata=${P3_SIZ
 log "--- Phase 1: btrfs -> LV -> PV -> md2 축소 ---"
 $MDADM --assemble --run /dev/md2 ${DISK}3
 $LVM vgchange -ay ${VG}
-mkdir -p /mnt/d2; mount /dev/mapper/${VG}-${LV} /mnt/d2
+mkdir -p /mnt/d2; mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
 USED_MiB=$(df -m /mnt/d2 | awk 'NR==2{print $3}')
 log "btrfs used ~${USED_MiB} MiB"
 # [FIX 1] btrfs 축소는 청크 재배치 공간이 필요 -> 사용량 + 2560 MiB 여유 (512 로는 No space left)
@@ -110,7 +110,7 @@ $MDADM --grow /dev/md2 --size=max
 $LVM pvresize /dev/md2
 $LVM vgchange -ay ${VG}
 $LVM lvextend -l +100%FREE ${VG}/${LV}
-mount /dev/mapper/${VG}-${LV} /mnt/d2
+mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
 $BTRFS filesystem resize max /mnt/d2
 df -h /mnt/d2 | tail -1
 umount /mnt/d2; $LVM vgchange -an ${VG}
