@@ -103,20 +103,15 @@ EOF
 partprobe ${DISK} 2>/dev/null || $BLOCKDEV --rereadpt ${DISK} 2>/dev/null || true
 $SFDISK -l ${DISK} 2>/dev/null | grep "${DISK}[123]"
 
-log "--- Phase 4: md0 0.90 재생성 + ext4 8G 확장 (백업 없음: 0.90 은 데이터오프셋0 이라 시작부 ext4 보존) ---"
-$MDADM --zero-superblock ${DISK}1 2>/dev/null || true
-echo y | $MDADM --create /dev/md0 --metadata=0.90 --level=1 --raid-devices=1 --force --assume-clean ${DISK}1
+log "--- Phase 4: md0 파티션 확장 후 grow + resize2fs ---"
+# --create 를 사용하면 슈퍼블록의 'this device' 가 TinyCore 디바이스 번호(sdb1=8:17)로
+# 기록되어, DSM 부팅 시 sata1p1(8:1)와 불일치 → 주니어 모드 진입 → 이식 불가.
+# 원본 슈퍼블록을 그대로 유지한 채 grow 만 수행하면 이 문제가 발생하지 않는다.
+$MDADM -A --run /dev/md0 ${DISK}1
+$MDADM --grow /dev/md0 --size=max
 $E2FSCK -f -y /dev/md0 || true
 $RESIZE2FS /dev/md0
 $MDADM --detail /dev/md0 | grep "Array Size"
-# [주의] TinyCore 에서 --create 하면 슈퍼블록의 "this device" 가 /dev/sdb1(8:17) 로 기록됨.
-# DSM 부팅 시 같은 파티션은 /dev/sata1p1(8:1) 로 보이기 때문에 device 불일치로
-# "No devices found for /dev/md0 assembly" 주니어 모드 진입이 발생한다.
-# 스크립트 완료 후 DSM 첫 주니어 부팅 환경에서 아래 명령으로 슈퍼블록을 갱신해야 한다:
-#   mdadm --zero-superblock /dev/sata1p1
-#   echo y | mdadm --create /dev/md0 --metadata=0.90 --level=1 \
-#       --raid-devices=1 --force --assume-clean /dev/sata1p1
-# 이후 재부팅하면 정상 조립된다. (ext4 데이터는 0.90 data-offset=0 으로 보존됨)
 
 log "--- Phase 5: md2 조립 + LVM/btrfs 14G 재확장 ---"
 # [FIX 3] 이동된 md2 슈퍼블록의 Avail Dev Size(옛 큰 파티션)를 새 파티션 크기로 갱신해야 조립됨
