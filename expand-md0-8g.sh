@@ -45,7 +45,7 @@ log "--- Phase 1: btrfs -> LV -> PV -> md2 축소 ---"
 $MDADM --assemble --run /dev/md2 ${DISK}3
 $LVM vgchange -ay ${VG}
 mkdir -p /mnt/d2; mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
-USED_MiB=$(df -m /mnt/d2 | awk 'NR==2{print $3}')
+USED_MiB=$(df -m /mnt/d2 | awk 'END{print $3}')
 log "btrfs used ~${USED_MiB} MiB"
 # [FIX 1] btrfs 축소는 청크 재배치 공간이 필요 -> 사용량 + 2560 MiB 여유 (512 로는 No space left)
 BTRFS_SHRINK_MiB=$(( USED_MiB + 2560 ))
