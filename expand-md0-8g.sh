@@ -28,10 +28,10 @@ log "===== md0 2.4G -> 8G in-place 확장 on ${DISK} ====="
 # resize2fs(e2fsprogs) 선확보 - TinyCore 기본 이미지엔 없을 수 있음
 if [ -z "$(which resize2fs 2>/dev/null)" ]; then
   log "e2fsprogs 설치 시도 (로컬 캐시)"
-  tce-load -i e2fsprogs 2>/dev/null || true
+  su tc -c "tce-load -i e2fsprogs" 2>/dev/null || true
   if [ -z "$(which resize2fs 2>/dev/null)" ]; then
     log "e2fsprogs 설치 시도 (네트워크)"
-    tce-load -wi e2fsprogs || true
+    su tc -c "tce-load -wi e2fsprogs" || true
   fi
 fi
 RESIZE2FS=$(which resize2fs 2>/dev/null)
