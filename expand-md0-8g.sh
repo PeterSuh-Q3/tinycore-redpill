@@ -11,8 +11,7 @@
 #           단일 디스크 무중복이므로 테스트/파괴가능 환경, 또는 사전 백업이 있는 경우에만 사용. ***
 set -e
 MDADM=/usr/local/sbin/mdadm; BTRFS=/usr/local/bin/btrfs; LVM=/usr/local/sbin/lvm
-SFDISK=/usr/local/sbin/sfdisk; RESIZE2FS=/usr/local/sbin/resize2fs
-E2FSCK=/sbin/e2fsck; BLOCKDEV=/usr/local/sbin/blockdev
+SFDISK=/usr/local/sbin/sfdisk; E2FSCK=/sbin/e2fsck; BLOCKDEV=/usr/local/sbin/blockdev
 
 ### ===== 설정 =====
 DISK=/dev/sdb
@@ -26,12 +25,13 @@ log(){ echo "[$(ts)] $*"; }
 
 log "===== md0 2.4G -> 8G in-place 확장 on ${DISK} ====="
 
-# [FIX 2] resize2fs(e2fsprogs) 선확보 - TinyCore 기본 이미지엔 없을 수 있음
-if [ ! -x "${RESIZE2FS}" ]; then
+# resize2fs(e2fsprogs) 선확보 - TinyCore 기본 이미지엔 없을 수 있음
+if [ -z "$(which resize2fs 2>/dev/null)" ]; then
   log "e2fsprogs 설치 (resize2fs)"
   tce-load -wi e2fsprogs >/dev/null 2>&1 || true
 fi
-[ -x "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 (e2fsprogs 설치 실패)"; exit 1; }
+RESIZE2FS=$(which resize2fs 2>/dev/null)
+[ -n "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 (e2fsprogs 설치 실패)"; exit 1; }
 
 # P1_START 자동 감지: 실제 p1 시작 섹터를 읽어 재파티션 시 그대로 유지
 # (하드코딩하면 ext4 data-offset=0 기반 보존이 깨짐)
