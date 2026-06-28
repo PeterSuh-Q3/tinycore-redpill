@@ -14,7 +14,7 @@ MDADM=/usr/local/sbin/mdadm; BTRFS=/usr/local/bin/btrfs; LVM=/usr/local/sbin/lvm
 SFDISK=/usr/local/sbin/sfdisk; E2FSCK=/sbin/e2fsck; BLOCKDEV=/usr/local/sbin/blockdev
 
 ### ===== 설정 =====
-DISK=/dev/sdb
+DISK=${1:-/dev/sdb}
 P1_SIZE=16777216   # 시스템 파티션 목표 크기 8.00 GiB (sectors)
 P2_SIZE=4194304    # swap 2.00 GiB (sectors)
 VG=vg1; LV=volume_1
