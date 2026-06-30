@@ -166,6 +166,7 @@ start=${P2_START}, size=${P2_SIZE}, type=fd
 start=${P3_START}, size=${P3_SIZE}, type=fd
 EOF
     partprobe ${DISK} 2>/dev/null || $BLOCKDEV --rereadpt ${DISK} 2>/dev/null || true
+    udevadm settle --timeout=10 2>/dev/null || sleep 3
     $SFDISK -l ${DISK} 2>/dev/null | grep "${DISK}[123]"
     log "Phase 3 완료"
 else
