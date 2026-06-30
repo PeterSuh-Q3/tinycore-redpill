@@ -34,7 +34,7 @@ if [ -z "$(which resize2fs 2>/dev/null)" ]; then
     su tc -c "tce-load -wi e2fsprogs" || true
   fi
 fi
-RESIZE2FS=$(which resize2fs 2>/dev/null)
+RESIZE2FS=$(which resize2fs 2>/dev/null || find /usr/local/sbin /usr/sbin /sbin -name resize2fs 2>/dev/null | head -1)
 [ -n "${RESIZE2FS}" ] || { log "ERROR: resize2fs 없음 — 'tce-load -wi e2fsprogs' 를 수동으로 실행 후 재시도"; exit 1; }
 
 # P1_START 자동 감지: 실제 p1 시작 섹터를 읽어 재파티션 시 그대로 유지
