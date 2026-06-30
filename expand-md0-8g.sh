@@ -99,8 +99,8 @@ $MDADM --stop /dev/md1 2>/dev/null || true
 $MDADM --stop /dev/md0 2>/dev/null || true
 # md0 0.90 슈퍼블록 백업: 0.90 슈퍼블록은 파티션 끝에 위치.
 # 재파티션으로 파티션이 커지면 슈퍼블록이 중간에 묻혀 mdadm 이 새 끝에서 찾지 못함.
-# 공식: offset = ((old_size & ~8191) - 8192) sectors from partition start
-SB_OFF_OLD=$(( (OLD_P1_SIZE & ~8191) - 8192 ))
+# 공식: MD_RESERVED_SECTORS=32, offset = ((size & ~31) - 32) sectors from partition start
+SB_OFF_OLD=$(( (OLD_P1_SIZE & ~31) - 32 ))
 log "md0 슈퍼블록 백업 (${DISK}1 offset ${SB_OFF_OLD} sectors)"
 dd if=${DISK}1 of=/tmp/md0_sb.bin bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
 # md 0.90 magic = 0xa92b4efc (little-endian: fc 4e 2b a9)
@@ -137,7 +137,7 @@ log "--- Phase 4: md0 슈퍼블록 복원 + 조립 + grow + resize2fs ---"
 # 0.90 슈퍼블록을 새 파티션 끝 위치에 복원한 후 --update=devicesize 로 조립.
 # --create 미사용: TinyCore 디바이스 번호(sdb1=8:17)가 기록되면
 # DSM 부팅 시 sata1p1(8:1)과 불일치 → 주니어 모드 → 이식 불가.
-SB_OFF_NEW=$(( (P1_SIZE & ~8191) - 8192 ))
+SB_OFF_NEW=$(( (P1_SIZE & ~31) - 32 ))
 log "md0 슈퍼블록 복원 (${DISK}1 new offset ${SB_OFF_NEW} sectors)"
 dd if=/tmp/md0_sb.bin of=${DISK}1 bs=512 seek=${SB_OFF_NEW} count=8 conv=notrunc 2>/dev/null
 sync
