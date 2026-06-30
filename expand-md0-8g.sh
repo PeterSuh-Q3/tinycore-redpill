@@ -69,6 +69,20 @@ TOTAL=$($BLOCKDEV --getsz ${DISK}); P3_SIZE=$(( TOTAL - P3_START ))
 OLD_P1_SIZE=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}1 .*size=[[:space:]]*\([0-9]*\).*#\1#p")
 OLD_P3_START=$($SFDISK -d ${DISK} | sed -n "s#^${DISK}3 .*start=[[:space:]]*\([0-9]*\).*#\1#p")
 
+# ===== 사전 감지: md0 슈퍼블록 유무 (모든 Phase 공통) =====
+# Phase 4 분기 기준을 스크립트 시작 시점에 결정한다.
+# --from-phase 로 Phase 1을 건너뛰어도 동일하게 판단된다.
+SB_OFF_OLD=$(( (OLD_P1_SIZE & ~31) - 32 ))
+dd if=${DISK}1 of=${SB_BIN} bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
+SB_MAGIC=$(od -A n -t x1 -N 4 ${SB_BIN} 2>/dev/null | tr -d ' \n')
+if [ "${SB_MAGIC}" = "fc4e2ba9" ]; then
+    MD0_METHOD=restore
+    log "md0 슈퍼블록 감지(0.90) → Phase 4: backup/restore 방식"
+else
+    MD0_METHOD=create
+    log "md0 슈퍼블록 없음(got=${SB_MAGIC}) → Phase 4: --create 방식"
+fi
+
 # ===== Phase 1: btrfs -> LV -> PV -> md2 축소 + md0 슈퍼블록 백업 =====
 if [ "${FROM_PHASE}" -le 1 ]; then
     log "--- Phase 1: btrfs -> LV -> PV -> md2 축소 ---"
@@ -110,30 +124,9 @@ if [ "${FROM_PHASE}" -le 1 ]; then
     swapoff ${DISK}2 2>/dev/null || true
     $MDADM --stop /dev/md1 2>/dev/null || true
     $MDADM --stop /dev/md0 2>/dev/null || true
-
-    # md0 0.90 슈퍼블록 백업 (있는 경우)
-    # MD_RESERVED_SECTORS=32, offset = ((size & ~31) - 32) sectors from partition start
-    SB_OFF_OLD=$(( (OLD_P1_SIZE & ~31) - 32 ))
-    log "md0 슈퍼블록 위치 확인 (${DISK}1 offset=${SB_OFF_OLD})"
-    dd if=${DISK}1 of=${SB_BIN} bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
-    SB_MAGIC=$(od -A n -t x1 -N 4 ${SB_BIN} 2>/dev/null | tr -d ' \n')
-    if [ "${SB_MAGIC}" = "fc4e2ba9" ]; then
-        log "md0 슈퍼블록 발견(0.90) → backup/restore 방식 사용"
-        echo "restore" > /tmp/md0_method.txt
-    else
-        log "md0 슈퍼블록 없음(got=${SB_MAGIC}) → 재파티션 후 --create 방식 사용"
-        echo "create" > /tmp/md0_method.txt
-    fi
     log "Phase 1 완료"
 else
     skip 1
-    # Phase 1 건너뜀: md0_method.txt 가 없으면 현재 상태에서 감지
-    if [ ! -f /tmp/md0_method.txt ]; then
-        SB_OFF_OLD=$(( (OLD_P1_SIZE & ~31) - 32 ))
-        dd if=${DISK}1 of=${SB_BIN} bs=512 skip=${SB_OFF_OLD} count=8 2>/dev/null
-        SB_MAGIC=$(od -A n -t x1 -N 4 ${SB_BIN} 2>/dev/null | tr -d ' \n')
-        [ "${SB_MAGIC}" = "fc4e2ba9" ] && echo "restore" > /tmp/md0_method.txt || echo "create" > /tmp/md0_method.txt
-    fi
 fi
 
 # ===== Phase 2: 데이터 우측 역방향 이동 =====
@@ -182,7 +175,6 @@ fi
 # ===== Phase 4: md0 조립 + grow + resize2fs =====
 if [ "${FROM_PHASE}" -le 4 ]; then
     log "--- Phase 4: md0 조립 + grow + resize2fs ---"
-    MD0_METHOD=$(cat /tmp/md0_method.txt 2>/dev/null || echo "create")
     SB_OFF_NEW=$(( (P1_SIZE & ~31) - 32 ))
 
     if [ "${MD0_METHOD}" = "restore" ]; then
