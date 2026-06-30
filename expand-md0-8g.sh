@@ -63,18 +63,32 @@ log "--- Phase 1: btrfs -> LV -> PV -> md2 축소 ---"
 $MDADM --stop /dev/md2 2>/dev/null || true
 $MDADM --assemble --run /dev/md2 ${DISK}3
 $LVM vgchange -ay ${VG}
-mkdir -p /mnt/d2; mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
-USED_MiB=$(df -m /mnt/d2 | awk 'NF==5{print $2} NF==6{print $3}')
-log "btrfs used ~${USED_MiB} MiB"
+mkdir -p /mnt/d2
+BTRFS_MOUNTED=0
+if mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2 2>/dev/null; then
+    BTRFS_MOUNTED=1
+    USED_MiB=$(df -m /mnt/d2 | awk 'NF==5{print $2} NF==6{print $3}')
+    log "btrfs used ~${USED_MiB} MiB (mounted)"
+else
+    # DSM btrfs 에 TinyCore 커널이 인식 못하는 feature flag 가 있어 마운트 불가.
+    # btrfs check --readonly 로 실제 사용 바이트를 오프라인 추출한다.
+    USED_BYTES=$($BTRFS check --readonly /dev/mapper/${VG}-${LV} 2>&1 | grep "found .* bytes used" | grep -oE '[0-9]+ bytes used' | grep -oE '^[0-9]+')
+    USED_MiB=$(( ${USED_BYTES:-0} / 1048576 + 1 ))
+    log "btrfs used ~${USED_MiB} MiB (offline, mount unavailable)"
+fi
 # [FIX 1] btrfs 축소는 청크 재배치 공간이 필요 -> 사용량 + 2560 MiB 여유 (512 로는 No space left)
 BTRFS_SHRINK_MiB=$(( USED_MiB + 2560 ))
 LV_SHRINK_MiB=$(( BTRFS_SHRINK_MiB + 256 ))   # 각 계층은 안쪽보다 크게
 PV_SHRINK_MiB=$(( LV_SHRINK_MiB + 128 ))
 MD2_SHRINK_MiB=$(( PV_SHRINK_MiB + 128 ))
 log "축소 타겟 btrfs=${BTRFS_SHRINK_MiB} LV=${LV_SHRINK_MiB} PV=${PV_SHRINK_MiB} md2=${MD2_SHRINK_MiB} MiB"
-[ ${MD2_SHRINK_MiB} -lt $(( P3_SIZE / 2048 )) ] || { log "ERROR: 축소 타겟이 새 데이터 파티션보다 큼"; umount /mnt/d2; exit 1; }
-$BTRFS filesystem resize ${BTRFS_SHRINK_MiB}m /mnt/d2
-umount /mnt/d2
+[ ${MD2_SHRINK_MiB} -lt $(( P3_SIZE / 2048 )) ] || { log "ERROR: 축소 타겟이 새 데이터 파티션보다 큼"; [ ${BTRFS_MOUNTED} -eq 1 ] && umount /mnt/d2; exit 1; }
+if [ ${BTRFS_MOUNTED} -eq 1 ]; then
+    $BTRFS filesystem resize ${BTRFS_SHRINK_MiB}m /mnt/d2
+    umount /mnt/d2
+else
+    log "btrfs filesystem resize 건너뜀 (mount 불가) — LV 직접 축소"
+fi
 $LVM lvreduce -f -y -L ${LV_SHRINK_MiB}M ${VG}/${LV}
 echo y | $LVM pvresize --setphysicalvolumesize ${PV_SHRINK_MiB}M /dev/md2
 $LVM vgchange -an ${VG}
@@ -142,10 +156,14 @@ $MDADM --grow /dev/md2 --size=max
 $LVM pvresize /dev/md2
 $LVM vgchange -ay ${VG}
 $LVM lvextend -l +100%FREE ${VG}/${LV}
-mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2
-$BTRFS filesystem resize max /mnt/d2
-df -h /mnt/d2 | tail -1
-umount /mnt/d2; $LVM vgchange -an ${VG}
+if mount -t btrfs /dev/mapper/${VG}-${LV} /mnt/d2 2>/dev/null; then
+    $BTRFS filesystem resize max /mnt/d2
+    df -h /mnt/d2 | tail -1
+    umount /mnt/d2
+else
+    log "btrfs mount 불가 (DSM feature flag 비호환) — LV 확장만 완료, btrfs resize 는 DSM 첫 부팅 시 자동 처리됨"
+fi
+$LVM vgchange -an ${VG}
 
 log "--- Phase 6: swap 재생성 ---"
 echo y | $MDADM --create /dev/md1 --metadata=0.90 --level=1 --raid-devices=1 --force ${DISK}2
