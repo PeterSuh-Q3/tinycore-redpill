@@ -349,6 +349,24 @@
             }
         ]
     },
+    "icelaked": {
+        "productvers": {
+            "7.4": "7.4-5.10.55"
+        },
+        "models": [
+            "FS3420",
+            "RS1626xs+",
+            "RS3626xs",
+            "RS4826xs+",
+            "RS6426xs+"
+        ],
+        "add_extensions": [
+            {
+                "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/rpext-index.json",
+                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
+            }
+        ]
+    },
     "v1000nk": {
         "productvers": {
             "7.2": "7.2-5.10.55",
