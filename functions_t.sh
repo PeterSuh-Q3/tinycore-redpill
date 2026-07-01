@@ -266,7 +266,9 @@ function history() {
     1.3.0.5 Add Support DSM 7.4.0-90075 Official Version
     1.3.0.6 Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
     1.3.0.7 Added Check/Expand System Partition(md0) Capacity menu, grows a legacy 2.4GB md0 to the full partition for DSM 7.4 upgrades.
-    1.3.0.8 Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
+    1.3.0.8 Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
+            NOTE: Module packs are epyc7002-based fake/preview builds. Only vanilla NIC drivers work
+            (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.). Full icelaked modules are not yet available.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -763,7 +765,8 @@ EOF
 # Detects a legacy 2.4GB md0 on an 8GB partition (blocks DSM 7.4 upgrade at ~56% file-corrupt) and grows md0 + ext4 to the full partition.
 
 # 2026.07.01 v1.3.0.8
-# Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
+# Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
+# Module packs are epyc7002-based fake/preview. Only vanilla NIC drivers work (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.).
 
 function showlastupdate() {
     cat <<EOF
@@ -981,7 +984,8 @@ function showlastupdate() {
 # Added "Check / Expand System Partition(md0) Capacity" menu (grows a legacy 2.4GB md0 to the full 8GB partition for DSM 7.4 upgrades).
 
 # 2026.07.01 v1.3.0.8
-# Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
+# Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
+# Module packs are epyc7002-based fake/preview. Only vanilla NIC drivers work (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.).
 
 EOF
 }
