@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.7"
+rploaderver="1.3.0.8"
 build="master"
 redpillmake="prod"
 
@@ -26,7 +26,7 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview"
-kver5platforms="epyc7002 v1000nk r1000nk geminilakenk"
+kver5platforms="epyc7002 icelaked v1000nk r1000nk geminilakenk"
 nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
 dsm6notsupported="broadwellntbap"
 
@@ -266,6 +266,7 @@ function history() {
     1.3.0.5 Add Support DSM 7.4.0-90075 Official Version
     1.3.0.6 Support for the NO DRM Module Pack (simplified version for Inject Loader to Disk) has started in nodrm-modules.
     1.3.0.7 Added Check/Expand System Partition(md0) Capacity menu, grows a legacy 2.4GB md0 to the full partition for DSM 7.4 upgrades.
+    1.3.0.8 Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -743,7 +744,7 @@ EOF
 # Resolved the issue where custom-modules were not working. (Branching error in handling dedicated bzImage usage)
 # 2026.06.07 v1.3.0.1
 # Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
-# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
+# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk). icelaked added from v1.3.0.8.
 # 2026.06.10 v1.3.0.2 
 # redpill addons git clone stabilization
 # The i915 and amdgpu modules can be used simultaneously in custom-modules. (/dev/dri/renderD128, /dev/dri/renderD129)
@@ -760,6 +761,9 @@ EOF
 # 2026.06.25 v1.3.0.7
 # Added "Check / Expand System Partition(md0) Capacity" menu under Syno disk and partition handling.
 # Detects a legacy 2.4GB md0 on an 8GB partition (blocks DSM 7.4 upgrade at ~56% file-corrupt) and grows md0 + ext4 to the full partition.
+
+# 2026.07.01 v1.3.0.8
+# Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
 
 function showlastupdate() {
     cat <<EOF
@@ -953,7 +957,7 @@ function showlastupdate() {
 
 # 2026.06.07 v1.3.0.1
 # Detect BMI2 CPU support at startup; on kernel 5.10.55+ with non-BMI2 CPUs, restrict module selection to custom-modules only (all 4 platforms).
-# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk).
+# custom-modules now supported on all 4 platforms (epyc7002, geminilakenk, r1000nk, v1000nk). icelaked added from v1.3.0.8.
 
 # 2026.06.10 v1.3.0.2 
 # redpill addons git clone stabilization
@@ -975,6 +979,9 @@ function showlastupdate() {
 
 # 2026.06.25 v1.3.0.7
 # Added "Check / Expand System Partition(md0) Capacity" menu (grows a legacy 2.4GB md0 to the full 8GB partition for DSM 7.4 upgrades).
+
+# 2026.07.01 v1.3.0.8
+# Added icelaked platform support (DS1823xs+, SA3610, SA3410). Supported from DSM 7.4 onwards.
 
 EOF
 }
@@ -1382,7 +1389,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
+    platforms="epyc7002 icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
 
     # Initialize MODELS array
     MODELS=()
