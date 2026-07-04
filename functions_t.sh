@@ -1457,6 +1457,8 @@ function getvarsmshell()
         KVER="4.4.302"
     elif [ "$TARGET_REVISION" == "90075" ]; then
         KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "101188" ]; then
+        KVER="4.4.302"
     else
         echo "Synology model revision not supported by TCRP."
         exit 0
