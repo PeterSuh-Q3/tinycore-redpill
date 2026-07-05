@@ -4641,7 +4641,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
     fi
-    if echo "broadwellntbap epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+    if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
@@ -4663,30 +4663,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
-        #epyc7003ntb: microP UP-lock(SED) 대기 루프 우회 (단일 노드).
-        #linuxrc.syno.impl 은 SED 처리를 위해 여러 곳(while / for-continue)에서
-        #  microPLock=$(synomulticontroller --up_lock_ctrl GET_LOCK SYNO_UP_LOCK_SED)
-        #  while/if [ "$microPLock" = "0" ] ...  로 uP 락을 기다린다.
-        #이중컨트롤러에선 정상이나 단일 노드에선 GET_LOCK 이 영원히 0 → hang.
-        #GET_LOCK 대입을 microPLock=1(획득됨) 으로 치환해 모든 락 루프(7곳)를 통과시킨다.
-        if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
-            #근본 우회: syno_feature_check.sh 의 EXPORTED_DEFINE 에서 SYNO_PRODUCT_FSDN 을 제거해
-            #해당 feature 를 exit 1(=미지원) 로 만든다. environments.sh 의
-            #  if syno_feature_check.sh SYNO_PRODUCT_FSDN; then IsFSDN="yes"; fi
-            #이 거짓이 되어 IsFSDN=no → 이중컨트롤러(FSDN) 전용 로직이 전면 비활성:
-            #  - /etc/rc 의 i2c_hb_checker.sh (i2c-4 하트비트 폴링 → /dev/i2c-4 없음 오류 도배) 차단
-            #  - linuxrc.syno.impl 의 FSDN SED microP 락 경로 자체를 미실행
-            #(synoinfo.conf 는 syno_feature_check.sh 가 참조하지 않으므로 소스 스크립트를 직접 수정)
-            sudo sed -i '/^SYNO_PRODUCT_FSDN$/d' "$rdtemp/usr/syno/sbin/syno_feature_check.sh"
-            echo "[NTB-fix] disabled SYNO_PRODUCT_FSDN in syno_feature_check.sh -> IsFSDN=no (single-node)"
-
-            #안전망: 혹시 다른 경로로 uP 락 루프에 진입하더라도 hang 안 되도록 GET_LOCK 대입을 획득됨(1)으로 치환
-            sudo sed -i 's#microPLock=$(/usr/syno/bin/synomulticontroller --up_lock_ctrl GET_LOCK SYNO_UP_LOCK_SED)#microPLock=1#g' "$rdtemp/linuxrc.syno.impl"
-            echo "[NTB-fix] forced microP UP-lock acquired (single-node) in linuxrc.syno.impl"
-            #다음 단계에서 또 다른 HA hang 이 있으면 잡기 위해 btrfs 이후 xtrace 를 ttyS0 로 유지
-            sudo sed -i '/SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs/a exec 2>/dev/ttyS0; set -x; echo "=== NTB-TRACE-START ===" >/dev/ttyS0' "$rdtemp/linuxrc.syno.impl"
-        fi
-        
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
         # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
         # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
