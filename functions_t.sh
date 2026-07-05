@@ -4663,12 +4663,16 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
-        #epyc7003ntb 계측: btrfs 로드 직후부터 linuxrc.syno.impl 실행 트레이스를 시리얼(ttyS0)로 출력.
-        #linuxrc echo 는 /var/log/lrc 로 리다이렉트되어 시리얼에 안 보이므로, post-btrfs 에서
-        #hang 되는 정확한 synomulticontroller/HA 호출을 특정하기 위해 xtrace 를 ttyS0 로 직접 보낸다.
+        #epyc7003ntb: microP UP-lock(SED) 무한대기 루프 우회.
+        #SEDUnlock/HasLockedSED/HasUnlockedSED 는 이중컨트롤러 SED 락 조율을 위해
+        #  while [ "$microPLock" = "0" ]; do sleep 1; ...GET_LOCK... ; done
+        #을 도는데, 단일 노드에선 GET_LOCK 이 영원히 0 을 반환해 여기서 hang 된다.
+        #단일 노드 redpill 에는 uP 락 조율이 무의미하므로 대기 루프를 무력화한다.
         if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+            sudo sed -i 's/while \[ "\$microPLock" = "0" \]/while false/g' "$rdtemp/linuxrc.syno.impl"
+            echo "[NTB-fix] neutralized microP UP-lock wait loops in linuxrc.syno.impl"
+            #다음 단계에서 또 다른 HA hang 이 있으면 잡기 위해 btrfs 이후 xtrace 를 ttyS0 로 유지
             sudo sed -i '/SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs/a exec 2>/dev/ttyS0; set -x; echo "=== NTB-TRACE-START ===" >/dev/ttyS0' "$rdtemp/linuxrc.syno.impl"
-            echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
         
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
