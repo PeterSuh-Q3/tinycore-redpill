@@ -4730,14 +4730,14 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         NTB_MAC1=$(jq -r -e '.extra_cmdline.mac1' "${userconfigfile}" 2>/dev/null)
         echo ""
         echo "=== epyc7003ntb FSDN dual-controller (ntbfsdn) ==="
-        echo "이 로더가 담당할 컨트롤러를 선택하세요 (NIC MAC=${NTB_MAC1}):"
+        echo "Select the controller role for this loader (NIC MAC=${NTB_MAC1}):"
         echo "  0) controller 0  ->  169.254.4.1  (mac0)"
         echo "  1) controller 1  ->  169.254.4.2  (mac1)"
-        printf "선택 [0/1] (기본 0): "
+        printf "Choice [0/1] (default 0): "
         read NTB_ROLE
         [ "${NTB_ROLE}" = "1" ] && NTB_KEY="mac1" || NTB_KEY="mac0"
         echo "{\"${NTB_KEY}\": \"${NTB_MAC1}\", \"vlan\": 100}" >"${RAMDISK_PATH}/addons/ntb_eth0.json"
-        echo "기록됨 -> ${RAMDISK_PATH}/addons/ntb_eth0.json"
+        echo "Written -> ${RAMDISK_PATH}/addons/ntb_eth0.json"
         cat "${RAMDISK_PATH}/addons/ntb_eth0.json"
     fi
 
