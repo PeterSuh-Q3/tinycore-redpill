@@ -4663,6 +4663,17 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
+        #epyc7003ntb 에서 HA 전용 모듈을 사전제거해서 NTB HA 서브시스템이 단일 노드(파트너 컨트롤러 없음)에서 대기/데드락 되는것을 방지
+        if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+            _NTB_MODS="ntb_netdev.ko"
+            for _MOD in ${_NTB_MODS}; do
+                if [ -f "$rdtemp/usr/lib/modules/${_MOD}" ]; then
+                    sudo rm -rf "$rdtemp/usr/lib/modules/${_MOD}"
+                    echo "[NTB-fix] removed: ${_MOD}"
+                fi
+            done
+        fi
+        
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
         # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
         # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
