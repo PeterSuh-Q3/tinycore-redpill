@@ -4641,7 +4641,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
         sudo cat $rdtemp/linuxrc.syno  
     fi
-    if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
+    if echo "broadwellntbap epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
