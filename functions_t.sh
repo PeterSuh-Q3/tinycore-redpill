@@ -4663,15 +4663,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
-        #epyc7003ntb 에서 HA 전용 모듈을 사전제거해서 NTB HA 서브시스템이 단일 노드(파트너 컨트롤러 없음)에서 대기/데드락 되는것을 방지
+        #epyc7003ntb 계측: btrfs 로드 직후부터 linuxrc.syno.impl 실행 트레이스를 시리얼(ttyS0)로 출력.
+        #linuxrc echo 는 /var/log/lrc 로 리다이렉트되어 시리얼에 안 보이므로, post-btrfs 에서
+        #hang 되는 정확한 synomulticontroller/HA 호출을 특정하기 위해 xtrace 를 ttyS0 로 직접 보낸다.
         if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
-            _NTB_MODS="ntb_netdev.ko"
-            for _MOD in ${_NTB_MODS}; do
-                if [ -f "$rdtemp/usr/lib/modules/${_MOD}" ]; then
-                    sudo rm -rf "$rdtemp/usr/lib/modules/${_MOD}"
-                    echo "[NTB-fix] removed: ${_MOD}"
-                fi
-            done
+            sudo sed -i '/SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs/a exec 2>/dev/ttyS0; set -x; echo "=== NTB-TRACE-START ===" >/dev/ttyS0' "$rdtemp/linuxrc.syno.impl"
+            echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
         
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
