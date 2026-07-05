@@ -4670,6 +4670,17 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         #이중컨트롤러에선 정상이나 단일 노드에선 GET_LOCK 이 영원히 0 → hang.
         #GET_LOCK 대입을 microPLock=1(획득됨) 으로 치환해 모든 락 루프(7곳)를 통과시킨다.
         if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+            #근본 우회: syno_feature_check.sh 의 EXPORTED_DEFINE 에서 SYNO_PRODUCT_FSDN 을 제거해
+            #해당 feature 를 exit 1(=미지원) 로 만든다. environments.sh 의
+            #  if syno_feature_check.sh SYNO_PRODUCT_FSDN; then IsFSDN="yes"; fi
+            #이 거짓이 되어 IsFSDN=no → 이중컨트롤러(FSDN) 전용 로직이 전면 비활성:
+            #  - /etc/rc 의 i2c_hb_checker.sh (i2c-4 하트비트 폴링 → /dev/i2c-4 없음 오류 도배) 차단
+            #  - linuxrc.syno.impl 의 FSDN SED microP 락 경로 자체를 미실행
+            #(synoinfo.conf 는 syno_feature_check.sh 가 참조하지 않으므로 소스 스크립트를 직접 수정)
+            sudo sed -i '/^SYNO_PRODUCT_FSDN$/d' "$rdtemp/usr/syno/sbin/syno_feature_check.sh"
+            echo "[NTB-fix] disabled SYNO_PRODUCT_FSDN in syno_feature_check.sh -> IsFSDN=no (single-node)"
+
+            #안전망: 혹시 다른 경로로 uP 락 루프에 진입하더라도 hang 안 되도록 GET_LOCK 대입을 획득됨(1)으로 치환
             sudo sed -i 's#microPLock=$(/usr/syno/bin/synomulticontroller --up_lock_ctrl GET_LOCK SYNO_UP_LOCK_SED)#microPLock=1#g' "$rdtemp/linuxrc.syno.impl"
             echo "[NTB-fix] forced microP UP-lock acquired (single-node) in linuxrc.syno.impl"
             #다음 단계에서 또 다른 HA hang 이 있으면 잡기 위해 btrfs 이후 xtrace 를 ttyS0 로 유지
