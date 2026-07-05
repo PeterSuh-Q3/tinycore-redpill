@@ -4723,21 +4723,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # epyc7003ntb (PAS7700 FSDN): bake controller role for the ntbfsdn addon.
-    # Junior can't read user_config.json, so record the NIC MAC (.extra_cmdline.mac1)
-    # and this loader's controller role into /addons/ntb_eth0.json here.
-    if [ "${ORIGIN_PLATFORM}" = "epyc7003ntb" ]; then
-        NTB_MAC1=$(jq -r -e '.extra_cmdline.mac1' "${userconfigfile}" 2>/dev/null)
-        echo ""
-        echo "=== epyc7003ntb FSDN dual-controller (ntbfsdn) ==="
-        echo "Select the controller role for this loader (NIC MAC=${NTB_MAC1}):"
-        echo "  0) controller 0  ->  169.254.4.1  (mac0)"
-        echo "  1) controller 1  ->  169.254.4.2  (mac1)"
-        printf "Choice [0/1] (default 0): "
-        read NTB_ROLE
-        [ "${NTB_ROLE}" = "1" ] && NTB_KEY="mac1" || NTB_KEY="mac0"
-        echo "{\"${NTB_KEY}\": \"${NTB_MAC1}\", \"vlan\": 100}" >"${RAMDISK_PATH}/addons/ntb_eth0.json"
-        echo "Written -> ${RAMDISK_PATH}/addons/ntb_eth0.json"
+    # epyc7003ntb (PAS7700 FSDN): controller role file is prepared interactively
+    # by menu_m.sh (p-build dialog) at /tmp/ntb_eth0.json. Copy it into the
+    # ramdisk so the junior-only ntbfsdn addon can read /addons/ntb_eth0.json.
+    if [ "${ORIGIN_PLATFORM}" = "epyc7003ntb" ] && [ -f /tmp/ntb_eth0.json ]; then
+        sudo cp -vf /tmp/ntb_eth0.json "${RAMDISK_PATH}/addons/ntb_eth0.json"
         cat "${RAMDISK_PATH}/addons/ntb_eth0.json"
     fi
 

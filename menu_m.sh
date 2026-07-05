@@ -3017,8 +3017,22 @@ while true; do
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
     k) selectldrmode ;    NEXT="p" ;;    
-    p) if [ "${LDRMODE}" == "FRIEND" ]; then
-         make_with_progress "fri" "${PREVENT_INIT}" 
+    p) # epyc7003ntb (PAS7700/FS3420) FSDN: ask controller role before build (ntbfsdn addon)
+       if [ "${MODEL}" = "PAS7700" ] || [ "${MODEL}" = "FS3420" ]; then
+         NTB_MAC1=$(readConfigKey "extra_cmdline" "mac1")
+         dialog --backtitle "`backtitle`" --colors \
+           --menu "epyc7003ntb FSDN dual-controller (ntbfsdn)\nSelect the controller role for THIS box (NIC MAC=${NTB_MAC1}):" 0 0 0 \
+           "0" "controller 0  ->  169.254.4.1  (mac0)" \
+           "1" "controller 1  ->  169.254.4.2  (mac1)" \
+           2>${TMP_PATH}/ntb_role
+         if [ $? -eq 0 ]; then
+           NTB_ROLE=$(<${TMP_PATH}/ntb_role)
+           [ "${NTB_ROLE}" = "1" ] && NTB_KEY="mac1" || NTB_KEY="mac0"
+           echo "{\"${NTB_KEY}\": \"${NTB_MAC1}\", \"vlan\": 100}" >/tmp/ntb_eth0.json
+         fi
+       fi
+       if [ "${LDRMODE}" == "FRIEND" ]; then
+         make_with_progress "fri" "${PREVENT_INIT}"
        #else  
        #  make_with_progress "jot" "${PREVENT_INIT}"
        fi  
