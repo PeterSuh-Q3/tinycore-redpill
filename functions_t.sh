@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.9"
+rploaderver="1.3.1.0"
 build="master"
 redpillmake="prod"
 
@@ -270,6 +270,8 @@ function history() {
             NOTE: Module packs are epyc7002-based fake/preview builds. Only vanilla NIC drivers work
             (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.). Full icelaked modules are not yet available.
     1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
+    1.3.1.0 Apply dom_szmax/synoboot_satadom on kernel-5 / Device-Tree platforms too
+            (removed the kernel<5 gates incl. sata_line deletion; LKM SMP fake-SATA-boot KP fixed)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -4429,12 +4431,11 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         sudo sed -i "s/light-magenta/white/" /tmp/grub.cfg
         sudo sed -i '31,34d' /tmp/grub.cfg
         # Check dom size and set max size accordingly for jot
-        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-            if [ "${BUS}" != "usb" ]; then
-                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
-                sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
-            fi
-        fi    
+        # kernel-version gate removed: kernel-5 / Device-Tree platforms also need dom_szmax (fake SATA boot)
+        if [ "${BUS}" != "usb" ] && [ "${BUS}" != "nvme" ]; then
+            DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+            sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
+        fi
         sed -i "s/${ORIGIN_PLATFORM}/${MODEL}/" /tmp/tempentry.txt
         sed -i "s/earlyprintk/syno_hw_version=${MODEL} earlyprintk/" /tmp/tempentry.txt
     fi
@@ -4463,12 +4464,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
-    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-        SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
-        SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
-        if [ -n "$SATA_DOM" ]; then
-            SATA_LINE="synoboot_satadom=${SATA_DOM} "
-        fi        
+    # kernel-version gate removed: extract synoboot_satadom for all kernels (kernel-5 / DT included)
+    SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
+    SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
+    if [ -n "$SATA_DOM" ]; then
+        SATA_LINE="synoboot_satadom=${SATA_DOM} "
     fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
@@ -4521,7 +4521,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE=${USB_LINE}
     else
-        [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
+        CMD_LINE=${USB_LINE}+" "+${SATA_LINE}
     fi
 
     #if echo ${nosas5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
@@ -4574,13 +4574,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     
     msgwarning "Updated user_config with USB Command Line : $USB_LINE"
     json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
-    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-        msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
-        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
-    else
-        msgwarning "Starting with kernel 5, the unused sata_line element is removed."
-        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
-    fi    
+    # kernel-version gate removed: always persist sata_line so kernel-5 / DT (and tcrpfriend boot.sh) can use it
+    msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
+    json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
 
     sudo cp $userconfigfile /mnt/${loaderdisk}3/
 
