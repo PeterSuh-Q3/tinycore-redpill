@@ -543,7 +543,16 @@ map_sata_nodes() {
 }
 
 # =============================================================================
-# NVMe → nvme_slot@N
+# NVMe → nvme_slot@N (기본: M.2 SSD 캐시)
+#        internal_slot@N { nvme { pcie_root } } (PAS7700: NVMe 데이터 볼륨)
+# -----------------------------------------------------------------------------
+# PAS7700 은 NVMe 올플래시 모델이라, 정품 model.dtb 는 NVMe 를 M.2 캐시 슬롯
+# (nvme_slot + port_type="ssdcache") 이 아니라 데이터 베이(internal_slot) 로
+# 정의한다. 실측한 정품 스키마:
+#     internal_slot@N { nvme { pcie_root = "..."; }; }
+#   - nvme_slot 이 아니라 internal_slot 노드
+#   - protocol 은 자식 노드 이름(nvme)으로 선언 (reg / port_type 없음)
+# 이 모델에서만 데이터-볼륨 스키마로 생성하고, 그 외 모델은 기존 캐시 슬롯 유지.
 # =============================================================================
 map_nvme_nodes() {
   local NVME_LIST
@@ -555,27 +564,56 @@ map_nvme_nodes() {
     return
   fi
 
-  local DEV_COUNT
+  # PAS7700 여부 판별 (대소문자 무시, MODEL/DTSMODEL 어느 쪽에 있어도 인식)
+  local NVME_AS_DATA=""
+  case "$(printf '%s' "${DTSMODEL}${MODEL}" | tr 'A-Z' 'a-z')" in
+    *pas7700*) NVME_AS_DATA="yes" ;;
+  esac
+
+  local DEV_COUNT MAXDISKS
   DEV_COUNT=$(printf '%s\n' "${NVME_LIST}" | wc -l)
-  dialog --backtitle "$(backtitle)" --title "NVMe Mapping" \
-    --msgbox $'Detected NVMe controllers: '"${DEV_COUNT}"$'\n(via udevadm DEVPATH, deduplicated per controller)\n\nSelect bay slot for each controller.' 9 60 || return
+  MAXDISKS=$(_get_maxdisks)
+  if [ -n "${NVME_AS_DATA}" ]; then
+    dialog --backtitle "$(backtitle)" --title "NVMe Mapping (PAS7700 data volume)" \
+      --msgbox $'Detected NVMe controllers: '"${DEV_COUNT}"$'  /  Max slots: '"${MAXDISKS}"$'\n\nPAS7700: NVMe -> internal_slot@N (data volume)\nGenuine all-flash schema: internal_slot { nvme { pcie_root } }' 10 64 || return
+  else
+    dialog --backtitle "$(backtitle)" --title "NVMe Mapping" \
+      --msgbox $'Detected NVMe controllers: '"${DEV_COUNT}"$'\n(via udevadm DEVPATH, deduplicated per controller)\n\nSelect bay slot for each controller.' 9 60 || return
+  fi
 
   local USED_SLOTS=""
   while IFS='|' read -r PCIEPATH DEVNAME; do
-    local SLOT_INFO
-    SLOT_INFO=$(printf '[nvme] /dev/%s\npcie_root: %s\nport_type: ssdcache' \
-      "${DEVNAME}" "${PCIEPATH}")
+    local SLOT_INFO SLOT_TOTAL
+    if [ -n "${NVME_AS_DATA}" ]; then
+      SLOT_INFO=$(printf '[nvme] /dev/%s\npcie_root: %s\nslot_type: internal_slot (data volume)' \
+        "${DEVNAME}" "${PCIEPATH}")
+      SLOT_TOTAL="${MAXDISKS}"
+    else
+      SLOT_INFO=$(printf '[nvme] /dev/%s\npcie_root: %s\nport_type: ssdcache' \
+        "${DEVNAME}" "${PCIEPATH}")
+      SLOT_TOTAL="8"
+    fi
     local PICKED
-    PICKED=$(_pick_slot "8" "${USED_SLOTS}" "${SLOT_INFO}") || continue
+    PICKED=$(_pick_slot "${SLOT_TOTAL}" "${USED_SLOTS}" "${SLOT_INFO}") || continue
 
     USED_SLOTS="${USED_SLOTS} ${PICKED}"
 
     local NODE
-    NODE="    nvme_slot@${PICKED} {\n"
-    NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
-    NODE+="        pcie_root = \"${PCIEPATH}\";\n"
-    NODE+="        port_type = \"ssdcache\";\n"
-    NODE+="    };"
+    if [ -n "${NVME_AS_DATA}" ]; then
+      # PAS7700: 데이터 볼륨 NVMe 베이 (정품 스키마 — reg/port_type 없음)
+      NODE="    internal_slot@${PICKED} {\n"
+      NODE+="        nvme {\n"
+      NODE+="            pcie_root = \"${PCIEPATH}\";\n"
+      NODE+="        };\n"
+      NODE+="    };"
+    else
+      # 기타 모델: 기존 M.2 SSD 캐시 슬롯
+      NODE="    nvme_slot@${PICKED} {\n"
+      NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
+      NODE+="        pcie_root = \"${PCIEPATH}\";\n"
+      NODE+="        port_type = \"ssdcache\";\n"
+      NODE+="    };"
+    fi
 
     DTS_NODES+=("${NODE}")
     DTS_REG_COUNTER=$((DTS_REG_COUNTER+1))
@@ -755,7 +793,7 @@ main_menu() {
       "a" "Show detected storage devices" \
       "b" "Set DTS header (compatible / model)" \
       "c" "Map SATA/SAS  ->  internal_slot@N" \
-      "d" "Map NVMe  ->  nvme_slot@N" \
+      "d" "Map NVMe  ->  nvme_slot@N (PAS7700: internal_slot data vol)" \
       "e" "Map USB   ->  usb_slot@N" \
       "f" "Preview .dts output" \
       "g" "Generate .dts file" \
