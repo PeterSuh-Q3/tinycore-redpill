@@ -601,9 +601,14 @@ map_nvme_nodes() {
     local NODE
     if [ -n "${NVME_AS_DATA}" ]; then
       # PAS7700: 데이터 볼륨 NVMe 베이 (정품 스키마 — reg/port_type 없음)
+      # 정품 dtb 의 내장 NVMe 베이는 pcie_root 를 domain:bus 접두 없는
+      # dev.func hop-chain 축약형으로 기록한다 (예: "17.0,00.0").
+      # NVMe 슬롯은 ata_port 없이 pcie_root 만으로 바인딩되므로 형식이 정확해야 함.
+      local PCIE_SHORT
+      PCIE_SHORT=$(printf '%s' "${PCIEPATH}" | sed 's/^[0-9a-f]\{4\}:[0-9a-f]\{2\}://')
       NODE="    internal_slot@${PICKED} {\n"
       NODE+="        nvme {\n"
-      NODE+="            pcie_root = \"${PCIEPATH}\";\n"
+      NODE+="            pcie_root = \"${PCIE_SHORT}\";\n"
       NODE+="        };\n"
       NODE+="    };"
     else
@@ -675,7 +680,7 @@ write_dts() {
     echo "    #address-cells = <1>;"
     echo "    #size-cells = <1>;"
     echo "    compatible = \"${COMPATIBLE}\";"
-    echo "    model = \"${DTSMODEL}\";"
+    echo "    model = \"$(printf '%s' "${DTSMODEL}" | tr 'A-Z' 'a-z')\";"
     echo "    version = <0x01>;"
     echo "    power_limit = \"${POWER_LIMIT}\";"
     for NODE in "${DTS_NODES[@]}"; do
