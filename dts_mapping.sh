@@ -600,11 +600,16 @@ map_nvme_nodes() {
 
     local NODE
     if [ -n "${NVME_AS_DATA}" ]; then
-      # PAS7700: 데이터 볼륨 NVMe 베이 (정품 스키마 — reg/port_type 없음)
+      # PAS7700: 데이터 볼륨 NVMe 베이.
       # pcie_root 은 커널의 syno_block_info(pciepath) 문자열과 정확히 일치해야
       # 슬롯 바인딩(syno_disk_serial 부여)이 된다. 그 값은 full 형식
       # (예: "0000:00:16.0,00.0")이므로 _build_pcie_root 결과를 그대로 사용한다.
+      # reg: 최초 실측 스키마엔 없었으나, reg 없이는 syno_location_get()/
+      # scemd 가 "Fail to get location" 을 반복하며 ns_installable_ns_list
+      # -> raidtool 열거까지 연쇄 실패해 포맷이 0%에서 막히는 것을 실기
+      # (45.52/45.183) 에서 확인. SATA internal_slot@N 과 동일하게 reg 부여.
       NODE="    internal_slot@${PICKED} {\n"
+      NODE+="        reg = <$(printf '0x%02X' "${DTS_REG_COUNTER}") 0x00>;\n"
       NODE+="        nvme {\n"
       NODE+="            pcie_root = \"${PCIEPATH}\";\n"
       NODE+="        };\n"
