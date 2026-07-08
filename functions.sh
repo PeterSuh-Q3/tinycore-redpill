@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.8"
+rploaderver="1.3.0.9"
 build="master"
 redpillmake="prod"
 
@@ -26,7 +26,7 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview"
-kver5platforms="epyc7002 icelaked v1000nk r1000nk geminilakenk"
+kver5platforms="epyc7002 epyc7003ntb icelaked v1000nk r1000nk geminilakenk"
 nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
 dsm6notsupported="broadwellntbap"
 
@@ -269,6 +269,7 @@ function history() {
     1.3.0.8 Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
             NOTE: Module packs are epyc7002-based fake/preview builds. Only vanilla NIC drivers work
             (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.). Full icelaked modules are not yet available.
+    1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -768,6 +769,9 @@ EOF
 # Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
 # Module packs are epyc7002-based fake/preview. Only vanilla NIC drivers work (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.).
 
+# 2026.07.04 v1.3.0.9
+# Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -986,6 +990,9 @@ function showlastupdate() {
 # 2026.07.01 v1.3.0.8
 # Added icelaked platform support (FS3420, RS1626xs+, RS3626xs, RS4826xs+, RS6426xs+). Supported from DSM 7.4 onwards.
 # Module packs are epyc7002-based fake/preview. Only vanilla NIC drivers work (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.).
+
+# 2026.07.04 v1.3.0.9
+# Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
 
 EOF
 }
@@ -1393,7 +1400,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
+    platforms="epyc7002 epyc7003ntb icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
 
     # Initialize MODELS array
     MODELS=()
@@ -4715,6 +4722,14 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
+
+    # epyc7003ntb (PAS7700 FSDN): controller role file is prepared interactively
+    # by menu_m.sh (p-build dialog) at /tmp/ntb_eth0.json. Copy it into the
+    # ramdisk so the junior-only ntbfsdn addon can read /addons/ntb_eth0.json.
+    if [ "${ORIGIN_PLATFORM}" = "epyc7003ntb" ] && [ -f /tmp/ntb_eth0.json ]; then
+        sudo cp -vf /tmp/ntb_eth0.json "${RAMDISK_PATH}/addons/ntb_eth0.json"
+        cat "${RAMDISK_PATH}/addons/ntb_eth0.json"
+    fi
 
     [ ! -f "${RAMDISK_PATH}/etc.defaults/rc.sas" ] && sudo touch "${RAMDISK_PATH}/etc.defaults/rc.sas"
 
