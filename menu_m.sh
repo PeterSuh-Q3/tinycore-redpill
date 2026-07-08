@@ -18,7 +18,7 @@ if [ ! -f "/etc/init.d/tc-functions" ]; then
 fi  
 
 kver3explatforms="bromolow braswell cedarview"
-kver5explatforms="epyc7002(DT) epyc7003ntb(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
+kver5explatforms="epyc7002(DT) epyc7003ntb(DT) epyc7003(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
 
 # ── BMI2 CPU capability detection ─────────────────────────────────────────────
 # all-modules / amd-modules 릴리즈에는 BMI2(mulx 등) 명령이 포함된 모듈이 있으므로
@@ -707,7 +707,7 @@ function modelMenu() {
   MODELS_JSON="/home/tc/models.json"
   
   # Define platform groups
-  M_GRP1="epyc7002 epyc7003ntb icelaked v1000nk r1000nk geminilakenk broadwellnk"
+  M_GRP1="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk broadwellnk"
   M_GRP2="broadwell broadwellnkv2 broadwellntbap purley bromolow avoton braswell cedarview"
   M_GRP3="denverton"
   M_GRP4="apollolake"
@@ -774,7 +774,7 @@ function modelMenu() {
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
 
-  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "epyc7003ntb(DT)" || "${platform}" == "icelaked(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "v1000nk(DT)" || "${platform}" == "r1000nk(DT)" ]]; then
+  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "epyc7003ntb(DT)" || "${platform}" == "epyc7003(DT)" || "${platform}" == "icelaked(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "v1000nk(DT)" || "${platform}" == "r1000nk(DT)" ]]; then
       echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
   else
       MDLNAME="all-modules"
@@ -816,7 +816,7 @@ function setSuggest() {
   case $1 in
     SA6400)      platform="epyc7002(DT)";bay="RACK_12_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     PAS7700)     platform="epyc7003ntb(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
-    FS6420)      platform="epyc7003ntb(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    FS6420)      platform="epyc7003(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     FS3420)      platform="icelaked(DT)";bay="RACK_20_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS1626xs+)   platform="icelaked(DT)";bay="RACK_4_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS3626xs)    platform="icelaked(DT)";bay="RACK_6_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
@@ -1818,8 +1818,8 @@ function additional() {
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
-    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
-    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
+    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
+    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \

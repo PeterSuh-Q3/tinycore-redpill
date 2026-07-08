@@ -26,7 +26,7 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/maste
 smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview"
-kver5platforms="epyc7002 epyc7003ntb icelaked v1000nk r1000nk geminilakenk"
+kver5platforms="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk"
 nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
 dsm6notsupported="broadwellntbap"
 
@@ -270,7 +270,7 @@ function history() {
             NOTE: Module packs are epyc7002-based fake/preview builds. Only vanilla NIC drivers work
             (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.). Full icelaked modules are not yet available.
     1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
-    1.3.0.10 Added FS6420 model support. FS6420 is epyc7003ntb platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
+    1.3.0.10 Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075). Note: epyc7003 is separate from epyc7003ntb (PAS7700 FSDN dual-controller).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -774,7 +774,7 @@ EOF
 # Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
 
 # 2026.07.08 v1.3.0.10
-# Added FS6420 model support. FS6420 is epyc7003ntb platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
+# Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075). Note: epyc7003 is separate from epyc7003ntb (PAS7700 FSDN dual-controller).
 
 function showlastupdate() {
     cat <<EOF
@@ -999,7 +999,7 @@ function showlastupdate() {
 # Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
 
 # 2026.07.08 v1.3.0.10
-# Added FS6420 model support. FS6420 is epyc7003ntb platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
+# Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075). Note: epyc7003 is separate from epyc7003ntb (PAS7700 FSDN dual-controller).
 
 EOF
 }
@@ -1407,7 +1407,7 @@ function getvarsmshell()
     MODELS_JSON="/home/tc/models.json"
 
     # Define platform groups
-    platforms="epyc7002 epyc7003ntb icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
+    platforms="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
 
     # Initialize MODELS array
     MODELS=()

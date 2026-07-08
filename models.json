@@ -354,14 +354,27 @@
             "7.4": "7.4-5.10.55"
         },
         "models": [
-            "PAS7700",
-            "FS6420"
+            "PAS7700"
         ],
         "add_extensions": [
             {
                 "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/rpext-index.json",
                 "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json",
                 "ntbfsdn": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/rpext-index.json"
+            }
+        ]
+    },
+    "epyc7003": {
+        "productvers": {
+            "7.4": "7.4-5.10.55"
+        },
+        "models": [
+            "FS6420"
+        ],
+        "add_extensions": [
+            {
+                "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/rpext-index.json",
+                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
             }
         ]
     },
