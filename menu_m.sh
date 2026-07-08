@@ -816,7 +816,7 @@ function setSuggest() {
   case $1 in
     SA6400)      platform="epyc7002(DT)";bay="RACK_12_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     PAS7700)     platform="epyc7003ntb(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
-    FS3420)      platform="epyc7003ntb(DT)";bay="RACK_20_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    FS3420)      platform="icelaked(DT)";bay="RACK_20_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS1626xs+)   platform="icelaked(DT)";bay="RACK_4_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS3626xs)    platform="icelaked(DT)";bay="RACK_6_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS4826xs+)   platform="icelaked(DT)";bay="RACK_8_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
@@ -3017,8 +3017,8 @@ while true; do
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
     k) selectldrmode ;    NEXT="p" ;;    
-    p) # epyc7003ntb (PAS7700/FS3420) FSDN: ask controller role before build (ntbfsdn addon)
-       if [ "${MODEL}" = "PAS7700" ] || [ "${MODEL}" = "FS3420" ]; then
+    p) # epyc7003ntb (PAS7700) FSDN: ask controller role before build (ntbfsdn addon)
+       if [ "${MODEL}" = "PAS7700" ]; then
          NTB_MAC1=$(readConfigKey "extra_cmdline" "mac1")
          dialog --backtitle "`backtitle`" --colors \
            --menu "epyc7003ntb FSDN dual-controller (ntbfsdn)\nSelect the controller role for THIS box (NIC MAC=${NTB_MAC1}):" 0 0 0 \
