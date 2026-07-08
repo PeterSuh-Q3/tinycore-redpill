@@ -816,6 +816,7 @@ function setSuggest() {
   case $1 in
     SA6400)      platform="epyc7002(DT)";bay="RACK_12_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     PAS7700)     platform="epyc7003ntb(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
+    FS6420)      platform="epyc7003ntb(DT)";bay="RACK_24_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     FS3420)      platform="icelaked(DT)";bay="RACK_20_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS1626xs+)   platform="icelaked(DT)";bay="RACK_4_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
     RS3626xs)    platform="icelaked(DT)";bay="RACK_6_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu} \"";;
