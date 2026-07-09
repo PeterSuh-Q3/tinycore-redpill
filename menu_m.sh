@@ -463,15 +463,15 @@ function checkAndResetModuleName() {
     if [ "${curZpadkver}" -ge 5010055 ]; then
         # ① 커널 >= 5.10.55
         if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-            # DSM >= 7.3.0 + BMI2 미지원: custom-modules만 허용.
+            # DSM >= 7.3.0 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
             # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
             # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
             fallbackMdl="custom-modules"; fallbackMethod="PML"
-            if [ "${curMdlName}" = "custom-modules" ]; then
+            if [ "${curMdlName}" = "custom-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
                 supported=true
             fi
         else
-            # BMI2 있거나 DSM < 7.3: all/amd/custom 모두 허용
+            # BMI2 있거나 DSM < 7.3: all/custom/anodrm 모두 허용
             supported=true
         fi
     elif [ "${curZpadkver}" -ge 4004302 ]; then
@@ -480,8 +480,8 @@ function checkAndResetModuleName() {
             supported=true
         fi
     else
-        # ③ 커널 < 4.4.302: all-modules만 지원 → all-modules fallback
-        if [ "${curMdlName}" = "all-modules" ]; then
+        # ③ 커널 < 4.4.302: all-modules/anodrm-modules 만 지원 → all-modules fallback
+        if [ "${curMdlName}" = "all-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
             supported=true
         fi
     fi
