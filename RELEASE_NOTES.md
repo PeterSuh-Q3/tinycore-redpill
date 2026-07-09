@@ -1,5 +1,6 @@
-fc16065588409f78fa81a091756e15869d2ea611
-2899835f1bce686d2ef6b92e0130aad7181b5c02
-8e07f41116c66c6f2d14f9e1b3e3c4ee72a4910c
+18256b6608c7e3e196cef89a6cef68b12f020b5a
+0b9dc57915b51a46d39db428978775b6f00bcd4f
+f57d1b26457b7f08e81be21b4009f81db7c59f15
 
-    1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
+    1.3.0.10 Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
+Started support for DSM 7.4 official toolchain-based modules.
