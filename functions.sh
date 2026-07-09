@@ -4661,10 +4661,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             if [ "${MDLNAME}" == "custom-modules" ]; then
                 sudo tar xvfz $rdtemp/exts/custom-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/custom-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-            elif [ "${MDLNAME}" == "amd-modules" ]; then
-                sudo tar xvfz $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/amd-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                sudo tar xvfz $rdtemp/exts/amd-modules/firmwareamdgpu.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
             else
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
@@ -4673,13 +4669,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
-        # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules 또는 amd-modules tgz에서
+        # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules tgz에서
         # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
         # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
         if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ] && \
            strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; then
             _USB_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
-            [ -z "${_USB_TGZ}" ] && _USB_TGZ=$(ls $rdtemp/exts/amd-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
             if [ -n "${_USB_TGZ}" ]; then
                 echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_USB_TGZ}"
                 _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
@@ -6430,20 +6425,17 @@ function my() {
 
   # bundled-exts.json 의 *-modules 키를 selectldrmode() 가 저장한 MDLNAME 으로 재적용.
   # 위 curl 이 GitHub 원본으로 덮어썼으므로 여기서 다시 정정해야
-  # amd-modules / custom-modules 선택이 보존된다. 모듈별로 저장소가 다름:
+  # custom-modules 선택이 보존된다. 모듈별로 저장소가 다름:
   #   all-modules    → tcrp-modules/master/all-modules/rpext-index.json
-  #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
   #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
   case "${MDLNAME}" in
     all-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
-    amd-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
     custom-modules) _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
     *) _MDLURL="" ;;
   esac
   if [ -n "${_MDLURL}" ] && [ -f /home/tc/redpill-load/bundled-exts.json ]; then
     jsonfile=$(jq --arg name "${MDLNAME}" --arg url "${_MDLURL}" '
         del(.["all-modules"])
-      | del(.["amd-modules"])
       | del(.["custom-modules"])
       | . + {($name): $url}
     ' /home/tc/redpill-load/bundled-exts.json) && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json

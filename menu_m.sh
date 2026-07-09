@@ -21,7 +21,7 @@ kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) epyc7003ntb(DT) epyc7003(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
 
 # ── BMI2 CPU capability detection ─────────────────────────────────────────────
-# all-modules / amd-modules 릴리즈에는 BMI2(mulx 등) 명령이 포함된 모듈이 있으므로
+# all-modules 릴리즈에는 BMI2(mulx 등) 명령이 포함된 모듈이 있으므로
 # BMI2 미지원 CPU(Ivy Bridge 이하 등)에서는 해당 모듈 선택을 제한한다.
 HAS_BMI2="n"
 if grep -qw "bmi2" /proc/cpuinfo 2>/dev/null; then
@@ -502,13 +502,11 @@ function checkAndResetModuleName() {
 # Shows available between FRIEND and JOT
 function selectldrmode() {
   #eval "MSG28=\"\${MSG${tz}28}\""
-  #eval "MSG29=\"\${MSG${tz}29}\""  
   MSG28="Intel iGPU i915 DRM Support"
-  MSG29="AMD dGPU/APU DRM Support"
   MSG99="i915 + AMDGPU dual DRM"
   MSGND="No DRM (general modules, no GPU)"
-  # 5.10.55 / 4.4.302 platforms 에 대해 amd-modules / custom-modules 옵션 노출.
-  # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있고, amd-modules 는 4 플랫폼 모두.
+  # 5.10.55 / 4.4.302 platforms 에 대해 custom-modules 옵션 노출.
+  # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있다.
   # Derive the kernel version of the *currently selected* model live.
   local _gv kver origin_plat
   _gv="$(resolveLiveKver)"
@@ -571,14 +569,6 @@ function selectldrmode() {
       MDLNAME="all-modules"
       MLMETHOD="IML"
       break
-    elif [ "${resp}" = "m" ]; then
-      MDLNAME="amd-modules"
-      MLMETHOD="IML"
-      break
-    elif [ "${resp}" = "l" ]; then
-      MDLNAME="amd-modules"
-      MLMETHOD="PML"
-      break
     elif [ "${resp}" = "k" ]; then
       MDLNAME="custom-modules"
       MLMETHOD="PML"
@@ -596,7 +586,6 @@ function selectldrmode() {
   # bundled-exts.json 의 *-modules 정의를 선택된 MDLNAME 으로 치환
   # 각 모듈 분기는 서로 다른 저장소를 가리킨다:
   #   all-modules    → tcrp-modules/master/all-modules/rpext-index.json
-  #   amd-modules    → tcrp-modules/master/amd-modules/rpext-index.json
   #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
   syncBundledExtsModule "${MDLNAME}"
 }
@@ -611,7 +600,6 @@ function syncBundledExtsModule() {
   local mdlurl
   case "${mdlname}" in
     all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
-    amd-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/amd-modules/rpext-index.json" ;;
     custom-modules) mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
     anodrm-modules)  mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/anodrm-modules/rpext-index.json" ;;
     *) return 0 ;;
@@ -619,7 +607,6 @@ function syncBundledExtsModule() {
   local tmp
   tmp=$(jq --arg name "${mdlname}" --arg url "${mdlurl}" '
       del(.["all-modules"])
-    | del(.["amd-modules"])
     | del(.["custom-modules"])
     | del(.["anodrm-modules"])
     | . + {($name): $url}
@@ -638,7 +625,7 @@ echo "PAT VERSIONS : $pat_versions"
 IFS=' ' read -ra versions <<< "$pat_versions"
 
 # 2-1. BMI2 미지원 CPU 에서는 DSM 7.4.0 이상 버전을 선택 목록에서 제외한다.
-#      (all/amd-modules 의 BMI2(mulx 등) 명령 미지원으로 부팅 불가)
+#      (all-modules 의 BMI2(mulx 등) 명령 미지원으로 부팅 불가)
 #      현재 시놀로지가 DSM 7.4 용 GPL 커널 소스를 아직 공개하지 않아
 #      BMI2 명령을 제거한 custom-modules(PML) 커널을 빌드할 수 없으므로,
 #      GPL 이 공개되기 전까지 BMI2 미지원 CPU 에서는 7.4 이상을 원천 차단한다.
@@ -2930,8 +2917,6 @@ while true; do
     else
       drmmode="Intel DRM"
     fi
-  elif [ "${MDLNAME}" = "amd-modules" ]; then
-    drmmode="AMD DRM"
   elif [ "${MDLNAME}" = "custom-modules" ]; then
     drmmode="i915+AMD dual DRM"
   elif [ "${MDLNAME}" = "anodrm-modules" ]; then
