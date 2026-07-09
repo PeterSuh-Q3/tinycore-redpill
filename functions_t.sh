@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.0.10"
+rploaderver="1.3.1.0"
 build="master"
 redpillmake="prod"
 
@@ -270,7 +270,7 @@ function history() {
             NOTE: Module packs are epyc7002-based fake/preview builds. Only vanilla NIC drivers work
             (igb, i40e, ixgbe, r8168, bnxt_en, mlx4/mlx5, atlantic, etc.). Full icelaked modules are not yet available.
     1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
-    1.3.0.10 Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
+    1.3.1.0 Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
              Started support for DSM 7.4 official toolchain-based modules.
     --------------------------------------------------------------------------------------
 EOF
@@ -774,7 +774,7 @@ EOF
 # 2026.07.04 v1.3.0.9
 # Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
 
-# 2026.07.08 v1.3.0.10
+# 2026.07.08 v1.3.1.0
 # Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
 # Started support for DSM 7.4 official toolchain-based modules.
 
@@ -1000,7 +1000,7 @@ function showlastupdate() {
 # 2026.07.04 v1.3.0.9
 # Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
 
-# 2026.07.08 v1.3.0.10
+# 2026.07.08 v1.3.1.0
 # Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
 # Started support for DSM 7.4 official toolchain-based modules.
 
