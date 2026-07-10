@@ -4669,11 +4669,20 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
-        #epyc7003ntb 듀얼-native 계측: btrfs 로드 직후부터 linuxrc.syno.impl 실행 트레이스를
-        #시리얼(ttyS0)로 출력. IsFSDN=yes 복원(dual-native) 시 ramdisk 단계에서 피어 부재로
-        #microP uP-lock/HA 가 다시 hang 될 수 있으므로, 정확한 정지 지점을 시리얼로 잡는다.
-        #linuxrc echo 는 /var/log/lrc 로 리다이렉트되어 시리얼에 안 보이므로 xtrace 를 직접 ttyS0 로 보낸다.
+        #epyc7003ntb 듀얼-native(하이브리드): microP SED 하드웨어 잠금만 무력화한다.
+        #com1 시리얼 캡처로 확인 — ramdisk 'Handle SED for FSDN' 단계에서
+        #  microPLock=$(synomulticontroller --up_lock_ctrl GET_LOCK SYNO_UP_LOCK_SED)
+        #  while [ "$microPLock" = "0" ]; do sleep 1; ... done
+        #이 무한 루프에 걸려 hang. 이 잠금은 섀시 백플레인 microP(물리 i2c 마이크로컨트롤러)가
+        #두 컨트롤러 SED 를 중재하는 하드웨어 호출이라, 일반 박스엔 칩이 없어 영원히 0 이다.
+        #ntb_eth0 피어(synoaa/HA 네트워크 조율)로는 대체 불가 → GET_LOCK 대입을 1(획득됨)로
+        #치환해 SED 루프만 통과시킨다. IsFSDN=yes(=ramdisk-004 제거)는 유지되어 synoaa
+        #이중 컨트롤러 네트워크 조율은 그대로 native 로 동작한다. (구 5a1c2227 방식 복구)
+        #SED 는 이 박스들에 없으므로 '획득됨' 처리는 무해하다.
         if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+            sudo sed -i 's#microPLock=$(/usr/syno/bin/synomulticontroller --up_lock_ctrl GET_LOCK SYNO_UP_LOCK_SED)#microPLock=1#g' "$rdtemp/linuxrc.syno.impl"
+            echo "[NTB-fix] forced microP SED UP-lock acquired (hardware chip absent) in linuxrc.syno.impl"
+            #btrfs 이후 xtrace 를 ttyS0 로 유지 — SED 통과 후 다음 정지 지점을 계속 추적.
             sudo sed -i '/SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs/a exec 2>/dev/ttyS0; set -x; echo "=== NTB-TRACE-START ===" >/dev/ttyS0' "$rdtemp/linuxrc.syno.impl"
             echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
