@@ -4669,6 +4669,15 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
         fi
 
+        #epyc7003ntb 듀얼-native 계측: btrfs 로드 직후부터 linuxrc.syno.impl 실행 트레이스를
+        #시리얼(ttyS0)로 출력. IsFSDN=yes 복원(dual-native) 시 ramdisk 단계에서 피어 부재로
+        #microP uP-lock/HA 가 다시 hang 될 수 있으므로, 정확한 정지 지점을 시리얼로 잡는다.
+        #linuxrc echo 는 /var/log/lrc 로 리다이렉트되어 시리얼에 안 보이므로 xtrace 를 직접 ttyS0 로 보낸다.
+        if echo "epyc7003ntb" | grep -wq "${ORIGIN_PLATFORM}"; then
+            sudo sed -i '/SYNOLoadModules xor raid6_pq zstd_compress syno_cache_protection btrfs/a exec 2>/dev/ttyS0; set -x; echo "=== NTB-TRACE-START ===" >/dev/ttyS0' "$rdtemp/linuxrc.syno.impl"
+            echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
+        fi
+
         # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules tgz에서
         # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
         # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
