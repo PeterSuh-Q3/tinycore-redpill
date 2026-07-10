@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.0"
+rploaderver="1.3.1.1"
 build="master"
 redpillmake="prod"
 
@@ -272,6 +272,10 @@ function history() {
     1.3.0.9 Added epyc7003ntb platform support (PAS7700). Supported from DSM 7.4 onwards.
     1.3.1.0 Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
              Started support for DSM 7.4 official toolchain-based modules.
+    1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
+             before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
+             PAS7700 (epyc7003ntb) can now be installed as a single-controller (1 PC) setup instead of
+             requiring dual-controller (2 PCs). (thanks @wjz304)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -778,6 +782,11 @@ EOF
 # Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
 # Started support for DSM 7.4 official toolchain-based modules.
 
+# 2026.07.10 v1.3.1.1
+# Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
+# stopping periodic renew/rebind traffic and preventing mid-build IP changes).
+# PAS7700 (epyc7003ntb) can now be installed as single-controller (1 PC) instead of dual-controller (2 PCs). (thanks @wjz304)
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1004,6 +1013,11 @@ function showlastupdate() {
 # Added FS6420 model support. FS6420 is epyc7003 platform (AMD EPYC 7303, single controller, DSM 7.4.0-90075).
 # Started support for DSM 7.4 official toolchain-based modules.
 
+# 2026.07.10 v1.3.1.1
+# Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
+# stopping periodic renew/rebind traffic and preventing mid-build IP changes).
+# PAS7700 (epyc7003ntb) can now be installed as single-controller (1 PC) instead of dual-controller (2 PCs). (thanks @wjz304)
+
 EOF
 }
 
@@ -1146,6 +1160,47 @@ log_backup_step() {
 }
 
 #################################################################################
+# DHCP 임대갱신 억제 (TinyCore 로더 세션 한정)
+#################################################################################
+# TinyCore 부팅 시 tc-config 가 띄운 udhcpc 데몬은 T1/T2 타이머로 주기적인
+# renew/rebind 를 계속 보낸다. 로더 세션에서는 이미 IP 를 확보한 상태이므로
+# 갱신 트래픽이 불필요할 뿐 아니라, 서버가 renew 응답으로 다른 IP 를 주면
+# 긴 빌드/다운로드 도중 IP 가 바뀌어 세션이 끊길 수 있다.
+#
+# 이 함수는 상주 udhcpc 데몬만 종료하여 갱신을 멈춘다. busybox udhcpc 는
+# -R 없이 SIGTERM 으로 종료되면 RELEASE 를 보내지 않고 인터페이스 설정도
+# 해제하지 않으므로, 현재 잡힌 IP/route/resolv.conf 는 그대로 유지된다.
+# 만약의 flush 에 대비해 기본 게이트웨이는 종료 후 재확정한다.
+# (서버측 임대가 만료돼도 재획득하지 않는 것이 "억제"의 의도 — 짧은 세션 전제)
+function dhcp_freeze() {
+    local pids dev ip4 gw
+
+    pids=$(pidof udhcpc 2>/dev/null)
+    if [ -z "${pids}" ]; then
+        echo "DHCP freeze: 상주 udhcpc 데몬 없음 — 억제 불필요 (static/quiet)"
+        return 0
+    fi
+
+    gw=$(route -n 2>/dev/null | awk '$1=="0.0.0.0" && $2!="0.0.0.0"{print $2; exit}')
+    for dev in $(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en)'); do
+        ip4=$(/sbin/ifconfig "${dev}" 2>/dev/null | awk '/inet /{print $2}' | cut -d: -f2)
+        [ -n "${ip4}" ] && echo "DHCP freeze: ${dev} IP ${ip4} 고정 (renew 중단)"
+    done
+
+    # SIGTERM (-R 미지정) → RELEASE/deconfig 없이 데몬만 종료
+    kill ${pids} 2>/dev/null
+    sleep 1
+    pids=$(pidof udhcpc 2>/dev/null)
+    [ -n "${pids}" ] && kill -9 ${pids} 2>/dev/null
+
+    # 기본 경로 유실 대비 재확정
+    if [ -n "${gw}" ] && ! route -n 2>/dev/null | awk '$1=="0.0.0.0"{f=1} END{exit !f}'; then
+        ip route add default via "${gw}" 2>/dev/null
+    fi
+    echo "DHCP freeze: udhcpc 종료 — 임대갱신 억제됨"
+}
+
+#################################################################################
 # Build with Progress Bar
 #################################################################################
 make_with_progress() {
@@ -1163,6 +1218,7 @@ make_with_progress() {
     clear
 
     getip
+    dhcp_freeze
     setSuggest $MODEL
     if [ "${R8168_YN}" = "Y" ] && echo "${kver5explatforms}" | grep -qw "${platform}"; then
       DMPM="DDSML+EUDEV"

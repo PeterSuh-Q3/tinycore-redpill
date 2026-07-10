@@ -50,7 +50,9 @@ while true; do
       sed -i "s/${ETH}/eth${IDX}/" /tmp/ethlist
       sed -i "s/tmp/${ETH}/" /tmp/ethlist
       sleep 1
-      udhcpc -i ${ETH}
+      # one-shot: 잡으면 즉시 종료(-q), 실패해도 데몬화 안 함(-n)
+      # → 상주 udhcpc 를 남기지 않아 임대갱신 트래픽이 발생하지 않는다.
+      udhcpc -i ${ETH} -q -n -t 5 -T 3
   fi
   IDX=$((${IDX} + 1))
 done
