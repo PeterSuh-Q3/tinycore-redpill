@@ -359,8 +359,7 @@
         "add_extensions": [
             {
                 "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/rpext-index.json",
-                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json",
-                "ntbfsdn": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/rpext-index.json"
+                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/rpext-index.json"
             }
         ]
     },

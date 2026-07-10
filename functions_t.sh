@@ -4746,13 +4746,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # epyc7003ntb (PAS7700 FSDN): controller role file is prepared interactively
-    # by menu_m.sh (p-build dialog) at /tmp/ntb_eth0.json. Copy it into the
-    # ramdisk so the junior-only ntbfsdn addon can read /addons/ntb_eth0.json.
-    if [ "${ORIGIN_PLATFORM}" = "epyc7003ntb" ] && [ -f /tmp/ntb_eth0.json ]; then
-        sudo cp -vf /tmp/ntb_eth0.json "${RAMDISK_PATH}/addons/ntb_eth0.json"
-        cat "${RAMDISK_PATH}/addons/ntb_eth0.json"
-    fi
+    # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 — 피어/이중 컨트롤러
+    # 조율을 쓰지 않으므로 ntb_eth0.json(컨트롤러 역할 파일) 베이킹은 제거했다.
+    # (misc addon 이 단일 노드용 synomulticontroller 래퍼로 apply-lock 을 통과시키고,
+    #  IsFSDN 은 junior=ramdisk-004, 설치본=misc late 에서 각각 off 처리)
 
     [ ! -f "${RAMDISK_PATH}/etc.defaults/rc.sas" ] && sudo touch "${RAMDISK_PATH}/etc.defaults/rc.sas"
 
