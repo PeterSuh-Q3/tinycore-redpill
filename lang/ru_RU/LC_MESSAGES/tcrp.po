@@ -257,3 +257,15 @@ msgstr "Добавить пункт меню Tinycore v9 для монтиров
 #: MSGRU67
 msgid "Select build pre-option (required or not required)"
 msgstr "Выберите предварительную опцию сборки (обязательно или необязательно)"
+
+#: MSGRU69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "Заморозка DHCP: резидентный демон udhcpc отсутствует — подавление не требуется"
+
+#: MSGRU70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "Заморозка DHCP: %s IP %s закреплён (обновление остановлено)"
+
+#: MSGRU71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "Заморозка DHCP: udhcpc остановлен — обновление аренды подавлено"

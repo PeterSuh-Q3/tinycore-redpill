@@ -1173,14 +1173,14 @@ function dhcp_freeze() {
 
     pids=$(pidof udhcpc 2>/dev/null)
     if [ -z "${pids}" ]; then
-        echo "DHCP freeze: 상주 udhcpc 데몬 없음 — 억제 불필요 (static/quiet)"
+        echo "${MSGZZ69:-DHCP freeze: no resident udhcpc daemon - suppression not needed}"
         return 0
     fi
 
     gw=$(route -n 2>/dev/null | awk '$1=="0.0.0.0" && $2!="0.0.0.0"{print $2; exit}')
     for dev in $(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en)'); do
         ip4=$(/sbin/ifconfig "${dev}" 2>/dev/null | awk '/inet /{print $2}' | cut -d: -f2)
-        [ -n "${ip4}" ] && echo "DHCP freeze: ${dev} IP ${ip4} 고정 (renew 중단)"
+        [ -n "${ip4}" ] && printf "${MSGZZ70:-DHCP freeze: %s IP %s pinned (renew stopped)}\n" "${dev}" "${ip4}"
     done
 
     # SIGTERM (-R 미지정) → RELEASE/deconfig 없이 데몬만 종료
@@ -1193,7 +1193,7 @@ function dhcp_freeze() {
     if [ -n "${gw}" ] && ! route -n 2>/dev/null | awk '$1=="0.0.0.0"{f=1} END{exit !f}'; then
         ip route add default via "${gw}" 2>/dev/null
     fi
-    echo "DHCP freeze: udhcpc 종료 — 임대갱신 억제됨"
+    echo "${MSGZZ71:-DHCP freeze: udhcpc stopped - lease renewal suppressed}"
 }
 
 #################################################################################

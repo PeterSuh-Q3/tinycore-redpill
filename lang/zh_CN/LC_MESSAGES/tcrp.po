@@ -257,3 +257,15 @@ msgstr "为挂载Syno磁盘BTRFS卷添加Tinycore v9菜单项"
 #: MSGCN67
 msgid "Select build pre-option (required or not required)"
 msgstr "选择构建预设选项（必选或可选）"
+
+#: MSGCN69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "DHCP 冻结：无常驻 udhcpc 守护进程 — 无需抑制"
+
+#: MSGCN70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "DHCP 冻结：%s IP %s 已固定（停止续租）"
+
+#: MSGCN71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "DHCP 冻结：udhcpc 已停止 — 已抑制租约续期"

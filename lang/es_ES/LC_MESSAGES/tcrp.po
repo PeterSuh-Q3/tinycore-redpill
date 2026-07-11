@@ -257,3 +257,15 @@ msgstr "Agregar entrada de menú Tinycore v9 para montar volumen Syno Disk BTRFS
 #: MSGES67
 msgid "Select build pre-option (required or not required)"
 msgstr "Seleccione la preopción de compilación (obligatoria o no obligatoria)"
+
+#: MSGES69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "Congelación DHCP: sin demonio udhcpc residente - supresión innecesaria"
+
+#: MSGES70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "Congelación DHCP: %s IP %s fijada (renovación detenida)"
+
+#: MSGES71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "Congelación DHCP: udhcpc detenido - renovación de concesión suprimida"

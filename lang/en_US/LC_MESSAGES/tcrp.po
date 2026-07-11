@@ -257,3 +257,15 @@ msgstr "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
 #: MSGUS67
 msgid "Select build pre-option (required or not required)"
 msgstr "Select build pre-option (required or not required)"
+
+#: MSGUS69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+
+#: MSGUS70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "DHCP freeze: %s IP %s pinned (renew stopped)"
+
+#: MSGUS71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "DHCP freeze: udhcpc stopped - lease renewal suppressed"
