@@ -274,8 +274,6 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-             PAS7700 (epyc7003ntb) can now be installed as a single-controller (1 PC) setup instead of
-             requiring dual-controller (2 PCs). (thanks @wjz304)
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -785,7 +783,6 @@ EOF
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
-# PAS7700 (epyc7003ntb) can now be installed as single-controller (1 PC) instead of dual-controller (2 PCs). (thanks @wjz304)
 
 function showlastupdate() {
     cat <<EOF
@@ -1016,7 +1013,6 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
-# PAS7700 (epyc7003ntb) can now be installed as single-controller (1 PC) instead of dual-controller (2 PCs). (thanks @wjz304)
 
 EOF
 }
