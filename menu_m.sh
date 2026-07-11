@@ -629,7 +629,11 @@ IFS=' ' read -ra versions <<< "$pat_versions"
 #      현재 시놀로지가 DSM 7.4 용 GPL 커널 소스를 아직 공개하지 않아
 #      BMI2 명령을 제거한 custom-modules(PML) 커널을 빌드할 수 없으므로,
 #      GPL 이 공개되기 전까지 BMI2 미지원 CPU 에서는 7.4 이상을 원천 차단한다.
-if [ "${HAS_BMI2}" = "n" ]; then
+#      단, 이 제한은 all-modules 에 BMI2 명령이 포함된 kver5platforms(커널 5.10.55)
+#      플랫폼에만 적용한다. apollolake 등 커널 4.4.302/3.x 플랫폼의 all-modules 에는
+#      BMI2 명령이 없어 BMI2 미지원 CPU 에서도 정상 부팅하므로 7.4 를 막지 않는다.
+_bmi2_plat="$(resolveLiveKver)"; _bmi2_plat="${_bmi2_plat##*|}"
+if [ "${HAS_BMI2}" = "n" ] && echo "${kver5platforms}" | grep -qw "${_bmi2_plat}"; then
   filtered=()
   for v in "${versions[@]}"; do
     vMaj=$(echo "${v}" | cut -d'.' -f1)
