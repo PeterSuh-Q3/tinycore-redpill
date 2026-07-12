@@ -1328,8 +1328,13 @@ function writexsession() {
     # (.profile의 TERMTYPE 체크 -> startx 트리거). xinit은 Xauthority/타이밍을
     # 내부적으로 안전하게 처리하므로, 수작업 Xorg&+xdpyinfo 폴링 방식(비-tty 환경에서
     # 행 발생 실측됨, 2026-07-12)을 버리고 TC와 동일하게 xinit/startx로 이식한다.
+    # xf86-input-* 가 하나도 없으면 Xorg는 마우스/키보드 입력 드라이버를 못 찾는다
+    # (2026-07-12 VMware Fusion 실기에서 마우스가 VM 창으로 전혀 진입 못 하는 문제로 확인).
+    # vmmouse는 VMware/QEMU 가상 마우스의 절대좌표를 그대로 받아 클릭 없이 자연스럽게
+    # 진입하게 해주고, libinput은 실물 하드웨어/그 외 하이퍼바이저용 범용 폴백이다.
     sudo apk add lxterminal musl-locales musl-locales-lang xorg-server \
-      xf86-video-fbdev xf86-video-dummy xinit flwm >/dev/null 2>&1
+      xf86-video-fbdev xf86-video-dummy xf86-input-vmmouse xf86-input-libinput \
+      xinit flwm >/dev/null 2>&1
 
     # lxterminal 기본값은 메뉴바(File/Edit/Tabs/Help)가 노출된다. 4창 배포팩 레이아웃은
     # 화면 공간이 좁고(78x32~78x25) 메뉴바가 불필요하므로 끈다. hidemenubar=true로 설정하면
@@ -1394,6 +1399,15 @@ XINITRC
 exec startx
 XSESSION
     chmod +x .xsession
+
+    # TC는 tty1을 `getty -nl /sbin/autologin`으로 tc 계정 자동 로그인시켜 .profile의
+    # TERMTYPE 트리거가 사람 개입 없이 바로 실행되게 한다. Alpine busybox getty엔 동등한
+    # -l 커스텀 로그인 프로그램 훅이 없으므로, agetty(util-linux, 이미 world에 설치됨)의
+    # --autologin으로 동일한 효과를 낸다(2026-07-12 VMware Fusion 실기 부팅 시
+    # 자동로그인 미동작 확인 후 이식).
+    sudo sed -i \
+      "s#^tty1::respawn:/sbin/getty 38400 tty1#tty1::respawn:/sbin/agetty --autologin tc --noclear 38400 tty1#" \
+      /etc/inittab
 
     # TC는 /etc/sysconfig/Xserver(내용: "Xfbdev")가 베이스 이미지에 기본 포함되어 있어
     # 이 파일의 존재 자체가 "X 사용 가능" opt-in 신호로 쓰인다(.profile의 TERMTYPE 체크가
