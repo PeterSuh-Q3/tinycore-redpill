@@ -66,6 +66,35 @@
 
 ---
 
+## 2-A. 동적 fstab 생성 — rebuildfstab 이식
+
+`getloaderdisk()`가 UUID(`6234-C863`)로 찾아낸 실제 디바이스명(`sda`/`vda`/`vdb` 등, 하드웨어·가상화
+구성에 따라 달라짐)에 맞춰 `/mnt/${loaderdisk}1,2,3`을 대상 경로 없이 `mount /dev/X1`만으로
+마운트하려면, TinyCore와 동일하게 **부팅마다 연결된 디스크를 스캔해 `/etc/fstab`을 동적 재생성**하는
+메커니즘이 필요하다. TinyCore는 `/etc/init.d/tc-config`가 부팅 시 `/usr/sbin/rebuildfstab`을 호출해
+이 작업을 수행한다 (`# Added by TC` 마커로 자기 관리 항목만 매 부팅 갱신, `/dev/`로 시작하는
+커스텀 항목은 보존).
+
+**소스**: [tinycorelinux/Core-scripts `usr/sbin/rebuildfstab`](https://github.com/tinycorelinux/Core-scripts/blob/master/usr/sbin/rebuildfstab)
+(box의 `/usr/sbin/rebuildfstab`과 바이트 단위로 동일 — 최신 upstream 확인됨, 2026-07-12).
+Alpine 전용 배포본은 upstream에도, Alpine 커뮤니티에도 존재하지 않음(검색 확인) — TinyCore와
+Alpine은 별개 배포판 프로젝트라 공식 크로스 포팅이 없다.
+
+**이식 판정**: 순수 busybox ash + `blkid`/`mkdir`/`printf`/`read`만 사용 — 둘 다 busybox 계열이라
+**TC 전용 의존성 2줄만 제거하면 원본 그대로 이식 가능**:
+- `. /etc/init.d/tc-functions` + `useBusybox` 소싱 제거 (TC 전용 셸 헬퍼, 불필요)
+- 그 외 로직 전체(파티션 스캔, `# Added by TC` 마커 기반 자기 관리, 커스텀 항목 보존) 무수정 이식
+
+**배치**: `alpine/rebuildfstab` → 대상 `/usr/local/sbin/rebuildfstab`,
+`alpine/local.d-restore-packages.start` → 대상 `/etc/local.d/restore-packages.start`
+(OpenRC `local` 서비스가 부팅마다 `rebuildfstab` 호출 → apk world 패키지 재설치 순으로 실행).
+
+**실측 검증**: Alpine PoC VM에서 수동 UUID 하드코딩(`/mnt/vdb1,2,3`)을 완전히 걷어내고
+`rebuildfstab` 단독으로 대체 → 재부팅 후 `mount /dev/vdb1`(대상 경로 생략)이 자동 생성된
+fstab만으로 정상 동작 확인.
+
+---
+
 ## 3. 사전빌드 바이너리 분류
 
 리포 전체 ELF 실측 결과, 동적 링크는 예외 없이 glibc(`/lib64/ld-linux-x86-64.so.2`).

@@ -1,0 +1,9 @@
+#!/bin/sh
+# OpenRC local.d 훅. /etc/local.d/restore-packages.start 로 설치.
+# apkovl은 설정만 복원, 패키지/디스크 마운트포인트는 저장 안함 -> 부팅마다 재생성.
+# rebuildfstab: TinyCore Core-scripts 이식 (하드코딩 없이 매 부팅 실제 연결된
+# 디스크를 blkid로 스캔해 /etc/fstab을 동적 재생성). 원본:
+# https://github.com/tinycorelinux/Core-scripts/blob/master/usr/sbin/rebuildfstab
+/usr/local/sbin/rebuildfstab
+[ -f /etc/apk/world ] || exit 0
+apk add --update $(cat /etc/apk/world) > /tmp/pkg-restore.log 2>&1

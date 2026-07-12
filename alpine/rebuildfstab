@@ -1,0 +1,149 @@
+#!/bin/busybox ash
+# Original author Robert Shingledecker 2004 (TinyCore Core-scripts, upstream:
+# https://github.com/tinycorelinux/Core-scripts/blob/master/usr/sbin/rebuildfstab)
+# Alpine 이식(v1.4.0.0): TC 전용 tc-functions 소싱 제거. 나머지 로직은 순수
+# busybox ash + blkid 만 사용해 원본 그대로 이식 가능 (docs/alpine-migration-plan.md).
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin"
+export PATH
+umask 022
+
+# Exit if script is already running
+[ -e /proc/partitions ] || exit
+if [ -e /var/run/rebuildfstab.pid ]; then
+ if [ -e "/proc/$(cat /var/run/rebuildfstab.pid)" ]; then
+  touch /var/run/rebuildfstab.rescan 2>/dev/null
+  exit
+ fi
+ rm -f /var/run/rebuildfstab.pid
+fi
+echo "$$" >/var/run/rebuildfstab.pid
+
+
+MyPID="$$"
+TMP="/tmp/fstab.$MyPID.tmp"
+ADDEDBY="# Added by TC"
+DEVROOT="/dev"
+
+# Read a list of CDROM/DVD Drives
+CDROMS=""
+CDROMSF=/etc/sysconfig/cdroms
+[ -s "$CDROMSF" ] &&  CDROMS=`cat "$CDROMSF"`
+
+NTFSDRIVER=""
+checkntfs() {
+    if [ -z "$NTFSDRIVER" ]; then
+        if [ -f /usr/bin/ntfs-3g ] || [ -f /usr/local/bin/ntfs-3g ] || [ -f /bin/ntfs-3g ]; then
+            NTFSDRIVER="ntfs-3g"
+        else
+            NTFSDRIVER="ntfs3"
+        fi
+    fi
+
+    FSTYPE="$NTFSDRIVER"
+    case "$FSTYPE" in
+        ntfs3|ntfs-3g) OPTIONS="$OPTIONS",iocharset=utf8;  ;;
+        ntfs) OPTIONS="$OPTIONS,ro,umask=000";  ;;
+    esac
+}
+
+# Create base fstab file (previous rebuildfstab additions removed).
+rm -f "$TMP"
+Custom=""
+while read -r Device Line
+do
+	case $Device$Line in
+		*"$ADDEDBY"*) # Skip entries added by TC.
+		continue
+		;;
+
+		"/dev/"*) # Save a list of custom entries.
+		Custom="$Custom ${Device##*/}"
+		printf "%-15s %s\n" "$Device" "$Line" >> "$TMP"
+		;;
+
+		"#"*) # Comments
+		echo "$Device $Line" >> "$TMP"
+		;;
+
+		*) # Base entries, proc, sysfs, tmpfs, ...
+		printf "%-15s %s\n" "$Device" "$Line" >> "$TMP"
+		;;
+	esac
+done < /etc/fstab
+
+# Loop through block devices
+DevList=""
+while read -r DEVMAJOR DEVMINOR BLOCKS DEVNAME
+do
+	#  name  and  ""  filter out header and blank lines.
+	case $DEVNAME in
+		*loop*|*ram*|name|"")
+		continue
+		;;
+	esac
+
+	# Custom mounts were already processed.
+	case "$Custom" in
+		*"$DEVNAME"*)
+		continue
+		;;
+	esac
+
+	MOUNTPOINT="/mnt/$DEVNAME"
+	OPTIONS="noauto,users,exec"
+	FSTYPE=""
+
+	# Set removable devices to auto.
+	case "$CDROMS" in *"$DEVROOT/$DEVNAME"*) FSTYPE="auto" ;; esac
+	# Avoid probing floppy drives.
+	[ $DEVMAJOR -eq 2 ] && FSTYPE="auto"
+
+	if [ "$FSTYPE" == "auto" ]
+	then
+		printf "%-15s %-15s %-8s %-20s %-s\n" "$DEVROOT/$DEVNAME" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" "0 0 $ADDEDBY" >> "$TMP"
+		mkdir -p "$MOUNTPOINT" 2>/dev/null >/dev/null
+		continue
+	fi
+
+	# Remaining devices get collected here.
+	DevList="$DevList $DEVROOT/$DEVNAME"
+done < /proc/partitions
+
+if [ -n "$DevList" ]; then
+	blkid -s TYPE $DevList | tr -d ':"' | while read -r DEVNAME TYPE
+	do
+		MOUNTPOINT="/mnt/${DEVNAME##*/}"
+		FSTYPE="${TYPE#*=}"
+		OPTIONS="noauto,users,exec"
+
+		# Skip these file system types.
+		case "$FSTYPE" in linux_raid_member|LVM2_member|zfs_member) continue;  ;; esac
+
+		case "$FSTYPE" in
+			ntfs) checkntfs ;;
+			vfat|msdos) OPTIONS="${OPTIONS},umask=000" ;;
+			swap) OPTIONS="defaults"; MOUNTPOINT="none" ;;
+		esac
+
+		if [ "$MOUNTPOINT" != "none" ]; then
+			mkdir -p "$MOUNTPOINT" 2>/dev/null >/dev/null
+		fi
+
+		# Add entry to new fstab file.
+		printf "%-15s %-15s %-8s %-20s %-s\n" "$DEVNAME" "$MOUNTPOINT" "$FSTYPE" "$OPTIONS" "0 0 $ADDEDBY" >> "$TMP"
+	done
+fi
+
+# Move new fstab file to its proper location.
+mv -f "$TMP" /etc/fstab
+
+# Clean up
+rm -f /var/run/rebuildfstab.pid
+sync
+
+# If another copy tried to run while we were running, rescan.
+if [ -e /var/run/rebuildfstab.rescan ]; then
+  rm -f /var/run/rebuildfstab.rescan
+  exec $0 "$@"
+fi
