@@ -3830,7 +3830,18 @@ function backuploader() {
         fi
         
     else
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+        if is_alpine; then
+            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 원본
+            # tar -T 명령이 그대로 실패/빈 아카이브를 만듦(실측 확인, 2026-07-12).
+            # Alpine의 실제 영속화는 lbu(apkovl)이므로 여기서 lbu commit을 호출해
+            # 대신하고, mydata.tgz는 빈 플레이스홀더만 남겨 이후 STEP들이 깨지지
+            # 않게 한다(부팅 시 읽는 쪽은 apkovl이지 mydata.tgz가 아님).
+            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            sudo lbu commit -d
+            sudo sh -c "echo '' | tar -cf - -T /dev/null | pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null
+        else
+            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+        fi
     fi
     
     echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
