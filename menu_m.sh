@@ -1435,10 +1435,26 @@ TERMTYPE=`/usr/bin/tty`
 [ ! -f /etc/sysconfig/Xserver ] ||
 [ -f /etc/sysconfig/text ] ||
 [ -e /tmp/.X11-unix/X0 ] ||
-startx
+{
+  _n=0
+  while [ $_n -lt 3 ]; do
+    startx && break
+    _n=$((_n+1))
+    sleep 1
+  done
+}
 )
 PROFILEX
     fi
+
+    # sshd는 지금까지 openssh apk 설치 시 우연히 활성화된 상태에 의존하고 있었을 뿐,
+    # 저장소 코드 어디에도 rc-update 등록이 없었다(2026-07-12 확인). apkovl 없이 새로
+    # 굽는 이미지에서도 tc 자동로그인 시점에 sshd/ttyd가 이미 떠 있도록 default
+    # 런레벨에 명시적으로 등록한다. OpenRC는 inittab의 getty 스폰 라인 전에
+    # `::wait:/sbin/openrc default`로 전체 default 런레벨을 기다리므로, sshd/local이
+    # 여기 등록되어 있기만 하면 tc 로그인 시점엔 이미 기동이 끝난 상태가 보장된다.
+    sudo rc-update add sshd default 2>&1 | grep -v "already"
+    sudo rc-update add local default 2>&1 | grep -v "already"
 
     echo "Checking ttyd/OpenRC local.d autostart ..."
     sudo mkdir -p /etc/local.d
