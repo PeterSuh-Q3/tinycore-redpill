@@ -1386,6 +1386,14 @@ export WM_PID=\$!
 [ -d "\$HOME/.X.d" ] && find "\$HOME/.X.d" -type f -o -type l | sort | while read F; do . "\$F"; done
 export LANG=${ucode}.UTF-8
 export LC_ALL=${ucode}.UTF-8
+# xinit은 X 소켓 생성까지만 기다리고 클라이언트를 곧장 실행하는데, 서버가 입력장치
+# 프로빙(vmmouse/libinput 등)을 마무리하기 전에 lxterminal이 접속을 시도하면
+# "cannot open display"로 즉시 죽는 경우가 실측됨(2026-07-12, AHCI 부팅에서 간헐 재현).
+# xdpyinfo로 실제 접속 가능 여부를 확인한 뒤 클라이언트를 띄워 이 경합을 없앤다.
+for i in 1 2 3 4 5 6 7 8 9 10; do
+    xdpyinfo >/dev/null 2>&1 && break
+    sleep 0.5
+done
 lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" --command="/home/tc/menu.sh" &
 lxterminal --geometry=78x32+525+0 --title="TCRP Monitor" --command="/home/tc/monitor.sh" &
 lxterminal --geometry=78x25+10+430 --title="TCRP Build Status" --command="/home/tc/ntp.sh" &
