@@ -102,13 +102,17 @@ function gitclone() {
 }
 
 # redpill-load의 확장(extension) 다운로드 함수 rpt_download_remote()는
-# include/file.sh 안에 curl --retry 5 로 이미 재시도가 있지만 --retry-all-errors
-# 가 빠져있어 특정 순간적 오류(DNS/연결 실패 등, 2026-07-12 실측: eudev 확장
-# 다운로드 실패로 로더 빌드 전체가 errorcode 99로 실패)에 재시도 커버리지가
-# 약함. clone/pull 직후 재시도 파라미터를 강화해 안정성을 높인다.
+# include/file.sh 안에서 curl -kns ...(-n = --netrc)를 쓰는데, Alpine의
+# musl-curl(8.21.0 실측)은 ~/.netrc 파일이 없으면 이를 무시하지 않고
+# CURLE_READ_ERROR(exit 26)로 즉시 실패시킴 - glibc curl과 다른 동작.
+# --retry를 아무리 늘려도 매 시도가 동일하게 즉시 실패하므로 재시도로는
+# 해결 안 되고 -n 자체를 제거해야 함(2026-07-12 실측: -n 있으면 매번
+# exit 26, 제거하면 즉시 성공 확인). --retry-all-errors도 함께 강화해
+# 이 문제 외의 다른 순간적 네트워크 오류에 대한 재시도 커버리지를 높인다.
 function patch_rpt_download_retry() {
     local f="/home/tc/redpill-load/include/file.sh"
     [ -f "$f" ] || return 0
+    sed -i 's/-kns --location/-ks --location/' "$f"
     sed -i 's/--retry 5 /--retry 8 --retry-delay 3 --retry-all-errors /' "$f"
 }
 
