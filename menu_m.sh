@@ -1438,7 +1438,10 @@ TERMTYPE=`/usr/bin/tty`
 {
   _n=0
   while [ $_n -lt 3 ]; do
-    startx && break
+    _t0=`date +%s`
+    startx
+    _t1=`date +%s`
+    [ $((_t1 - _t0)) -ge 3 ] && break
     _n=$((_n+1))
     sleep 1
   done
