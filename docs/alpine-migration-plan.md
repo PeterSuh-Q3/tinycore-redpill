@@ -121,11 +121,31 @@ loader에서 실행되고 apk 대체가 없는 유일 항목.
 
 ---
 
-## 4. 폐기 스택
+## 4. 폐기 스택 (개정: X11은 유지, urxvt만 교체)
 
-ttyd 단일화로 X11/콘솔 로케일 경로 전체가 불필요해진다. 이식 시 제거 대상:
+> **2026-07-12 결정 번복**: 초기엔 "X11을 쓰면 musl에서 glibc 로케일이 강제된다"고 판단해
+> X11 전체를 폐기 대상으로 잡았으나, 이는 **TinyCore 특유의 구식 urxvt+glibc 조합 문제였지
+> X11 자체의 제약이 아님**이 실측으로 확인됨. Alpine은 musl 위에서 `xorg-server`를 apk
+> 네이티브로 지원하고, `lxterminal`(GTK/VTE, Pango+fontconfig 렌더링)은 glibc 로케일
+> 없이도 CJK를 정상 렌더링한다(스크린샷 실측 — "안녕하세요_한글테스트" 정상 표시,
+> Xvfb+xwd로 캡처 확인). 따라서 **X11은 유지하고 urxvt/aterm만 lxterminal로 교체**하는
+> 쪽으로 방향을 수정한다. ttyd는 원격 접속 경로로 계속 병행 유지.
 
-`glibc_apps` · `glibc_i18n_locale` · `unifont` · `rxvt`/`urxvt` · `setfont` · `kmaps` · `.xsession` · X11 전체 · `LANG`/`LC_ALL` 로케일 설정
+폐기 대상은 다음으로 축소된다 — **glibc 커플링 패키지만** 제거하고 X11 자체는 유지:
+
+`glibc_apps` · `glibc_i18n_locale` · `unifont` · `rxvt`/`urxvt` · `aterm` · `setfont` · `kmaps` · `localedef` 호출부
+
+**교체**: `urxvt`/`aterm` → `lxterminal` (`apk lxterminal xorg-server musl-locales musl-locales-lang`).
+`~/.Xdefaults`의 `URxvt.*` 리소스 설정은 GTK 앱에 적용되지 않으므로 함께 제거 —
+lxterminal 설정은 `~/.config/lxterminal/lxterminal.conf` 사용.
+
+**menu_m.sh 반영 지점** (`is_alpine()` 가드):
+- `writexsession()` — `.xsession`에 urxvt 대신 `lxterminal --geometry=... --command=...` 주입,
+  `localedef` 대신 `musl-locales` 패키지로 `LANG=${ucode}.UTF-8` 유효화
+- 태그 재실행부 — 직접 `urxvt -e menu.sh` 호출을 `lxterminal --command=...`로 교체
+- glibc_apps 설치 분기 — `tce-load glibc_apps glibc_i18n_locale unifont rxvt` 대신
+  `apk add lxterminal musl-locales musl-locales-lang xorg-server`
+- `~/.Xdefaults`/`localedef` 블록 — lxterminal에 무의미하므로 `is_alpine`이면 전체 skip
 
 ---
 

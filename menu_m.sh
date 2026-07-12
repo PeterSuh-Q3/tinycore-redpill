@@ -1316,11 +1316,31 @@ function postupdate() {
 
 function writexsession() {
 
-  # Alpine 이식: X11/urxvt/glibc 로케일 스택은 ttyd 단일화 전략으로 폐기(§4).
-  # 아래 ttyd 자동기동 로직도 TinyCore 전용 /opt/bootlocal.sh에 의존하므로 함께 skip.
-  # Alpine 쪽 ttyd 자동기동(OpenRC local.d 등)은 별도 작업으로 이관.
+  # Alpine 이식: X11은 유지하되 urxvt/aterm(glibc_i18n_locale·unifont 의존)을
+  # lxterminal(GTK/VTE, Pango+fontconfig로 CJK 렌더링, glibc 로케일 불필요)로 교체.
+  # localedef(glibc 전용)는 musl-locales 패키지로 대체.
   if is_alpine; then
-    echo "[alpine] writexsession skipped — X11/.xsession/bootlocal.sh not applicable."
+    echo "[alpine] writexsession: urxvt/aterm -> lxterminal 로 대체하여 주입."
+    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server >/dev/null 2>&1
+
+    sed -i "/locale/d;/utf8/d;/UTF-8/d;/aterm/d;/urxvt/d;/lxterminal/d" .xsession
+
+    echo "export LANG=${ucode}.UTF-8" >> .xsession
+    echo "export LC_ALL=${ucode}.UTF-8" >> .xsession
+
+    echo "lxterminal --geometry=78x32+10+0 --title=\"TCRP-mshell Menu\" --command=\"/home/tc/menu.sh\" &" >> .xsession
+    sed -i "/rploader/d" .xsession
+    echo "lxterminal --geometry=78x32+525+0 --title=\"TCRP Monitor\" --command=\"/home/tc/monitor.sh\" &" >> .xsession
+    echo "lxterminal --geometry=78x25+10+430 --title=\"TCRP Build Status\" --command=\"/home/tc/ntp.sh\" &" >> .xsession
+    echo "lxterminal --geometry=78x25+525+430 --title=\"TCRP Extra Terminal\" &" >> .xsession
+
+    echo "Checking ttyd/OpenRC local.d autostart ..."
+    sudo mkdir -p /etc/local.d
+    if ! grep -q "ttyd" /etc/local.d/restore-packages.start 2>/dev/null; then
+      echo "'sudo /home/tc/ttyd login -f tc 2>/dev/null &' 를 /etc/local.d/restore-packages.start 에 추가"
+      echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' | sudo tee -a /etc/local.d/restore-packages.start >/dev/null
+      sudo chmod +x /etc/local.d/restore-packages.start
+    fi
     return 0
   fi
 
@@ -2312,8 +2332,9 @@ select_and_run_menu() {
 
     echo ">>> ${SELECTED_TAG}  ${MSG_RUN}"
     if is_alpine; then
-        # ttyd 단일화: 별도 urxvt 창 대신 현재 세션에서 바로 재실행
-        exec /home/tc/menu.sh "${SELECTED_TAG}"
+        # X11 유지 + lxterminal 로 urxvt 대체
+        lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" --command="/home/tc/menu.sh ${SELECTED_TAG}"
+        return 0
     fi
     urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh "${SELECTED_TAG}"
 }
@@ -2587,8 +2608,14 @@ fi
 #     fi
 #fi
 
-# Alpine 이식: glibc_apps/glibc_i18n_locale/unifont/rxvt는 X11 폐기 전략(§4)으로 skip.
-# musl은 로케일 독립 wcwidth를 쓰고 CJK 렌더링은 ttyd(xterm.js) 브라우저 측에서 처리.
+# Alpine 이식: glibc_apps/glibc_i18n_locale/unifont/rxvt(tcz) 대신 apk lxterminal +
+# musl-locales 설치. lxterminal은 Pango+fontconfig로 CJK를 렌더링해 glibc 로케일이
+# 불필요 (X11 자체는 유지, urxvt만 교체).
+if is_alpine; then
+    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server >/dev/null 2>&1
+    echo "lxterminal + musl-locales installed (urxvt replacement)."
+fi
+
 if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -eq 0 ]; then
     tce-load -wi glibc_apps glibc_i18n_locale unifont rxvt
     if [ $? -eq 0 ]; then
@@ -2612,8 +2639,10 @@ fi
 # for 2Byte Language
 [ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale
 
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -gt 0 ]; then
-  
+# Alpine: ~/.Xdefaults의 URxvt.* 리소스 설정과 localedef(glibc 전용)는 lxterminal에는
+# 적용되지 않으므로(GTK 설정은 ~/.config/lxterminal/lxterminal.conf) 전체 skip.
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -gt 0 ]; then
+
   sudo localedef -c -i ${ucode} -f UTF-8 ${ucode}.UTF-8
   sudo localedef -f UTF-8 -i ${ucode} ${ucode}.UTF-8
 
