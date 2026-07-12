@@ -1320,19 +1320,68 @@ function writexsession() {
   # lxterminal(GTK/VTE, Pango+fontconfig로 CJK 렌더링, glibc 로케일 불필요)로 교체.
   # localedef(glibc 전용)는 musl-locales 패키지로 대체.
   if is_alpine; then
-    echo "[alpine] writexsession: urxvt/aterm -> lxterminal 로 대체하여 주입."
-    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server >/dev/null 2>&1
+    echo "[alpine] writexsession: TC startx+.xsession(Xfbdev+waitforX+flwm+urxvt/aterm) 를"
+    echo "         apk 네이티브 등가물(xinit/startx+Xorg-fbdev+flwm+lxterminal)로 재작성."
+    # TC는 손수 짠 Xorg&+waitforX 폴링이 아니라 xinit 기반 startx로 X를 기동한다
+    # (.profile의 TERMTYPE 체크 -> startx 트리거). xinit은 Xauthority/타이밍을
+    # 내부적으로 안전하게 처리하므로, 수작업 Xorg&+xdpyinfo 폴링 방식(비-tty 환경에서
+    # 행 발생 실측됨, 2026-07-12)을 버리고 TC와 동일하게 xinit/startx로 이식한다.
+    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server \
+      xf86-video-fbdev xf86-video-dummy xinit flwm >/dev/null 2>&1
 
-    sed -i "/locale/d;/utf8/d;/UTF-8/d;/aterm/d;/urxvt/d;/lxterminal/d" .xsession
+    # X서버(fbdev) 설정 — TC의 Xfbdev(kdrive 계열 setuid glibc 바이너리)를
+    # 대신할 apk 네이티브 Xorg+xf86-video-fbdev 조합. 실측 검증 완료(2026-07-12):
+    # /dev/fb0 직결로 flwm+lxterminal 한글 렌더링 확인(docs/assets 스크린샷).
+    # Xorg.wrap(suid)은 -config 절대경로를 거부하므로 xorg.conf.d 스니펫으로 배치.
+    sudo mkdir -p /etc/X11/xorg.conf.d
+    sudo tee /etc/X11/xorg.conf.d/10-fbdev.conf > /dev/null << "XCONF"
+Section "Device"
+    Identifier "Framebuffer"
+    Driver "fbdev"
+    Option "fbdev" "/dev/fb0"
+EndSection
+Section "Screen"
+    Identifier "Screen0"
+    Device "Framebuffer"
+EndSection
+XCONF
 
-    echo "export LANG=${ucode}.UTF-8" >> .xsession
-    echo "export LC_ALL=${ucode}.UTF-8" >> .xsession
+    # Xorg.wrap 기본 정책(console 사용자만 허용)을 TC Xfbdev와 동등하게 완화.
+    sudo tee /etc/X11/Xwrapper.config > /dev/null << "XWRAP"
+allowed_users=anybody
+needs_root_rights=yes
+XWRAP
 
-    echo "lxterminal --geometry=78x32+10+0 --title=\"TCRP-mshell Menu\" --command=\"/home/tc/menu.sh\" &" >> .xsession
-    sed -i "/rploader/d" .xsession
-    echo "lxterminal --geometry=78x32+525+0 --title=\"TCRP Monitor\" --command=\"/home/tc/monitor.sh\" &" >> .xsession
-    echo "lxterminal --geometry=78x25+10+430 --title=\"TCRP Build Status\" --command=\"/home/tc/ntp.sh\" &" >> .xsession
-    echo "lxterminal --geometry=78x25+525+430 --title=\"TCRP Extra Terminal\" &" >> .xsession
+    # ~/.xserverrc: startx가 있으면 자동으로 사용 (conf.d가 자동 로드되므로 -config 불필요)
+    cat > .xserverrc << XSERVERRC
+#!/bin/sh
+exec /usr/bin/Xorg -nolisten tcp -noreset "\$@"
+XSERVERRC
+    chmod +x .xserverrc
+
+    # ~/.xinitrc: startx가 X 기동 완료 후 실행하는 클라이언트 스크립트.
+    # TC의 waitforX 폴링은 xinit이 대신 처리하므로 여기엔 불필요.
+    cat > .xinitrc << XINITRC
+flwm 2>/tmp/wm_errors &
+export WM_PID=\$!
+[ -x \$HOME/.setbackground ] && \$HOME/.setbackground
+[ -d "/usr/local/etc/X.d" ] && find "/usr/local/etc/X.d" -type f -o -type l | sort | while read F; do . "\$F"; done
+[ -d "\$HOME/.X.d" ] && find "\$HOME/.X.d" -type f -o -type l | sort | while read F; do . "\$F"; done
+export LANG=${ucode}.UTF-8
+export LC_ALL=${ucode}.UTF-8
+lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" --command="/home/tc/menu.sh" &
+lxterminal --geometry=78x32+525+0 --title="TCRP Monitor" --command="/home/tc/monitor.sh" &
+lxterminal --geometry=78x25+10+430 --title="TCRP Build Status" --command="/home/tc/ntp.sh" &
+lxterminal --geometry=78x25+525+430 --title="TCRP Extra Terminal"
+XINITRC
+    chmod +x .xinitrc
+
+    # .xsession은 TC .profile과의 호환을 위해 startx 위임 래퍼로 유지
+    cat > .xsession << XSESSION
+#!/bin/sh
+exec startx
+XSESSION
+    chmod +x .xsession
 
     echo "Checking ttyd/OpenRC local.d autostart ..."
     sudo mkdir -p /etc/local.d

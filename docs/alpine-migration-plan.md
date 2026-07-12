@@ -140,12 +140,55 @@ loader에서 실행되고 apk 대체가 없는 유일 항목.
 lxterminal 설정은 `~/.config/lxterminal/lxterminal.conf` 사용.
 
 **menu_m.sh 반영 지점** (`is_alpine()` 가드):
-- `writexsession()` — `.xsession`에 urxvt 대신 `lxterminal --geometry=... --command=...` 주입,
-  `localedef` 대신 `musl-locales` 패키지로 `LANG=${ucode}.UTF-8` 유효화
+- `writexsession()` — 아래 4-A 참조. `.xsession`/`.xinitrc`/`.xserverrc` 3파일 재작성
 - 태그 재실행부 — 직접 `urxvt -e menu.sh` 호출을 `lxterminal --command=...`로 교체
 - glibc_apps 설치 분기 — `tce-load glibc_apps glibc_i18n_locale unifont rxvt` 대신
-  `apk add lxterminal musl-locales musl-locales-lang xorg-server`
+  `apk add lxterminal musl-locales musl-locales-lang xorg-server xf86-video-fbdev xinit flwm`
 - `~/.Xdefaults`/`localedef` 블록 — lxterminal에 무의미하므로 `is_alpine`이면 전체 skip
+
+---
+
+## 4-A. .xsession 전체 이식 상세 (Xfbdev/waitforX/flwm)
+
+box(192.168.45.95)의 실제 `.xsession`을 열어보니 `writexsession()`이 생성하는 urxvt/aterm
+호출부 외에, **X 세션 부팅 자체를 담당하는 헤더가 별도로 존재**했다(TC의 X.tcz가 미리 깔아둔
+베이스 템플릿). 이 헤더가 없으면 애초에 X도, WM도, 터미널도 뜨지 않는다 — urxvt→lxterminal
+교체보다 선행되어야 할 더 근본적인 부분이었다.
+
+| TC 원본 구성요소 | 정체(실측) | Alpine 대응 |
+|---|---|---|
+| `Xfbdev -mouse ...` | kdrive 계열 **setuid glibc 동적 바이너리** X서버 | `xorg-server` + `xf86-video-fbdev`(apk 네이티브, musl) |
+| `waitforX` | `XOpenDisplay` 폴링하는 **glibc 동적 바이너리**(strings로 확인) | `xinit`이 내부적으로 처리 — 별도 폴링 스크립트 불필요 |
+| `flwm`(WM) | glibc 동적 바이너리인 줄 알았으나 **apk에 musl 네이티브 빌드로 이미 존재** | `apk add flwm` 그대로 사용(재빌드 불필요) |
+| `urxvt`/`aterm` | glibc_i18n_locale 의존 | `lxterminal` (§4 상단 참조) |
+| `LANG`/`localedef` | glibc 전용 | `musl-locales`/`musl-locales-lang` |
+| `/usr/local/etc/X.d`, `~/.X.d` 훅 디렉터리 | TC 관례, 확장 포인트 | 동일 경로 관례 그대로 이식(현재 비어있어 no-op) |
+| `.profile`의 `startx` 자동기동 트리거(TERMTYPE 체크) | tty1 콘솔 로그인 시 자동 실행 | **미이식** — `.profile`은 이번 범위 밖, 별도 작업 필요 |
+
+**이식 방식 변경 이력**: 처음엔 TC 원본처럼 `Xorg &` + `until xdpyinfo; do sleep; done` 수작업
+폴링으로 이식했으나, **비-tty(SSH/nohup) 환경에서 xdpyinfo가 무기한 행(hang)되는 현상을 실측**
+(정상 상태의 X에 대해 인터랙티브 SSH 명령으로는 즉시 성공하는데 스크립트 내부에서는 걸림).
+TC가 실제로는 `waitforX` 수작업이 아니라 **`.profile` → `startx`(xinit 래퍼)로 기동**한다는
+사실을 뒤늦게 확인하고, `xinit`이 이미 안전하게 처리하는 Xauthority/타이밍 로직을 재발명하지
+않도록 **`startx`/`xinit` 기반으로 교체**했다. 이 과정에서 Alpine 고유의 추가 장벽 2개를
+발견해 제거함:
+1. `/usr/libexec/Xorg.wrap`의 기본 정책이 **"console 사용자만 X 서버 실행 허용"** —
+   TC의 `Xfbdev`는 이런 제약이 없는 setuid 바이너리였으므로 `/etc/X11/Xwrapper.config`에
+   `allowed_users=anybody`로 동등하게 완화.
+2. Xorg.wrap(suid)이 **`-config`에 절대경로를 거부**(`With elevated privileges -config
+   must specify a relative path`) — `/etc/X11/xorg.conf.d/10-fbdev.conf` 스니펫으로
+   전환해 `-config` 플래그 자체를 제거(Xorg가 자동 로드).
+
+**실측 검증 상태**:
+- ✅ **완료**: Xorg(fbdev)+flwm+lxterminal 조합의 실제 렌더링 — Xvfb/수동 Xorg 기동으로
+  한글 CJK 정상 표시 스크린샷 2매 확보(`docs/assets/lxterminal-korean-render-poc.png` 외)
+- ⚠️ **미완료**: `startx` 자동 기동 체인의 완전한 end-to-end 검증. 원인은 이식 결함이
+  아니라 **이 PoC VM이 `console=ttyS0 -display none`(시리얼 전용) 구성이라 실제 VT가
+  없기 때문** — Alpine의 Xorg.wrap/xinit은 진짜 콘솔(VT) 세션을 전제로 동작한다.
+  물리 하드웨어 또는 `-vga std` 등 실제 그래픽 콘솔이 있는 qemu 구성에서 재검증 필요.
+
+**리포 자산**: `alpine/xorg.conf.d-10-fbdev.conf`, `alpine/Xwrapper.config`
+(둘 다 `writexsession()`이 동일 내용을 인라인 생성하므로 참조용 사본).
 
 ---
 
