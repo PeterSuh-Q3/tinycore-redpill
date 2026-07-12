@@ -1331,6 +1331,16 @@ function writexsession() {
     sudo apk add lxterminal musl-locales musl-locales-lang xorg-server \
       xf86-video-fbdev xf86-video-dummy xinit flwm >/dev/null 2>&1
 
+    # lxterminal 기본값은 메뉴바(File/Edit/Tabs/Help)가 노출된다. 4창 배포팩 레이아웃은
+    # 화면 공간이 좁고(78x32~78x25) 메뉴바가 불필요하므로 끈다. hidemenubar=true로 설정하면
+    # 메뉴는 사라지고 F10/우클릭으로 여전히 접근 가능(disablef10=false 유지).
+    # 최초 부팅 시 lxterminal.conf가 아직 없을 수 있으므로 패키지 기본값을 복사해 생성한다
+    # (DISPLAY 없이도 동작해야 하므로 lxterminal 프로세스를 띄워 생성시키지 않는다).
+    mkdir -p ~/.config/lxterminal
+    [ -f ~/.config/lxterminal/lxterminal.conf ] || \
+      cp /usr/share/lxterminal/lxterminal.conf ~/.config/lxterminal/lxterminal.conf
+    sed -i 's/^hidemenubar=.*/hidemenubar=true/' ~/.config/lxterminal/lxterminal.conf
+
     # X서버(fbdev) 설정 — TC의 Xfbdev(kdrive 계열 setuid glibc 바이너리)를
     # 대신할 apk 네이티브 Xorg+xf86-video-fbdev 조합. 실측 검증 완료(2026-07-12):
     # /dev/fb0 직결로 flwm+lxterminal 한글 렌더링 확인(docs/assets 스크린샷).
