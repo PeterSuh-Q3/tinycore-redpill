@@ -183,7 +183,9 @@ else
 fi
 
 # update tinycore 14.0 2023.12.18
-if [ "$FRKRNL" = "NO" ]; then
+# Alpine 이식: update_tinycore/update_motd 는 TC 14.0 자체 부트이미지(corepure64.gz/
+# vmlinuz64)와 TC 전용 motd 배너를 대상으로 하는 순수 TinyCore 기능이라 skip.
+if ! is_alpine && [ "$FRKRNL" = "NO" ]; then
     update_tinycore
     update_motd
 fi
@@ -2547,7 +2549,8 @@ function showAutoUpdateMenu() {
 # Main loop ###########################################################################################
 
 # Fix bug /opt/bootlocal.sh ownership 2025.09.15
-sudo chown tc:118 /opt/bootlocal.sh
+# Alpine엔 이 TC 전용 부팅훅 파일이 없음(대신 /etc/local.d/*.start 사용) → 존재할 때만.
+[ -f /opt/bootlocal.sh ] && sudo chown tc:118 /opt/bootlocal.sh
 
 chk_diskcnt
 writeConfigKey "general" "diskcount" "${DISKCNT}"
@@ -2758,11 +2761,15 @@ if [ "$FRKRNL" = "NO" ] && [ "${ucode}" != "${config_ucode}" ]; then
 fi
 
 # Download ethtool
+# tce-load(shim)는 Alpine에서도 apk로 정상 설치하므로 유지, onboot.lst(TC 전용
+# cde 파티션 기록)만 skip.
 if [ "$FRKRNL" = "NO" ] && [ "$(which ethtool)_" == "_" ]; then
    echo "ethtool does not exist, install from tinycore"
    tce-load -iw ethtool iproute2 2>&1 >/dev/null
-   sudo echo "ethtool.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-   sudo echo "iproute2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+   if ! is_alpine; then
+     sudo echo "ethtool.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+     sudo echo "iproute2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+   fi
 fi
 
 sortnetif
@@ -2884,7 +2891,10 @@ if [ $tcrppart == "mmc3" ]; then
 fi    
 
 # Download dialog
-if [ "$FRKRNL" = "NO" ] && [ "$(which dialog)_" == "_" ]; then
+if is_alpine; then
+    # apk dialog로 직접 설치 - TC .tcz/cde/optional 다운로드 경로는 불필요.
+    [ "$(which dialog)_" == "_" ] && sudo apk add dialog >/dev/null 2>&1
+elif [ "$FRKRNL" = "NO" ] && [ "$(which dialog)_" == "_" ]; then
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz -o /mnt/${tcrppart}/cde/optional/dialog.tcz
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.dep -o /mnt/${tcrppart}/cde/optional/dialog.tcz.dep
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/dialog.tcz.md5.txt
@@ -2898,28 +2908,34 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which dialog)_" == "_" ]; then
 fi
 
 # Download ntpclient
+# Alpine 이식: ntpclient -> chrony 매핑(tce-load shim)이라 `which ntpclient`가
+# 항상 비어있어 재진입하지만, onboot.lst(TC 전용 cde 파티션)에 쓰는 부분만
+# 실패했음(실측, 2026-07-12). tce-load는 shim이 이미 idempotent 처리하므로
+# onboot.lst 기록만 skip.
 if [ "$FRKRNL" = "NO" ] && [ "$(which ntpclient)_" == "_" ]; then
    echo "ntpclient does not exist, install from tinycore"
-   tce-load -iw ntpclient 
-   sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+   tce-load -iw ntpclient
+   ! is_alpine && sudo echo "ntpclient.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download mdadm
-if [ "$FRKRNL" = "NO" ] && [ "$(which mdadm)_" == "_" ]; then  
+if [ "$FRKRNL" = "NO" ] && [ "$(which mdadm)_" == "_" ]; then
     echo "mdadm does not exist, install from tinycore"
-    tce-load -iw mdadm 
-    sudo echo "mdadm.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+    tce-load -iw mdadm
+    ! is_alpine && sudo echo "mdadm.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download sqlite3-bin
-if [ "$FRKRNL" = "NO" ] && [ "$(which sqlite3)_" == "_" ]; then 
+if [ "$FRKRNL" = "NO" ] && [ "$(which sqlite3)_" == "_" ]; then
     echo "sqlite3 does not exist, install from tinycore"
-    tce-load -iw sqlite3-bin 
-    sudo echo "sqlite3-bin.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
-fi    
+    tce-load -iw sqlite3-bin
+    ! is_alpine && sudo echo "sqlite3-bin.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+fi
 
 # Download pigz
-if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
+if is_alpine; then
+    [ "$(which pigz)_" == "_" ] && sudo apk add pigz >/dev/null 2>&1
+elif [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     echo "pigz does not exist, bringing over from repo"
     curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/pigz
     chmod 700 pigz
@@ -2950,7 +2966,9 @@ fi
 getbspatch
 
 # Download kmaps
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | wc -w) -eq 0 ]; then
+# Alpine: 콘솔 keymap이 아니라 X11(xorg)이 키보드 입력을 담당하므로 kmaps.tcz
+# 자체가 불필요 - 전체 skip.
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | wc -w) -eq 0 ]; then
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz -o /mnt/${tcrppart}/cde/optional/kmaps.tcz
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/kmaps.tcz.md5.txt
     tce-load -i kmaps
@@ -2963,24 +2981,26 @@ if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | 
 fi
 
 # Download firmware-broadcom_bnx2x
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware-broadcom_bnx2x | wc -w) -eq 0 ]; then
+# Alpine: apk linux-firmware-broadcom 대응이 별도 필요한 하드웨어 특수 케이스라
+# 현재 범위 밖 - 전체 skip(문서화 필요 시 별도 작업).
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep firmware-broadcom_bnx2x | wc -w) -eq 0 ]; then
     installtcz "firmware-broadcom_bnx2x.tcz"
     echo "Install firmware-broadcom_bnx2x OK !!!"
     backuploader
 fi
 
 # Download btrfs-progs
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep btrfs-progs | wc -w) -eq 0 ]; then
+if [ "$FRKRNL" = "NO" ] && [ "$(which mkfs.btrfs)_" == "_" ]; then
     echo "btrfs-progs does not exist, install from tinycore"
     tce-load -iw btrfs-progs
-    sudo echo "btrfs-progs.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+    ! is_alpine && sudo echo "btrfs-progs.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download lvm2
 if [ "$FRKRNL" = "NO" ] && [ "$(which lvm)_" == "_" ]; then
     echo "lvm2 does not exist, install from tinycore"
     tce-load -iw lvm2
-    sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
+    ! is_alpine && sudo echo "lvm2.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
 fi
 
 # Download zstd
@@ -2991,7 +3011,8 @@ fi
 #fi
 
 # copy tinycore pack and backup, except scsi-6.1.2-tinycore64.tcz
-if [ $(ls /tmp/tce/optional/ | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 ]; then
+# Alpine: /tmp/tce(TC tce-load 스테이징 영역) 자체가 없어 skip.
+if ! is_alpine && [ $(ls /tmp/tce/optional/ 2>/dev/null | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 ]; then
     sudo cp -f /tmp/tce/optional/* /mnt/${tcrppart}/cde/optional
     backuploader
 fi

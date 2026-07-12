@@ -12,6 +12,15 @@ is_alpine() {
   [ -f /etc/alpine-release ]
 }
 
+# fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
+# util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
+# 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
+if is_alpine; then
+  FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
+else
+  FDISK="$FDISK"
+fi
+
 # 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 master(TinyCore
 # 원본, is_alpine 가드가 없음)로 자기 자신을 덮어써 패치가 무력화되는 사고가
 # 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리.
@@ -5635,11 +5644,11 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
-    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
-    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
+    RAID_CNT="$(sudo $FDISK -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo $FDISK -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo $FDISK -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo $FDISK -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo $FDISK -l | grep "BIOS" | grep ${1} | wc -l )"
     
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
@@ -5728,7 +5737,7 @@ function inject_loader() {
                   ;;                  
           esac
       fi
-  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+  done < <(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
   echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
 
   SHR=$((SHR + GPT))
@@ -5760,7 +5769,7 @@ function inject_loader() {
   
   [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
-  [ -n "$FIRST_SHR" ] && sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
+  [ -n "$FIRST_SHR" ] && sudo $FDISK -l "${FIRST_SHR}"
 
   do_ex_first=""
   if [ $SHR_EX -eq 1 ]; then
@@ -5823,7 +5832,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6036,7 +6045,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6099,7 +6108,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
     mountpoint -q "${synop3}" && sudo umount ${synop3}
 
-    sudo /usr/local/sbin/fdisk -l "${edisk}"
+    sudo $FDISK -l "${edisk}"
     
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
