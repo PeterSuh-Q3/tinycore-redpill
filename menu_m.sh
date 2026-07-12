@@ -1385,6 +1385,22 @@ exec startx
 XSESSION
     chmod +x .xsession
 
+    # TC ~/.profile의 TERMTYPE(로컬 tty 판별) -> startx 자동기동 트리거를 그대로 이식.
+    # /etc/sysconfig/text 로 비활성화 가능, 이미 X가 떠있으면(/tmp/.X11-unix/X0) 재실행 안 함.
+    if ! grep -q "TERMTYPE" .profile 2>/dev/null; then
+      echo "Inject TERMTYPE auto-startx trigger into ~/.profile (Alpine)."
+      cat >> .profile << 'PROFILEX'
+
+TERMTYPE=`/usr/bin/tty`
+[ "${TERMTYPE:5:3}" = "tty" ] && (
+[ ! -f /etc/sysconfig/Xserver ] ||
+[ -f /etc/sysconfig/text ] ||
+[ -e /tmp/.X11-unix/X0 ] ||
+startx
+)
+PROFILEX
+    fi
+
     echo "Checking ttyd/OpenRC local.d autostart ..."
     sudo mkdir -p /etc/local.d
     if ! grep -q "ttyd" /etc/local.d/restore-packages.start 2>/dev/null; then
