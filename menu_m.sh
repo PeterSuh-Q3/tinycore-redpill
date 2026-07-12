@@ -2181,9 +2181,9 @@ function chk_diskcnt() {
 
   DISKCNT=0
 
-  fdisk_path="/sbin/fdisk"
-
-  [ "$FRKRNL" = "NO" ] && fdisk_path="/usr/local${fdisk_path}"
+  # functions.sh 의 $FDISK(Alpine: /sbin/fdisk, TC: 아래 FRKRNL 분기)를 재사용.
+  fdisk_path="${FDISK:-/sbin/fdisk}"
+  ! is_alpine && [ "$FRKRNL" = "NO" ] && fdisk_path="/usr/local/sbin/fdisk"
 
   for edisk in $(sudo ${fdisk_path} -l | grep "Disk /dev/sd" | awk '{print $2}' | sed 's/://'); do
     if [ $(sudo ${fdisk_path} -l | grep "83 Linux" | grep ${edisk} | wc -l) -gt 0 ]; then
