@@ -57,6 +57,7 @@
 | ethtool (11) · lvm (14) | `ethtool` `lvm2` | 그대로 |
 | mkfs.vfat (8) | `dosfstools` | 그대로 |
 | mksquashfs (2) | `squashfs-tools` | 그대로 |
+| lspci | `pciutils` | **추가(2026-07-12 실측)**: menu_m.sh의 `lspci -d ::107`(scsi-tinycore64 분기) 호출, 원 매핑표에서 누락됐던 항목 |
 | bash · sudo | `bash` `sudo`\|`doas` | 전 스크립트 bash 전제 → 필수 설치 |
 | **glibc_i18n_locale** | 없음 → `LANG=C.UTF-8` | musl는 로케일 독립 UTF-8, 폐기 |
 
