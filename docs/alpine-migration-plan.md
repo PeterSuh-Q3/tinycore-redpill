@@ -58,6 +58,9 @@
 | mkfs.vfat (8) | `dosfstools` | 그대로 |
 | mksquashfs (2) | `squashfs-tools` | 그대로 |
 | lspci | `pciutils` | **추가(2026-07-12 실측)**: menu_m.sh의 `lspci -d ::107`(scsi-tinycore64 분기) 호출, 원 매핑표에서 누락됐던 항목 |
+| git (30, addon_gitdown 등) | `git` | **추가(2026-07-12 실측)**: functions.sh의 redpill-load/tcrp-addons git clone 경로 |
+| udevadm (1) | `eudev` | **추가(2026-07-12 실측)**: functions.sh의 로더 디스크 버스 타입 판별(`udevadm info --query property`) |
+| rsync (2) | `rsync` | **추가(2026-07-12 실측)**: pat 추출/백업 fallback 경로 |
 | bash · sudo | `bash` `sudo`\|`doas` | 전 스크립트 bash 전제 → 필수 설치 |
 | **glibc_i18n_locale** | 없음 → `LANG=C.UTF-8` | musl는 로케일 독립 UTF-8, 폐기 |
 
