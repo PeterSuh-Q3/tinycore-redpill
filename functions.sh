@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.1"
+rploaderver="1.4.0.0"
 build="master"
 redpillmake="prod"
 
@@ -274,6 +274,12 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
+    1.4.0.0 Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
+             Pre-investigation completed via 3 rounds of live measurement on a TinyCore 14.0 box: confirmed glibc 2.36
+             runtime, mapped tce-load package calls to apk equivalents, and classified prebuilt binaries by link type
+             (static/apk-replaceable/DSM-internal/custom). Decided to standardize on ttyd as the single terminal path,
+             dropping the urxvt/X11 + glibc locale stack. No showstopper risk found; kpatch/gcompat functional test is
+             the only remaining open item. See docs/alpine-migration-plan.md for the full plan.
     --------------------------------------------------------------------------------------
 EOF
 }

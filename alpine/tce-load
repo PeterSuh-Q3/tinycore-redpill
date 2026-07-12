@@ -1,0 +1,34 @@
+#!/bin/sh
+# tce-load 호환 shim: TinyCore .tcz 요청을 Alpine apk 패키지로 매핑해 설치.
+# docs/alpine-migration-plan.md §2 매핑표 기반.
+map_pkg() {
+  case "$1" in
+    e2fsprogs) echo e2fsprogs ;;
+    mdadm) echo mdadm ;;
+    ntpclient) echo chrony ;;
+    grub2-multi) echo grub ;;
+    gdisk) echo gptfdisk ;;
+    bc) echo bc ;;
+    dosfstools) echo dosfstools ;;
+    gettext) echo gettext ;;
+    sqlite3-bin) echo sqlite ;;
+    btrfs-progs) echo btrfs-progs ;;
+    lvm2) echo lvm2 ;;
+    ethtool) echo ethtool ;;
+    iproute2) echo iproute2 ;;
+    *) echo "$1" ;;
+  esac
+}
+for arg in "$@"; do
+  case "$arg" in
+    -*) continue ;;
+  esac
+  pkg="${arg%.tcz}"
+  apkpkg="$(map_pkg "$pkg")"
+  if apk info -e "$apkpkg" >/dev/null 2>&1; then
+    echo "[tce-load-shim] $pkg -> $apkpkg (already installed)"
+  else
+    echo "[tce-load-shim] $pkg -> apk add $apkpkg"
+    apk add "$apkpkg" >/dev/null 2>&1 || echo "[tce-load-shim] WARN: apk add $apkpkg failed (no apk equivalent?)"
+  fi
+done
