@@ -101,10 +101,21 @@ function gitclone() {
     git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
 }
 
+# redpill-load의 확장(extension) 다운로드 함수 rpt_download_remote()는
+# include/file.sh 안에 curl --retry 5 로 이미 재시도가 있지만 --retry-all-errors
+# 가 빠져있어 특정 순간적 오류(DNS/연결 실패 등, 2026-07-12 실측: eudev 확장
+# 다운로드 실패로 로더 빌드 전체가 errorcode 99로 실패)에 재시도 커버리지가
+# 약함. clone/pull 직후 재시도 파라미터를 강화해 안정성을 높인다.
+function patch_rpt_download_retry() {
+    local f="/home/tc/redpill-load/include/file.sh"
+    [ -f "$f" ] || return 0
+    sed -i 's/--retry 5 /--retry 8 --retry-delay 3 --retry-all-errors /' "$f"
+}
+
 function gitdownload() {
 
     cd /home/tc
-    git config --global http.sslVerify false    
+    git config --global http.sslVerify false
     if [ -d /home/tc/redpill-load ]; then
         echo "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
@@ -112,13 +123,13 @@ function gitdownload() {
         if [ $? -ne 0 ]; then
            cd /home/tc
            rploader clean
-           gitclone    
-        fi   
+           gitclone
+        fi
         cd /home/tc
     else
         gitclone
     fi
-    
+    patch_rpt_download_retry
 }
 
 function mmc_modprobe() {
