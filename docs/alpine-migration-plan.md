@@ -60,6 +60,8 @@
 | lspci | `pciutils` | **추가(2026-07-12 실측)**: menu_m.sh의 `lspci -d ::107`(scsi-tinycore64 분기) 호출, 원 매핑표에서 누락됐던 항목 |
 | git (30, addon_gitdown 등) | `git` | **추가(2026-07-12 실측)**: functions.sh의 redpill-load/tcrp-addons git clone 경로 |
 | udevadm (1) | `eudev` | **추가(2026-07-12 실측)**: functions.sh의 로더 디스크 버스 타입 판별(`udevadm info --query property`) |
+| sed(-s 옵션) | `sed`(GNU sed 4.9) | **추가(2026-07-12 실측)**: busybox sed는 `-s` 미지원(`unrecognized option`) → apk sed로 교체 필요. `/usr/bin` PATH 우선순위로 자동 해결 |
+| bspatch | 없음(gcompat) | **추가(2026-07-12 실측)**: apk에 bsdiff/bspatch 패키지 자체가 없음 → `tools/bspatch`(glibc)를 gcompat+libbz2 SONAME 심볼릭 링크로 실행(§5-A) |
 | rsync (2) | `rsync` | **추가(2026-07-12 실측)**: pat 추출/백업 fallback 경로 |
 | bash · sudo | `bash` `sudo`\|`doas` | 전 스크립트 bash 전제 → 필수 설치 |
 | **glibc_i18n_locale** | 없음 → `LANG=C.UTF-8` | musl는 로케일 독립 UTF-8, 폐기 |
@@ -209,6 +211,14 @@ apk add gcompat
 1. sgerrand glibc-compat 패키지(실제 glibc를 `/usr/glibc-compat`에 설치)
 2. glibc chroot에서 실행
 3. musl static 재빌드 (소스 필요)
+
+**§5-A. gcompat 실측 성공 사례 — bspatch (2026-07-12)**: kpatch와 동일 카테고리(glibc
+동적 바이너리)인 `tools/bspatch`로 gcompat 경로를 실제 검증. `apk add gcompat`만으로는
+`libc.so.6`/`ld-linux`는 해결됐으나 `libbz2.so.1.0`이 없어 실패 — Alpine의 `libbz2`
+패키지는 SONAME이 `libbz2.so.1`(`.1.0.8`로 심볼릭)이라 정확한 문자열이 불일치했던 것.
+`ln -sf /usr/lib/libbz2.so.1.0.8 /usr/lib/libbz2.so.1.0` 호환 심볼릭 링크로 완전 해결,
+`bspatch` 정상 실행 확인(사용법 메시지 출력). **kpatch도 유사한 SONAME 불일치 가능성을
+염두에 두고 같은 패턴(gcompat + 필요 시 심볼릭 링크 보정)으로 접근할 것.**
 
 ---
 
