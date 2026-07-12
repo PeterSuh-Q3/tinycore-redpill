@@ -2628,7 +2628,12 @@ fi
 
 [ "$FRKRNL" = "NO" ] && writexsession
 
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep gettext | wc -w) -eq 0 ]; then
+# Alpine 이식: gettext는 이미 apk 매핑에서 설치되지만, 이 블록은 TC 전용
+# onboot.lst/cde 파티션 영속화 + backuploader+restart(재부팅)까지 포함하는
+# TinyCore 고유 흐름이라 is_alpine이면 skip. 실측 발견(2026-07-12): 가드
+# 누락으로 tce-load shim이 gettext apk 설치를 성공시켜 exit 0 -> 조건 충족
+# -> 불필요한 backuploader+재부팅이 실제로 발생함(menu.sh 대화형 실행 중 확인).
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep gettext | wc -w) -eq 0 ]; then
     tce-load -wi gettext
     if [ $? -eq 0 ]; then
         echo "Download gettext.tcz OK, Permanent installation progress !!!"
@@ -2762,7 +2767,9 @@ fi
 
 sortnetif
 
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep "kmaps.tczglibc_apps.tcz" | wc -w) -gt 0 ]; then
+# Alpine엔 onboot.lst 자체가 없어 grep이 항상 0을 반환해 자연히 비활성화되지만
+# backuploader+restart(재부팅)를 포함하므로 명시적으로도 가드.
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep "kmaps.tczglibc_apps.tcz" | wc -w) -gt 0 ]; then
     sudo sed -i "/kmaps.tczglibc_apps.tcz/d" /mnt/${tcrppart}/cde/onboot.lst    
     sudo echo "glibc_apps.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
     sudo echo "kmaps.tcz" >> /mnt/${tcrppart}/cde/onboot.lst
