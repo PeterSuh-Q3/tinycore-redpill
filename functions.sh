@@ -3,7 +3,6 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.4.0.0"
-build="master"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -12,6 +11,15 @@ redpillmake="prod"
 is_alpine() {
   [ -f /etc/alpine-release ]
 }
+
+# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 master(TinyCore
+# 원본, is_alpine 가드가 없음)로 자기 자신을 덮어써 패치가 무력화되는 사고가
+# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리.
+if is_alpine; then
+  build="alpine-redpill"
+else
+  build="master"
+fi
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
@@ -27,7 +35,7 @@ configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/my.sh.gz"
 
 #Defaults
 smallfixnumber="0"
