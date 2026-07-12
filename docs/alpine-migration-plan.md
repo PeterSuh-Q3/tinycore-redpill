@@ -44,7 +44,8 @@
 | jq (322) · curl (224) | `jq` `curl` | 그대로 |
 | dialog (134) | `dialog` `ncurses` | CJK 폭은 musl wcwidth가 처리, 렌더는 ttyd |
 | cpio (76) | `cpio` | initramfs 조작 → GNU cpio 권장 |
-| fdisk·sgdisk (68·6) | `util-linux` `gptfdisk` | 그대로 |
+| fdisk (68) | `util-linux` | 그대로 |
+| sgdisk (6) | `sgdisk` | **정정(2026-07-12 실측)**: `gptfdisk`는 gdisk/cgdisk/fixparts만 제공, sgdisk 바이너리 없음 — apk에 `sgdisk`라는 별도 패키지 존재, 그것을 설치 |
 | losetup·blkid (39·32) | `util-linux` | 그대로 |
 | pigz·xz·zstd (66·30·29) | `pigz` `xz` `zstd` | 그대로 |
 | smartctl (38) | `smartmontools` | 그대로 |
