@@ -109,7 +109,11 @@ function gitclone() {
 # 해결 안 되고 -n 자체를 제거해야 함(2026-07-12 실측: -n 있으면 매번
 # exit 26, 제거하면 즉시 성공 확인). --retry-all-errors도 함께 강화해
 # 이 문제 외의 다른 순간적 네트워크 오류에 대한 재시도 커버리지를 높인다.
+# TC(glibc curl 7.67.0, box 실측)에도 ~/.netrc가 없어 -n이 원래도 사실상
+# no-op이었을 가능성이 높지만, "아마 무해하다"에 기대지 않고 TC 동작을
+# 그대로 보존하기 위해 is_alpine일 때만 패치를 적용한다.
 function patch_rpt_download_retry() {
+    is_alpine || return 0
     local f="/home/tc/redpill-load/include/file.sh"
     [ -f "$f" ] || return 0
     sed -i 's/-kns --location/-ks --location/' "$f"
