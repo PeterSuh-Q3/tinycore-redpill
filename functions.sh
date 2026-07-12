@@ -6,6 +6,13 @@ rploaderver="1.4.0.0"
 build="master"
 redpillmake="prod"
 
+# Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
+# X11/urxvt/glibc 로케일 스택과 TinyCore 커널 전용 .tcz(scsi-*-tinycore64 등) 분기를
+# Alpine 환경에서 건너뛰기 위해 사용.
+is_alpine() {
+  [ -f /etc/alpine-release ]
+}
+
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
 

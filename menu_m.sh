@@ -9,13 +9,15 @@ set -u # Unbound variable errors are not allowed
 #####################################################################################################
 export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
-if [ ! -f "/etc/init.d/tc-functions" ]; then
+# Alpine 이식: /etc/init.d/tc-functions는 TinyCore 전용 복구 스크립트라 Alpine에 존재하지
+#않는 게 정상이며, tinycorelinux.net에서 받아올 필요도 없음. is_alpine()이면 이 체크를 skip.
+if ! is_alpine && [ ! -f "/etc/init.d/tc-functions" ]; then
   echo "/etc/init.d/tc-functions is missing recover file..."
   sudo /usr/local/bin/curl -kL https://raw.githubusercontent.com/tinycorelinux/Core-scripts/refs/heads/master/etc/init.d/tc-functions -o /etc/init.d/tc-functions
   source /etc/init.d/tc-functions
-  sudo filetool.sh -b 
+  sudo filetool.sh -b
   exit
-fi  
+fi
 
 kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) epyc7003ntb(DT) epyc7003(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
@@ -1314,6 +1316,14 @@ function postupdate() {
 
 function writexsession() {
 
+  # Alpine 이식: X11/urxvt/glibc 로케일 스택은 ttyd 단일화 전략으로 폐기(§4).
+  # 아래 ttyd 자동기동 로직도 TinyCore 전용 /opt/bootlocal.sh에 의존하므로 함께 skip.
+  # Alpine 쪽 ttyd 자동기동(OpenRC local.d 등)은 별도 작업으로 이관.
+  if is_alpine; then
+    echo "[alpine] writexsession skipped — X11/.xsession/bootlocal.sh not applicable."
+    return 0
+  fi
+
   echo "Inject urxvt menu.sh into /home/tc/.xsession."
 
   sed -i "/locale/d" .xsession
@@ -2301,6 +2311,10 @@ select_and_run_menu() {
     local SELECTED_TAG="${TAGS[$IDX]}"
 
     echo ">>> ${SELECTED_TAG}  ${MSG_RUN}"
+    if is_alpine; then
+        # ttyd 단일화: 별도 urxvt 창 대신 현재 세션에서 바로 재실행
+        exec /home/tc/menu.sh "${SELECTED_TAG}"
+    fi
     urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh "${SELECTED_TAG}"
 }
 
@@ -2573,7 +2587,9 @@ fi
 #     fi
 #fi
 
-if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -eq 0 ]; then
+# Alpine 이식: glibc_apps/glibc_i18n_locale/unifont/rxvt는 X11 폐기 전략(§4)으로 skip.
+# musl은 로케일 독립 wcwidth를 쓰고 CJK 렌더링은 ttyd(xterm.js) 브라우저 측에서 처리.
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep rxvt | wc -w) -eq 0 ]; then
     tce-load -wi glibc_apps glibc_i18n_locale unifont rxvt
     if [ $? -eq 0 ]; then
         echo "Download glibc_apps.tcz and glibc_i18n_locale.tcz OK, Permanent installation progress !!!"
@@ -2896,7 +2912,9 @@ if [ $(ls /tmp/tce/optional/ | grep -v scsi-6.1.2-tinycore64.tcz | wc -l) -gt 0 
 fi
 
 # Download scsi-6.1.2-tinycore64.tcz
-if [ "$FRKRNL" = "NO" ] && [ $(lspci -d ::107 | wc -l) -gt 0 ]; then
+# Alpine 이식: TinyCore 커널(6.1.2-tinycore64) 전용 .tcz라 apk 대응 없음. Alpine 커널의
+# scsi 모듈은 커널 패키지에 내장되므로 이 블록은 skip. (docs/alpine-migration-plan.md 착수 체크리스트 §kernel)
+if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(lspci -d ::107 | wc -l) -gt 0 ]; then
     tce-load -iw scsi-6.1.2-tinycore64.tcz
 fi
 
