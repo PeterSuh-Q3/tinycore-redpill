@@ -63,6 +63,7 @@
 | sed(-s 옵션) | `sed`(GNU sed 4.9) | **추가(2026-07-12 실측)**: busybox sed는 `-s` 미지원(`unrecognized option`) → apk sed로 교체 필요. `/usr/bin` PATH 우선순위로 자동 해결 |
 | bspatch | 없음(gcompat) | **추가(2026-07-12 실측)**: apk에 bsdiff/bspatch 패키지 자체가 없음 → `tools/bspatch`(glibc)를 gcompat+libbz2 SONAME 심볼릭 링크로 실행(§5-A) |
 | strip | `binutils` | **추가(2026-07-12 실측)**: functions.sh의 redpill 커널 모듈 `strip --strip-debug` 호출(§ REDPILL_MOD_NAME 빌드 경로), 미설치 상태였음 |
+| patch | `patch` | **추가(2026-07-12 실측)**: `zlastbuild.log` 분석으로 발견 — redpill-load 로더 빌드 스크립트가 "Couldn't find patch in your $PATH"로 실패(errorcode 99), 미설치 상태였음 |
 | rsync (2) | `rsync` | **추가(2026-07-12 실측)**: pat 추출/백업 fallback 경로 |
 | bash · sudo | `bash` `sudo`\|`doas` | 전 스크립트 bash 전제 → 필수 설치 |
 | **glibc_i18n_locale** | 없음 → `LANG=C.UTF-8` | musl는 로케일 독립 UTF-8, 폐기 |
