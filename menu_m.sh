@@ -1385,6 +1385,13 @@ exec startx
 XSESSION
     chmod +x .xsession
 
+    # TC는 /etc/sysconfig/Xserver(내용: "Xfbdev")가 베이스 이미지에 기본 포함되어 있어
+    # 이 파일의 존재 자체가 "X 사용 가능" opt-in 신호로 쓰인다(.profile의 TERMTYPE 체크가
+    # 이 파일이 없으면 startx를 아예 건너뜀, 2026-07-12 실측 확인). Alpine은 base 이미지에
+    # 이 파일이 없으므로, X 스택 구성이 끝나는 이 시점에 직접 생성해서 신호를 맞춘다.
+    sudo mkdir -p /etc/sysconfig
+    echo "Xorg" | sudo tee /etc/sysconfig/Xserver >/dev/null
+
     # TC ~/.profile의 TERMTYPE(로컬 tty 판별) -> startx 자동기동 트리거를 그대로 이식.
     # /etc/sysconfig/text 로 비활성화 가능, 이미 X가 떠있으면(/tmp/.X11-unix/X0) 재실행 안 함.
     if ! grep -q "TERMTYPE" .profile 2>/dev/null; then
