@@ -2,9 +2,33 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.1"
-build="master"
+rploaderver="1.4.0.0"
 redpillmake="prod"
+
+# Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
+# X11/urxvt/glibc 로케일 스택과 TinyCore 커널 전용 .tcz(scsi-*-tinycore64 등) 분기를
+# Alpine 환경에서 건너뛰기 위해 사용.
+is_alpine() {
+  [ -f /etc/alpine-release ]
+}
+
+# fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
+# util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
+# 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
+if is_alpine; then
+  FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
+else
+  FDISK="$FDISK"
+fi
+
+# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 master(TinyCore
+# 원본, is_alpine 가드가 없음)로 자기 자신을 덮어써 패치가 무력화되는 사고가
+# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리.
+if is_alpine; then
+  build="alpine-redpill"
+else
+  build="master"
+fi
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
@@ -20,7 +44,7 @@ configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/my.sh.gz"
 
 #Defaults
 smallfixnumber="0"
@@ -274,6 +298,12 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
+    1.4.0.0 Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
+             Pre-investigation completed via 3 rounds of live measurement on a TinyCore 14.0 box: confirmed glibc 2.36
+             runtime, mapped tce-load package calls to apk equivalents, and classified prebuilt binaries by link type
+             (static/apk-replaceable/DSM-internal/custom). Decided to standardize on ttyd as the single terminal path,
+             dropping the urxvt/X11 + glibc locale stack. No showstopper risk found; kpatch/gcompat functional test is
+             the only remaining open item. See docs/alpine-migration-plan.md for the full plan.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1414,6 +1444,47 @@ function getloaderdisk() {
 
     # Output the loader disk
     echo "LOADER DISK: $loaderdisk"
+}
+
+function ensure_loader_partition_mounted() {
+
+    local part="$1"
+    local dev="/dev/${loaderdisk}${part}"
+    local mount_point="/mnt/${loaderdisk}${part}"
+    local media_mount="/media/${loaderdisk}${part}"
+
+    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
+    [ -z "${loaderdisk}" ] && return 1
+
+    sudo mkdir -p "${mount_point}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
+    fi
+
+    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount --bind "${media_mount}" "${mount_point}"
+        return $?
+    fi
+
+    sudo mount "${dev}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
+    fi
+
+    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount --bind "${media_mount}" "${mount_point}"
+        return $?
+    fi
+
+    return 1
+}
+
+function ensure_loader_partitions_mounted() {
+    ensure_loader_partition_mounted 1
+    ensure_loader_partition_mounted 2
+    ensure_loader_partition_mounted 3
 }
 
 # ==============================================================================          
@@ -2886,8 +2957,7 @@ function monitor() {
 
     getBus "${loaderdisk}" 
 
-    [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
-    [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
+    ensure_loader_partitions_mounted
 
     HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
@@ -3327,8 +3397,9 @@ function postupdate() {
     updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
     echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
 
-    echo "Mounting partition ${loaderdisk}1" && sudo mount /dev/${loaderdisk}1
-    echo "Mounting partition ${loaderdisk}2" && sudo mount /dev/${loaderdisk}2
+    echo "Mounting partition ${loaderdisk}1" && ensure_loader_partition_mounted 1
+    echo "Mounting partition ${loaderdisk}2" && ensure_loader_partition_mounted 2
+    echo "Mounting partition ${loaderdisk}3" && ensure_loader_partition_mounted 3
 
     zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
     updateuserconfigfield "general" "zimghash" "$zimghash"
@@ -3809,7 +3880,18 @@ function backuploader() {
         fi
         
     else
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+        if is_alpine; then
+            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 원본
+            # tar -T 명령이 그대로 실패/빈 아카이브를 만듦(실측 확인, 2026-07-12).
+            # Alpine의 실제 영속화는 lbu(apkovl)이므로 여기서 lbu commit을 호출해
+            # 대신하고, mydata.tgz는 빈 플레이스홀더만 남겨 이후 STEP들이 깨지지
+            # 않게 한다(부팅 시 읽는 쪽은 apkovl이지 mydata.tgz가 아님).
+            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            sudo lbu commit -d
+            sudo sh -c "echo '' | tar -cf - -T /dev/null | pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null
+        else
+            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
+        fi
     fi
     
     echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
@@ -5603,11 +5685,11 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
-    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
-    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
+    RAID_CNT="$(sudo $FDISK -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo $FDISK -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo $FDISK -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo $FDISK -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo $FDISK -l | grep "BIOS" | grep ${1} | wc -l )"
     
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
@@ -5696,7 +5778,7 @@ function inject_loader() {
                   ;;                  
           esac
       fi
-  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+  done < <(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
   echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
 
   SHR=$((SHR + GPT))
@@ -5728,7 +5810,7 @@ function inject_loader() {
   
   [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
-  [ -n "$FIRST_SHR" ] && sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
+  [ -n "$FIRST_SHR" ] && sudo $FDISK -l "${FIRST_SHR}"
 
   do_ex_first=""
   if [ $SHR_EX -eq 1 ]; then
@@ -5791,7 +5873,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6004,7 +6086,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6067,7 +6149,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
     mountpoint -q "${synop3}" && sudo umount ${synop3}
 
-    sudo /usr/local/sbin/fdisk -l "${edisk}"
+    sudo $FDISK -l "${edisk}"
     
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
