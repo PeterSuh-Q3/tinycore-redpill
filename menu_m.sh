@@ -1647,8 +1647,8 @@ function i915_edit() {
 
 function defaultchange() {
 
-  [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
-  [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
+  ensure_loader_partition_mounted 1
+  ensure_loader_partition_mounted 2
 
   # Get the list of boot entries and write to /tmp/menub
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
@@ -2903,9 +2903,7 @@ writeConfigKey "general" "bay" "${bay}"
 
 chk_shr_ex
 
-[ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
-[ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
-[ "$(mount | grep /dev/${loaderdisk}3 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}3
+ensure_loader_partitions_mounted
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 _gv=""; kver=""; origin_plat=""; drmmode=""

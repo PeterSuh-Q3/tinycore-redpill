@@ -1446,6 +1446,47 @@ function getloaderdisk() {
     echo "LOADER DISK: $loaderdisk"
 }
 
+function ensure_loader_partition_mounted() {
+
+    local part="$1"
+    local dev="/dev/${loaderdisk}${part}"
+    local mount_point="/mnt/${loaderdisk}${part}"
+    local media_mount="/media/${loaderdisk}${part}"
+
+    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
+    [ -z "${loaderdisk}" ] && return 1
+
+    sudo mkdir -p "${mount_point}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
+    fi
+
+    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount --bind "${media_mount}" "${mount_point}"
+        return $?
+    fi
+
+    sudo mount "${dev}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
+    fi
+
+    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount --bind "${media_mount}" "${mount_point}"
+        return $?
+    fi
+
+    return 1
+}
+
+function ensure_loader_partitions_mounted() {
+    ensure_loader_partition_mounted 1
+    ensure_loader_partition_mounted 2
+    ensure_loader_partition_mounted 3
+}
+
 # ==============================================================================          
 # Color Function                                                                          
 # ==============================================================================          
@@ -2916,9 +2957,7 @@ function monitor() {
 
     getBus "${loaderdisk}" 
 
-    [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
-    [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
-    [ "$(mount | grep /dev/${loaderdisk}3 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}3
+    ensure_loader_partitions_mounted
 
     HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
@@ -3358,8 +3397,9 @@ function postupdate() {
     updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
     echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
 
-    echo "Mounting partition ${loaderdisk}1" && sudo mount /dev/${loaderdisk}1
-    echo "Mounting partition ${loaderdisk}2" && sudo mount /dev/${loaderdisk}2
+    echo "Mounting partition ${loaderdisk}1" && ensure_loader_partition_mounted 1
+    echo "Mounting partition ${loaderdisk}2" && ensure_loader_partition_mounted 2
+    echo "Mounting partition ${loaderdisk}3" && ensure_loader_partition_mounted 3
 
     zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
     updateuserconfigfield "general" "zimghash" "$zimghash"
