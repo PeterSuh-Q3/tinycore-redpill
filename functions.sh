@@ -4118,6 +4118,20 @@ function checkfilechecksum() {
 
 }
 
+function alpineentry() {
+    cat <<EOF
+menuentry 'Alpine Redpill Image Build' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading Linux...
+        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1
+        echo Loading initramfs...
+        initrd /initramfs-lts
+        echo Booting Alpine for loader creation
+}
+EOF    
+}
+
 function tinyentry() {
     cat <<EOF
 menuentry 'Tiny Core Image Build (version 14.0)' {
@@ -4689,6 +4703,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if [ -f /mnt/${tcrppart}/corepure64.gz ] && [ -f /mnt/${tcrppart}/vmlinuz64 ] && [ -d /mnt/${tcrppart}/cde ]; then
         echo "Creating tinycore configure loader entry"
         tinyentry | sudo tee --append /tmp/grub.cfg
+    else
+        echo "Creating alpinecore configure loader entry"
+        alpineentry | sudo tee --append /tmp/grub.cfg
     fi
     
     echo "Creating xTCRP configure loader entry"
