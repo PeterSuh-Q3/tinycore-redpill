@@ -1463,6 +1463,7 @@ function ensure_loader_partition_mounted() {
     fi
 
     if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount -o remount,rw "${media_mount}"
         sudo mount --bind "${media_mount}" "${mount_point}"
         return $?
     fi
@@ -1474,6 +1475,7 @@ function ensure_loader_partition_mounted() {
     fi
 
     if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
+        sudo mount -o remount,rw "${media_mount}"
         sudo mount --bind "${media_mount}" "${mount_point}"
         return $?
     fi
