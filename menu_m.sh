@@ -174,7 +174,7 @@ if [ -z "${loaderdisk}" ]; then
 fi
 getBus "${loaderdisk}"
 
-tcrppart="${loaderdisk}3"
+tcrppart="${loaderdisk}4"
 
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
     FRKRNL="YES"
@@ -1316,6 +1316,134 @@ function postupdate() {
   return 0
 }
 
+function writexsession() {
+
+  # Alpine 이식: X11은 유지하되 urxvt/aterm(glibc_i18n_locale·unifont 의존)을
+  # lxterminal(GTK/VTE, Pango+fontconfig로 CJK 렌더링, glibc 로케일 불필요)로 교체.
+  # localedef(glibc 전용)는 musl-locales 패키지로 대체.
+  if is_alpine; then
+    echo "[alpine] writexsession: TC startx+.xsession(Xfbdev+waitforX+flwm+urxvt/aterm) 를"
+    echo "         apk 네이티브 등가물(xinit/startx+Xorg-fbdev+flwm+lxterminal)로 재작성."
+    # TC는 손수 짠 Xorg&+waitforX 폴링이 아니라 xinit 기반 startx로 X를 기동한다
+    # (.profile의 TERMTYPE 체크 -> startx 트리거). xinit은 Xauthority/타이밍을
+    # 내부적으로 안전하게 처리하므로, 수작업 Xorg&+xdpyinfo 폴링 방식(비-tty 환경에서
+    # 행 발생 실측됨, 2026-07-12)을 버리고 TC와 동일하게 xinit/startx로 이식한다.
+    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server \
+      xf86-video-fbdev xf86-video-dummy xinit flwm >/dev/null 2>&1
+
+    # X서버(fbdev) 설정 — TC의 Xfbdev(kdrive 계열 setuid glibc 바이너리)를
+    # 대신할 apk 네이티브 Xorg+xf86-video-fbdev 조합. 실측 검증 완료(2026-07-12):
+    # /dev/fb0 직결로 flwm+lxterminal 한글 렌더링 확인(docs/assets 스크린샷).
+    # Xorg.wrap(suid)은 -config 절대경로를 거부하므로 xorg.conf.d 스니펫으로 배치.
+    sudo mkdir -p /etc/X11/xorg.conf.d
+    sudo tee /etc/X11/xorg.conf.d/10-fbdev.conf > /dev/null << "XCONF"
+Section "Device"
+    Identifier "Framebuffer"
+    Driver "fbdev"
+    Option "fbdev" "/dev/fb0"
+EndSection
+Section "Screen"
+    Identifier "Screen0"
+    Device "Framebuffer"
+EndSection
+XCONF
+
+    # Xorg.wrap 기본 정책(console 사용자만 허용)을 TC Xfbdev와 동등하게 완화.
+    sudo tee /etc/X11/Xwrapper.config > /dev/null << "XWRAP"
+allowed_users=anybody
+needs_root_rights=yes
+XWRAP
+
+    # ~/.xserverrc: startx가 있으면 자동으로 사용 (conf.d가 자동 로드되므로 -config 불필요)
+    cat > .xserverrc << XSERVERRC
+#!/bin/sh
+exec /usr/bin/Xorg -nolisten tcp -noreset "\$@"
+XSERVERRC
+    chmod +x .xserverrc
+
+    # ~/.xinitrc: startx가 X 기동 완료 후 실행하는 클라이언트 스크립트.
+    # TC의 waitforX 폴링은 xinit이 대신 처리하므로 여기엔 불필요.
+    cat > .xinitrc << XINITRC
+flwm 2>/tmp/wm_errors &
+export WM_PID=\$!
+[ -x \$HOME/.setbackground ] && \$HOME/.setbackground
+[ -d "/usr/local/etc/X.d" ] && find "/usr/local/etc/X.d" -type f -o -type l | sort | while read F; do . "\$F"; done
+[ -d "\$HOME/.X.d" ] && find "\$HOME/.X.d" -type f -o -type l | sort | while read F; do . "\$F"; done
+export LANG=${ucode}.UTF-8
+export LC_ALL=${ucode}.UTF-8
+lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" --command="/home/tc/menu.sh" &
+lxterminal --geometry=78x32+525+0 --title="TCRP Monitor" --command="/home/tc/monitor.sh" &
+lxterminal --geometry=78x25+10+430 --title="TCRP Build Status" --command="/home/tc/ntp.sh" &
+lxterminal --geometry=78x25+525+430 --title="TCRP Extra Terminal"
+XINITRC
+    chmod +x .xinitrc
+
+    # .xsession은 TC .profile과의 호환을 위해 startx 위임 래퍼로 유지
+    cat > .xsession << XSESSION
+#!/bin/sh
+exec startx
+XSESSION
+    chmod +x .xsession
+
+    echo "Checking ttyd/OpenRC local.d autostart ..."
+    sudo mkdir -p /etc/local.d
+    if ! grep -q "ttyd" /etc/local.d/restore-packages.start 2>/dev/null; then
+      echo "'sudo /home/tc/ttyd login -f tc 2>/dev/null &' 를 /etc/local.d/restore-packages.start 에 추가"
+      echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' | sudo tee -a /etc/local.d/restore-packages.start >/dev/null
+      sudo chmod +x /etc/local.d/restore-packages.start
+    fi
+    return 0
+  fi
+
+  echo "Inject urxvt menu.sh into /home/tc/.xsession."
+
+  sed -i "/locale/d" .xsession
+  sed -i "/utf8/d" .xsession
+  sed -i "/UTF-8/d" .xsession
+  sed -i "/aterm/d" .xsession
+  sed -i "/urxvt/d" .xsession
+
+  echo "export LANG=${ucode}.UTF-8" >> .xsession
+  echo "export LC_ALL=${ucode}.UTF-8" >> .xsession
+  echo "[ ! -d /usr/lib/locale ] && sudo mkdir /usr/lib/locale &" >> .xsession
+  echo "sudo localedef -c -i ${ucode} -f UTF-8 ${ucode}.UTF-8" >> .xsession
+  echo "sudo localedef -f UTF-8 -i ${ucode} ${ucode}.UTF-8" >> .xsession
+
+  echo "urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh &" >> .xsession  
+  sed -i "/rploader/d" .xsession
+  echo "aterm -geometry 78x32+525+0 -fg yellow -title \"TCRP Monitor\" -e /home/tc/monitor.sh &" >> .xsession
+  echo "aterm -geometry 78x25+10+430 -title \"TCRP Build Status\" -e /home/tc/ntp.sh &" >> .xsession
+  echo "aterm -geometry 78x25+525+430 -fg green -title \"TCRP Extra Terminal\" &" >> .xsession
+
+  echo "Checking if 'ttyd' pattern exists in /opt/bootlocal.sh ..."
+  sed -i "/ttyd/d" .xsession
+  # Check if 'ttyd' pattern exists in /opt/bootlocal.sh
+  if ! grep -q "ttyd" /opt/bootlocal.sh; then
+    echo "'ttyd' pattern not found. Adding necessary lines to /opt/bootlocal.sh"
+
+    # Add the required lines to .xsession
+    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
+    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
+    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+
+    # Notify the user about the changes and prompt for reboot
+    echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
+    #echo "The system needs to reboot. Press any key to continue..."
+
+    #backuploader
+    #restart
+  else
+    echo "'ttyd' pattern already exists in /opt/bootlocal.sh"
+    sudo sed -i "/ttyd/d" /opt/bootlocal.sh
+    sudo sed -i "/sync/d" /opt/bootlocal.sh
+    sudo sed -i "/mountvol/d" /opt/bootlocal.sh
+    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+    echo '( while true; do sync; sleep 15; done ) &' >> /opt/bootlocal.sh
+    echo '[ $(/bin/uname -r | /bin/grep 4.14.10 | /usr/bin/wc -l) -eq 1 ] && {( sleep 5; sudo openvt -c 2 -s bash -c "/home/tc/mountvol.sh; exec sudo login -f tc") & }' >> /opt/bootlocal.sh
+  fi
+
+}
+
 ###############################################################################
 # Shows available language to user choose one
 function langMenu() {
@@ -1361,6 +1489,7 @@ function langMenu() {
   set -o allexport
   
   writeConfigKey "general" "ucode" "${ucode}"  
+  [ "$FRKRNL" = "NO" ] && writexsession
 
   tz="ZZ"
   load_zz
@@ -1612,7 +1741,7 @@ function packing_loader() {
         mkdir -p /dev/shm/p3
         cp -vf /mnt/${loaderdisk}1/GRUB_VER /mnt/${loaderdisk}1/zImage /dev/shm/p1
         cp -vf /mnt/${loaderdisk}2/GRUB_VER /mnt/${loaderdisk}2/zImage /mnt/${loaderdisk}2/rd.gz /mnt/${loaderdisk}2/grub_cksum.syno /dev/shm/p2
-        cp -vf /mnt/${loaderdisk}3/custom.gz /mnt/${loaderdisk}3/initrd-dsm /mnt/${loaderdisk}3/rd.gz /mnt/${loaderdisk}3/zImage-dsm /mnt/${loaderdisk}3/user_config.json /dev/shm/p3
+        cp -vf /mnt/${loaderdisk}4/custom.gz /mnt/${loaderdisk}4/initrd-dsm /mnt/${loaderdisk}4/rd.gz /mnt/${loaderdisk}4/zImage-dsm /mnt/${loaderdisk}4/user_config.json /dev/shm/p3
         tar -zcvf /home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz -C /dev/shm ./p1 ./p2 ./p3
     else
         echo "OK, the package has been canceled."
@@ -1647,8 +1776,8 @@ function i915_edit() {
 
 function defaultchange() {
 
-  ensure_loader_partition_mounted 1
-  ensure_loader_partition_mounted 2
+  [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
+  [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
 
   # Get the list of boot entries and write to /tmp/menub
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
@@ -2500,6 +2629,8 @@ else
   echo "screen_color = (CYAN,BLUE,ON)" > ~/.dialogrc
 fi
 
+[ "$FRKRNL" = "NO" ] && writexsession
+
 # Alpine 이식: gettext는 이미 apk 매핑에서 설치되지만, 이 블록은 TC 전용
 # onboot.lst/cde 파티션 영속화 + backuploader+restart(재부팅)까지 포함하는
 # TinyCore 고유 흐름이라 is_alpine이면 skip. 실측 발견(2026-07-12): 가드
@@ -2902,8 +3033,6 @@ fi
 writeConfigKey "general" "bay" "${bay}"
 
 chk_shr_ex
-
-ensure_loader_partitions_mounted
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 _gv=""; kver=""; origin_plat=""; drmmode=""

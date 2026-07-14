@@ -4,7 +4,7 @@ tag=${1}
 
 # Get the loader disk using the UUID "6234-C863"
 loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
-tcrppart="${loaderdisk}3"
+tcrppart="${loaderdisk}4"
 
 # Output the loader disk
 echo "tcrppart: $tcrppart"
