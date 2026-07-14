@@ -4135,36 +4135,6 @@ function checkfilechecksum() {
 
 }
 
-function tinyentry() {
-    cat <<EOF
-menuentry 'Tiny Core Image Build (version 14.0)' {
-        savedefault
-        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
-        echo Loading Linux...
-        linux /vmlinuz64 loglevel=3 cde waitusb=5 vga=791
-        echo Loading initramfs...
-        initrd /corepure64.gz
-        echo Booting TinyCore for loader creation
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
-}
-
-function tinyentry9() {
-    cat <<EOF
-menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
-        savedefault
-        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
-        echo Loading Linux...
-        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
-        echo Loading initramfs...
-        initrd /v9/corepure64.gz
-        echo Booting TinyCore for mount btrfs volume
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
-}
-
 function tcrpfriendentry() {
     cat <<EOF
 menuentry 'Tiny Core Friend $MODEL ${BUILD} Update ${smallfixnumber} ${DMPM} ${MDLNAME}:${MLMETHOD} v${rploaderver}' {
@@ -4702,13 +4672,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    #if is_alpine; then
-        echo "Creating alpinecore configure loader entry"
-        alpineentry | sudo tee --append /tmp/grub.cfg
-    #else
-    #    echo "Creating tinycore configure loader entry"
-    #    tinyentry | sudo tee --append /tmp/grub.cfg
-    #fi
+    echo "Creating alpinecore configure loader entry"
+    alpineentry | sudo tee --append /tmp/grub.cfg
     
     echo "Creating xTCRP configure loader entry"
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
