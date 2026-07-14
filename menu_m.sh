@@ -1388,8 +1388,8 @@ XSESSION
     echo "Checking ttyd/OpenRC local.d autostart ..."
     sudo mkdir -p /etc/local.d
     if ! grep -q "ttyd" /etc/local.d/restore-packages.start 2>/dev/null; then
-      echo "'sudo /home/tc/ttyd login -f tc 2>/dev/null &' 를 /etc/local.d/restore-packages.start 에 추가"
-      echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' | sudo tee -a /etc/local.d/restore-packages.start >/dev/null
+      echo "'sudo /usr/bin/ttyd -W login -f tc 2>/dev/null &' 를 /etc/local.d/restore-packages.start 에 추가"
+      echo 'sudo /usr/bin/ttyd -W login -f tc 2>/dev/null &' | sudo tee -a /etc/local.d/restore-packages.start >/dev/null
       sudo chmod +x /etc/local.d/restore-packages.start
     fi
     return 0
@@ -1422,9 +1422,7 @@ XSESSION
     echo "'ttyd' pattern not found. Adding necessary lines to /opt/bootlocal.sh"
 
     # Add the required lines to .xsession
-    [ -f lsz ] && sudo cp -f lsz /usr/sbin/sz
-    [ -f lrz ] && sudo cp -f lrz /usr/sbin/rz
-    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+    echo 'sudo /usr/bin/ttyd -W login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
 
     # Notify the user about the changes and prompt for reboot
     echo "The 'ttyd' configuration has been added to /opt/bootlocal.sh"
@@ -1437,7 +1435,7 @@ XSESSION
     sudo sed -i "/ttyd/d" /opt/bootlocal.sh
     sudo sed -i "/sync/d" /opt/bootlocal.sh
     sudo sed -i "/mountvol/d" /opt/bootlocal.sh
-    echo 'sudo /home/tc/ttyd login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
+    echo 'sudo /usr/bin/ttyd -W login -f tc 2>/dev/null &' >> /opt/bootlocal.sh
     echo '( while true; do sync; sleep 15; done ) &' >> /opt/bootlocal.sh
     echo '[ $(/bin/uname -r | /bin/grep 4.14.10 | /usr/bin/wc -l) -eq 1 ] && {( sleep 5; sudo openvt -c 2 -s bash -c "/home/tc/mountvol.sh; exec sudo login -f tc") & }' >> /opt/bootlocal.sh
   fi
