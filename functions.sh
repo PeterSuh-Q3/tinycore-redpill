@@ -4718,13 +4718,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    if is_alpine; then
+    #if is_alpine; then
         echo "Creating alpinecore configure loader entry"
         alpineentry | sudo tee --append /tmp/grub.cfg
-    else
-        echo "Creating tinycore configure loader entry"
-        tinyentry | sudo tee --append /tmp/grub.cfg
-    fi
+    #else
+    #    echo "Creating tinycore configure loader entry"
+    #    tinyentry | sudo tee --append /tmp/grub.cfg
+    #fi
     
     echo "Creating xTCRP configure loader entry"
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
