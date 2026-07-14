@@ -4135,21 +4135,6 @@ function checkfilechecksum() {
 
 }
 
-function alpineentry() {
-    cat <<EOF
-menuentry 'Alpine Redpill Image Build' {
-        savedefault
-        search --set=root --label alpine --hint hd0,msdos4
-        set gfxpayload=1280x960
-        echo Loading Linux...
-        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1 video=Virtual-1:1280x960
-        echo Loading initramfs...
-        initrd /initramfs-lts
-        echo Booting Alpine for loader creation
-}
-EOF    
-}
-
 function tinyentry() {
     cat <<EOF
 menuentry 'Tiny Core Image Build (version 14.0)' {
@@ -4308,7 +4293,6 @@ menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM} ${MDLN
 }
 EOF
 }
-
 
 function showsyntax() {
     cat <<EOF
@@ -6898,3 +6882,18 @@ if [ $# -gt 1 ]; then
         ;;
     esac    
 fi
+
+function alpineentry() {
+    cat <<EOF
+menuentry 'Alpine Redpill Image Build' {
+        savedefault
+        search --set=root --label alpine --hint hd0,msdos4
+        set gfxpayload=1280x960
+        echo Loading Linux...
+        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1 video=Virtual-1:1280x960
+        echo Loading initramfs...
+        initrd /initramfs-lts
+        echo Booting Alpine for loader creation
+}
+EOF    
+}
