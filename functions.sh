@@ -1470,6 +1470,28 @@ function ensure_loader_partition_mounted() {
     return 1
 }
 
+function get_alpine_os_device() {
+    sudo /sbin/blkid -L alpine 2>/dev/null
+}
+
+function ensure_alpine_partition_mounted() {
+
+    local dev
+    dev=$(get_alpine_os_device)
+    [ -z "${dev}" ] && return 1
+
+    local mount_point="/mnt/alpine"
+    sudo mkdir -p "${mount_point}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
+    fi
+
+    sudo mount "${dev}" "${mount_point}"
+
+    mountpoint -q "${mount_point}"
+}
+
 function ensure_loader_partitions_mounted() {
     ensure_loader_partition_mounted 1
     ensure_loader_partition_mounted 2

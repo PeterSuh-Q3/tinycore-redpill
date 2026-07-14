@@ -1451,7 +1451,6 @@ function ensure_loader_partition_mounted() {
     local part="$1"
     local dev="/dev/${loaderdisk}${part}"
     local mount_point="/mnt/${loaderdisk}${part}"
-    local media_mount="/media/${loaderdisk}${part}"
 
     [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
     [ -z "${loaderdisk}" ] && return 1
@@ -1462,25 +1461,35 @@ function ensure_loader_partition_mounted() {
         return 0
     fi
 
-    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
-        sudo mount -o remount,rw "${media_mount}"
-        sudo mount --bind "${media_mount}" "${mount_point}"
-        return $?
-    fi
-
     sudo mount "${dev}"
 
     if mountpoint -q "${mount_point}"; then
         return 0
     fi
 
-    if [ "${part}" = "3" ] && mountpoint -q "${media_mount}"; then
-        sudo mount -o remount,rw "${media_mount}"
-        sudo mount --bind "${media_mount}" "${mount_point}"
-        return $?
+    return 1
+}
+
+function get_alpine_os_device() {
+    sudo /sbin/blkid -L alpine 2>/dev/null
+}
+
+function ensure_alpine_partition_mounted() {
+
+    local dev
+    dev=$(get_alpine_os_device)
+    [ -z "${dev}" ] && return 1
+
+    local mount_point="/mnt/alpine"
+    sudo mkdir -p "${mount_point}"
+
+    if mountpoint -q "${mount_point}"; then
+        return 0
     fi
 
-    return 1
+    sudo mount "${dev}" "${mount_point}"
+
+    mountpoint -q "${mount_point}"
 }
 
 function ensure_loader_partitions_mounted() {
@@ -4122,9 +4131,10 @@ function alpineentry() {
     cat <<EOF
 menuentry 'Alpine Redpill Image Build' {
         savedefault
-        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        search --set=root --label alpine --hint hd0,msdos4
+        set gfxpayload=1280x960
         echo Loading Linux...
-        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1
+        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1 video=Virtual-1:1280x960
         echo Loading initramfs...
         initrd /initramfs-lts
         echo Booting Alpine for loader creation
