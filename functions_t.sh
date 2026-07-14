@@ -2998,7 +2998,7 @@ function monitor() {
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------CPU / Memory----------------------------------"
         msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
-        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), $3/$2*100}')
+        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), ($2>0 ? $3/$2*100 : 0)}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
         echo -e "-------------------------------Disk Usage >80%-------------------------------"
         df -Ph /mnt/${loaderdisk}1 /mnt/${loaderdisk}2 /mnt/${loaderdisk}3
@@ -4099,12 +4099,20 @@ function backuploader_old() {
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
 
-        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
-        backup_loader
-        sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
-        if [ $? -ne 0 ]; then
-            echo "Error: Couldn't backup files"
+        if is_alpine; then
+            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
+            # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
+            cecho y "Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            sudo lbu commit -d
+            backup_loader
+        else
+            cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
+            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+            backup_loader
+            sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
+            if [ $? -ne 0 ]; then
+                echo "Error: Couldn't backup files"
+            fi
         fi
     else
         echo "OK, keeping last status"
@@ -4125,51 +4133,6 @@ function checkfilechecksum() {
         exit 99
     fi
 
-}
-
-function alpineentry() {
-    cat <<EOF
-menuentry 'Alpine Redpill Image Build' {
-        savedefault
-        search --set=root --label alpine --hint hd0,msdos4
-        set gfxpayload=1280x960
-        echo Loading Linux...
-        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1 video=Virtual-1:1280x960
-        echo Loading initramfs...
-        initrd /initramfs-lts
-        echo Booting Alpine for loader creation
-}
-EOF    
-}
-
-function tinyentry() {
-    cat <<EOF
-menuentry 'Tiny Core Image Build (version 14.0)' {
-        savedefault
-        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
-        echo Loading Linux...
-        linux /vmlinuz64 loglevel=3 cde waitusb=5 vga=791
-        echo Loading initramfs...
-        initrd /corepure64.gz
-        echo Booting TinyCore for loader creation
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
-}
-
-function tinyentry9() {
-    cat <<EOF
-menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
-        savedefault
-        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
-        echo Loading Linux...
-        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
-        echo Loading initramfs...
-        initrd /v9/corepure64.gz
-        echo Booting TinyCore for mount btrfs volume
-        set gfxpayload=1024x768x16,1024x768
-}
-EOF
 }
 
 function tcrpfriendentry() {
@@ -4300,7 +4263,6 @@ menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM} ${MDLN
 }
 EOF
 }
-
 
 function showsyntax() {
     cat <<EOF
@@ -4710,13 +4672,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    if [ -f /mnt/${tcrppart}/corepure64.gz ] && [ -f /mnt/${tcrppart}/vmlinuz64 ] && [ -d /mnt/${tcrppart}/cde ]; then
-        echo "Creating tinycore configure loader entry"
-        tinyentry | sudo tee --append /tmp/grub.cfg
-    else
-        echo "Creating alpinecore configure loader entry"
-        alpineentry | sudo tee --append /tmp/grub.cfg
-    fi
+    echo "Creating alpinecore configure loader entry"
+    alpineentry | sudo tee --append /tmp/grub.cfg
     
     echo "Creating xTCRP configure loader entry"
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
@@ -6890,3 +6847,18 @@ if [ $# -gt 1 ]; then
         ;;
     esac    
 fi
+
+function alpineentry() {
+    cat <<EOF
+menuentry 'Alpine Redpill Image Build' {
+        savedefault
+        search --set=root --label alpine --hint hd0,msdos4
+        set gfxpayload=1280x960
+        echo Loading Linux...
+        linux /vmlinuz-lts loglevel=8 debug_init console=ttyS0 console=tty1 video=Virtual-1:1280x960
+        echo Loading initramfs...
+        initrd /initramfs-lts
+        echo Booting Alpine for loader creation
+}
+EOF    
+}
