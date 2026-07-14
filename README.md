@@ -1,7 +1,7 @@
-# M Shell for tinycore-redpill
+# M Shell for alpine-redpill
 
-<a href="https://github.com/PeterSuh-Q3/tinycore-redpill/releases"><img src="https://img.shields.io/github/release/PeterSuh-Q3/tinycore-redpill.svg"></a>
-<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2FPeterSuh-Q3%2Ftinycore-redpill&label=&icon=github&message=&style=flat&tz=UTC">
+<a href="https://github.com/PeterSuh-Q3/alpine-redpill/releases"><img src="https://img.shields.io/github/release/PeterSuh-Q3/alpine-redpill.svg"></a>
+<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2FPeterSuh-Q3%2Falpine-redpill&label=&icon=github&message=&style=flat&tz=UTC">
 [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/PeterSuh-Q3)
 <!-- [![committers.top badge](https://user-badge.committers.top/south_korea/PeterSuh-Q3.svg)](https://user-badge.committers.top/south_korea/PeterSuh-Q3) -->
 
@@ -71,7 +71,7 @@ A typical build process starts with:
     
     B. For virtual gunzip use the provided vmdk file
     
-2. Boot Tinycore
+2. Boot alpine
 
 3. Loader Building
 
@@ -116,16 +116,16 @@ A typical build process starts with:
     1.0.5.0 Improved internet check function in menu.sh
     ...
     1.0.6.2 Changed to use only the first one when multiple bootloaders exist
-    1.0.6.3 Added ability to force loading mmc and sd modules when loading Tinycore Linux
+    1.0.6.3 Added ability to force loading mmc and sd modules when loading alpine Linux
     1.0.6.4 Expanded MAC address support from 4 to 8.
-    1.0.6.5 Includes tinycore linux scsi module for scsi type bootloader support.
+    1.0.6.5 Includes alpine linux scsi module for scsi type bootloader support.
     1.0.6.6 Discontinuing support for DS3615xs.
     1.0.6.7 Applying REDPILL background image to grub boot
     1.0.6.8 i915.modeset=0 menu processing improvement (FRIEND guidance console is activated when i915 transcoding is disabled)
-    1.1.0.0 Added features for distribution of xTCRP (Tinycore Linux stripped down version)
+    1.1.0.0 Added features for distribution of xTCRP (alpine Linux stripped down version)
     1.1.0.1 When using a single m.2 NVMe volume, the DDSML error issue has occurred, so menu usage has been excluded and related support has been strengthened.
     1.2.0.0 Added new platforms purley, broadwellnkv2, broadwellntbap and started supporting all models for each platform
-    1.2.1.0 Create tinycore-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
+    1.2.1.0 Create alpine-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
     1.2.1.1 Renewal of SynoDisk bootloader injection function
     1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
     1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
@@ -135,7 +135,7 @@ A typical build process starts with:
     1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
     1.2.1.8 Modify the method of checking Internet connection in menu.sh
     1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
-    1.2.2.0 Activate Tinycore TTYD web console (port 7681, login use tc/P@ssw0rd)
+    1.2.2.0 Activate alpine TTYD web console (port 7681, login use tc/P@ssw0rd)
     1.2.2.1 TTYD web console baremetal headless support fix
     1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
     1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
@@ -186,7 +186,7 @@ Create an account with Sign Up and then log in with Sign In.
 
 2. If you write an issue in this issue, the loader will be automatically built based on the model in the content you wrote.
 
-https://github.com/PeterSuh-Q3/tinycore-redpill/issues
+https://github.com/PeterSuh-Q3/alpine-redpill/issues
 
 This is using the GitHub ACTIONS-COOL build bot.
 
@@ -223,11 +223,11 @@ You can change the model and version, but if you make even the slightest mistake
 
 If you go to the Actions side, you will see an orange icon and the loader build will proceed.
 
-https://github.com/PeterSuh-Q3/tinycore-redpill/actions
+https://github.com/PeterSuh-Q3/alpine-redpill/actions
 
-Workflow runs · PeterSuh-Q3/tinycore-redpill
+Workflow runs · PeterSuh-Q3/alpine-redpill
 github.com
-Contribute to PeterSuh-Q3/tinycore-redpill development by creating an
+Contribute to PeterSuh-Q3/alpine-redpill development by creating an
 
 If you want to see the details, you can click on the workflow in progress.
 
