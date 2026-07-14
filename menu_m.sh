@@ -174,7 +174,7 @@ if [ -z "${loaderdisk}" ]; then
 fi
 getBus "${loaderdisk}"
 
-tcrppart="${loaderdisk}4"
+tcrppart="${loaderdisk}3"
 
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
     FRKRNL="YES"
@@ -1741,7 +1741,7 @@ function packing_loader() {
         mkdir -p /dev/shm/p3
         cp -vf /mnt/${loaderdisk}1/GRUB_VER /mnt/${loaderdisk}1/zImage /dev/shm/p1
         cp -vf /mnt/${loaderdisk}2/GRUB_VER /mnt/${loaderdisk}2/zImage /mnt/${loaderdisk}2/rd.gz /mnt/${loaderdisk}2/grub_cksum.syno /dev/shm/p2
-        cp -vf /mnt/${loaderdisk}4/custom.gz /mnt/${loaderdisk}4/initrd-dsm /mnt/${loaderdisk}4/rd.gz /mnt/${loaderdisk}4/zImage-dsm /mnt/${loaderdisk}4/user_config.json /dev/shm/p3
+        cp -vf /mnt/${loaderdisk}3/custom.gz /mnt/${loaderdisk}3/initrd-dsm /mnt/${loaderdisk}3/rd.gz /mnt/${loaderdisk}3/zImage-dsm /mnt/${loaderdisk}3/user_config.json /dev/shm/p3
         tar -zcvf /home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz -C /dev/shm ./p1 ./p2 ./p3
     else
         echo "OK, the package has been canceled."

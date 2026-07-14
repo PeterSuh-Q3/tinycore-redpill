@@ -287,7 +287,7 @@ fi
 
 getBus "${loaderdisk}" 
 
-tcrppart="${loaderdisk}4"
+tcrppart="${loaderdisk}3"
 
 TCB=$(readConfigKey "general" "tcbautoupd")
 if [ -z "${TCB}" ]; then

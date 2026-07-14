@@ -4,7 +4,7 @@ tag=${1}
 
 # Get the loader disk using the UUID "6234-C863"
 loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
-tcrppart="${loaderdisk}4"
+tcrppart="${loaderdisk}3"
 
 # Output the loader disk
 echo "tcrppart: $tcrppart"
@@ -55,4 +55,3 @@ sudo sed -i "s/$org/$sha256/g" ./tcrp-modules/all-modules/releases/epyc700272.js
 #sha256=$(sha256sum ./tcrp-modules/all-modules/releases/firmware.tgz | awk '{print $1}')
 #org=$(jq -r '.files[1].sha256' ./tcrp-modules/all-modules/releases/epyc700272.json)
 #sudo sed -i "s/$org/$sha256/g" ./tcrp-modules/all-modules/releases/epyc700272.json
-
