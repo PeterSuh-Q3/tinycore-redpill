@@ -120,6 +120,13 @@ if [ -n "$DevList" ]; then
 		# Skip these file system types.
 		case "$FSTYPE" in linux_raid_member|LVM2_member|zfs_member) continue;  ;; esac
 
+		# Skip the Alpine boot media (LABEL=alpine). Emitting an fstab entry for it
+		# makes the initramfs remount_fstab_entry() relocate /media/<dev> -> /mnt/<dev>,
+		# after which find_boot_repositories() (scans /media/* only) finds nothing and
+		# apk installs zero packages -> /sbin/init missing -> kernel panic. The boot
+		# media is mounted dynamically via "blkid -L alpine" (/mnt/alpine) instead.
+		if [ "$(blkid -s LABEL -o value "$DEVNAME" 2>/dev/null)" = "alpine" ]; then continue; fi
+
 		case "$FSTYPE" in
 			ntfs) checkntfs ;;
 			vfat|msdos) OPTIONS="${OPTIONS},umask=000" ;;
