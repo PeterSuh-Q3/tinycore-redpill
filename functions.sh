@@ -4099,12 +4099,20 @@ function backuploader_old() {
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
 
-        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
-        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
-        backup_loader
-        sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
-        if [ $? -ne 0 ]; then
-            echo "Error: Couldn't backup files"
+        if is_alpine; then
+            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
+            # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
+            cecho y "Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            sudo lbu commit -d
+            backup_loader
+        else
+            cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
+            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+            backup_loader
+            sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
+            if [ $? -ne 0 ]; then
+                echo "Error: Couldn't backup files"
+            fi
         fi
     else
         echo "OK, keeping last status"
