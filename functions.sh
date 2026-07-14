@@ -6860,5 +6860,5 @@ menuentry 'Alpine Redpill Image Build' {
         initrd /initramfs-lts
         echo Booting Alpine for loader creation
 }
-EOF    
+EOF
 }
