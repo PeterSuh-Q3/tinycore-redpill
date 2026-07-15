@@ -2607,7 +2607,7 @@ set -o allexport
 
 
 #gettext
-[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/lang.tgz > /dev/null 2>&1
+[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/lang.tgz > /dev/null 2>&1
 [ ! -d "/usr/local/share/locale" ] && sudo mkdir -p "/usr/local/share/locale"
 gunzip -c lang.tgz | sudo tar -xvf - -C /usr/local/share/locale > /dev/null 2>&1
 locale > /dev/null 2>&1
@@ -2765,9 +2765,9 @@ if is_alpine; then
     # apk dialog로 직접 설치 - TC .tcz/cde/optional 다운로드 경로는 불필요.
     [ "$(which dialog)_" == "_" ] && sudo apk add dialog >/dev/null 2>&1
 elif [ "$FRKRNL" = "NO" ] && [ "$(which dialog)_" == "_" ]; then
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz -o /mnt/${tcrppart}/cde/optional/dialog.tcz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.dep -o /mnt/${tcrppart}/cde/optional/dialog.tcz.dep
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/dialog.tcz.md5.txt
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz -o /mnt/${tcrppart}/cde/optional/dialog.tcz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz.dep -o /mnt/${tcrppart}/cde/optional/dialog.tcz.dep
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/dialog.tcz.md5.txt
     tce-load -i dialog
     if [ $? -eq 0 ]; then
         echo "Install dialog OK !!!"
@@ -2807,7 +2807,7 @@ if is_alpine; then
     [ "$(which pigz)_" == "_" ] && sudo apk add pigz >/dev/null 2>&1
 elif [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     echo "pigz does not exist, bringing over from repo"
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/pigz
+    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/pigz
     chmod 700 pigz
     sudo mv -vf pigz /usr/local/bin/
     backuploader
@@ -2816,18 +2816,18 @@ fi
 #if [ "$FRKRNL" = "YES" ]; then
     #overwrite GNU tar and patch for friend
 #    sudo rm /usr/bin/tar
-#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/tar -o /usr/bin/tar
+#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/tar -o /usr/bin/tar
 #    sudo chmod +x /usr/bin/tar
     
 #    sudo rm /usr/bin/patch
-#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/patch -o /usr/bin/patch
+#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/patch -o /usr/bin/patch
 #    sudo chmod +x /usr/bin/patch
 #fi    
 
 # Download dtc, Don't used anymore 24.9.13
 #if [ "$(which dtc)_" == "_" ]; then
 #    echo "dtc dos not exist, Downloading dtc binary"
-#    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/dtc
+#    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/dtc
 #    chmod 700 dtc
 #    sudo mv -vf dtc /usr/local/bin/
 #fi   
@@ -2839,8 +2839,8 @@ getbspatch
 # Alpine: 콘솔 keymap이 아니라 X11(xorg)이 키보드 입력을 담당하므로 kmaps.tcz
 # 자체가 불필요 - 전체 skip.
 if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | wc -w) -eq 0 ]; then
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz -o /mnt/${tcrppart}/cde/optional/kmaps.tcz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/kmaps.tcz.md5.txt
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/kmaps.tcz -o /mnt/${tcrppart}/cde/optional/kmaps.tcz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/kmaps.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/kmaps.tcz.md5.txt
     tce-load -i kmaps
     if [ $? -eq 0 ]; then
         echo "Install kmaps OK !!!"
