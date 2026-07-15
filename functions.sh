@@ -2,52 +2,9 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.0.0"
+rploaderver="1.3.1.1"
+build="main"
 redpillmake="prod"
-
-# Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
-# X11/urxvt/glibc 로케일 스택과 TinyCore 커널 전용 .tcz(scsi-*-tinycore64 등) 분기를
-# Alpine 환경에서 건너뛰기 위해 사용.
-is_alpine() {
-  [ -f /etc/alpine-release ]
-}
-
-# dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
-# 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
-# 나머지를 스크롤 뒤로 숨기는 회귀가 있음(TC의 구버전 1.3-20171209는 정상).
-# 세 번째 인자(menu-height)를 실제 항목 수(인자 $1) 기준으로 계산해 대체.
-# 항목 수를 모르는 호출부는 인자 생략 시 5로 대체(고정 큰 값으로 박스가
-# 쓸데없이 커지는 것을 피하기 위함).
-dlgmenuheight() {
-  local n="${1:-5}"
-  local rows
-  rows=$(tput lines 2>/dev/null) || rows=24
-  local max=$((rows - 10))
-  [ "$max" -lt 3 ] && max=3
-  [ "$n" -lt 1 ] && n=1
-  [ "$n" -gt "$max" ] && n="$max"
-  echo "$n"
-}
-
-# fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
-# util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
-# 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
-if is_alpine; then
-  FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
-else
-  FDISK="$FDISK"
-fi
-
-# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 main(TinyCore
-# 원본, is_alpine 가드가 없음)으로 자기 자신을 덮어써 패치가 무력화되는 사고가
-# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리. main은
-# v1.3.1.1에서 동결(더 이상 업데이트 없음), alpine-redpill이 v1.4.0.0부터
-# 이어받음(2026-07-15).
-if is_alpine; then
-  build="alpine-redpill"
-else
-  build="main"
-fi
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
@@ -63,7 +20,7 @@ configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/my.sh.gz"
 
 #Defaults
 smallfixnumber="0"
@@ -317,12 +274,6 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-    1.4.0.0 Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
-             Pre-investigation completed via 3 rounds of live measurement on a TinyCore 14.0 box: confirmed glibc 2.36
-             runtime, mapped tce-load package calls to apk equivalents, and classified prebuilt binaries by link type
-             (static/apk-replaceable/DSM-internal/custom). Decided to standardize on ttyd as the single terminal path,
-             dropping the urxvt/X11 + glibc locale stack. No showstopper risk found; kpatch/gcompat functional test is
-             the only remaining open item. See docs/alpine-migration-plan.md for the full plan.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1465,58 +1416,6 @@ function getloaderdisk() {
     echo "LOADER DISK: $loaderdisk"
 }
 
-function ensure_loader_partition_mounted() {
-
-    local part="$1"
-    local dev="/dev/${loaderdisk}${part}"
-    local mount_point="/mnt/${loaderdisk}${part}"
-
-    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
-    [ -z "${loaderdisk}" ] && return 1
-
-    sudo mkdir -p "${mount_point}"
-
-    if mountpoint -q "${mount_point}"; then
-        return 0
-    fi
-
-    sudo mount "${dev}"
-
-    if mountpoint -q "${mount_point}"; then
-        return 0
-    fi
-
-    return 1
-}
-
-function get_alpine_os_device() {
-    sudo /sbin/blkid -L alpine 2>/dev/null
-}
-
-function ensure_alpine_partition_mounted() {
-
-    local dev
-    dev=$(get_alpine_os_device)
-    [ -z "${dev}" ] && return 1
-
-    local mount_point="/mnt/alpine"
-    sudo mkdir -p "${mount_point}"
-
-    if mountpoint -q "${mount_point}"; then
-        return 0
-    fi
-
-    sudo mount "${dev}" "${mount_point}"
-
-    mountpoint -q "${mount_point}"
-}
-
-function ensure_loader_partitions_mounted() {
-    ensure_loader_partition_mounted 1
-    ensure_loader_partition_mounted 2
-    ensure_loader_partition_mounted 3
-}
-
 # ==============================================================================          
 # Color Function                                                                          
 # ==============================================================================          
@@ -1920,7 +1819,7 @@ function mountvol () {
   fi
   
   dialog --backtitle "`backtitle`" --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 $(dlgmenuheight $((${#lvm_volumes[@]}/2))) "${lvm_volumes[@]}" \
+    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -2667,7 +2566,7 @@ function checkmachine() {
 
     if grep -q ^flags.*\ hypervisor\  /proc/cpuinfo; then
         MACHINE="VIRTUAL"
-        HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+        HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
         echo "Machine is $MACHINE Hypervisor=$HYPERVISOR"
     else
         MACHINE="NON-VIRTUAL"
@@ -2987,9 +2886,10 @@ function monitor() {
 
     getBus "${loaderdisk}" 
 
-    ensure_loader_partitions_mounted
+    [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
+    [ "$(mount | grep /dev/${loaderdisk}2 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}2
 
-    HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+    HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
         clear
@@ -3017,7 +2917,7 @@ function monitor() {
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------CPU / Memory----------------------------------"
         msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
-        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), ($2>0 ? $3/$2*100 : 0)}')
+        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), $3/$2*100}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
         echo -e "-------------------------------Disk Usage >80%-------------------------------"
         df -Ph /mnt/${loaderdisk}1 /mnt/${loaderdisk}2 /mnt/${loaderdisk}3
@@ -3427,9 +3327,8 @@ function postupdate() {
     updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
     echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
 
-    echo "Mounting partition ${loaderdisk}1" && ensure_loader_partition_mounted 1
-    echo "Mounting partition ${loaderdisk}2" && ensure_loader_partition_mounted 2
-    echo "Mounting partition ${loaderdisk}3" && ensure_loader_partition_mounted 3
+    echo "Mounting partition ${loaderdisk}1" && sudo mount /dev/${loaderdisk}1
+    echo "Mounting partition ${loaderdisk}2" && sudo mount /dev/${loaderdisk}2
 
     zimghash=$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')
     updateuserconfigfield "general" "zimghash" "$zimghash"
@@ -3910,18 +3809,7 @@ function backuploader() {
         fi
         
     else
-        if is_alpine; then
-            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 원본
-            # tar -T 명령이 그대로 실패/빈 아카이브를 만듦(실측 확인, 2026-07-12).
-            # Alpine의 실제 영속화는 lbu(apkovl)이므로 여기서 lbu commit을 호출해
-            # 대신하고, mydata.tgz는 빈 플레이스홀더만 남겨 이후 STEP들이 깨지지
-            # 않게 한다(부팅 시 읽는 쪽은 apkovl이지 mydata.tgz가 아님).
-            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
-            sudo lbu commit -d
-            sudo sh -c "echo '' | tar -cf - -T /dev/null | pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null
-        else
-            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
-        fi
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
     fi
     
     echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
@@ -4118,20 +4006,12 @@ function backuploader_old() {
             fi
         done 2>/dev/null  # 전체 오류 출력 억제
 
-        if is_alpine; then
-            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
-            # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
-            cecho y "Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
-            sudo lbu commit -d
-            backup_loader
-        else
-            cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
-            sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
-            backup_loader
-            sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
-            if [ $? -ne 0 ]; then
-                echo "Error: Couldn't backup files"
-            fi
+        cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
+        sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > /dev/shm/mydata.tgz
+        backup_loader
+        sudo dd if=/dev/shm/mydata.tgz of=/mnt/${tcrppart}/mydata.tgz conv=fsync status=progress
+        if [ $? -ne 0 ]; then
+            echo "Error: Couldn't backup files"
         fi
     else
         echo "OK, keeping last status"
@@ -4152,6 +4032,36 @@ function checkfilechecksum() {
         exit 99
     fi
 
+}
+
+function tinyentry() {
+    cat <<EOF
+menuentry 'Tiny Core Image Build (version 14.0)' {
+        savedefault
+        search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
+        echo Loading Linux...
+        linux /vmlinuz64 loglevel=3 cde waitusb=5 vga=791
+        echo Loading initramfs...
+        initrd /corepure64.gz
+        echo Booting TinyCore for loader creation
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
+}
+
+function tinyentry9() {
+    cat <<EOF
+menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        echo Loading Linux...
+        linux /v9/vmlinuz64 loglevel=3 tce=UUID=6234-C863/v9/cde waitusb=10 vga=791
+        echo Loading initramfs...
+        initrd /v9/corepure64.gz
+        echo Booting TinyCore for mount btrfs volume
+        set gfxpayload=1024x768x16,1024x768
+}
+EOF
 }
 
 function tcrpfriendentry() {
@@ -4282,6 +4192,7 @@ menuentry 'Re-Install DSM of $MODEL ${BUILD} Direct-Boot Update 0 ${DMPM} ${MDLN
 }
 EOF
 }
+
 
 function showsyntax() {
     cat <<EOF
@@ -4691,8 +4602,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    echo "Creating alpinecore configure loader entry"
-    alpineentry | sudo tee --append /tmp/grub.cfg
+    if [ -f /mnt/${tcrppart}/corepure64.gz ] && [ -f /mnt/${tcrppart}/vmlinuz64 ] && [ -d /mnt/${tcrppart}/cde ]; then
+        echo "Creating tinycore configure loader entry"
+        tinyentry | sudo tee --append /tmp/grub.cfg
+    fi
     
     echo "Creating xTCRP configure loader entry"
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
@@ -5690,11 +5603,11 @@ function prepare_img() {
 
 function get_disk_type_cnt() {
 
-    RAID_CNT="$(sudo $FDISK -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
-    DOS_CNT="$(sudo $FDISK -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
-    W95_CNT="$(sudo $FDISK -l | grep "95 Ext" | grep ${1} | wc -l )" 
-    EXT_CNT="$(sudo $FDISK -l | grep "Extended" | grep ${1} | wc -l )"
-    BIOS_CNT="$(sudo $FDISK -l | grep "BIOS" | grep ${1} | wc -l )"
+    RAID_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "Linux RAID" -e "fd Linux raid" | grep ${1} | wc -l )"
+    DOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep -e "83 Linux" -e "Linux filesystem" | grep ${1} | wc -l )"
+    W95_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "95 Ext" | grep ${1} | wc -l )" 
+    EXT_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "Extended" | grep ${1} | wc -l )"
+    BIOS_CNT="$(sudo /usr/local/sbin/fdisk -l | grep "BIOS" | grep ${1} | wc -l )"
     
     if [ "${2}" = "Y" ]; then
         echo "RAID_CNT=$RAID_CNT"
@@ -5783,7 +5696,7 @@ function inject_loader() {
                   ;;                  
           esac
       fi
-  done < <(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+  done < <(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
   echo -e "GPT = $GPT, GPT_EX=$GPT_EX, MBR SHR = $SHR, MBR SHR_EX = $SHR_EX \n"
 
   SHR=$((SHR + GPT))
@@ -5815,7 +5728,7 @@ function inject_loader() {
   
   [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
-  [ -n "$FIRST_SHR" ] && sudo $FDISK -l "${FIRST_SHR}"
+  [ -n "$FIRST_SHR" ] && sudo /usr/local/sbin/fdisk -l "${FIRST_SHR}"
 
   do_ex_first=""
   if [ $SHR_EX -eq 1 ]; then
@@ -5878,7 +5791,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6091,7 +6004,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                 disk_list="$FIRST_SHR"
             else
                 # descending sort from /dev/sd            
-                disk_list=$(sudo $FDISK -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
+                disk_list=$(sudo /usr/local/sbin/fdisk -l | grep -e "Disk /dev/sd" -e "Disk /dev/nv" | awk '{print $2}' | sed 's/://' | sort -k1.6 -r)
             fi
             
             for edisk in $disk_list; do
@@ -6154,7 +6067,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
     mountpoint -q "${synop2}" && sudo umount ${synop2} 
     mountpoint -q "${synop3}" && sudo umount ${synop3}
 
-    sudo $FDISK -l "${edisk}"
+    sudo /usr/local/sbin/fdisk -l "${edisk}"
     
     returnto "The entire process of injecting the boot loader into the disk has been completed! Press any key to continue..." && return
 fi
@@ -6866,18 +6779,3 @@ if [ $# -gt 1 ]; then
         ;;
     esac    
 fi
-
-function alpineentry() {
-    cat <<EOF
-menuentry 'Alpine Redpill Image Build' {
-        savedefault
-        search --set=root --label alpine --hint hd0,msdos4
-        set gfxpayload=1280x960
-        echo Loading Linux...
-        linux /vmlinuz-lts loglevel=3 console=ttyS0 console=tty1 video=Virtual-1:1280x960
-        echo Loading initramfs...
-        initrd /initramfs-lts
-        echo Booting Alpine for loader creation
-}
-EOF
-}
