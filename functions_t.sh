@@ -12,6 +12,23 @@ is_alpine() {
   [ -f /etc/alpine-release ]
 }
 
+# dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
+# 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
+# 나머지를 스크롤 뒤로 숨기는 회귀가 있음(TC의 구버전 1.3-20171209는 정상).
+# 세 번째 인자(menu-height)를 실제 항목 수(인자 $1) 기준으로 계산해 대체.
+# 항목 수를 모르는 호출부는 인자 생략 시 5로 대체(고정 큰 값으로 박스가
+# 쓸데없이 커지는 것을 피하기 위함).
+dlgmenuheight() {
+  local n="${1:-5}"
+  local rows
+  rows=$(tput lines 2>/dev/null) || rows=24
+  local max=$((rows - 10))
+  [ "$max" -lt 3 ] && max=3
+  [ "$n" -lt 1 ] && n=1
+  [ "$n" -gt "$max" ] && n="$max"
+  echo "$n"
+}
+
 # fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
 # util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
 # 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
@@ -21,13 +38,15 @@ else
   FDISK="$FDISK"
 fi
 
-# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 master(TinyCore
-# 원본, is_alpine 가드가 없음)로 자기 자신을 덮어써 패치가 무력화되는 사고가
-# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리.
+# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 main(TinyCore
+# 원본, is_alpine 가드가 없음)으로 자기 자신을 덮어써 패치가 무력화되는 사고가
+# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리. main은
+# v1.3.1.1에서 동결(더 이상 업데이트 없음), alpine-redpill이 v1.4.0.0부터
+# 이어받음(2026-07-15).
 if is_alpine; then
   build="alpine-redpill"
 else
-  build="master"
+  build="main"
 fi
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -1901,7 +1920,7 @@ function mountvol () {
   fi
   
   dialog --backtitle "`backtitle`" --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
+    --menu "Choose a Volume to mount.\Zn" 0 0 $(dlgmenuheight $((${#lvm_volumes[@]}/2))) "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -2419,15 +2438,15 @@ function getlatestmshell() {
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
     sudo mkdir -p /mnt/${tcrppart}/v9/cde
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
     md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
     md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
     if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
-      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
 
       #GRUB 부트엔트리 Default 값 조정
@@ -2446,8 +2465,8 @@ function get_tinycore9() {
 function get_tinycore() {
     cd /mnt/${tcrppart}
     echo "Downloading tinycore 14.0..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
     md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
     md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
     if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
@@ -2470,7 +2489,7 @@ function update_tinycore() {
       echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
       get_tinycore
       if [ $? -eq 0 ]; then
-        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
+        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
         backuploader
         restart
@@ -2482,7 +2501,7 @@ function update_motd() {
   echo "check update for /etc/motd"
   md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
   if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
-    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/motd -o /etc/motd
   fi
 }
 
@@ -2648,7 +2667,7 @@ function checkmachine() {
 
     if grep -q ^flags.*\ hypervisor\  /proc/cpuinfo; then
         MACHINE="VIRTUAL"
-        HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+        HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
         echo "Machine is $MACHINE Hypervisor=$HYPERVISOR"
     else
         MACHINE="NON-VIRTUAL"
@@ -2970,7 +2989,7 @@ function monitor() {
 
     ensure_loader_partitions_mounted
 
-    HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+    HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
         clear
@@ -3043,7 +3062,7 @@ function copyextractor() {
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" -o /home/tc/extractor.gz
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" -o /home/tc/extractor.gz
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     if [ "${BUS}" = "block"  ]; then
@@ -6461,7 +6480,7 @@ function my() {
   #else
   #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
   #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
+  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
   #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
   #fi
   
@@ -6588,7 +6607,7 @@ function my() {
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
   [ "$sortnetif" = true ] && add-addons "sortnetif" 
 
-  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
 
   if [ "${MDLNAME}" = "all-modules" ]; then
       sed -i "s/rr-modules/all-modules/g" models.json
