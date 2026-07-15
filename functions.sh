@@ -15,14 +15,18 @@ is_alpine() {
 # dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
 # 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
 # 나머지를 스크롤 뒤로 숨기는 회귀가 있음(TC의 구버전 1.3-20171209는 정상).
-# 세 번째 인자(menu-height)만 터미널 행수 기준의 명시적 값으로 대체해 우회.
+# 세 번째 인자(menu-height)를 실제 항목 수(인자 $1) 기준으로 계산해 대체.
+# 항목 수를 모르는 호출부는 인자 생략 시 5로 대체(고정 큰 값으로 박스가
+# 쓸데없이 커지는 것을 피하기 위함).
 dlgmenuheight() {
+  local n="${1:-5}"
   local rows
   rows=$(tput lines 2>/dev/null) || rows=24
-  local h=$((rows - 10))
-  [ "$h" -lt 5 ] && h=5
-  [ "$h" -gt 20 ] && h=20
-  echo "$h"
+  local max=$((rows - 10))
+  [ "$max" -lt 3 ] && max=3
+  [ "$n" -lt 1 ] && n=1
+  [ "$n" -gt "$max" ] && n="$max"
+  echo "$n"
 }
 
 # fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
@@ -1914,7 +1918,7 @@ function mountvol () {
   fi
   
   dialog --backtitle "`backtitle`" --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 $(dlgmenuheight) "${lvm_volumes[@]}" \
+    --menu "Choose a Volume to mount.\Zn" 0 0 $(dlgmenuheight $((${#lvm_volumes[@]}/2))) "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)

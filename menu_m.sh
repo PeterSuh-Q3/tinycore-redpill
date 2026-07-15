@@ -394,7 +394,7 @@ function seleudev() {
 
   while true; do
     dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) \
+      --menu "Choose a option" 0 0 $(dlgmenuheight $((${#menu_options[@]}/2))) \
       "${menu_options[@]}" \
       2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
@@ -559,7 +559,7 @@ function selectldrmode() {
   
   while true; do
     dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) \
+      --menu "Choose a option" 0 0 $(dlgmenuheight $((${#menu_options[@]}/2))) \
       "${menu_options[@]}" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
@@ -671,7 +671,7 @@ done
 
 while true; do
   dialog --clear --backtitle "$(backtitle)" \
-    --menu "Choose a option" 0 0 $(dlgmenuheight) \
+    --menu "Choose a option" 0 0 $(dlgmenuheight $((${#menu_items[@]}/2))) \
     "${menu_items[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
@@ -751,7 +751,7 @@ function modelMenu() {
   
   # Display dialog for model selection
   dialog --backtitle "`backtitle`" --default-item "${MODEL}" --colors \
-    --menu "${MSG00} [Except SA6400]\n" 0 0 $(dlgmenuheight) \
+    --menu "${MSG00} [Except SA6400]\n" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/mdl_final")) \
     --file "${TMP_PATH}/mdl_final" 2>${TMP_PATH}/resp
   
   # Check for dialog exit status
@@ -947,7 +947,7 @@ function storagepanel() {
 
   BAYSIZE="${bay}"
   dialog --backtitle "`backtitle`" --default-item "${BAYSIZE}" --no-items \
-    --menu "Choose a Panel Size" 0 0 $(dlgmenuheight) "TOWER_1_Bay" "TOWER_2_Bay" "TOWER_4_Bay" "TOWER_4_Bay_J" \
+    --menu "Choose a Panel Size" 0 0 $(dlgmenuheight 13) "TOWER_1_Bay" "TOWER_2_Bay" "TOWER_4_Bay" "TOWER_4_Bay_J" \
         "TOWER_4_Bay_S" "TOWER_5_Bay" "TOWER_6_Bay" "TOWER_8_Bay" "TOWER_12_Bay" \
         "RACK_2_Bay" "RACK_4_Bay" "RACK_8_Bay" "RACK_10_Bay" \
                 "RACK_12_Bay" "RACK_12_Bay_2" "RACK_16_Bay" "RACK_20_Bay" "RACK_24_Bay" "RACK_60_Bay" \
@@ -969,7 +969,7 @@ function serialMenu() {
   eval "MSG31=\"\${MSG${tz}31}\""  
   while true; do
     dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) \
+      --menu "Choose a option" 0 0 $(dlgmenuheight 2) \
       a "${MSG30}" \
       m "${MSG31}" \
     2>${TMP_PATH}/resp
@@ -1008,7 +1008,7 @@ function macMenu() {
   eval "MSG34=\"\${MSG${tz}34}\""  
   while true; do
     dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) \
+      --menu "Choose a option" 0 0 $(dlgmenuheight 3) \
       c "${MSG32}" \
       d "${MSG33}" \
       m "${MSG34}" \
@@ -1321,7 +1321,7 @@ function postupdate() {
 function langMenu() {
 
   dialog --backtitle "`backtitle`" --default-item "${LAYOUT}" --no-items \
-    --menu "Choose a language" 0 0 $(dlgmenuheight) "English" "한국어" "日本語" "简体中文" "正體中文" "Русский" \
+    --menu "Choose a language" 0 0 $(dlgmenuheight 18) "English" "한국어" "日本語" "简体中文" "正體中文" "Русский" \
     "Français" "Deutsch" "Español" "Italiano" "brasileiro" \
     "Magyar" "bahasa_Indonesia" "Türkçe" "हिंदी" "عربي" \
     "አማርኛ" "ไทย" \
@@ -1375,7 +1375,7 @@ function langMenu() {
 # Shows available keymaps to user choose one
 function keymapMenu() {
   dialog --backtitle "`backtitle`" --default-item "${LAYOUT}" --no-items \
-    --menu "Choose a layout" 0 0 $(dlgmenuheight) "azerty" "colemak" \
+    --menu "Choose a layout" 0 0 $(dlgmenuheight 7) "azerty" "colemak" \
     "dvorak" "fgGIod" "olpc" "qwerty" "qwertz" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
@@ -1385,7 +1385,7 @@ function keymapMenu() {
     OPTIONS+="${KM::-5} "
   done < <(cd /usr/share/kmap/${LAYOUT}; ls *.kmap)
   dialog --backtitle "`backtitle`" --no-items --default-item "${KEYMAP}" \
-    --menu "Choice a keymap" 0 0 $(dlgmenuheight) ${OPTIONS} \
+    --menu "Choice a keymap" 0 0 $(dlgmenuheight $(echo ${OPTIONS} | wc -w)) ${OPTIONS} \
     2>/tmp/resp
   [ $? -ne 0 ] && return
   resp=`cat /tmp/resp 2>/dev/null`
@@ -1438,7 +1438,7 @@ function burnloader() {
   fi
 
   dialog --backtitle "`backtitle`" --no-items --colors \
-    --menu "Choose a USB Stick, SSD or NVMe for New Loader\n\Z1(Caution!) In the case of SSD(include NVMe), be sure to check whether it is a cache or data disk.\Zn" 0 0 $(dlgmenuheight) "${listusb[@]}" \
+    --menu "Choose a USB Stick, SSD or NVMe for New Loader\n\Z1(Caution!) In the case of SSD(include NVMe), be sure to check whether it is a cache or data disk.\Zn" 0 0 $(dlgmenuheight ${#listusb[@]}) "${listusb[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -1551,7 +1551,7 @@ function cloneloader() {
   fi
 
   dialog --backtitle "`backtitle`" --no-items --colors \
-    --menu "Choose a USB Stick or SSD for Clone Loader\n\Z1(Caution!) In the case of SSD, be sure to check whether it is a cache or data disk.\Zn" 0 0 $(dlgmenuheight) "${listusb[@]}" \
+    --menu "Choose a USB Stick or SSD for Clone Loader\n\Z1(Caution!) In the case of SSD, be sure to check whether it is a cache or data disk.\Zn" 0 0 $(dlgmenuheight ${#listusb[@]}) "${listusb[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -1678,7 +1678,7 @@ function defaultchange() {
 
     # Display the menu and get the selection
     dialog --clear --default-item ${default_item} --backtitle "`backtitle`" --colors \
-    --menu "Choose a boot entry" 0 0 $(dlgmenuheight) --file /${TMP_PATH}/menub2 \
+    --menu "Choose a boot entry" 0 0 $(dlgmenuheight $(wc -l < /${TMP_PATH}/menub2)) --file /${TMP_PATH}/menub2 \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     
@@ -1704,7 +1704,7 @@ function changesatadom() {
     echo "1 \"Native SATA DOM(SYNO)\""
     echo "2 \"Fake SATA DOM(Redpill)\""
   } >"${TMP_PATH}/menub"
-  dialog --clear --default-item "${SATADOM}" --backtitle "`backtitle`" --colors --menu "Choose a mode(Only supported for kernel version 4)" 0 0 $(dlgmenuheight) --file /${TMP_PATH}/menub  2>${TMP_PATH}/resp
+  dialog --clear --default-item "${SATADOM}" --backtitle "`backtitle`" --colors --menu "Choose a mode(Only supported for kernel version 4)" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menub")) --file /${TMP_PATH}/menub  2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
   [ -z "${resp}" ] && return
@@ -1766,7 +1766,7 @@ function additional() {
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) --file "${TMP_PATH}/menua" \
+      --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menua")) --file "${TMP_PATH}/menua" \
     2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
 
@@ -1830,7 +1830,7 @@ function synopart() {
     eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"i \\\"${MSG69}\\\"\""                  >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) --file "${TMP_PATH}/menuc" \
+      --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuc")) --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/respc
     [ $? -ne 0 ] && return
 
@@ -1875,7 +1875,7 @@ function build-pre-option() {
     echo "z exit"                                                       >> "${TMP_PATH}/menud"
     
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
-      --menu "Choose a option" 0 0 $(dlgmenuheight) --file "${TMP_PATH}/menud" \
+      --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menud")) --file "${TMP_PATH}/menud" \
     2>${TMP_PATH}/respd
     [ $? -ne 0 ] && return
 
@@ -2108,7 +2108,7 @@ function formatDisks() {
     fi
     
     dialog --title "Format Disks" \
-      --checklist "${TITLE}" 0 0 $(dlgmenuheight) --file "${TMP_PATH}/opts" \
+      --checklist "${TITLE}" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/opts")) --file "${TMP_PATH}/opts" \
       2>"${TMP_PATH}/format_resp"
     
     [ $? -ne 0 ] && return
