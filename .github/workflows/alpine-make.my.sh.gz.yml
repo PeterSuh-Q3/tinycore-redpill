@@ -45,28 +45,14 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz preoff.sh 
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh 
           
           mkdir -p ./mydata/home/tc/
-          tar -zxvf mydata.tgz -C ./mydata/
-          cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz preoff.sh user_config.json ./mydata/home/tc/
-          cp -vf ./tinycore_14.0/etc/motd ./mydata/etc/motd
-          mkdir -p ./mydata/usr/bin
-          rm -f ./mydata/usr/bin/menu.sh
-          rm -f ./mydata/usr/bin/monitor.sh
-          rm -f ./mydata/usr/bin/ntp.sh
-          ln -sf /home/tc/menu.sh ./mydata/usr/bin/menu.sh
-          ln -sf /home/tc/monitor.sh ./mydata/usr/bin/monitor.sh
-          ln -sf /home/tc/ntp.sh ./mydata/usr/bin/ntp.sh                    
-          if ! grep -q "ttyd" ./mydata/opt/bootlocal.sh; then
-            echo "sudo /home/tc/ttyd login -f tc" >> ./mydata/opt/bootlocal.sh
-            mkdir -p ./mydata/usr/sbin
-            cp -f lsz ./mydata/usr/sbin/sz
-            cp -f lrz ./mydata/usr/sbin/rz
-          fi
-          tar -zcvf mydata.tgz -C ./mydata/ .
+          tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
+          cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
+          tar -zcvf localhost.apkovl.tar.gz -C ./mydata/ .
           
-          rm ./mydata/home/tc/custom-module
+          [ -f ./mydata/home/tc/custom-module ] && rm ./mydata/home/tc/custom-module
           cd ./mydata/home/tc
           tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz
           
@@ -74,6 +60,6 @@ jobs:
         run: |
           git config --global user.name "PeterSuh-Q3"
           git config --global user.email dante9000@gmail.com
-          git add my.sh.gz mydata.tgz xtcrp.tgz RELEASE_NOTES.md
+          git add my.sh.gz localhost.apkovl.tar.gz xtcrp.tgz RELEASE_NOTES.md
           git commit -m "${{ steps.remake-mydata-tgz.outputs.note }}"
           git push  
