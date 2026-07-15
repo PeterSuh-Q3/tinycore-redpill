@@ -3,7 +3,7 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.3.1.1"
-build="master"
+build="main"
 redpillmake="prod"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -20,7 +20,7 @@ configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/my.sh.gz"
 
 #Defaults
 smallfixnumber="0"
@@ -2337,15 +2337,15 @@ function getlatestmshell() {
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
     sudo mkdir -p /mnt/${tcrppart}/v9/cde
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
     md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
     md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
     if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
-      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
 
       #GRUB 부트엔트리 Default 값 조정
@@ -2364,8 +2364,8 @@ function get_tinycore9() {
 function get_tinycore() {
     cd /mnt/${tcrppart}
     echo "Downloading tinycore 14.0..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
     md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
     md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
     if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
@@ -2388,7 +2388,7 @@ function update_tinycore() {
       echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
       get_tinycore
       if [ $? -eq 0 ]; then
-        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
+        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
         backuploader
         restart
@@ -2400,7 +2400,7 @@ function update_motd() {
   echo "check update for /etc/motd"
   md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
   if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
-    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/motd -o /etc/motd
   fi
 }
 
@@ -2962,7 +2962,7 @@ function copyextractor() {
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" -o /home/tc/extractor.gz
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" -o /home/tc/extractor.gz
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     if [ "${BUS}" = "block"  ]; then
@@ -6393,7 +6393,7 @@ function my() {
   #else
   #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
   #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
+  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
   #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
   #fi
   
@@ -6520,7 +6520,7 @@ function my() {
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
   [ "$sortnetif" = true ] && add-addons "sortnetif" 
 
-  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
 
   if [ "${MDLNAME}" = "all-modules" ]; then
       sed -i "s/rr-modules/all-modules/g" models.json

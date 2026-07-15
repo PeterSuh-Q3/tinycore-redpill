@@ -25,8 +25,8 @@ function safe_fetch() {
 # functions.sh 가 비었거나(이전 GitHub 오류 다운로드로 깨짐) 문법이 깨졌으면 소싱 전 안전 재다운로드.
 # (getloaderdisk 등 함수가 정의되지 않아 이후 'command not found'/'unbound variable' 로 죽는 것을 방지)
 if [ ! -s /home/tc/functions.sh ] || ! grep -q 'rploaderver=' /home/tc/functions.sh 2>/dev/null || ! bash -n /home/tc/functions.sh 2>/dev/null; then
-    echo "[!] /home/tc/functions.sh missing or corrupt - re-fetching from master..."
-    safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
+    echo "[!] /home/tc/functions.sh missing or corrupt - re-fetching from main..."
+    safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions.sh" "/home/tc/functions.sh" "rploaderver="
 fi
 . /home/tc/functions.sh
 #####################################################################################################
@@ -361,12 +361,12 @@ else
 fi  
 
 if [ "${offline}" = "NO" ]; then
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
     if [ "$oldver" = "test" ]; then
       gitdownload
       cecho g "###############################  This is Test Mode  ############################"
-      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
-      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
@@ -375,14 +375,14 @@ if [ "${offline}" = "NO" ]; then
     elif [ "$oldver" = "unknown" ]; then
       gitdownload
       #echo "this is normal case not unknown parameter !!!"
-      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions.sh" "/home/tc/functions.sh" "rploaderver="
     else
       cecho g "###############################  This is for version ${oldver} ############################"
       extract_old_shell "$oldver"
       if [ $? -ne 0 ]; then
         echo "[!] extract_old_shell failed. Falling back to master functions.sh ..."
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh" "/home/tc/functions.sh" "rploaderver="
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions.sh" "/home/tc/functions.sh" "rploaderver="
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
       fi
 
       get_dep_hashes "$oldver"

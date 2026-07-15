@@ -138,18 +138,18 @@ else
 fi  
 
 if [ "${offline}" = "NO" ]; then
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
     if [ -f /tmp/test_mode ]; then
       cecho g "###############################  This is Test Mode  ############################"
-      curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions_t.sh -o functions.sh
-      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/menu_m.sh
+      curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions_t.sh -o functions.sh
+      curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/menu_m.sh
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
       /bin/cp -vf /home/tc/redpill-load/bundled-exts_t.json /home/tc/redpill-load/bundled-exts.json
       /bin/cp -vf /home/tc/redpill-load/config/pats_t.json /home/tc/redpill-load/config/pats.json
     #else
-    #  curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/functions.sh
+    #  curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/functions.sh
     fi
 
     # 다운로드 후 새로 받아온 파일을 다시 소싱하여 현재 환경에 즉시 반영 26.03.11
