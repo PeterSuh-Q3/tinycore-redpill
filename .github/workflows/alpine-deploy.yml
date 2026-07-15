@@ -145,6 +145,7 @@ jobs:
           sudo mkdir -p /mnt/tarp4
           sudo mount ${LOOPZ}p4 /mnt/tarp4
           sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp4/localhost.apkovl.tar.gz
           ls -ltr /mnt/tarp4
           sudo blkid "${LOOPZ}p4"
 
@@ -211,6 +212,7 @@ jobs:
           sudo mkdir -p /mnt/tarp4
           sudo mount ${LOOPZ}p4 /mnt/tarp4
           sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp4/localhost.apkovl.tar.gz
           ls -ltr /mnt/tarp4
           sudo blkid "${LOOPZ}p4"
 
