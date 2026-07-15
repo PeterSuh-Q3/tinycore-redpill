@@ -1,44 +1,49 @@
-name: Alpine - release tags mshell (2GB/4GB)
+name: Alpine - release tags mshell (3GB/5GB)
 
 on:
   release:
     types: [published]
 
   workflow_dispatch:
-      
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bring last uploaded mydata.tgz files from tinycore-redpill & lastest img
+      - name: Bring last uploaded loader base img (partitions 1/2 source)
         id: get-tag
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev jq
           #sudo apt-get install grub2 qemu-utils grub-efi-amd64-bin
-          
+
           #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
           #TAG="${LATESTURL##*/}"
-          
+
           PREV_TAG=$(curl -s https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases | jq -r '.[1].tag_name')
           TAG="${PREV_TAG}"
-          
+
           echo "TAG is ${TAG}"
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          
+
           curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
-          gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
+          gunzip tinycore-redpill.${TAG}.m-shell.img.gz
           pwd
           ls -ltr
-          
+
+      - name: Bring Alpine 4th-partition content (from the "alpine" release tag)
+        run: |
+          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz
+          ls -ltr alpine-partition.tar.gz
+
       - name: Download GRUB 2.12 source
         run: |
           #wget https://ftp.gnu.org/gnu/grub/grub-2.12.tar.gz
           tar xzf grub-2.12.tar.gz
           cd grub-2.12
-  
+
       - name: Configure GRUB
         working-directory: grub-2.12
         run: |
@@ -51,27 +56,27 @@ jobs:
             --disable-werror     \
             --with-freetype &&
             unset TARGET_CC
-          
+
       - name: Create extra_deps.lst
         working-directory: grub-2.12
         run: |
           echo "depends bli part_gpt" > grub-core/extra_deps.lst
-        
+
       - name: Build GRUB
         working-directory: grub-2.12
         run: make -j4
-  
+
       #- name: Run tests
       #  working-directory: grub-2.12
       #  run: make check
-  
+
       - name: Install GRUB
         working-directory: grub-2.12
-        run: sudo make install && sudo mv -v /etc/bash_completion.d/grub /usr/share/bash-completion/completions 
+        run: sudo make install && sudo mv -v /etc/bash_completion.d/grub /usr/share/bash-completion/completions
 
       - name: Return to workflow home directory
         run: cd $GITHUB_WORKSPACE
-      
+
       - name: Mount source img and make target img
         id: get-version
         run: |
@@ -79,34 +84,36 @@ jobs:
           echo "Version: ${VERSION}"
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           mkdir /opt/output
-          
+
           LOOPX=$(sudo losetup -f)
-          echo "LOOPX = ${LOOPX}"          
+          echo "LOOPX = ${LOOPX}"
 
           echo "Using TAG: ${RELEASE_TAG}"
           sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
 
 
-          # 2GB
-          
-          dd if=/dev/zero of=tinycore-redpill.${VERSION}.m-shell.img bs=1M seek=1862 count=0
+          # 3GB (2GB base + 1GB Alpine partition)
+
+          dd if=/dev/zero of=alpine-redpill.${VERSION}.m-shell.img bs=1M seek=2886 count=0
           echo "PREPARE partitions"
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
-          
-          echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
-          #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell.img
-          
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nn\np\n4\n\n+1024M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
+
+          echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
+          echo -e "t\n4\nc\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
+          #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
+
           LOOPZ=$(sudo losetup -f)
-          sudo losetup -P ${LOOPZ} tinycore-redpill.${VERSION}.m-shell.img
+          sudo losetup -P ${LOOPZ} alpine-redpill.${VERSION}.m-shell.img
           echo "LOOPZ = ${LOOPZ}"
           sudo fdisk -l ${LOOPZ}
-          
-          ## Format 3rd partition with vfat ##
+
+          ## Format 3rd/4th partition ##
           #sudo mkfs.vfat -F16 ${LOOPZ}p1
           #sudo mkfs.vfat -F16 ${LOOPZ}p2
           sudo mkfs.vfat -i 6234C863 -F16 ${LOOPZ}p3
-          
-          ## Copy 1st,2nd,3rd partition from source to target (with grub 2.12 install) ##
+          sudo mkfs.vfat -F32 -n alpine ${LOOPZ}p4
+
+          ## Copy 1st,2nd partition from source to target (with grub 2.12 install) ##
           sudo dd if="${LOOPX}p1" of="${LOOPZ}p1"
           sudo mkdir -p /mnt/tarp1
           sudo mount ${LOOPZ}p1 /mnt/tarp1
@@ -115,70 +122,64 @@ jobs:
 
           export GRUB_VERSION=2.12
           sudo grub-install --version
-          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"          
+          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
+          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
 
           ls -ltr /mnt/tarp1/boot/grub/x86_64-efi/
           echo "Copy and check EFI files"
           ls -ltr /mnt/tarp1/EFI/BOOT/
-          
+
           sudo cat /mnt/tarp1/EFI/BOOT/grub.cfg
           sudo blkid "${LOOPX}p1"
           sudo blkid "${LOOPZ}p1"
 
           ##  Copy 2nd partition from source to target ##
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
-          
-          ## Copy 3rd partition from source to target ##
-          sudo mkdir -p /mnt/p3
-          sudo mount ${LOOPX}p3 /mnt/p3
-          sudo mkdir -p /mnt/tarp3
-          sudo mount ${LOOPZ}p3 /mnt/tarp3
-          cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
-          cd $GITHUB_WORKSPACE
-          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3/mydatab.tgz
-          ls -ltr /mnt/tarp3
-          
-          ## add tinycore packages
-          sudo cp -vf ${GITHUB_WORKSPACE}/tce/optional/*.* /mnt/tarp3/cde/optional
-          ls -ltr /mnt/tarp3/cde/optional
-          sudo cp -vf ${GITHUB_WORKSPACE}/tce/onboot.lst /mnt/tarp3/cde/onboot.lst
-          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubbkg.png /mnt/tarp3/grubbkg.png
-          
+
+          ## 3rd partition: reserved only, left empty (no TC content copy) ##
+
+          ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##
+          sudo mkdir -p /mnt/tarp4
+          sudo mount ${LOOPZ}p4 /mnt/tarp4
+          sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          ls -ltr /mnt/tarp4
+          sudo blkid "${LOOPZ}p4"
+
           ##  Finalize ##
-          sudo umount /mnt/p3
           sudo umount /mnt/tarp1
-          sudo umount /mnt/tarp3
+          sudo umount /mnt/tarp4
           sudo losetup -d ${LOOPZ}
 
-          gzip -c tinycore-redpill.${VERSION}.m-shell.img > /opt/output/tinycore-redpill.${VERSION}.m-shell.img.gz
-          qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.m-shell.img tinycore-redpill.${VERSION}.m-shell.vmdk
-          gzip -c tinycore-redpill.${VERSION}.m-shell.vmdk > /opt/output/tinycore-redpill.${VERSION}.m-shell.vmdk.gz
+          gzip -c alpine-redpill.${VERSION}.m-shell.img > /opt/output/alpine-redpill.${VERSION}.m-shell.img.gz
+          qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.m-shell.img alpine-redpill.${VERSION}.m-shell.vmdk
+          gzip -c alpine-redpill.${VERSION}.m-shell.vmdk > /opt/output/alpine-redpill.${VERSION}.m-shell.vmdk.gz
 
 
-          # 4GB
+          # 5GB (4GB base + 1GB Alpine partition)
 
-          dd if=/dev/zero of=tinycore-redpill.${VERSION}.m-shell-4GB.img bs=1M seek=3724 count=0
+          dd if=/dev/zero of=alpine-redpill.${VERSION}.m-shell-4GB.img bs=1M seek=4748 count=0
           echo "PREPARE partitions"
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.m-shell-4GB.img
-          
-          echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell-4GB.img
-          #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.m-shell-4GB.img
-          
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nn\np\n4\n\n+1024M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.m-shell-4GB.img
+
+          echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-4GB.img
+          echo -e "t\n4\nc\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-4GB.img
+          #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-4GB.img
+
           LOOPZ=$(sudo losetup -f)
-          sudo losetup -P ${LOOPZ} tinycore-redpill.${VERSION}.m-shell-4GB.img
+          sudo losetup -P ${LOOPZ} alpine-redpill.${VERSION}.m-shell-4GB.img
           echo "LOOPZ = ${LOOPZ}"
           sudo fdisk -l ${LOOPZ}
-          
-          ## Format 3rd partition with vfat ##
+
+          ## Format 3rd/4th partition ##
           #sudo mkfs.vfat -F16 ${LOOPZ}p1
           #sudo mkfs.vfat -F16 ${LOOPZ}p2
           sudo mkfs.vfat -i 6234C863 -F16 ${LOOPZ}p3
-          
-          ## Copy 1st,2nd,3rd partition from source to target (with grub 2.12 install) ##
+          sudo mkfs.vfat -F32 -n alpine ${LOOPZ}p4
+
+          ## Copy 1st,2nd partition from source to target (with grub 2.12 install) ##
           sudo dd if="${LOOPX}p1" of="${LOOPZ}p1"
           sudo mkdir -p /mnt/tarp1
           sudo mount ${LOOPZ}p1 /mnt/tarp1
@@ -187,53 +188,45 @@ jobs:
 
           export GRUB_VERSION=2.12
           sudo grub-install --version
-          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"          
+          sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
+          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
 
           ls -ltr /mnt/tarp1/boot/grub/x86_64-efi/
           echo "Copy and check EFI files"
           ls -ltr /mnt/tarp1/EFI/BOOT/
-          
+
           sudo cat /mnt/tarp1/EFI/BOOT/grub.cfg
           sudo blkid "${LOOPX}p1"
           sudo blkid "${LOOPZ}p1"
 
           ##  Copy 2nd partition from source to target ##
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
-          
-          ## Copy 3rd partition from source to target ##
-          sudo mkdir -p /mnt/p3
-          sudo mount ${LOOPX}p3 /mnt/p3
-          sudo mkdir -p /mnt/tarp3
-          sudo mount ${LOOPZ}p3 /mnt/tarp3
-          cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
-          cd $GITHUB_WORKSPACE
-          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/mydata.tgz /mnt/tarp3/mydatab.tgz
-          ls -ltr /mnt/tarp3
-          
-          ## add tinycore packages
-          sudo cp -vf ${GITHUB_WORKSPACE}/tce/optional/*.* /mnt/tarp3/cde/optional
-          ls -ltr /mnt/tarp3/cde/optional
-          sudo cp -vf ${GITHUB_WORKSPACE}/tce/onboot.lst /mnt/tarp3/cde/onboot.lst
-          sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubbkg.png /mnt/tarp3/grubbkg.png
-          
+
+          ## 3rd partition: reserved only, left empty (no TC content copy) ##
+
+          ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##
+          sudo mkdir -p /mnt/tarp4
+          sudo mount ${LOOPZ}p4 /mnt/tarp4
+          sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          ls -ltr /mnt/tarp4
+          sudo blkid "${LOOPZ}p4"
+
           ##  Finalize ##
-          sudo umount /mnt/p3
           sudo umount /mnt/tarp1
-          sudo umount /mnt/tarp3
+          sudo umount /mnt/tarp4
           sudo losetup -d ${LOOPZ}
 
-          gzip -c tinycore-redpill.${VERSION}.m-shell-4GB.img > /opt/output/tinycore-redpill.${VERSION}.m-shell-4GB.img.gz
-          qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.m-shell-4GB.img tinycore-redpill.${VERSION}.m-shell-4GB.vmdk
-          gzip -c tinycore-redpill.${VERSION}.m-shell-4GB.vmdk > /opt/output/tinycore-redpill.${VERSION}.m-shell-4GB.vmdk.gz
+          gzip -c alpine-redpill.${VERSION}.m-shell-4GB.img > /opt/output/alpine-redpill.${VERSION}.m-shell-4GB.img.gz
+          qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.m-shell-4GB.img alpine-redpill.${VERSION}.m-shell-4GB.vmdk
+          gzip -c alpine-redpill.${VERSION}.m-shell-4GB.vmdk > /opt/output/alpine-redpill.${VERSION}.m-shell-4GB.vmdk.gz
 
           sudo losetup -d ${LOOPX}
-          
+
           ls -ltr /opt/output
-          
+
       - name: Upload MshellImage-${{ steps.get-version.outputs.VERSION }}
         if: success()
         uses: actions/upload-artifact@v4
@@ -247,4 +240,4 @@ jobs:
           tag_name: ${{ inputs.version }}
           files: |
             /opt/output/*.gz
-          body_path: RELEASE_NOTES.md            
+          body_path: RELEASE_NOTES.md
