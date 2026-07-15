@@ -239,7 +239,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ inputs.version }}
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
           files: |
             /opt/output/*.gz
           body_path: RELEASE_NOTES.md
