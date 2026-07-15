@@ -12,6 +12,19 @@ is_alpine() {
   [ -f /etc/alpine-release ]
 }
 
+# dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
+# 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
+# 나머지를 스크롤 뒤로 숨기는 회귀가 있음(TC의 구버전 1.3-20171209는 정상).
+# 세 번째 인자(menu-height)만 터미널 행수 기준의 명시적 값으로 대체해 우회.
+dlgmenuheight() {
+  local rows
+  rows=$(tput lines 2>/dev/null) || rows=24
+  local h=$((rows - 10))
+  [ "$h" -lt 5 ] && h=5
+  [ "$h" -gt 20 ] && h=20
+  echo "$h"
+}
+
 # fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
 # util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
 # 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
@@ -1901,7 +1914,7 @@ function mountvol () {
   fi
   
   dialog --backtitle "`backtitle`" --colors \
-    --menu "Choose a Volume to mount.\Zn" 0 0 0 "${lvm_volumes[@]}" \
+    --menu "Choose a Volume to mount.\Zn" 0 0 $(dlgmenuheight) "${lvm_volumes[@]}" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
