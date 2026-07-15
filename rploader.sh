@@ -10,7 +10,7 @@ source /home/tc/functions.h
 #####################################################################################################
 
 rploaderver="1.0.2.9"
-build="master"
+build="alpine-redpill"
 redpillmake="prod"
 
 rploaderfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/rploader.sh"
@@ -522,7 +522,7 @@ function copyextractor() {
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" -o /home/tc/extractor.gz
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/extractor.gz" -o /home/tc/extractor.gz
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     echo "Copying required libraries to local lib directory"
@@ -1758,7 +1758,7 @@ function patchdtc() {
     usbvid=$(cat user_config.json | jq '.extra_cmdline .vid' | sed -e 's/"//g' | sed -e 's/0x//g')
     loaderusb=$(lsusb | grep "${usbvid}:${usbpid}" | awk '{print $2 "-"  $4 }' | sed -e 's/://g' | sed -s 's/00//g')
 
-    curl -skL "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/${TARGET_PLATFORM}.dts" -o /home/tc/redpill-load/${TARGET_PLATFORM}.dts
+    curl -skL "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/${TARGET_PLATFORM}.dts" -o /home/tc/redpill-load/${TARGET_PLATFORM}.dts
 
     if [ ! -d /lib64 ]; then
         [ ! -h /lib64 ] && sudo ln -s /lib /lib64
