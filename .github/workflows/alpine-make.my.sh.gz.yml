@@ -52,7 +52,7 @@ jobs:
           cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           tar -zcvf localhost.apkovl.tar.gz -C ./mydata/ .
           
-          [ -d ./mydata/home/tc/custom-module ] && rm ./mydata/home/tc/custom-module
+          [ -f ./mydata/home/tc/custom-module ] && rm ./mydata/home/tc/custom-module
           cd ./mydata/home/tc
           tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz
           
