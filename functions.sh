@@ -2648,7 +2648,7 @@ function checkmachine() {
 
     if grep -q ^flags.*\ hypervisor\  /proc/cpuinfo; then
         MACHINE="VIRTUAL"
-        HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+        HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
         echo "Machine is $MACHINE Hypervisor=$HYPERVISOR"
     else
         MACHINE="NON-VIRTUAL"
@@ -2970,7 +2970,7 @@ function monitor() {
 
     ensure_loader_partitions_mounted
 
-    HYPERVISOR=$(dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
+    HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
         clear
