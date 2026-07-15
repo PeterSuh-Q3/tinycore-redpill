@@ -1,4 +1,4 @@
-name: Build static stty (uutils/coreutils)
+name: Alpine - Build static stty (uutils/coreutils)
 
 on:
   workflow_dispatch:

@@ -1,6 +1,6 @@
 # This is a basic workflow
 
-name: Make .mo file
+name: Alpine - Make .mo file
 
 on:
   workflow_dispatch:

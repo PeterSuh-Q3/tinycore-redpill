@@ -1,4 +1,4 @@
-name: convert vmdk
+name: Alpine - convert vmdk
 
 on:
   workflow_dispatch:

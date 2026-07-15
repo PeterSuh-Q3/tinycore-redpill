@@ -1,4 +1,4 @@
-name: Build amdgpu_top (Pure Ubuntu)
+name: Alpine - Build amdgpu_top (Pure Ubuntu)
 
 on:
   workflow_dispatch: # 수동 실행

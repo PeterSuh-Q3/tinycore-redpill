@@ -1,4 +1,4 @@
-name: Build amdgpu_top on Synology Environment
+name: Alpine - Build amdgpu_top on Synology Environment
 
 on:
   workflow_dispatch:

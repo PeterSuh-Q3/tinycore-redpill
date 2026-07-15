@@ -1,4 +1,4 @@
-name: Build set_baud
+name: Alpine - Build set_baud
 
 on:
   workflow_dispatch:

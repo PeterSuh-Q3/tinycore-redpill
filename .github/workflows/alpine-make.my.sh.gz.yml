@@ -1,4 +1,4 @@
-name: Tar my.sh.gz
+name: Alpine - Tar my.sh.gz
 
 on:
   workflow_dispatch:

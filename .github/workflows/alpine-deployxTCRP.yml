@@ -1,4 +1,4 @@
-name: release tags xtcrp (2GB/4GB)
+name: Alpine - release tags xtcrp (2GB/4GB)
 
 on:
   release:
