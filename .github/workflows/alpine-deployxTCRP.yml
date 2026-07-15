@@ -87,14 +87,14 @@ jobs:
           sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
 
           # 2GB
-          dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp.img bs=1M seek=1862 count=0
+          dd if=/dev/zero of=alpine-redpill.${VERSION}.xtcrp.img bs=1M seek=1862 count=0
           echo "Prepare partitions"
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
-          echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
-          #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp.img
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.xtcrp.img
+          echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.xtcrp.img
+          #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.xtcrp.img
           
           LOOPZ=$(sudo losetup -f)
-          sudo losetup -P ${LOOPZ} tinycore-redpill.${VERSION}.xtcrp.img
+          sudo losetup -P ${LOOPZ} alpine-redpill.${VERSION}.xtcrp.img
           echo "LOOPZ = ${LOOPZ}"
           sudo fdisk -l ${LOOPZ}
           
@@ -162,20 +162,20 @@ jobs:
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
 
-          gzip -c tinycore-redpill.${VERSION}.xtcrp.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp.img.gz
-          qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp.img tinycore-redpill.${VERSION}.xtcrp.vmdk
-          gzip -c tinycore-redpill.${VERSION}.xtcrp.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp.vmdk.gz
+          gzip -c alpine-redpill.${VERSION}.xtcrp.img > /opt/output/alpine-redpill.${VERSION}.xtcrp.img.gz
+          qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.xtcrp.img alpine-redpill.${VERSION}.xtcrp.vmdk
+          gzip -c alpine-redpill.${VERSION}.xtcrp.vmdk > /opt/output/alpine-redpill.${VERSION}.xtcrp.vmdk.gz
 
           # 4GB
           
-          dd if=/dev/zero of=tinycore-redpill.${VERSION}.xtcrp-4GB.img bs=1M seek=3724 count=0
+          dd if=/dev/zero of=alpine-redpill.${VERSION}.xtcrp-4GB.img bs=1M seek=3724 count=0
           echo "Prepare partitions"
-          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nw\nq\n" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
-          echo -e "a\n1\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
-          #echo -e "t\n1\nuefi\nw" | sudo fdisk tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.xtcrp-4GB.img
+          echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.xtcrp-4GB.img
+          #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.xtcrp-4GB.img
           
           LOOPZ=$(sudo losetup -f)
-          sudo losetup -P ${LOOPZ} tinycore-redpill.${VERSION}.xtcrp-4GB.img
+          sudo losetup -P ${LOOPZ} alpine-redpill.${VERSION}.xtcrp-4GB.img
           echo "LOOPZ = ${LOOPZ}"
           sudo fdisk -l ${LOOPZ}
           
@@ -243,9 +243,9 @@ jobs:
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
 
-          gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.img > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.img.gz
-          qemu-img convert -f raw -O vmdk tinycore-redpill.${VERSION}.xtcrp-4GB.img tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk
-          gzip -c tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk > /opt/output/tinycore-redpill.${VERSION}.xtcrp-4GB.vmdk.gz
+          gzip -c alpine-redpill.${VERSION}.xtcrp-4GB.img > /opt/output/alpine-redpill.${VERSION}.xtcrp-4GB.img.gz
+          qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.xtcrp-4GB.img alpine-redpill.${VERSION}.xtcrp-4GB.vmdk
+          gzip -c alpine-redpill.${VERSION}.xtcrp-4GB.vmdk > /opt/output/alpine-redpill.${VERSION}.xtcrp-4GB.vmdk.gz
 
           sudo losetup -d ${LOOPX}
           
