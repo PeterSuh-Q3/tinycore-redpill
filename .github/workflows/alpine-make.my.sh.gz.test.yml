@@ -66,6 +66,12 @@ jobs:
             tar -tvzf localhost.apkovl.tar.gz.test | awk '$2 !~ /^root\// {print}'
           fi
 
+          echo ""
+          echo "--- home/tc 항목의 실제 숫자 uid/gid 확인 (원본 tc 계정 uid=1001과 비교) ---"
+          tar --numeric-owner -tvzf localhost.apkovl.tar.gz.test | grep 'home/tc/functions.sh\|home/tc/menu.sh$\|home/tc/my.sh.gz$'
+          echo "--- (참고) runner 계정의 uid ---"
+          id
+
       - name: Upload my.sh.gz.test artifact
         if: success()
         uses: actions/upload-artifact@v4
