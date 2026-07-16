@@ -833,6 +833,9 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
+# 2026.07.16 v1.4.0.0 
+# Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1062,6 +1065,9 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
+
+# 2026.07.16 v1.4.0.0 
+# Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
 
 EOF
 }
