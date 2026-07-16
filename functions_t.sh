@@ -3506,7 +3506,7 @@ function getgrubbkg() {
     curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.cfg"
     if [ ! -f /home/tc/grubbkg.png ]; then
         curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.png"
-        sudo cp -vf /home/tc/grubbkg.png /mnt/${loaderdisk}4/grubbkg.png
+        sudo cp -vf /home/tc/grubbkg.png /mnt/alpine/grubbkg.png
     fi
 }
 
