@@ -35,7 +35,7 @@ jobs:
       - name: Check original localhost.apkovl.tar.gz ownership (baseline)
         run: |
           echo "--- 원본 localhost.apkovl.tar.gz 내 민감 파일 소유권(기준값) ---"
-          tar -tvzf localhost.apkovl.tar.gz | grep -E '(^|/)(etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_)' || true
+          tar -tvzf localhost.apkovl.tar.gz | grep -E 'etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_' || true
 
       - name: Rebuild localhost.apkovl.tar.gz (test output, no repo commit)
         id: rebuild-apkovl
@@ -53,7 +53,7 @@ jobs:
       - name: Check rebuilt localhost.apkovl.tar.gz.test ownership (contamination check)
         run: |
           echo "--- 재가공된 localhost.apkovl.tar.gz.test 내 민감 파일 소유권 ---"
-          tar -tvzf localhost.apkovl.tar.gz.test | grep -E '(^|/)(etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_)' || true
+          tar -tvzf localhost.apkovl.tar.gz.test | grep -E 'etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_' || true
 
           echo ""
           echo "--- 전체 오염 스캔: uid/gid가 0(root)이 아닌 항목 개수 ---"
