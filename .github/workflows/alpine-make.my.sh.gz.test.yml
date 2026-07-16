@@ -32,9 +32,55 @@ jobs:
           echo "--- 실행권한(+x) 확인 ---"
           find /tmp/perm_check -maxdepth 1 -type f ! -perm -u+x -name "*.sh" -print
 
+      - name: Check original localhost.apkovl.tar.gz ownership (baseline)
+        run: |
+          echo "--- 원본 localhost.apkovl.tar.gz 내 민감 파일 소유권(기준값) ---"
+          tar -tvzf localhost.apkovl.tar.gz | grep -E '(^|/)(etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_)' || true
+
+      - name: Rebuild localhost.apkovl.tar.gz (test output, no repo commit)
+        id: rebuild-apkovl
+        run: |
+          mkdir -p ./mydata/home/tc/
+          tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
+          cp -vf my.sh.gz.test lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
+          mv -f ./mydata/home/tc/my.sh.gz.test ./mydata/home/tc/my.sh.gz
+          tar -zcvf localhost.apkovl.tar.gz.test -C ./mydata/ .
+
+          [ -f ./mydata/home/tc/custom-module ] && rm ./mydata/home/tc/custom-module
+          cd ./mydata/home/tc
+          tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz.test
+
+      - name: Check rebuilt localhost.apkovl.tar.gz.test ownership (contamination check)
+        run: |
+          echo "--- 재가공된 localhost.apkovl.tar.gz.test 내 민감 파일 소유권 ---"
+          tar -tvzf localhost.apkovl.tar.gz.test | grep -E '(^|/)(etc/shadow|etc/passwd|etc/sudoers\.d|etc/ssh/ssh_host_)' || true
+
+          echo ""
+          echo "--- 전체 오염 스캔: uid/gid가 0(root)이 아닌 항목 개수 ---"
+          NONROOT_COUNT=$(tar -tvzf localhost.apkovl.tar.gz.test | awk '{print $2}' | grep -vc '^root/root$' || true)
+          echo "non-root owned entries: ${NONROOT_COUNT}"
+          if [ "${NONROOT_COUNT}" -gt 0 ]; then
+            echo "::warning::localhost.apkovl.tar.gz.test에 root:root가 아닌 항목이 ${NONROOT_COUNT}개 있습니다. 아래 목록 확인 필요."
+            tar -tvzf localhost.apkovl.tar.gz.test | awk '$2 != "root/root" {print}'
+          fi
+
       - name: Upload my.sh.gz.test artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: my.sh.gz.test-${{ steps.remake-mydata-tgz.outputs.VERSION }}
           path: my.sh.gz.test
+
+      - name: Upload localhost.apkovl.tar.gz.test artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: localhost.apkovl.tar.gz.test-${{ steps.remake-mydata-tgz.outputs.VERSION }}
+          path: localhost.apkovl.tar.gz.test
+
+      - name: Upload xtcrp.tgz.test artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xtcrp.tgz.test-${{ steps.remake-mydata-tgz.outputs.VERSION }}
+          path: xtcrp.tgz.test
