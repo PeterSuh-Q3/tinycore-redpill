@@ -45,16 +45,31 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh 
-          
-          mkdir -p ./mydata/home/tc/
-          tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
-          cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
-          tar -zcvf localhost.apkovl.tar.gz -C ./mydata/ .
-          
-          [ -f ./mydata/home/tc/custom-module ] && rm ./mydata/home/tc/custom-module
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
+
+          # localhost.apkovl.tar.gz는 root:root, root:shadow 등 특권 소유권의
+          # 시스템 파일(/etc/shadow, /etc/sudoers.d 등)을 담고 있음. 비-root
+          # runner 계정으로 압축해제/재압축하면 그 소유권이 runner로 뭉개져
+          # 다운스트림에서 소유권 오염이 발생하므로(2026-07-16 실측 확인),
+          # 이 구간은 sudo tar로 실행해 원본 소유권을 보존한다.
+          sudo mkdir -p ./mydata/home/tc/
+          sudo tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
+
+          # tc 계정의 실제 uid:gid를 원본 apkovl에서 동적으로 확인 (하드코딩 금지)
+          TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
+
+          sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
+          # 위 cp는 기존 파일을 같은 이름으로 덮어써 원본 inode(및 소유권)를
+          # 유지하지만, 혹시 새로 추가된 파일이 있을 경우를 대비해 명시적으로
+          # tc 소유권을 재적용.
+          sudo chown "${TC_OWNER}" ./mydata/home/tc/my.sh.gz ./mydata/home/tc/user_config.json
+          sudo tar -zcvf localhost.apkovl.tar.gz -C ./mydata/ .
+          sudo chown "$(id -u):$(id -g)" localhost.apkovl.tar.gz
+
+          [ -f ./mydata/home/tc/custom-module ] && sudo rm ./mydata/home/tc/custom-module
           cd ./mydata/home/tc
-          tar -cf - ./ | pigz -p 2 > ${GITHUB_WORKSPACE}/xtcrp.tgz
+          sudo tar -cf - ./ | pigz -p 2 | sudo tee ${GITHUB_WORKSPACE}/xtcrp.tgz > /dev/null
+          sudo chown "$(id -u):$(id -g)" ${GITHUB_WORKSPACE}/xtcrp.tgz
           
       - name: Commit changes
         run: |
