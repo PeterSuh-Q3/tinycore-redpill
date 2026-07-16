@@ -2975,10 +2975,11 @@ while true; do
     --menu "${result}" ${BOX_H} ${SCR_W} ${MENU_H} --file "${TMP_PATH}/menu" \
     2>${TMP_PATH}/resp
   dlgret=$?
-  # ESC(255)는 메뉴 종료로 취급하지 않고 그대로 재표시. Cancel(1) 등 다른
-  # 비정상 종료 코드일 때만 메뉴를 빠져나감.
-  [ ${dlgret} -eq 255 ] && continue
-  [ ${dlgret} -ne 0 ] && break
+  # 실측 확인(2026-07-16): 이 dialog 빌드(1.3-20260107)는 ESC와 Cancel
+  # 버튼을 종료 코드로 구분하지 않음(--no-cancel, DIALOG_ESC 환경변수 모두
+  # 무시하고 둘 다 1 반환). 종료는 메뉴의 별도 항목(e: byebye)으로만
+  # 하도록 하고, ESC/Cancel은 메뉴를 다시 그리기만 함(프로그램 종료 안 함).
+  [ ${dlgret} -ne 0 ] && continue
   case `<"${TMP_PATH}/resp"` in
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
     1) NEXT="c" ;;   # ===== Main =====        → c
