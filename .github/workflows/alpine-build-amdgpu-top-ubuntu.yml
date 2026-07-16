@@ -20,8 +20,7 @@ jobs:
 
       - name: Run PeterSuh-Q3 Build Script
         run: |
-          echo "1. 스크립트 다운로드"
-          curl -O https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/amdgpu_top-build.sh
+          echo "1. 체크아웃된 저장소의 스크립트 사용 (트리거 브랜치와 항상 일치)"
           chmod +x amdgpu_top-build.sh
           
           echo "2. 빌드 스크립트 실행"

@@ -29,7 +29,7 @@ userconfigfile="/home/tc/user_config.json"
 fullupdatefiles="custom_config.json custom_config_jun.json global_config.json modules.alias.3.json.gz modules.alias.4.json.gz rpext-index.json user_config.json rploader.sh"
 
 HOMEPATH="/home/tc"
-TOOLSPATH="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/"
+TOOLSPATH="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/tools/"
 TOOLS="bspatch bzImage-template-v4.gz bzImage-template-v5.gz bzImage-to-vmlinux.sh calc_run_size.sh crc32 dtc kexec ramdisk-patch.sh vmlinux-to-bzImage.sh xxd zimage-patch.sh kpatch grub-editenv pigz modprobe"
 
 # END Do not modify after this line

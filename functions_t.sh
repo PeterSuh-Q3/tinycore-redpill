@@ -2446,7 +2446,7 @@ function get_tinycore9() {
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
       sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
-      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/mountvol.sh -o /home/tc/mountvol.sh
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
 
       #GRUB 부트엔트리 Default 값 조정
@@ -3062,7 +3062,7 @@ function copyextractor() {
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" -o /home/tc/extractor.gz
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" -o /home/tc/extractor.gz
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     if [ "${BUS}" = "block"  ]; then
@@ -6480,7 +6480,7 @@ function my() {
   #else
   #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
   #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
+  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
   #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
   #fi
   
@@ -6607,7 +6607,7 @@ function my() {
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
   [ "$sortnetif" = true ] && add-addons "sortnetif" 
 
-  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
+  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/models.json
 
   if [ "${MDLNAME}" = "all-modules" ]; then
       sed -i "s/rr-modules/all-modules/g" models.json

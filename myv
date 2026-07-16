@@ -9,7 +9,7 @@ source myfunc.h # my.sh / myv.sh common use
 ########################################################################################################################
                                                                                         
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/my.sh.gz"
 
 # ==============================================================================                                        
 # Color Function                                                                                                        
