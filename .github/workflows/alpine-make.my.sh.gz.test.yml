@@ -1,0 +1,40 @@
+name: Alpine - Tar my.sh.gz (TEST, no commit)
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'board'
+        required: true
+        default: "1"
+jobs:
+  tar_compress_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Compress shell files (test output, no repo commit)
+        id: remake-mydata-tgz
+        run: |
+          VERSION=v`cat functions.sh | grep rploaderver= | cut -d\" -f2`
+          echo "Version: ${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+          chmod +x preoff.sh
+          tar -zcvf my.sh.gz.test lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
+
+          echo "--- 아카이브 내 소유권/권한 사전 체크 ---"
+          tar -tvzf my.sh.gz.test
+
+          mkdir -p /tmp/perm_check
+          tar -xzf my.sh.gz.test -C /tmp/perm_check
+          echo "--- 실행권한(+x) 확인 ---"
+          find /tmp/perm_check -maxdepth 1 -type f ! -perm -u+x -name "*.sh" -print
+
+      - name: Upload my.sh.gz.test artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: my.sh.gz.test-${{ steps.remake-mydata-tgz.outputs.VERSION }}
+          path: my.sh.gz.test
