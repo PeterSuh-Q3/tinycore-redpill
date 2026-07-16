@@ -264,4 +264,5 @@ jobs:
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
           files: |
             /opt/output/*.gz
-          body_path: RELEASE_NOTES.md            
+          body_path: RELEASE_NOTES.md
+          append_body: true            

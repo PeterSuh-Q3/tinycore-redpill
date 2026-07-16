@@ -243,3 +243,4 @@ jobs:
           files: |
             /opt/output/*.gz
           body_path: RELEASE_NOTES.md
+          append_body: true
