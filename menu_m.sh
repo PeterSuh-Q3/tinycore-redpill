@@ -2974,7 +2974,11 @@ while true; do
     --begin 1 0 --no-shadow \
     --menu "${result}" ${BOX_H} ${SCR_W} ${MENU_H} --file "${TMP_PATH}/menu" \
     2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && break
+  dlgret=$?
+  # ESC(255)는 메뉴 종료로 취급하지 않고 그대로 재표시. Cancel(1) 등 다른
+  # 비정상 종료 코드일 때만 메뉴를 빠져나감.
+  [ ${dlgret} -eq 255 ] && continue
+  [ ${dlgret} -ne 0 ] && break
   case `<"${TMP_PATH}/resp"` in
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
     1) NEXT="c" ;;   # ===== Main =====        → c
