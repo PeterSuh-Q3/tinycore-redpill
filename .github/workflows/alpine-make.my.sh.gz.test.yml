@@ -42,8 +42,18 @@ jobs:
         run: |
           sudo mkdir -p ./mydata/home/tc/
           sudo tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
+
+          # tc 계정의 실제 uid:gid를 원본 apkovl에서 동적으로 확인 (하드코딩 금지)
+          TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
+          echo "tc 계정 uid:gid = ${TC_OWNER}"
+
           sudo cp -vf my.sh.gz.test lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           sudo mv -f ./mydata/home/tc/my.sh.gz.test ./mydata/home/tc/my.sh.gz
+          # mv는 대상 inode를 새 파일로 완전히 교체하므로, my.sh.gz(신규 생성분)만
+          # tc 소유권으로 명시적으로 재적용. 그 외 기존 파일을 덮어쓴 cp는 원본
+          # inode를 유지하므로 이미 tc 소유권 그대로임.
+          sudo chown "${TC_OWNER}" ./mydata/home/tc/my.sh.gz
+
           sudo tar -zcvf localhost.apkovl.tar.gz.test -C ./mydata/ .
           sudo chown "$(id -u):$(id -g)" localhost.apkovl.tar.gz.test
 
