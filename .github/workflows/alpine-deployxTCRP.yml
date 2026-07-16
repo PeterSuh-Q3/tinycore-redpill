@@ -21,7 +21,7 @@ jobs:
           #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
           #TAG="${LATESTURL##*/}"
 
-          PREV_TAG=$(curl -s https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases | jq -r '[.[] | select(.tag_name != "alpine")][1].tag_name')
+          PREV_TAG=$(curl -s https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases | jq -r '[.[] | select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))][1].tag_name')
           TAG="${PREV_TAG}"
           
           echo "TAG is ${TAG}"
