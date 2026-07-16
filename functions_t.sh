@@ -3503,10 +3503,10 @@ function postupdate() {
 
 function getgrubbkg() {
 
-    curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/grub/grubbkg.cfg"
+    curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.cfg"
     if [ ! -f /home/tc/grubbkg.png ]; then
-        curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/main/grub/grubbkg.png"
-        sudo cp -vf /home/tc/grubbkg.png /mnt/${loaderdisk}3/grubbkg.png
+        curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.png"
+        sudo cp -vf /home/tc/grubbkg.png /mnt/${loaderdisk}4/grubbkg.png
     fi
 }
 
