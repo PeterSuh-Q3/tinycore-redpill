@@ -213,11 +213,26 @@ jobs:
           path: /opt/output
 
       # Publish a release if is a tag
+      - name: Prepend RELEASE_NOTES.md to existing release body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.version }}"
+          EXISTING_BODY=$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" --jq .body 2>/dev/null || echo "")
+          {
+            cat RELEASE_NOTES.md
+            if [ -n "$EXISTING_BODY" ]; then
+              echo ""
+              echo "---"
+              echo ""
+              echo "$EXISTING_BODY"
+            fi
+          } > /tmp/combined_release_notes.md
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ inputs.version }}
           files: |
             /opt/output/*.gz
-          body_path: RELEASE_NOTES.md
-          append_body: true
+          body_path: /tmp/combined_release_notes.md
