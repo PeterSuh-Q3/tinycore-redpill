@@ -29,14 +29,11 @@ dlgmenuheight() {
   echo "$n"
 }
 
-# fdisk 절대경로. TC는 항상 $FDISK 에 설치되지만 Alpine의
-# util-linux는 /sbin/fdisk 에 설치됨 - 하드코딩된 TC 경로가 "command not found"
-# 로 조용히 실패하던 것을 실측 확인(2026-07-12)해 동적 해석으로 교체.
-if is_alpine; then
-  FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
-else
-  FDISK="$FDISK"
-fi
+# fdisk 절대경로. alpine-redpill은 항상 Alpine 위에서 도는 구조라
+# is_alpine 분기가 불필요 - Alpine의 util-linux는 /sbin/fdisk에 설치됨.
+# 하드코딩된 경로가 "command not found"로 조용히 실패하던 것을 실측
+# 확인(2026-07-12)해 동적 해석으로 교체.
+FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
 
 # 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 main(TinyCore
 # 원본, is_alpine 가드가 없음)으로 자기 자신을 덮어써 패치가 무력화되는 사고가
