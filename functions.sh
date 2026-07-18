@@ -4644,7 +4644,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         USB_LINE="${USB_LINE} intel_iommu=igfx_off"
     fi
 
-    if [ "$KVER" == "4.4.302" ]; then
+    if [ "$KVER" == "4.4.180" ]; then
         USB_LINE="${USB_LINE} i915.enable_guc=0"
     fi
 
