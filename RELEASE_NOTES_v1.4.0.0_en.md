@@ -41,6 +41,15 @@ Nothing else about the original partition layout's *capacity* changed — partit
 - **Built-in offline package restore.** The new 4th partition doubles as a local apk mirror, so package restoration at boot no longer strictly depends on internet access.
 - **More robust hardware detection.** As part of this migration, disk (`rebuildfstab`) and now network interface (`rebuildnetifaces`) configuration are generated dynamically at every boot from what's actually detected — rather than relying on static, hardcoded device lists that silently miss additional disks or NICs.
 
+## About the xTCRP variant — it has nothing to do with Alpine
+
+If you're using the `xtcrp` image variant, note that **xTCRP is unrelated to the Alpine migration.** It's the same mechanism as before: a separate "friend" kernel (`bzImage-friend` / `initrd-friend`, built from a different, Buildroot-based project) is bundled alongside the loader for a quick-configure boot path. Nothing about that mechanism changed — only the build scripts that assemble the image were bumped to v1.4.0.0 along with everything else. xTCRP does not use Alpine Linux, does not have a 4th `alpine` partition, and is unaffected by anything described above.
+
+## Other fixes worth knowing about
+
+- **Dual-NIC boot support.** Previously, only the first detected NIC (`eth0`) was automatically brought up and given a DHCP address at boot; any additional NICs (`eth1`, etc.) were left completely unconfigured. A new boot-time script (`rebuildnetifaces`, mirroring the existing disk-detection script `rebuildfstab`) now scans all detected network interfaces at every boot and configures any that are missing — multi-NIC hardware now gets a working IP on every interface out of the box.
+- **Menu no longer exits on ESC/Cancel.** The main mshell menu used to drop straight back to the shell if you pressed Esc or Cancel by mistake. It now simply redraws the menu instead; the only way to exit is the explicit "Exit" menu item.
+
 ## Notes
 
 - Existing v1.3.1.1 users are unaffected and continue to receive updates on the `main`/v1.3.x line.
