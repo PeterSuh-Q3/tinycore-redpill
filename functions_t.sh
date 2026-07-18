@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.0.0"
+rploaderver="1.4.1.0"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -320,6 +320,9 @@ function history() {
              (static/apk-replaceable/DSM-internal/custom). Decided to standardize on ttyd as the single terminal path,
              dropping the urxvt/X11 + glibc locale stack. No showstopper risk found; kpatch/gcompat functional test is
              the only remaining open item. See docs/alpine-migration-plan.md for the full plan.
+    1.4.1.0 Fixed low-RAM (2GB) build-time OOM via rootfs tmpfs/disk-swap tuning, dual-NIC auto-DHCP, ESC/Cancel
+             no longer exits the menu, and several build/menu script robustness fixes (FDISK resolution, grub
+             background image path, main-branch self-reference hardcoding, my.sh.gz workflow ownership safety).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -830,8 +833,12 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
-# 2026.07.16 v1.4.0.0 
+# 2026.07.16 v1.4.0.0
 # Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
+
+# 2026.07.19 v1.4.1.0
+# Fixed low-RAM (2GB) build-time OOM (rootfs tmpfs/disk-swap tuning), dual-NIC auto-DHCP, ESC/Cancel menu exit,
+# and several build/menu script robustness fixes.
 
 function showlastupdate() {
     cat <<EOF
@@ -1063,8 +1070,12 @@ function showlastupdate() {
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
-# 2026.07.16 v1.4.0.0 
+# 2026.07.16 v1.4.0.0
 # Begin TinyCore -> Alpine Linux (musl) diskless migration (alpine-redpill branch).
+
+# 2026.07.19 v1.4.1.0
+# Fixed low-RAM (2GB) build-time OOM (rootfs tmpfs/disk-swap tuning), dual-NIC auto-DHCP, ESC/Cancel menu exit,
+# and several build/menu script robustness fixes.
 
 EOF
 }
