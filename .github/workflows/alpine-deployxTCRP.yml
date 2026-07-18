@@ -28,8 +28,8 @@ jobs:
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           
-          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
-          gunzip tinycore-redpill.${TAG}.m-shell.img.gz          
+          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/alpine-redpill.${TAG}.m-shell.img.gz
+          gunzip alpine-redpill.${TAG}.m-shell.img.gz          
           pwd
           ls -ltr
           
@@ -84,7 +84,7 @@ jobs:
           echo "LOOPX = ${LOOPX}"
 
           echo "Using TAG: ${RELEASE_TAG}"
-          sudo losetup -P ${LOOPX} tinycore-redpill.${RELEASE_TAG}.m-shell.img
+          sudo losetup -P ${LOOPX} alpine-redpill.${RELEASE_TAG}.m-shell.img
 
           # 2GB
           dd if=/dev/zero of=alpine-redpill.${VERSION}.xtcrp.img bs=1M seek=1862 count=0
