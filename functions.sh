@@ -3727,9 +3727,15 @@ function cleanloader() {
     sudo rm -rf /home/tc/redpill*
     sudo rm -rf /home/tc/*tgz
 
-    # 빌드(성공/실패 무관) 직후 메모리 정리: 페이지캐시/dentry/inode 캐시를 반환하고,
-    # 스왑을 껐다 켜서 더 이상 필요없어진 스왑아웃 페이지를 회수한다.
-    # 연속으로 여러 모델을 빌드할 때 스왑 사용량이 누적되어 줄지 않는 현상을 완화하기 위함.
+    cleanupmemory
+
+}
+
+# 빌드(성공/실패 무관) 직후 메모리 정리: 페이지캐시/dentry/inode 캐시를 반환하고,
+# 스왑을 껐다 켜서 더 이상 필요없어진 스왑아웃 페이지를 회수한다.
+# 연속으로 여러 모델을 빌드할 때 스왑 사용량이 줄지 않고 누적되는 현상을 완화하기 위함.
+function cleanupmemory() {
+
     sync
     echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1
     ACTIVE_SWAPFILE="$(swapon --show=NAME --noheadings 2>/dev/null | head -1)"
@@ -5028,8 +5034,11 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 [ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
-        fi    
-    fi    
+        fi
+    fi
+
+    cleanupmemory
+
 }
 
 function curlfriend() {
@@ -6875,13 +6884,14 @@ function my() {
       echo "n"|rploader build ${TARGET_PLATFORM}-${BUILD} static
   fi
 
-  errorcode=$?  
+  errorcode=$?
   echo "errorcode = $errorcode"
-  
+
   if [ "$errorcode" != "0" ]; then
       cecho r "An error occurred while building the loader!!! Clean the redpill-load directory!!! "
       echo "y"|rploader clean
   else
+      cleanupmemory
       [ "${BUS}" = "block" ] && exit 0
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
       echo "y"|rploader backup
