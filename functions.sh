@@ -2809,6 +2809,23 @@ function getBus() {
 # git clone redpill-load
 function gitclone() {
     git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    patchredpillload
+}
+
+# redpill-load의 brp_pack_cpiord()는 기본적으로 find/cpio stderr를 /dev/null로 버려서
+# "Failed to repack flat ramdisk" 실패시 원인(디스크 공간부족/OOM 등)을 알 수 없다.
+# /home/tc/redpill-load는 tmpfs 위에 매 빌드마다 새로 clone되므로, clone 직후 이
+# 함수를 통해 로그가 남도록 패치한다 (원본 저장소를 직접 수정할 수 없어 로컬 패치).
+function patchredpillload() {
+    local f="/home/tc/redpill-load/include/file.sh"
+    [ -f "$f" ] || return 0
+    grep -q 'cpio -o -H newc -R root:root 2>>/tmp/strerr.log' "$f" && return 0
+    local cpio_line find_line
+    cpio_line=$(grep -n 'cpio -o -H newc -R root:root 2>/dev/null 1> "\${1}")' "$f" | head -1 | cut -d: -f1)
+    [ -z "$cpio_line" ] && return 0
+    find_line=$((cpio_line - 1))
+    sed -i "${find_line}s|2>/dev/null|2>/tmp/strerr.log|" "$f"
+    sed -i "${cpio_line}s|2>/dev/null|2>>/tmp/strerr.log|" "$f"
 }
 
 function gitdownload() {
@@ -3709,6 +3726,17 @@ function cleanloader() {
     echo "Clearing local redpill files"
     sudo rm -rf /home/tc/redpill*
     sudo rm -rf /home/tc/*tgz
+
+    # 빌드(성공/실패 무관) 직후 메모리 정리: 페이지캐시/dentry/inode 캐시를 반환하고,
+    # 스왑을 껐다 켜서 더 이상 필요없어진 스왑아웃 페이지를 회수한다.
+    # 연속으로 여러 모델을 빌드할 때 스왑 사용량이 누적되어 줄지 않는 현상을 완화하기 위함.
+    sync
+    echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1
+    ACTIVE_SWAPFILE="$(swapon --show=NAME --noheadings 2>/dev/null | head -1)"
+    if [ -n "$ACTIVE_SWAPFILE" ]; then
+        sudo swapoff "$ACTIVE_SWAPFILE" 2>/dev/null
+        sudo swapon -p 100 "$ACTIVE_SWAPFILE" 2>/dev/null
+    fi
 
 }
 
