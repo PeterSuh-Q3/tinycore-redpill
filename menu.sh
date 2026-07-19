@@ -26,7 +26,7 @@ function safe_fetch() {
 # 아직 없으므로 동일 조건을 인라인으로 판별(Alpine에서 main으로 자기 자신을
 # 덮어써 패치가 무력화되는 사고가 실측 확인되어(2026-07-12) 분리). main은
 # v1.3.1.1에서 동결, alpine-redpill이 v1.4.0.0부터 이어받음(2026-07-15).
-if [ -f /etc/alpine-release ]; then UPDATE_BRANCH="alpine-redpill"; else UPDATE_BRANCH="main"; fi
+UPDATE_BRANCH="alpine-redpill"
 
 # functions.sh 가 비었거나(이전 GitHub 오류 다운로드로 깨짐) 문법이 깨졌으면 소싱 전 안전 재다운로드.
 # (getloaderdisk 등 함수가 정의되지 않아 이후 'command not found'/'unbound variable' 로 죽는 것을 방지)
