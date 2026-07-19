@@ -6652,11 +6652,11 @@ function my() {
   # bundled-exts.json 의 *-modules 키를 selectldrmode() 가 저장한 MDLNAME 으로 재적용.
   # 위 curl 이 GitHub 원본으로 덮어썼으므로 여기서 다시 정정해야
   # custom-modules 선택이 보존된다. 모듈별로 저장소가 다름:
-  #   all-modules    → tcrp-modules/master/all-modules/rpext-index.json
-  #   custom-modules → tcrp-modules/master/custom-modules/rpext-index.json
+  #   all-modules    → tcrp-modules/main/all-modules/rpext-index.json
+  #   custom-modules → tcrp-modules/main/custom-modules/rpext-index.json
   case "${MDLNAME}" in
-    all-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
-    custom-modules) _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/custom-modules/rpext-index.json" ;;
+    all-modules)    _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/rpext-index.json" ;;
+    custom-modules) _MDLURL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/custom-modules/rpext-index.json" ;;
     *) _MDLURL="" ;;
   esac
   if [ -n "${_MDLURL}" ] && [ -f /home/tc/redpill-load/bundled-exts.json ]; then
