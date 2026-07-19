@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.1.0"
+rploaderver="1.4.1.1"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -323,6 +323,10 @@ function history() {
     1.4.1.0 Fixed low-RAM (2GB) build-time OOM via rootfs tmpfs/disk-swap tuning, dual-NIC auto-DHCP, ESC/Cancel
              no longer exits the menu, and several build/menu script robustness fixes (FDISK resolution, grub
              background image path, main-branch self-reference hardcoding, my.sh.gz workflow ownership safety).
+    1.4.1.1 Fixed xTCRP (Buildroot friend-kernel) boxes silently falling back to the stale main branch for
+             functions.sh; raised low-RAM swap to 1.5GB and made cleanup run on successful builds too; added
+             redpill-load download failure diagnostics; fixed tcrp-modules/tcrp-addons/rp-ext branch references
+             (master->main); brightened default terminal colors.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -840,6 +844,11 @@ EOF
 # Fixed low-RAM (2GB) build-time OOM (rootfs tmpfs/disk-swap tuning), dual-NIC auto-DHCP, ESC/Cancel menu exit,
 # and several build/menu script robustness fixes.
 
+# 2026.07.19 v1.4.1.1
+# Fixed xTCRP falling back to the stale main branch for functions.sh, raised low-RAM swap to 1.5GB, added
+# redpill-load download diagnostics, fixed tcrp-modules/tcrp-addons/rp-ext branch references, brightened
+# terminal colors.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1076,6 +1085,11 @@ function showlastupdate() {
 # 2026.07.19 v1.4.1.0
 # Fixed low-RAM (2GB) build-time OOM (rootfs tmpfs/disk-swap tuning), dual-NIC auto-DHCP, ESC/Cancel menu exit,
 # and several build/menu script robustness fixes.
+
+# 2026.07.19 v1.4.1.1
+# Fixed xTCRP falling back to the stale main branch for functions.sh, raised low-RAM swap to 1.5GB, added
+# redpill-load download diagnostics, fixed tcrp-modules/tcrp-addons/rp-ext branch references, brightened
+# terminal colors.
 
 EOF
 }
