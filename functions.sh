@@ -2814,18 +2814,39 @@ function gitclone() {
 
 # redpill-load의 brp_pack_cpiord()는 기본적으로 find/cpio stderr를 /dev/null로 버려서
 # "Failed to repack flat ramdisk" 실패시 원인(디스크 공간부족/OOM 등)을 알 수 없다.
+# 또한 rpt_download_remote()도 curl의 stderr를 캡처하지 않아, raw.githubusercontent.com
+# 다운로드가 실패해도 DNS/연결/TLS/타임아웃 중 무엇이 원인인지 로그에 전혀 남지 않는다
+# (152 실기에서 rpext-index.json 다운로드 반복 실패, 원인 불명 확인, 2026-07-19).
 # /home/tc/redpill-load는 tmpfs 위에 매 빌드마다 새로 clone되므로, clone 직후 이
 # 함수를 통해 로그가 남도록 패치한다 (원본 저장소를 직접 수정할 수 없어 로컬 패치).
 function patchredpillload() {
     local f="/home/tc/redpill-load/include/file.sh"
     [ -f "$f" ] || return 0
-    grep -q 'cpio -o -H newc -R root:root 2>>/tmp/strerr.log' "$f" && return 0
-    local cpio_line find_line
-    cpio_line=$(grep -n 'cpio -o -H newc -R root:root 2>/dev/null 1> "\${1}")' "$f" | head -1 | cut -d: -f1)
-    [ -z "$cpio_line" ] && return 0
-    find_line=$((cpio_line - 1))
-    sed -i "${find_line}s|2>/dev/null|2>/tmp/strerr.log|" "$f"
-    sed -i "${cpio_line}s|2>/dev/null|2>>/tmp/strerr.log|" "$f"
+
+    # (1) cpio 리패킹 실패 원인 로그 캡처
+    if ! grep -q 'cpio -o -H newc -R root:root 2>>/tmp/strerr.log' "$f"; then
+        local cpio_line find_line
+        cpio_line=$(grep -n 'cpio -o -H newc -R root:root 2>/dev/null 1> "\${1}")' "$f" | head -1 | cut -d: -f1)
+        if [ -n "$cpio_line" ]; then
+            find_line=$((cpio_line - 1))
+            sed -i "${find_line}s|2>/dev/null|2>/tmp/strerr.log|" "$f"
+            sed -i "${cpio_line}s|2>/dev/null|2>>/tmp/strerr.log|" "$f"
+        fi
+    fi
+
+    # (2) 원격 다운로드 실패 원인(DNS/연결/TLS 소요시간, HTTP 코드, curl 에러메시지) 로그 캡처
+    if ! grep -q 'curl-diag' "$f"; then
+        local dl_line indent newline
+        dl_line=$(grep -n -- '--progress-bar --retry 5 --output' "$f" | head -1 | cut -d: -f1)
+        if [ -n "$dl_line" ]; then
+            indent=$(sed -n "${dl_line}p" "$f" | sed 's/[^ ].*//')
+            newline=$(cat <<EOF
+${indent}out=\$("\${CURL_PATH}" -kns --location --fail --retry 5 --output "\${2}" --write-out ' [curl-diag] http_code=%{http_code} dns=%{time_namelookup}s connect=%{time_connect}s tls=%{time_appconnect}s total=%{time_total}s errormsg=%{errormsg} url=%{url_effective}' "\${1}" 2>&1)
+EOF
+)
+            awk -v n="$dl_line" -v repl="$newline" 'NR==n{print repl; next} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
+        fi
+    fi
 }
 
 function gitdownload() {
