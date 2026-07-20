@@ -2729,11 +2729,12 @@ function check_github() {
 # check for Sas module
 function checkforsas() {
 
+    local modalias="/lib/modules/$(uname -r)/modules.alias"
     sasmods="mpt3sas hpsa mvsas"
     for sasmodule in $sasmods
     do
         echo "Checking existense of $sasmodule"
-        for sas in `depmod -n 2>/dev/null |grep -i $sasmodule |grep pci|cut -d":" -f 2 | cut -c 6-9,15-18`
+        for sas in `grep -i $sasmodule "${modalias}" 2>/dev/null |grep pci|cut -d":" -f 2 | cut -c 6-9,15-18`
     do
         if [ `grep -i $sas /proc/bus/pci/devices |wc -l` -gt 0 ] ; then
             echo "  => $sasmodule, device found, block eudev mode" 
