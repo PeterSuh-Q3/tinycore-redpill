@@ -2913,13 +2913,19 @@ function patchredpillload() {
     fi
 
     # (2) 원격 다운로드 실패 원인(DNS/연결/TLS 소요시간, HTTP 코드, curl 에러메시지) 로그 캡처
+    # 2026-07-22: 이 로그 캡처로 실제 원인이 curl의 -n(--netrc) 플래그였음을 발견
+    # (152 실기, "eudev bundled extension" 다운로드가 ".netrc error: no such file"로
+    # 매번 즉시 실패, http_code=000). ~/.netrc가 없는 diskless 환경에서 이 플래그는
+    # 네트워크 시도 자체를 막는 명백한 버그라 -kns를 -ks로 수정(원본 redpill-load
+    # include/file.sh도 동일하게 수정, 이 함수는 매 clone마다 통째로 줄을 치환하므로
+    # 여기 하드코딩된 값도 함께 고쳐야 함).
     if ! grep -q 'curl-diag' "$f"; then
         local dl_line indent newline
         dl_line=$(grep -n -- '--progress-bar --retry 5 --output' "$f" | head -1 | cut -d: -f1)
         if [ -n "$dl_line" ]; then
             indent=$(sed -n "${dl_line}p" "$f" | sed 's/[^ ].*//')
             newline=$(cat <<EOF
-${indent}out=\$("\${CURL_PATH}" -kns --location --fail --retry 5 --output "\${2}" --write-out ' [curl-diag] http_code=%{http_code} dns=%{time_namelookup}s connect=%{time_connect}s tls=%{time_appconnect}s total=%{time_total}s errormsg=%{errormsg} url=%{url_effective}' "\${1}" 2>&1)
+${indent}out=\$("\${CURL_PATH}" -ks --location --fail --retry 5 --output "\${2}" --write-out ' [curl-diag] http_code=%{http_code} dns=%{time_namelookup}s connect=%{time_connect}s tls=%{time_appconnect}s total=%{time_total}s errormsg=%{errormsg} url=%{url_effective}' "\${1}" 2>&1)
 EOF
 )
             awk -v n="$dl_line" -v repl="$newline" 'NR==n{print repl; next} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
