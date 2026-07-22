@@ -330,6 +330,9 @@ function history() {
     1.4.1.2 Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage and OOM-killer
              detection) regardless of verbose mode, plus surfaced cpio/download error detail that was being
              captured but never displayed; monitor() now shows ramdisk (tmpfs) size/usage alongside RAM.
+             Low-RAM setup-disk-swap now layers a fast zram tier (priority 200) in front of the disk-backed
+             swapfile (priority 100), reducing swap latency and USB/flash wear while keeping the disk swap
+             as the real capacity backstop; cleanupmemory() now cycles all active swap devices, not just one.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -855,7 +858,8 @@ EOF
 # 2026.07.22 v1.4.1.2
 # Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage, OOM-killer detection)
 # regardless of verbose mode, and surface previously-hidden cpio/download error detail. monitor() now shows
-# ramdisk (tmpfs) size/usage.
+# ramdisk (tmpfs) size/usage. Low-RAM swap now layers zram (fast, priority 200) in front of the disk
+# swapfile (priority 100); cleanupmemory() cycles all active swap devices.
 
 function showlastupdate() {
     cat <<EOF
@@ -1102,7 +1106,8 @@ function showlastupdate() {
 # 2026.07.22 v1.4.1.2
 # Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage, OOM-killer detection)
 # regardless of verbose mode, and surface previously-hidden cpio/download error detail. monitor() now shows
-# ramdisk (tmpfs) size/usage.
+# ramdisk (tmpfs) size/usage. Low-RAM swap now layers zram (fast, priority 200) in front of the disk
+# swapfile (priority 100); cleanupmemory() cycles all active swap devices.
 
 EOF
 }
@@ -3834,11 +3839,15 @@ function cleanupmemory() {
 
     sync
     echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1
-    ACTIVE_SWAPFILE="$(swapon --show=NAME --noheadings 2>/dev/null | head -1)"
-    if [ -n "$ACTIVE_SWAPFILE" ]; then
-        sudo swapoff "$ACTIVE_SWAPFILE" 2>/dev/null
-        sudo swapon -p 100 "$ACTIVE_SWAPFILE" 2>/dev/null
-    fi
+
+    # zram(1차, 우선순위 200) + 디스크 스왑파일(2차, 우선순위 100)이 동시에
+    # 있을 수 있으므로 첫 번째 장치만이 아니라 전체를 순회하며 각자의 기존
+    # 우선순위를 유지한 채 off/on 한다.
+    swapon --show=NAME,PRIO --noheadings 2>/dev/null | while read -r swap_dev swap_prio; do
+        [ -z "${swap_dev}" ] && continue
+        sudo swapoff "${swap_dev}" 2>/dev/null
+        sudo swapon -p "${swap_prio:-100}" "${swap_dev}" 2>/dev/null
+    done
 
 }
 
