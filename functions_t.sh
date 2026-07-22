@@ -3214,7 +3214,11 @@ function copyextractor() {
     echo "Copying required libraries to local lib directory"
     sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
     echo "Linking lib to lib64"
-    [ ! -h /lib64 ] && sudo ln -s /lib /lib64
+    # gcompat 등이 /lib64를 이미 실제 디렉토리로 만들어두는 경우, "-h /lib64"는
+    # 항상 참(=/lib64 자체는 심볼릭 링크가 아님)이 되어 매번 ln이 재시도되고
+    # "/lib64/lib: File exists"로 실패한다(ln이 기존 디렉토리 안에 이름을 만듦).
+    # 실제 결과 경로(/lib64/lib)의 존재 여부로 확인해야 재실행에도 안전함.
+    [ ! -e /lib64/lib ] && [ ! -L /lib64/lib ] && sudo ln -s /lib /lib64
     echo "Copying executable"
     sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
     echo "pigz copy for multithreaded compression"
@@ -3755,7 +3759,11 @@ function getvars() {
     usbpart1uuid=$(/sbin/blkid /dev/${tcrpdisk}1 | awk '{print $3}' | sed -e "s/\"//g" -e "s/UUID=//g")
     usbpart3uuid="6234-C863"
 
-    [ ! -h /lib64 ] && sudo ln -s /lib /lib64
+    # gcompat 등이 /lib64를 이미 실제 디렉토리로 만들어두는 경우, "-h /lib64"는
+    # 항상 참(=/lib64 자체는 심볼릭 링크가 아님)이 되어 매번 ln이 재시도되고
+    # "/lib64/lib: File exists"로 실패한다(ln이 기존 디렉토리 안에 이름을 만듦).
+    # 실제 결과 경로(/lib64/lib)의 존재 여부로 확인해야 재실행에도 안전함.
+    [ ! -e /lib64/lib ] && [ ! -L /lib64/lib ] && sudo ln -s /lib /lib64
 
     sudo chown -R tc:staff /home/tc
 
@@ -4660,8 +4668,8 @@ checkmachine
     echo "Clean up extension files before building!!!"
     removemodelexts    
 
-    [ ! -d /lib64 ] &&  sudo ln -s /lib /lib64
-    [ ! -f /lib64/libbz2.so.1 ] && sudo ln -s /usr/local/lib/libbz2.so.1.0.8 /lib64/libbz2.so.1
+    [ ! -e /lib64 ] && [ ! -L /lib64 ] && sudo ln -s /lib /lib64
+    [ ! -e /lib64/libbz2.so.1 ] && [ ! -L /lib64/libbz2.so.1 ] && sudo ln -s /usr/local/lib/libbz2.so.1.0.8 /lib64/libbz2.so.1
     [ ! -f /home/tc/redpill-load/user_config.json ] && ln -s /home/tc/user_config.json /home/tc/redpill-load/user_config.json
     [ ! -d cache ] && mkdir -p /home/tc/redpill-load/cache
     cd /home/tc/redpill-load
