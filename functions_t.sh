@@ -1345,12 +1345,57 @@ show_backup_error_info() {
     echo -e "\n\033[1;31m╔════════════════════════════════════════════╗\033[0m"
     echo -e "\033[1;31m║         BUILD ERROR INFORMATION            ║\033[0m"
     echo -e "\033[1;31m╚════════════════════════════════════════════╝\033[0m"
-    
+
     if [ -f /home/tc/zlastbuild.log ]; then
+        echo -e "\n\033[1;33mError-relevant lines from build log:\033[0m"
+        grep -inE 'fail|error|\[!\]|no space|cannot allocate|killed' /home/tc/zlastbuild.log | tail -20 | sed 's/^/  /'
+
         echo -e "\n\033[1;33mLast 10 lines of build log:\033[0m"
         tail -10 /home/tc/zlastbuild.log | sed 's/^/  /'
+
+        if grep -q '\[curl-diag\]' /home/tc/zlastbuild.log 2>/dev/null; then
+            echo -e "\n\033[1;33mDownload diagnostics (curl):\033[0m"
+            grep '\[curl-diag\]' /home/tc/zlastbuild.log | tail -5 | sed 's/^/  /'
+        fi
     fi
-    
+
+    if [ -s /tmp/strerr.log ]; then
+        echo -e "\n\033[1;33mcpio/ramdisk repack error detail (/tmp/strerr.log):\033[0m"
+        sed 's/^/  /' /tmp/strerr.log
+    fi
+
+    # 빌드 실패 원인이 "알파인 메모리/램디스크 부족"인지 매 실패마다 육안으로
+    # 바로 판단할 수 있도록, VERBOSE 설정과 무관하게(로그 함수들의 ALWAYS shown
+    # 원칙과 동일하게) 실패 시점의 메모리/tmpfs/스왑/OOM-killer 상태를 캡처한다.
+    echo -e "\n\033[1;33mMemory/Ramdisk diagnostics (at failure time):\033[0m"
+    local mem_line swap_line rootfs_line oom_lines rootfs_pct swap_total_kb swap_used_kb swap_pct
+
+    mem_line=$(free -h 2>/dev/null | awk '/^Mem:/{printf "total=%s used=%s free=%s available=%s", $2,$3,$4,$7}')
+    swap_line=$(free -h 2>/dev/null | awk '/^Swap:/{printf "total=%s used=%s free=%s", $2,$3,$4}')
+    rootfs_line=$(df -h / 2>/dev/null | awk 'NR==2{printf "size=%s used=%s avail=%s use%%=%s", $2,$3,$4,$5}')
+    oom_lines=$(sudo dmesg 2>/dev/null | grep -iE "killed process|out of memory" | tail -5)
+
+    echo "  RAM:        ${mem_line}"
+    echo "  Swap:       ${swap_line}"
+    echo "  Ramdisk(/): ${rootfs_line}"
+    if [ -n "${oom_lines}" ]; then
+        echo -e "  OOM-killer: \033[1;31m발생함\033[0m"
+        echo "${oom_lines}" | sed 's/^/    /'
+    else
+        echo -e "  OOM-killer: \033[1;32m발생 안 함\033[0m"
+    fi
+
+    rootfs_pct=$(df -h / 2>/dev/null | awk 'NR==2{print $5}' | tr -d '%')
+    swap_total_kb=$(free 2>/dev/null | awk '/^Swap:/{print $2}')
+    swap_used_kb=$(free 2>/dev/null | awk '/^Swap:/{print $3}')
+    if [ "${swap_total_kb:-0}" -gt 0 ] 2>/dev/null; then
+        swap_pct=$(( swap_used_kb * 100 / swap_total_kb ))
+    else
+        swap_pct=0
+    fi
+
+    echo -e "\n\033[1;33m[진단 요약]\033[0m tmpfs 사용률 ${rootfs_pct:-?}%, 스왑 사용률 ${swap_pct}%, OOM-killer: $([ -n "${oom_lines}" ] && echo '발생' || echo '없음')"
+
     echo -e "\n\033[1;33mBackup status:\033[0m"
     echo "  Checking for corrupted files..."
     ls -lh /mnt/${tcrppart}/*.pat 2>/dev/null | tail -5
@@ -3085,6 +3130,8 @@ function monitor() {
         echo -e "-------------------------------CPU / Memory----------------------------------"
         msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
         echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), ($2>0 ? $3/$2*100 : 0)}')
+        echo -e "Ramdisk Size (/):\t"$(df -h / | awk 'NR==2{print $2}')
+        echo -e "Ramdisk Usage (/):\t"$(df -h / | awk 'NR==2{printf "%s (%s)", $3, $5}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
         echo -e "-------------------------------Disk Usage >80%-------------------------------"
         df -Ph /mnt/${loaderdisk}1 /mnt/${loaderdisk}2 /mnt/${loaderdisk}3
