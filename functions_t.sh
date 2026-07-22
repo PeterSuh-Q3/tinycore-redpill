@@ -35,16 +35,14 @@ dlgmenuheight() {
 # 확인(2026-07-12)해 동적 해석으로 교체.
 FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
 
-# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. Alpine에서는 main(TinyCore
-# 원본, is_alpine 가드가 없음)으로 자기 자신을 덮어써 패치가 무력화되는 사고가
-# 실측 확인되어(2026-07-12) alpine-redpill 브랜치를 따라가도록 분리. main은
-# v1.3.1.1에서 동결(더 이상 업데이트 없음), alpine-redpill이 v1.4.0.0부터
-# 이어받음(2026-07-15).
-if is_alpine; then
-  build="alpine-redpill"
-else
-  build="main"
-fi
+# 자동 업데이트(safe_fetch/git clone) 대상 브랜치. main은 v1.3.1.1에서 동결
+# (더 이상 업데이트 없음), alpine-redpill이 v1.4.0.0부터 이어받았다(2026-07-15).
+# 2026-07-22: is_alpine()으로 분기하던 것을 제거 - mshell(Alpine)뿐 아니라
+# xTCRP(Buildroot friend 커널, is_alpine()이 거짓)도 이제 alpine-redpill
+# 브랜치로 관리되는데, 이 분기 때문에 xTCRP가 my.sh.gz/modules.alias.*를
+# 계속 stale main에서 받아와 "menu.sh test 실행 시 v1.3.1.1로 회귀"하는
+# 사고가 실측 확인됨(152 실기, menu.sh의 UPDATE_BRANCH와 동일한 버그 패턴).
+build="alpine-redpill"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
