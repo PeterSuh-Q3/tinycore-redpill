@@ -3653,15 +3653,22 @@ function getgrubbkg() {
 function getbspatch() {
 
     chmod 777 /home/tc/tools/bspatch
+    # 2026-07-22: "sudo cp"는 원본(777) 권한을 보존하지 않고 root의 umask를 따라
+    # 복사한다. 이 환경(xTCRP/Buildroot)의 root umask가 엄격해 결과물이 -rwx------
+    # (700)로 복사되어, tc 계정에서 which/실행이 안 되고 "Some tools weren't
+    # available"로 빌드가 실패하는 사고를 실측 확인(152 실기). cp 직후 명시적으로
+    # chmod를 추가해 모든 사용자가 실행 가능하도록 보장.
     if [ "$FRKRNL" = "YES" ]; then
-        if [ ! -f /usr/bin/bspatch ]; then
+        if [ ! -x /usr/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
             sudo cp -vf /home/tc/tools/bspatch /usr/bin/
+            sudo chmod 755 /usr/bin/bspatch
         fi
     else
-        if [ ! -f /usr/local/bin/bspatch ]; then
+        if [ ! -x /usr/local/bin/bspatch ]; then
             echo "bspatch does not exist, copy from tools"
             sudo cp -vf /home/tc/tools/bspatch /usr/local/bin/
+            sudo chmod 755 /usr/local/bin/bspatch
         fi
     fi
 
