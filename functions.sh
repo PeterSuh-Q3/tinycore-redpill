@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.1.2"
+rploaderver="1.4.2.0"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -331,6 +331,14 @@ function history() {
              Low-RAM setup-disk-swap now layers a fast zram tier (priority 200) in front of the disk-backed
              swapfile (priority 100), reducing swap latency and USB/flash wear while keeping the disk swap
              as the real capacity backstop; cleanupmemory() now cycles all active swap devices, not just one.
+    1.4.2.0 Stability milestone: fixed a curl -n(--netrc) typo that made bundled-extension downloads fail
+             structurally; fixed /lib64 symlink existence checks that errored on every rebuild; fixed dialog
+             silently hanging on TERM=dumb SSH sessions (xTCRP); fixed xTCRP falling back to the stale main
+             branch twice more (xtcrp.tgz restore URL, functions.sh's own $build variable); fixed bspatch
+             losing its execute bit when copied via sudo; reduced the permanently-cached .pat to just the
+             5 files a rebuild actually needs (~97% smaller); selective .pat extraction during the build
+             itself, cutting peak tmpfs usage from ~400MB to ~10MB. All changes tested end-to-end on real
+             hardware (xTCRP + mshell) before merging from the _t test track into production.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -859,6 +867,12 @@ EOF
 # ramdisk (tmpfs) size/usage. Low-RAM swap now layers zram (fast, priority 200) in front of the disk
 # swapfile (priority 100); cleanupmemory() cycles all active swap devices.
 
+# 2026.07.22 v1.4.2.0
+# Stability milestone: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink re-creation
+# errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch (twice more),
+# bspatch losing its execute bit, and reduced permanently-cached .pat files to ~3% of their original size
+# via selective extraction (both at cache time and during the build itself).
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1106,6 +1120,12 @@ function showlastupdate() {
 # regardless of verbose mode, and surface previously-hidden cpio/download error detail. monitor() now shows
 # ramdisk (tmpfs) size/usage. Low-RAM swap now layers zram (fast, priority 200) in front of the disk
 # swapfile (priority 100); cleanupmemory() cycles all active swap devices.
+
+# 2026.07.22 v1.4.2.0
+# Stability milestone: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink re-creation
+# errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch (twice more),
+# bspatch losing its execute bit, and reduced permanently-cached .pat files to ~3% of their original size
+# via selective extraction (both at cache time and during the build itself).
 
 EOF
 }
