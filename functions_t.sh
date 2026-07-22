@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.1.1"
+rploaderver="1.4.1.2"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -327,6 +327,9 @@ function history() {
              functions.sh; raised low-RAM swap to 1.5GB and made cleanup run on successful builds too; added
              redpill-load download failure diagnostics; fixed tcrp-modules/tcrp-addons/rp-ext branch references
              (master->main); brightened default terminal colors.
+    1.4.1.2 Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage and OOM-killer
+             detection) regardless of verbose mode, plus surfaced cpio/download error detail that was being
+             captured but never displayed; monitor() now shows ramdisk (tmpfs) size/usage alongside RAM.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -849,6 +852,11 @@ EOF
 # redpill-load download diagnostics, fixed tcrp-modules/tcrp-addons/rp-ext branch references, brightened
 # terminal colors.
 
+# 2026.07.22 v1.4.1.2
+# Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage, OOM-killer detection)
+# regardless of verbose mode, and surface previously-hidden cpio/download error detail. monitor() now shows
+# ramdisk (tmpfs) size/usage.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1090,6 +1098,11 @@ function showlastupdate() {
 # Fixed xTCRP falling back to the stale main branch for functions.sh, raised low-RAM swap to 1.5GB, added
 # redpill-load download diagnostics, fixed tcrp-modules/tcrp-addons/rp-ext branch references, brightened
 # terminal colors.
+
+# 2026.07.22 v1.4.1.2
+# Build failures now always show a memory/ramdisk diagnostic (RAM/swap/tmpfs usage, OOM-killer detection)
+# regardless of verbose mode, and surface previously-hidden cpio/download error detail. monitor() now shows
+# ramdisk (tmpfs) size/usage.
 
 EOF
 }
