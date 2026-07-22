@@ -2,6 +2,18 @@
 
 set -u # Unbound variable errors are not allowed
 
+# 2026-07-22: 이 환경의 sshd가 pty-req의 TERM 협상을 제대로 하지 않아, SSH로
+# 접속한 세션은 (실제 pty를 요청해도) TERM=dumb으로 떨어지는 것을 실측 확인.
+# TERM=dumb에서는 dialog가 terminfo를 못 찾아 "Error opening terminal: unknown"
+# 으로 즉시 실패하는데, menu_m.sh의 메인 루프는 dialog 실패 시 화면에 아무
+# 표시 없이 조용히 재시도만 반복해("[ dlgret -ne 0 ] && continue") 마치 메뉴가
+# 멈춘 것처럼 보인다("다이얼로그 팝업이 안 뜬다" 증상, 152 실기로 재현/확정).
+# 시리얼(ttyS0)/tty1은 정상적으로 TERM=linux를 받으므로 SSH 세션에서만
+# 나타나는 문제. dialog 호출 전에 안전한 값으로 보정.
+if [ -z "${TERM:-}" ] || [ "${TERM}" = "dumb" ]; then
+    export TERM=linux
+fi
+
 ##### INCLUDES ######################################################################################
 # GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
 # 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
