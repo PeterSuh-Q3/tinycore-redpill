@@ -5788,7 +5788,7 @@ function wr_part3() {
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
 
     
-    TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/main/xtcrp.tgz"
+    TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/alpine-redpill/xtcrp.tgz"
 
     SPACELEFT=$(df --block-size=1 | grep "${mdiskpart}" | awk '{print $4}') # Check disk space left
     FILESIZE=$(curl -k -sLI "${TGZURL}" | grep -i Content-Length | awk '{print$2}')
