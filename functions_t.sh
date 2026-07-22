@@ -331,14 +331,19 @@ function history() {
              Low-RAM setup-disk-swap now layers a fast zram tier (priority 200) in front of the disk-backed
              swapfile (priority 100), reducing swap latency and USB/flash wear while keeping the disk swap
              as the real capacity backstop; cleanupmemory() now cycles all active swap devices, not just one.
-    1.4.2.0 Stability milestone: fixed a curl -n(--netrc) typo that made bundled-extension downloads fail
-             structurally; fixed /lib64 symlink existence checks that errored on every rebuild; fixed dialog
-             silently hanging on TERM=dumb SSH sessions (xTCRP); fixed xTCRP falling back to the stale main
-             branch twice more (xtcrp.tgz restore URL, functions.sh's own $build variable); fixed bspatch
-             losing its execute bit when copied via sudo; reduced the permanently-cached .pat to just the
-             5 files a rebuild actually needs (~97% smaller); selective .pat extraction during the build
-             itself, cutting peak tmpfs usage from ~400MB to ~10MB. All changes tested end-to-end on real
-             hardware (xTCRP + mshell) before merging from the _t test track into production.
+    1.4.2.0 HEADLINE: DSM .pat files are now radically slimmed down. A downloaded Synology .pat (typically
+             300-400MB, almost entirely a DSM OS payload the loader never touches) is reduced to just the
+             5 files a build actually needs (zImage/rd.gz/GRUB_VER/grub_cksum.syno/VERSION) both for the
+             permanently-cached copy on disk (~97% smaller, ~400MB->~10MB) and during the build itself
+             (redpill-load now extracts only those files from the .pat instead of unpacking the whole
+             archive into tmpfs) - directly cutting the single largest source of low-RAM build-time OOM.
+             Also in this stability milestone: fixed a curl -n(--netrc) typo that made bundled-extension
+             downloads fail structurally; fixed /lib64 symlink existence checks that errored on every
+             rebuild; fixed dialog silently hanging on TERM=dumb SSH sessions (xTCRP); fixed xTCRP falling
+             back to the stale main branch twice more (xtcrp.tgz restore URL, functions.sh's own $build
+             variable); fixed bspatch losing its execute bit when copied via sudo. All changes tested
+             end-to-end on real hardware (xTCRP + mshell) before merging from the _t test track into
+             production.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -868,10 +873,11 @@ EOF
 # swapfile (priority 100); cleanupmemory() cycles all active swap devices.
 
 # 2026.07.22 v1.4.2.0
-# Stability milestone: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink re-creation
-# errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch (twice more),
-# bspatch losing its execute bit, and reduced permanently-cached .pat files to ~3% of their original size
-# via selective extraction (both at cache time and during the build itself).
+# HEADLINE: DSM .pat files slimmed to ~3% of their original size (only the 5 files a build actually needs
+# are kept, both in the permanent cache and during the build itself) - directly cuts the largest source
+# of low-RAM build-time OOM. Also: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink
+# re-creation errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch
+# (twice more), and bspatch losing its execute bit.
 
 function showlastupdate() {
     cat <<EOF
@@ -1122,10 +1128,11 @@ function showlastupdate() {
 # swapfile (priority 100); cleanupmemory() cycles all active swap devices.
 
 # 2026.07.22 v1.4.2.0
-# Stability milestone: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink re-creation
-# errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch (twice more),
-# bspatch losing its execute bit, and reduced permanently-cached .pat files to ~3% of their original size
-# via selective extraction (both at cache time and during the build itself).
+# HEADLINE: DSM .pat files slimmed to ~3% of their original size (only the 5 files a build actually needs
+# are kept, both in the permanent cache and during the build itself) - directly cuts the largest source
+# of low-RAM build-time OOM. Also: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink
+# re-creation errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch
+# (twice more), and bspatch losing its execute bit.
 
 EOF
 }
