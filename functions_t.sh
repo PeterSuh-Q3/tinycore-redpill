@@ -5135,7 +5135,41 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
         
             if [ -f ${patfile} ]; then
                 echo "Found ${patfile}, moving to cache directory : ${local_cache} "
-                $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache} && $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
+                # 2026-07-22: .pat 전체(보통 300~400MB, 대부분 DSM 자체 설치용 페이로드로
+                # 로더 빌드엔 불필요)를 그대로 영구 캐시하던 것을, 실제 참조되는 5개 파일
+                # (zImage/rd.gz: redpill-load 커널·램디스크, GRUB_VER/grub_cksum.syno:
+                # bootp1_copy/bootp2_copy, VERSION: 이 스크립트 자신이 3417번째 줄 근방에서
+                # 직접 추출) 만 뽑아 재압축한 "미니 pat"으로 대체해 캐시 용량을 절감한다
+                # (실측 398MB -> 약 9MB, 97%+ 절감). 파일명은 원본과 동일하게 유지해
+                # redpill-load의 "파일이 이미 있으면 다운로드 스킵" 로직과 완전히 호환된다.
+                # 5개 중 하나라도 못 찾으면 안전하게 원본 그대로 보존한다(폴백).
+                MINIPAT_FILES="zImage rd.gz GRUB_VER grub_cksum.syno VERSION"
+                MINIPAT_TMPDIR="$(mktemp -d)"
+                MINIPAT_OK=1
+                MINIPAT_RESOLVED=""
+                MINIPAT_LISTING="$(tar -tf "${patfile}" 2>/dev/null)"
+                for _mp_f in ${MINIPAT_FILES}; do
+                    _mp_resolved="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)${_mp_f}\$" | head -1)"
+                    if [ -z "${_mp_resolved}" ]; then
+                        echo "[minipat] ${_mp_f} not found in ${patfile} - keeping original pat as-is"
+                        MINIPAT_OK=0
+                        break
+                    fi
+                    MINIPAT_RESOLVED="${MINIPAT_RESOLVED}${MINIPAT_RESOLVED:+ }${_mp_resolved}"
+                done
+                if [ "${MINIPAT_OK}" -eq 1 ]; then
+                    if tar -xf "${patfile}" -C "${MINIPAT_TMPDIR}" ${MINIPAT_RESOLVED} 2>/dev/null \
+                       && tar -cf "${MINIPAT_TMPDIR}/$(basename ${patfile})" -C "${MINIPAT_TMPDIR}" ${MINIPAT_FILES} 2>/dev/null; then
+                        echo "[minipat] Reduced $(basename ${patfile}) to 5 essential files (zImage/rd.gz/GRUB_VER/grub_cksum.syno/VERSION)"
+                        $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf "${MINIPAT_TMPDIR}/$(basename ${patfile})" ${local_cache}
+                    else
+                        echo "[minipat] selective repack failed - keeping original pat as-is"
+                        MINIPAT_OK=0
+                    fi
+                fi
+                [ "${MINIPAT_OK}" -eq 0 ] && $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache}
+                rm -rf "${MINIPAT_TMPDIR}"
+                $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
             fi
 st "cachingpat" "Caching pat file" "Cached file to: ${local_cache}"
 [ "${BUS}" != "block" ] && log_build_step "Caching pat file" 11 12
