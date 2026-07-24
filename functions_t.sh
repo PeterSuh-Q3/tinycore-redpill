@@ -881,6 +881,9 @@ EOF
 # re-creation errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch
 # (twice more), and bspatch losing its execute bit.
 
+# 2026.07.24 v1.4.2.1
+# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1135,6 +1138,9 @@ function showlastupdate() {
 # of low-RAM build-time OOM. Also: fixed curl -n(--netrc) breaking extension downloads, /lib64 symlink
 # re-creation errors, dialog hanging on TERM=dumb SSH sessions, xTCRP regressing to stale main branch
 # (twice more), and bspatch losing its execute bit.
+
+# 2026.07.24 v1.4.2.1
+# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models.
 
 EOF
 }
