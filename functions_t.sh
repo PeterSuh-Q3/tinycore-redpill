@@ -346,6 +346,8 @@ function history() {
              production.
     1.4.2.1 Add Support DSM 7.4.1-90080 Official Version for all supported models (pats.json/config
              extended; module/addon recipes reuse the existing DSM 7.4 (_74_) keys, same kernel line).
+             Fixed the revision-picker menu truncating the oldest supported version now that each
+             model has 12 revision buckets instead of 11 (menu_m.sh slice .[:11] -> .[:12]).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -882,7 +884,8 @@ EOF
 # (twice more), and bspatch losing its execute bit.
 
 # 2026.07.24 v1.4.2.1
-# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models.
+# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models, and fixed the
+# revision-picker menu truncating the oldest supported version (12 buckets now, slice was still 11).
 
 function showlastupdate() {
     cat <<EOF
@@ -1140,7 +1143,8 @@ function showlastupdate() {
 # (twice more), and bspatch losing its execute bit.
 
 # 2026.07.24 v1.4.2.1
-# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models.
+# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models, and fixed the
+# revision-picker menu truncating the oldest supported version (12 buckets now, slice was still 11).
 
 EOF
 }
