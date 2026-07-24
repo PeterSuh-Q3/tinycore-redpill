@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.0"
+rploaderver="1.4.2.1"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -344,6 +344,8 @@ function history() {
              variable); fixed bspatch losing its execute bit when copied via sudo. All changes tested
              end-to-end on real hardware (xTCRP + mshell) before merging from the _t test track into
              production.
+    1.4.2.1 Add Support DSM 7.4.1-90080 Official Version for all supported models (pats.json/config
+             extended; module/addon recipes reuse the existing DSM 7.4 (_74_) keys, same kernel line).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1735,6 +1737,8 @@ function getvarsmshell()
     elif [ "$TARGET_REVISION" == "86009" ]; then
         KVER="4.4.302"
     elif [ "$TARGET_REVISION" == "90075" ]; then
+        KVER="4.4.302"
+    elif [ "$TARGET_REVISION" == "90080" ]; then
         KVER="4.4.302"
     elif [ "$TARGET_REVISION" == "101188" ]; then
         KVER="4.4.302"
