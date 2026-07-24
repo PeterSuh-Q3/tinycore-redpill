@@ -29,6 +29,64 @@ HAS_BMI2="n"
 if grep -qw "bmi2" /proc/cpuinfo 2>/dev/null; then
     HAS_BMI2="y"
 fi
+
+# 2026-07-25: BMI2 관련 두 임계값을 명시적 상수로 분리.
+#   - BMI2_REQUIRED_FROM_DSM: all-modules가 DSM 몇 버전부터 BMI2(mulx 등)를
+#     쓰기 시작하는지 (7.3.0). 이 버전부터는 BMI2 없는 CPU에서 all-modules
+#     부팅이 안 됨.
+#   - CUSTOM_MODULES_MAX_DSM: BMI2 없는 CPU용 대안인 custom-modules가 실제로
+#     빌드되어 있는 최신 DSM 버전 (7.3.2). 이걸 넘는 버전(7.4.0+)은 BMI2 없는
+#     CPU에서 쓸 수 있는 모듈팩이 전혀 없음(Synology가 DSM 7.4 GPL 소스를
+#     아직 미공개).
+# 즉 BMI2 없는 CPU에서 실제 사용 가능한 범위는 "< 7.3.0"(all-modules) +
+# "7.3.0~7.3.2"(custom-modules) 이고, "7.4.0 이상"만 완전히 막힌다. 이전에는
+# selectversion()만 이 경계를 하드코딩된 매직넘버(7004)로 반영했고,
+# checkAndResetModuleName()/selectldrmode()는 "DSM>=7.3.0이면 custom-modules
+# 가능"으로만 판단해 7.4.0+에서도 custom-modules를 있는 것처럼 다뤄 일관성이
+# 없었다. 세 곳 모두 아래 공용 상수/헬퍼로 통일하고, 모델 선택 시점에도
+# enforceBmi2VersionCap()으로 즉시 반영한다.
+BMI2_REQUIRED_FROM_DSM_ZPAD="007003000"   # 7.3.0
+CUSTOM_MODULES_MAX_DSM_ZPAD="007003002"   # 7.3.2
+
+# "7.3.2-86009" / "7.3-69057" 같은 문자열을 major/minor/patch 9자리
+# zero-pad 정수로 변환 (patch 필드가 없으면 0으로 처리)
+function zpadDsmVersion() {
+  local raw="${1:-}" maj min pat
+  maj=$(echo "${raw}" | cut -d'.' -f1)
+  min=$(echo "${raw}" | cut -d'.' -f2 | cut -d'-' -f1)
+  pat=$(echo "${raw}" | cut -d'.' -f3 | cut -d'-' -f1)
+  printf "%03d%03d%03d" "${maj:-0}" "${min:-0}" "${pat:-0}"
+}
+
+# 모델 선택 시점에 즉시 적용: 현재 플랫폼이 kver5platforms 이고 BMI2 미지원인데
+# 저장된 general.version(DSM)이 CUSTOM_MODULES_MAX_DSM_ZPAD(7.3.2)를 초과하면
+# (즉 7.4.0+ 이면, custom-modules 조차 없어 부팅 가능한 모듈팩이 전혀 없음)
+# 해당 모델의 pats.json 지원 리비전 중 7.3.2 이하의 최신 리비전으로 즉시 되돌린다.
+function enforceBmi2VersionCap() {
+  local plat
+  plat="$(resolveLiveKver)"; plat="${plat##*|}"
+  [ "${HAS_BMI2}" = "n" ] || return 0
+  echo "${kver5platforms}" | grep -qw "${plat}" || return 0
+
+  local curBuild curZpadDsm
+  curBuild=$(readConfigKey "general" "version")
+  curZpadDsm=$(zpadDsmVersion "${curBuild}")
+  [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ] || return 0
+
+  # pats.json 에서 이 모델의 리비전 중 7.3.2 이하 최신 버전을 조회
+  local safeVersion
+  safeVersion=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[]" "${configfile}" 2>/dev/null | while read -r v; do
+    if [ "$(zpadDsmVersion "${v}")" -le "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
+      echo "${v}"
+      break
+    fi
+  done)
+  [ -n "${safeVersion}" ] || return 0
+
+  echo "⚠ Stored DSM ${curBuild} needs BMI2 (not present on this CPU) and exceeds"
+  echo "  custom-modules cap (7.3.2). Resetting version to ${safeVersion}..."
+  writeConfigKey "general" "version" "${safeVersion}"
+}
 # ───────────────────────────────────────────────────────────────────────────────
 # pats.json is kept at a persistent location (/home/tc) so a redpill-load
 # clean/re-clone after a failed build does not wipe the DSM version source.
@@ -456,23 +514,30 @@ function checkAndResetModuleName() {
     # 미지원 시 되돌릴 기본 fallback (분기별로 아래에서 덮어씀)
     local fallbackMdl="all-modules" fallbackMethod="IML"
 
-    # DSM 버전 추출: BUILD 형식 "7.3-69057" → major=7 minor=3 → ZPADDSM=007003
-    local curBuild curDsmMajor curDsmMinor curZpadDsm
+    # DSM 버전 추출 (major/minor/patch 전체 정밀도)
+    local curBuild curZpadDsm
     curBuild=$(readConfigKey "general" "version")
-    curDsmMajor=$(echo "${curBuild}" | cut -d'.' -f1)
-    curDsmMinor=$(echo "${curBuild}" | cut -d'.' -f2 | cut -d'-' -f1)
-    curZpadDsm=$(printf "%03d%03d" "${curDsmMajor:-0}" "${curDsmMinor:-0}")
+    curZpadDsm=$(zpadDsmVersion "${curBuild}")
 
     # ── 커널 구간 3단계 분기 ────────────────────────────────────────────────────
     if [ "${curZpadkver}" -ge 5010055 ]; then
         # ① 커널 >= 5.10.55
-        if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-            # DSM >= 7.3.0 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
-            # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
-            # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
-            fallbackMdl="custom-modules"; fallbackMethod="PML"
-            if [ "${curMdlName}" = "custom-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
-                supported=true
+        if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
+            if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
+                # DSM > 7.3.2 + BMI2 미지원: custom-modules 도 존재하지 않음.
+                # 사용 가능한 모듈팩이 전혀 없는 상태이므로, 최소한 빌드가
+                # 되도록 all-modules(IML) 로 되돌린다. (실제로는 이 DSM 버전 자체가
+                # selectversion()/enforceBmi2VersionCap() 단계에서 이미 걸러져야 함)
+                fallbackMdl="all-modules"; fallbackMethod="IML"
+                supported=false
+            else
+                # DSM 7.3.0 ~ 7.3.2 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
+                # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
+                # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
+                fallbackMdl="custom-modules"; fallbackMethod="PML"
+                if [ "${curMdlName}" = "custom-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
+                    supported=true
+                fi
             fi
         else
             # BMI2 있거나 DSM < 7.3: all/custom/anodrm 모두 허용
@@ -521,22 +586,25 @@ function selectldrmode() {
   local curZpadkver
   curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
 
-  # DSM 버전 추출: BUILD 형식 "7.3-69057" → ZPADDSM 비교용 정수
-  local _build _dsmMaj _dsmMin curZpadDsm
+  # DSM 버전 추출 (major/minor/patch 전체 정밀도)
+  local _build curZpadDsm
   _build=$(readConfigKey "general" "version")
-  _dsmMaj=$(echo "${_build}" | cut -d'.' -f1)
-  _dsmMin=$(echo "${_build}" | cut -d'.' -f2 | cut -d'-' -f1)
-  curZpadDsm=$(printf "%03d%03d" "${_dsmMaj:-0}" "${_dsmMin:-0}")
+  curZpadDsm=$(zpadDsmVersion "${_build}")
 
   # ── 커널 구간 3단계 분기 ──────────────────────────────────────────────────────
   # anodrm-modules(In-Memory:IML) 는 DRM/GPU 스택을 제외한 일반 모듈팩으로
   # 모든 커널(3.x / 4.4.x / 5.10.x)에 공통 대응하므로 전 분기에 노출한다.
   if [ "${curZpadkver}" -ge 5010055 ]; then
     # ① 커널 >= 5.10.55
-    if [ "${curZpadDsm}" -ge 7003 ] && [ "${HAS_BMI2}" = "n" ]; then
-      # DSM >= 7.3.0 + BMI2 미지원: custom-modules + nodrm 만 노출
-      menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)" \
-                    "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
+    if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
+      if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
+        # DSM > 7.3.2 + BMI2 미지원: custom-modules 도 존재하지 않음 → nodrm 만 노출
+        menu_options=("n" "${MSGND}, anodrm-modules(In-Memory:IML)")
+      else
+        # DSM 7.3.0 ~ 7.3.2 + BMI2 미지원: custom-modules + nodrm 만 노출
+        menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)" \
+                      "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
+      fi
     else
       # BMI2 있거나 DSM < 7.3: 전체 메뉴 (custom-modules 포함)
       menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
@@ -640,11 +708,9 @@ _bmi2_plat="$(resolveLiveKver)"; _bmi2_plat="${_bmi2_plat##*|}"
 if [ "${HAS_BMI2}" = "n" ] && echo "${kver5platforms}" | grep -qw "${_bmi2_plat}"; then
   filtered=()
   for v in "${versions[@]}"; do
-    vMaj=$(echo "${v}" | cut -d'.' -f1)
-    vMin=$(echo "${v}" | cut -d'.' -f2 | cut -d'-' -f1)
-    vZpadDsm=$(printf "%03d%03d" "${vMaj:-0}" "${vMin:-0}")
-    if [ "${vZpadDsm}" -ge 7004 ]; then
-      echo "Excluding ${v} (DSM >= 7.4.0 requires BMI2 CPU)"
+    vZpadDsm=$(zpadDsmVersion "${v}")
+    if [ "${vZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${vZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
+      echo "Excluding ${v} (DSM > 7.3.2 requires BMI2 CPU; custom-modules not built past 7.3.2)"
       continue
     fi
     filtered+=("${v}")
@@ -768,6 +834,8 @@ function modelMenu() {
   MODEL="`<${TMP_PATH}/resp`"
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
+
+  enforceBmi2VersionCap
 
   if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "epyc7003ntb(DT)" || "${platform}" == "epyc7003(DT)" || "${platform}" == "icelaked(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "v1000nk(DT)" || "${platform}" == "r1000nk(DT)" ]]; then
       echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
