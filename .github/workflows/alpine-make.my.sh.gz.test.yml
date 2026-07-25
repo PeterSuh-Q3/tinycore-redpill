@@ -47,6 +47,12 @@ jobs:
           TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
           echo "tc 계정 uid:gid = ${TC_OWNER}"
 
+          # /etc/motd를 apkovl에 직접 구워 넣어 최초 부팅부터 반영되게 한다.
+          # (프로덕션 트랙과 동일한 처리, alpine-make.my.sh.gz.yml 참고)
+          MOTD_OWNER=$(stat -c '%u:%g' ./mydata/etc/motd)
+          sudo cp -vf alpine/etc/motd ./mydata/etc/motd
+          sudo chown "${MOTD_OWNER}" ./mydata/etc/motd
+
           sudo cp -vf my.sh.gz.test lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           sudo mv -f ./mydata/home/tc/my.sh.gz.test ./mydata/home/tc/my.sh.gz
           # mv는 대상 inode를 새 파일로 완전히 교체하므로, my.sh.gz(신규 생성분)만

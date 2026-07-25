@@ -58,6 +58,15 @@ jobs:
           # tc 계정의 실제 uid:gid를 원본 apkovl에서 동적으로 확인 (하드코딩 금지)
           TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
 
+          # /etc/motd는 my.sh.gz(=/home/tc/*) 재압축 대상이 아니라 apkovl에 얼려있는
+          # 값 그대로 남기 때문에, 재빌드해도 갱신되지 않고 update_motd()가 최초 1회
+          # menu.sh 실행되기 전까지는 구버전 TinyCore 배너가 그대로 보이는 문제가 있었다.
+          # 레포의 alpine/etc/motd를 apkovl에 직접 구워 넣어 최초 부팅부터 반영되게 한다.
+          # (update_motd()는 이미 배포된 박스가 재빌드 없이 자가 갱신하도록 그대로 유지)
+          MOTD_OWNER=$(stat -c '%u:%g' ./mydata/etc/motd)
+          sudo cp -vf alpine/etc/motd ./mydata/etc/motd
+          sudo chown "${MOTD_OWNER}" ./mydata/etc/motd
+
           sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           # 위 cp는 기존 파일을 같은 이름으로 덮어써 원본 inode(및 소유권)를
           # 유지하지만, 혹시 새로 추가된 파일이 있을 경우를 대비해 명시적으로

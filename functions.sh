@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.1"
+rploaderver="1.4.2.2"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -348,6 +348,17 @@ function history() {
              extended; module/addon recipes reuse the existing DSM 7.4 (_74_) keys, same kernel line).
              Fixed the revision-picker menu truncating the oldest supported version now that each
              model has 12 revision buckets instead of 11 (menu_m.sh slice .[:11] -> .[:12]).
+    1.4.2.2 Fixed selectversion()'s revision-picker still hiding the 12th (oldest) entry on some
+             models: the tags=(a..k) lookup array had only 11 letters even after the .[:12] slice
+             fix in 1.4.2.1, leaving the 12th item's tag empty. Unified BMI2-related version gating
+             across checkAndResetModuleName()/selectldrmode()/selectversion(): all-modules requires
+             BMI2 starting DSM 7.3.0, but the BMI2-free custom-modules alternative is only built
+             through DSM 7.3.2, so a BMI2-less CPU can now only use < 7.3.0 (all-modules) or
+             7.3.0-7.3.2 (custom-modules) - DSM 7.4.0+ is consistently blocked everywhere instead of
+             only at the version-picker step; a stale stored DSM version past 7.3.2 is now corrected
+             the moment a BMI2-less model is selected (new enforceBmi2VersionCap(), called from
+             modelMenu()). Replaced the TinyCore /etc/motd (fetched from a stale main-branch path)
+             with an alpine-redpill-branded colored logo; mshell-only, xTCRP is unaffected.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -887,6 +898,13 @@ EOF
 # Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models, and fixed the
 # revision-picker menu truncating the oldest supported version (12 buckets now, slice was still 11).
 
+# 2026.07.25 v1.4.2.2
+# Fixed the revision-picker still hiding the 12th (oldest) entry on some models (tags lookup array was
+# still only 11 letters). Unified BMI2 version gating across module-name/loader-mode/version-picker: a
+# BMI2-less CPU can now only use < 7.3.0 (all-modules) or 7.3.0-7.3.2 (custom-modules), consistently
+# blocking DSM 7.4.0+ everywhere, including immediately at model-selection time. Replaced the stale
+# TinyCore /etc/motd with an alpine-redpill-branded colored logo (mshell only, xTCRP unaffected).
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1145,6 +1163,13 @@ function showlastupdate() {
 # 2026.07.24 v1.4.2.1
 # Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models, and fixed the
 # revision-picker menu truncating the oldest supported version (12 buckets now, slice was still 11).
+
+# 2026.07.25 v1.4.2.2
+# Fixed the revision-picker still hiding the 12th (oldest) entry on some models (tags lookup array was
+# still only 11 letters). Unified BMI2 version gating across module-name/loader-mode/version-picker: a
+# BMI2-less CPU can now only use < 7.3.0 (all-modules) or 7.3.0-7.3.2 (custom-modules), consistently
+# blocking DSM 7.4.0+ everywhere, including immediately at model-selection time. Replaced the stale
+# TinyCore /etc/motd with an alpine-redpill-branded colored logo (mshell only, xTCRP unaffected).
 
 EOF
 }
