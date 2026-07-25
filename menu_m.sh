@@ -2607,7 +2607,7 @@ fi
 # musl-locales 설치. lxterminal은 Pango+fontconfig로 CJK를 렌더링해 glibc 로케일이
 # 불필요 (X11 자체는 유지, urxvt만 교체).
 if is_alpine; then
-    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server >/dev/null 2>&1
+    sudo apk add lxterminal musl-locales musl-locales-lang xorg-server mesa-dri-gallium mesa-gl mesa-egl mesa-gbm >/dev/null 2>&1
     echo "lxterminal + musl-locales installed (urxvt replacement)."
 fi
 
