@@ -1,0 +1,12 @@
+
+            [1;97m/\[0m
+           [1;96m/  \[0m       [1;97malpine-redpill[0m is distributed with ABSOLUTELY NO WARRANTY.
+          [1;96m/    \[0m                [4;96mhttps://www.alpinelinux.org/[0m
+         [1;34m/  /\  \[0m
+        [1;34m/  /  \  \[0m
+       [1;34m/__/____\__\[0m
+
+Configure the loader using the [1;32mmenu.sh[0m
+To check system information and boot entries using the [1;33mmonitor.sh[0m
+To check the settings and installed addons using the [1;35mntp.sh[0m
+
