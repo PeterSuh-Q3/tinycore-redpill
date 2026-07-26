@@ -1659,8 +1659,9 @@ function add-addon() {
     echo -n "Would you like to add vmtools? [yY/nN] : "
   fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
-  
-  readanswer    
+  [ "${1}" = "nvidiadriver" ] && echo -n "Add no-auth NVIDIA driver for H/W transcoding (physical/passthrough GPU; needs boot-time network)? [yY/nN] : "
+
+  readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
     jsonfile=$(jq ". |= .+ {\"${1}\": \"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${1}/rpext-index.json\"}" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json    
     return 0
@@ -1795,6 +1796,7 @@ function additional() {
 
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
+  [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
   SATADOM=$(jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]' /home/tc/user_config.json)
   if [ "${SATADOM}" = "0" ]; then
     DOMKIND="Disable"
@@ -1828,6 +1830,7 @@ function additional() {
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
+    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"g \\\"${nvdrv} Nvidia drivers for H/W Trans.\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}: ${PREVENT_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1859,6 +1862,11 @@ function additional() {
       #[ "$MACHINE" = "VIRTUAL" ] && echo "VIRTUAL Machine is not supported..." && read answer && continue
       i915_edit
       default_resp="z"
+      ;;
+    g)
+      [ "${nvdrv}" = "Add" ] && add-addon "nvidiadriver" || del-addon "nvidiadriver"
+      [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
+      default_resp="g"
       ;;
     b) prevent; default_resp="b";;
     d) viewerrorlog; default_resp="d";;
