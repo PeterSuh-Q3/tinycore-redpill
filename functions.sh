@@ -6848,21 +6848,31 @@ function my() {
   fi
   cecho y "The selected integrated module pack is ${MDLNAME}"
   
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof=true || spoof=false
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("nvmesystem")') = true ] && nvmes=true || nvmes=false
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("vmtools")') = true ] && vmtools=true || vmtools=false  
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils=true || dbgutils=false
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
-  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvidiadriver=true || nvidiadriver=false
-
+  # Preserve ALL user-toggled addons across the GitHub reset via a generated
+  # /home/tc/merged-addons.json (= current bundled-exts MINUS the fresh GitHub
+  # default MINUS module packs). This replaces the old hardcoded capture list,
+  # so ANY addon (mac-spoof, dbgutils, nvidiadriver, future ones) survives
+  # generically with no per-addon code.
   echo  "download original bundled-exts.json file..."
   if [ -f /tmp/test_mode ]; then
     cecho g "###############################  This is Test Mode  ############################"
-    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /home/tc/redpill-load/bundled-exts.json
+    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /tmp/default-bundled-exts.json
   else
-    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json
-  fi  
-  
+    curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /tmp/default-bundled-exts.json
+  fi
+  # user addons = keys present now but NOT in the fresh default, minus module packs
+  if [ -s /tmp/default-bundled-exts.json ] && jq -e . /tmp/default-bundled-exts.json >/dev/null 2>&1; then
+    jq -s '
+      .[0] as $cur | .[1] as $def |
+      ["all-modules","custom-modules","anodrm-modules"] as $excl |
+      $cur | with_entries( .key as $k | select( (($def|has($k))|not) and (($excl|index($k))==null) ) )
+    ' /home/tc/redpill-load/bundled-exts.json /tmp/default-bundled-exts.json > /home/tc/merged-addons.json
+    cecho y "merged-addons.json (preserved): $(jq -r 'keys | join(", ") // "(none)"' /home/tc/merged-addons.json)"
+    cp -f /tmp/default-bundled-exts.json /home/tc/redpill-load/bundled-exts.json
+  else
+    cecho p "[!] default bundled-exts.json download failed - keeping existing file (addons intact)"
+  fi
+
   if [ "${DMPM}" = "DDSML" ]; then
       jq 'del(.eudev, .aeudev)' \
         /home/tc/redpill-load/bundled-exts.json > /tmp/bundled-exts.tmp && \
@@ -6900,12 +6910,11 @@ function my() {
   #    jsonfile=$(jq 'del(.acpid)' /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
   #fi
   
-  [ "$spoof" = true ] && add-addons "mac-spoof" 
-  [ "$nvmes" = true ] && add-addons "nvmesystem" 
-  [ "$vmtools" = true ] && add-addons "vmtools" 
-  [ "$dbgutils" = true ] && add-addons "dbgutils" 
-  [ "$sortnetif" = true ] && add-addons "sortnetif"
-  [ "$nvidiadriver" = true ] && add-addons "nvidiadriver" 
+  # re-apply ALL preserved user addons generically from merged-addons.json
+  if [ -s /home/tc/merged-addons.json ]; then
+    jsonfile=$(jq -s '.[0] * .[1]' /home/tc/redpill-load/bundled-exts.json /home/tc/merged-addons.json) && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+    cecho y "bundled-exts.json: re-applied user addons -> $(jq -r 'keys | join(", ") // "(none)"' /home/tc/merged-addons.json)"
+  fi
 
   [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/models.json
 
