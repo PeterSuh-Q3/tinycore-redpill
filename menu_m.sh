@@ -1738,7 +1738,7 @@ function nvidiaMenu() {
     else
       status="\Z1DISABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}  (choose Enable below)"
     fi
-    dialog --clear --backtitle "`backtitle`" --colors --no-tags \
+    dialog --clear --backtitle "`backtitle`" --colors --no-tags --no-cancel \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
@@ -1755,6 +1755,7 @@ function nvidiaMenu() {
           else add-addons "nvidiadriver"; fi ;;                       # Enable  (stays in submenu to show new Status)
       *)  json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # pin version
     esac
+    return   # OK applies the highlighted item then exits (no Cancel button); re-open to change more
   done
 }
 
