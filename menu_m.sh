@@ -1659,7 +1659,6 @@ function add-addon() {
     echo -n "Would you like to add vmtools? [yY/nN] : "
   fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
-  [ "${1}" = "nvidiadriver" ] && echo -n "Add NVIDIA H/W transcoding driver? [yY/nN] : "
 
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
@@ -1729,14 +1728,20 @@ function nvidiaMenu() {
     echo "f \"NVENC ffmpeg (Jellyfin pkg): ${ffon}\"" >> "${TMP_PATH}/menun"
     echo "x \"Disable / Remove addon\"" >> "${TMP_PATH}/menun"
 
+    local status
+    if [ "$has" = "yes" ]; then
+      status="\Z2ENABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}"
+    else
+      status="\Z1DISABLED\Zn — pick Auto or a version to enable"
+    fi
     dialog --clear --backtitle "`backtitle`" --colors \
-      --menu "NVIDIA H/W Transcoding  (addon: ${has}, current: ${cur:-Auto})" 0 0 \
+      --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
     [ $? -ne 0 ] && return
     local r; r=$(<${TMP_PATH}/respn); [ -z "$r" ] && return
     case "$r" in
-      a)  [ "$has" = "yes" ] || add-addon "nvidiadriver"
+      a)  add-addons "nvidiadriver"    # silent enable (no prompt); Auto = clear pinned version
           json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
       f)  if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
           else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
@@ -1744,7 +1749,7 @@ function nvidiaMenu() {
       x)  del-addon "nvidiadriver"
           json="$(jq 'del(.nvidia_driver, .nvidia_ffmpeg)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}"
           return ;;
-      *)  [ "$has" = "yes" ] || add-addon "nvidiadriver"
+      *)  add-addons "nvidiadriver"    # silent enable + pin selected version
           json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
     esac
   done
@@ -3075,9 +3080,9 @@ while true; do
   if [ "$(jq 'has("nvidiadriver")' ~/redpill-load/bundled-exts.json 2>/dev/null)" = "true" ]; then
     nvsel="$(jq -r '.nvidia_driver // "Auto"' "${userconfigfile}" 2>/dev/null)"
     [ "$(jq -r '.nvidia_ffmpeg // false' "${userconfigfile}" 2>/dev/null)" = "true" ] && nvsel="${nvsel}+ffmpeg"
-    nvlabel="Nvidia H/W Trans.: ${nvsel}"
+    nvlabel="NVIDIA H/W Trans. [ON: ${nvsel}]"
   else
-    nvlabel="Add Nvidia drivers for H/W Trans."
+    nvlabel="NVIDIA H/W Trans. [OFF] - select to add"
   fi
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
   echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"

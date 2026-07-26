@@ -6853,7 +6853,8 @@ function my() {
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("vmtools")') = true ] && vmtools=true || vmtools=false  
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils=true || dbgutils=false
   [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("sortnetif")') = true ] && sortnetif=true || sortnetif=false
-  
+  [ $(cat /home/tc/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvidiadriver=true || nvidiadriver=false
+
   echo  "download original bundled-exts.json file..."
   if [ -f /tmp/test_mode ]; then
     cecho g "###############################  This is Test Mode  ############################"
@@ -6903,7 +6904,8 @@ function my() {
   [ "$nvmes" = true ] && add-addons "nvmesystem" 
   [ "$vmtools" = true ] && add-addons "vmtools" 
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
-  [ "$sortnetif" = true ] && add-addons "sortnetif" 
+  [ "$sortnetif" = true ] && add-addons "sortnetif"
+  [ "$nvidiadriver" = true ] && add-addons "nvidiadriver" 
 
   [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/models.json
 
