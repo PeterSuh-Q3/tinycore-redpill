@@ -1517,32 +1517,51 @@ function burnloader() {
   #leftshm=$(df --block-size=1 | grep /dev/shm | awk '{print $4}')
   #if [ 0${leftshm} -gt 02147483648 ]; then
     imgversion="${VERSION}"
-  #else 
+  #else
   #  imgversion="v1.0.1.0"
   #fi
 
+  # v1.4.0.0부터 TinyCore -> Alpine 전환(레포명 tinycore-redpill -> alpine-redpill,
+  # 기본/대용량 mshell 이미지 크기도 2GB/4GB -> 3GB/5GB로 변경)되었으므로, 굽는
+  # 이미지의 파일명 접두사/크기 라벨을 imgversion 기준으로 분기한다.
+  local imgverZpad
+  imgverZpad=$(zpadDsmVersion "${imgversion#v}")
+  if [ "${imgverZpad}" -ge "$(zpadDsmVersion "1.4.0.0")" ]; then
+    imgprefix="alpine-redpill"
+    dfltLabel="Standard 3GB image"
+    lgLabel="Large 5GB image"
+    lgTag="5GB"
+    lgSuffix="m-shell-5GB"
+  else
+    imgprefix="tinycore-redpill"
+    dfltLabel="Standard 2GB image"
+    lgLabel="Large 4GB image"
+    lgTag="4GB"
+    lgSuffix="m-shell-4GB"
+  fi
+
   dialog --title "IMG Size Selection" --menu "Select img file size to download:" 10 50 2 \
-    "2GB" "Standard 2GB image" \
-    "4GB" "Large 4GB image" 2>/tmp/imgsize_selection.txt
+    "DEFAULT" "${dfltLabel}" \
+    "${lgTag}" "${lgLabel}" 2>/tmp/imgsize_selection.txt
   imgsize=$(cat /tmp/imgsize_selection.txt)
   rm -f /tmp/imgsize_selection.txt
 
-  if [ "${imgsize}" = "4GB" ]; then
-    imgsuffix="m-shell-4GB"
+  if [ "${imgsize}" = "${lgTag}" ]; then
+    imgsuffix="${lgSuffix}"
   else
     imgsuffix="m-shell"
   fi
 
   echo "Downloading TCRP-mshell ${imgversion} img file..."
-  if [ -f /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img ]; then
+  if [ -f /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img ]; then
     echo "TCRP-mshell ${imgversion} img file already exists. Skip download..."
   else
-    curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${imgversion}/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz -o /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz
-    gunzip /tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img.gz
+    curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${imgversion}/${imgprefix}.${imgversion}.${imgsuffix}.img.gz -o /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img.gz
+    gunzip /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img.gz
   fi
 
   echo "Please wait a moment. Burning ${imgversion} image is in progress..."
-  sudo dd if=/tmp/tinycore-redpill.${imgversion}.${imgsuffix}.img of=${loaderdev} status=progress bs=4M
+  sudo dd if=/tmp/${imgprefix}.${imgversion}.${imgsuffix}.img of=${loaderdev} status=progress bs=4M
   echo "Burning Image ${imgversion} completed, press any key to continue..."
   read answer
   return 0
