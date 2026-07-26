@@ -1734,7 +1734,7 @@ function nvidiaMenu() {
     else
       status="\Z1DISABLED\Zn — pick Auto or a version to enable"
     fi
-    dialog --clear --backtitle "`backtitle`" --colors \
+    dialog --clear --backtitle "`backtitle`" --colors --no-tags \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
