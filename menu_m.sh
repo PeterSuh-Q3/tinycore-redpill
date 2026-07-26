@@ -1796,7 +1796,6 @@ function additional() {
 
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
   [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
-  [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
   SATADOM=$(jq -r '.general.sata_line | split(" ")[] | select(startswith("synoboot_satadom=")) | ltrimstr("synoboot_satadom=") | .[0:1]' /home/tc/user_config.json)
   if [ "${SATADOM}" = "0" ]; then
     DOMKIND="Disable"
@@ -1830,7 +1829,6 @@ function additional() {
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
-    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"g \\\"${nvdrv} Nvidia drivers for H/W Trans.\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}: ${PREVENT_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
@@ -1862,11 +1860,6 @@ function additional() {
       #[ "$MACHINE" = "VIRTUAL" ] && echo "VIRTUAL Machine is not supported..." && read answer && continue
       i915_edit
       default_resp="z"
-      ;;
-    g)
-      [ "${nvdrv}" = "Add" ] && add-addon "nvidiadriver" || del-addon "nvidiadriver"
-      [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
-      default_resp="g"
       ;;
     b) prevent; default_resp="b";;
     d) viewerrorlog; default_resp="d";;
@@ -3003,6 +2996,7 @@ while true; do
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
+  [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
   echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
@@ -3019,6 +3013,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
+    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvdrv} Nvidia drivers for H/W Trans.\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
   fi
@@ -3085,7 +3080,12 @@ while true; do
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
-    k) selectldrmode ;    NEXT="p" ;;    
+    N)
+      [ "${nvdrv}" = "Add" ] && add-addon "nvidiadriver" || del-addon "nvidiadriver"
+      [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
+      NEXT="N"
+      ;;
+    k) selectldrmode ;    NEXT="p" ;;
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
        # 두 번째 박스도 불필요하며, 설치는 misc addon 의 단일 노드 우회로 진행된다.
