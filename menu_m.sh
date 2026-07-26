@@ -617,8 +617,8 @@ function syncBundledExtsModule() {
 # Shows available dsm verwsion 
 function selectversion () {
 
-# 1. 최신순으로 최대 11개 결과 추출 (공백 한 개로 join)
-pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[:11] | join(\" \")" "${configfile}")
+# 1. 최신순으로 최대 12개 결과 추출 (공백 한 개로 join)
+pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[:12] | join(\" \")" "${configfile}")
 echo "PAT VERSIONS : $pat_versions"
 
 # 2. 배열 변환
@@ -656,7 +656,7 @@ fi
 
 # 3. TAG-ITEM 쌍 만들기
 menu_items=()
-tags=(a b c d e f g h i j k)
+tags=(a b c d e f g h i j k l)
 for i in "${!versions[@]}"; do
   menu_items+=("${tags[$i]}" "${versions[$i]}")
 done
