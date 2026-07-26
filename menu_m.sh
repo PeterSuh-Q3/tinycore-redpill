@@ -1521,33 +1521,17 @@ function burnloader() {
   #  imgversion="v1.0.1.0"
   #fi
 
-  # v1.4.0.0부터 TinyCore -> Alpine 전환(레포명 tinycore-redpill -> alpine-redpill,
-  # 기본/대용량 mshell 이미지 크기도 2GB/4GB -> 3GB/5GB로 변경)되었으므로, 굽는
-  # 이미지의 파일명 접두사/크기 라벨을 imgversion 기준으로 분기한다.
-  local imgverZpad
-  imgverZpad=$(zpadDsmVersion "${imgversion#v}")
-  if [ "${imgverZpad}" -ge "$(zpadDsmVersion "1.4.0.0")" ]; then
-    imgprefix="alpine-redpill"
-    dfltLabel="Standard 3GB image"
-    lgLabel="Large 5GB image"
-    lgTag="5GB"
-    lgSuffix="m-shell-5GB"
-  else
-    imgprefix="tinycore-redpill"
-    dfltLabel="Standard 2GB image"
-    lgLabel="Large 4GB image"
-    lgTag="4GB"
-    lgSuffix="m-shell-4GB"
-  fi
+  # alpine-redpill 브랜치는 alpine-redpill 릴리즈 자산만 사용한다.
+  imgprefix="alpine-redpill"
 
   dialog --title "IMG Size Selection" --menu "Select img file size to download:" 10 50 2 \
-    "DEFAULT" "${dfltLabel}" \
-    "${lgTag}" "${lgLabel}" 2>/tmp/imgsize_selection.txt
+    "DEFAULT" "Standard 3GB image" \
+    "5GB" "Large 5GB image" 2>/tmp/imgsize_selection.txt
   imgsize=$(cat /tmp/imgsize_selection.txt)
   rm -f /tmp/imgsize_selection.txt
 
-  if [ "${imgsize}" = "${lgTag}" ]; then
-    imgsuffix="${lgSuffix}"
+  if [ "${imgsize}" = "5GB" ]; then
+    imgsuffix="m-shell-5GB"
   else
     imgsuffix="m-shell"
   fi
