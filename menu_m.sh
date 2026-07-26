@@ -1726,13 +1726,17 @@ function nvidiaMenu() {
       echo "${v} \"${v}${mk}${sel}\"" >> "${TMP_PATH}/menun"
     done
     echo "f \"NVENC ffmpeg (Jellyfin pkg): ${ffon}\"" >> "${TMP_PATH}/menun"
-    echo "x \"Disable / Remove addon\"" >> "${TMP_PATH}/menun"
+    if [ "$has" = "yes" ]; then
+      echo "x \"Disable addon  (Status -> DISABLED)\"" >> "${TMP_PATH}/menun"
+    else
+      echo "x \"Enable addon   (Status -> ENABLED)\""  >> "${TMP_PATH}/menun"
+    fi
 
     local status
     if [ "$has" = "yes" ]; then
       status="\Z2ENABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}"
     else
-      status="\Z1DISABLED\Zn — pick Auto or a version to enable"
+      status="\Z1DISABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}  (choose Enable below)"
     fi
     dialog --clear --backtitle "`backtitle`" --colors --no-tags \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
@@ -1741,16 +1745,15 @@ function nvidiaMenu() {
     [ $? -ne 0 ] && return
     local r; r=$(<${TMP_PATH}/respn); [ -z "$r" ] && return
     case "$r" in
-      a)  add-addons "nvidiadriver"    # silent enable (no prompt); Auto = clear pinned version
-          json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+      # version / Auto / ffmpeg = preference only (user_config); they do NOT
+      # change the Status. Only the Enable/Disable item toggles the addon.
+      a)  json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # Auto (clear pin)
       f)  if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
           else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
           echo -E "${json}" | jq . > "${userconfigfile}" ;;
-      x)  del-addon "nvidiadriver"
-          json="$(jq 'del(.nvidia_driver, .nvidia_ffmpeg)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}"
-          return ;;
-      *)  add-addons "nvidiadriver"    # silent enable + pin selected version
-          json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+      x)  if [ "$has" = "yes" ]; then del-addon "nvidiadriver"        # Disable
+          else add-addons "nvidiadriver"; fi ;;                       # Enable  (stays in submenu to show new Status)
+      *)  json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # pin version
     esac
   done
 }
