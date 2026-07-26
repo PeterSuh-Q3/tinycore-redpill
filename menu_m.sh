@@ -1659,6 +1659,7 @@ function add-addon() {
     echo -n "Would you like to add vmtools? [yY/nN] : "
   fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
+  [ "${1}" = "nvidiadriver" ] && echo -n "Add NVIDIA H/W transcoding driver? [yY/nN] : "
 
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
@@ -1679,7 +1680,7 @@ function del-addon() {
 # functions.sh bakes it to /addons/nvidia.conf and install.sh (junior) reads it.
 # Auto = leave nvidia_driver unset -> install.sh detects the GPU at boot.
 function nvidiaMenu() {
-  local BEX=~/redpill-load/bundled-exts.json
+  local BEX="/home/tc/redpill-load/bundled-exts.json"
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
   local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
   curl -skL "${RAW}/nvidia-index.json"       -o "$idx" 2>/dev/null
@@ -1735,7 +1736,7 @@ function nvidiaMenu() {
     [ $? -ne 0 ] && return
     local r; r=$(<${TMP_PATH}/respn); [ -z "$r" ] && return
     case "$r" in
-      a)  nvEnable
+      a)  [ "$has" = "yes" ] || add-addon "nvidiadriver"
           json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
       f)  if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
           else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
@@ -1743,17 +1744,10 @@ function nvidiaMenu() {
       x)  del-addon "nvidiadriver"
           json="$(jq 'del(.nvidia_driver, .nvidia_ffmpeg)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}"
           return ;;
-      *)  nvEnable
+      *)  [ "$has" = "yes" ] || add-addon "nvidiadriver"
           json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
     esac
   done
-}
-
-# register nvidiadriver in bundled-exts.json (no prompt — submenu = confirmation)
-function nvEnable() {
-  local BEX=~/redpill-load/bundled-exts.json
-  [ "$(jq 'has("nvidiadriver")' "$BEX" 2>/dev/null)" = "true" ] && return
-  local j; j="$(jq '. + {"nvidiadriver":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/rpext-index.json"}' "$BEX")" && echo -E "$j" | jq . > "$BEX"
 }
 
 function packing_loader() {
