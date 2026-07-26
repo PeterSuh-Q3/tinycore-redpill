@@ -1659,7 +1659,6 @@ function add-addon() {
     echo -n "Would you like to add vmtools? [yY/nN] : "
   fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
-  [ "${1}" = "nvidiadriver" ] && echo -n "Add no-auth NVIDIA driver for H/W transcoding (physical/passthrough GPU; needs boot-time network)? [yY/nN] : "
 
   readanswer
   if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then    
@@ -1672,6 +1671,89 @@ function add-addon() {
 
 function del-addon() {
   jsonfile=$(jq "del(.[\"${1}\"])" ~/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > ~/redpill-load/bundled-exts.json
+}
+
+###############################################################################
+# NVIDIA H/W transcoding driver — version selection submenu.
+# Writes user's choice to user_config.json (nvidia_driver / nvidia_ffmpeg);
+# functions.sh bakes it to /addons/nvidia.conf and install.sh (junior) reads it.
+# Auto = leave nvidia_driver unset -> install.sh detects the GPU at boot.
+function nvidiaMenu() {
+  local BEX=~/redpill-load/bundled-exts.json
+  local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
+  local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
+  curl -skL "${RAW}/nvidia-index.json"       -o "$idx" 2>/dev/null
+  curl -skL "${RAW}/nvidia-gpu-support.json" -o "$sup" 2>/dev/null
+
+  # detect NVIDIA GPU on this box (= target for TCRP) via sysfs
+  local gpuid=""
+  for d in /sys/bus/pci/devices/*; do
+    [ "$(cat "$d/vendor" 2>/dev/null)" = "0x10de" ] || continue
+    case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
+      gpuid="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;; esac
+  done
+  local gname="Unknown" branch=""
+  if [ -s "$sup" ]; then
+    branch=$(jq -r '.default_branch' "$sup" 2>/dev/null)
+    [ -n "$gpuid" ] && {
+      gname=$(jq -r --arg g "$gpuid" '.gpus[$g].name // "Unknown"' "$sup")
+      branch=$(jq -r --arg g "$gpuid" '.gpus[$g].branches[0] // .default_branch' "$sup")
+    }
+  fi
+  local vers=""
+  [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" '.platforms[$p].drivers | keys | reverse[]' "$idx" 2>/dev/null)
+  local autover; autover=$(echo "$vers" | grep "^${branch}" | head -1)
+
+  while true; do
+    local cur ffon has
+    cur=$(jq -r '.nvidia_driver // ""' "${userconfigfile}" 2>/dev/null)
+    ffon=$(jq -r 'if .nvidia_ffmpeg==true then "On" else "Off" end' "${userconfigfile}" 2>/dev/null)
+    [ "$(jq 'has("nvidiadriver")' "$BEX" 2>/dev/null)" = "true" ] && has="yes" || has="no"
+
+    local autolbl
+    if [ -n "$gpuid" ]; then
+      autolbl="Auto — ${gname} (${gpuid}) → ${autover:-none}"
+    else
+      autolbl="Auto — no NVIDIA GPU detected (default ${branch:-535})"
+    fi
+    echo "a \"${autolbl}\"" > "${TMP_PATH}/menun"
+    local v mk sel
+    for v in ${vers}; do
+      mk=""
+      [ -n "$gpuid" ] && [ "$(jq -r --arg g "$gpuid" --arg v "$v" '(.gpus[$g].verified // []) | index($v)' "$sup" 2>/dev/null)" != "null" ] && mk=" (verified)"
+      [ -z "$mk" ] && [ -n "$gpuid" ] && [ "$(jq -r --arg g "$gpuid" --arg v "$v" '(.gpus[$g].build_ok // []) | index($v)' "$sup" 2>/dev/null)" != "null" ] && mk=" (build-ok)"
+      sel=""; [ "$v" = "$cur" ] && sel=" *"
+      echo "${v} \"${v}${mk}${sel}\"" >> "${TMP_PATH}/menun"
+    done
+    echo "f \"NVENC ffmpeg (Jellyfin pkg): ${ffon}\"" >> "${TMP_PATH}/menun"
+    echo "x \"Disable / Remove addon\"" >> "${TMP_PATH}/menun"
+
+    dialog --clear --backtitle "`backtitle`" --colors \
+      --menu "NVIDIA H/W Transcoding  (addon: ${has}, current: ${cur:-Auto})" 0 0 \
+      $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
+      2>${TMP_PATH}/respn
+    [ $? -ne 0 ] && return
+    local r; r=$(<${TMP_PATH}/respn); [ -z "$r" ] && return
+    case "$r" in
+      a)  nvEnable
+          json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+      f)  if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
+          else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
+          echo -E "${json}" | jq . > "${userconfigfile}" ;;
+      x)  del-addon "nvidiadriver"
+          json="$(jq 'del(.nvidia_driver, .nvidia_ffmpeg)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}"
+          return ;;
+      *)  nvEnable
+          json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+    esac
+  done
+}
+
+# register nvidiadriver in bundled-exts.json (no prompt — submenu = confirmation)
+function nvEnable() {
+  local BEX=~/redpill-load/bundled-exts.json
+  [ "$(jq 'has("nvidiadriver")' "$BEX" 2>/dev/null)" = "true" ] && return
+  local j; j="$(jq '. + {"nvidiadriver":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/rpext-index.json"}' "$BEX")" && echo -E "$j" | jq . > "$BEX"
 }
 
 function packing_loader() {
@@ -2996,7 +3078,13 @@ while true; do
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
-  [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
+  if [ "$(jq 'has("nvidiadriver")' ~/redpill-load/bundled-exts.json 2>/dev/null)" = "true" ]; then
+    nvsel="$(jq -r '.nvidia_driver // "Auto"' "${userconfigfile}" 2>/dev/null)"
+    [ "$(jq -r '.nvidia_ffmpeg // false' "${userconfigfile}" 2>/dev/null)" = "true" ] && nvsel="${nvsel}+ffmpeg"
+    nvlabel="Nvidia H/W Trans.: ${nvsel}"
+  else
+    nvlabel="Add Nvidia drivers for H/W Trans."
+  fi
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
   echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
   eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
@@ -3013,7 +3101,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvdrv} Nvidia drivers for H/W Trans.\\\"\"" >> "${TMP_PATH}/menu"
+    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
   fi
@@ -3080,11 +3168,7 @@ while true; do
     [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
-    N)
-      [ "${nvdrv}" = "Add" ] && add-addon "nvidiadriver" || del-addon "nvidiadriver"
-      [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("nvidiadriver")') = true ] && nvdrv="Remove" || nvdrv="Add"
-      NEXT="N"
-      ;;
+    N) nvidiaMenu; NEXT="N" ;;
     k) selectldrmode ;    NEXT="p" ;;
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
