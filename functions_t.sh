@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.2"
+rploaderver="1.3.1.1"
 build="main"
 redpillmake="prod"
 
@@ -274,8 +274,6 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-    1.3.1.2 Add Support DSM 7.4.1-90080 Official Version for all supported models (module/addon recipes
-             reuse the existing DSM 7.4 (_74_) keys, same kernel line).
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -786,10 +784,6 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
-# 2026.07.25 v1.3.1.2
-# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models (reuses the existing
-# DSM 7.4 module/addon recipes, same kernel line).
-
 function showlastupdate() {
     cat <<EOF
 
@@ -1019,10 +1013,6 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
-
-# 2026.07.25 v1.3.1.2
-# Added DSM 7.4.1-90080 (official) to the supported revision whitelist for all models (reuses the existing
-# DSM 7.4 module/addon recipes, same kernel line).
 
 EOF
 }
