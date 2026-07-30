@@ -4,7 +4,7 @@ A release centered on NVIDIA hardware-transcoding support and a menu-structure o
 
 ## NVIDIA hardware transcoding, end to end
 
-The no-auth NVIDIA driver (physical / passthrough GPUs only — no vGPU, no license server) is now selectable straight from the main menu under `g`. Pick a driver version, optionally add an NVENC-capable ffmpeg for the Jellyfin package, and enable the addon; the loader build carries it into DSM from there.
+The no-auth NVIDIA driver (physical / passthrough GPUs only — no vGPU, no license server) is now selectable straight from the main menu under `g`. Pick a driver version, optionally add an NVENC-capable ffmpeg for the Jellyfin package, and enable the addon; the loader build carries it into DSM from there. When the ffmpeg layer is included, a boot hook automatically repoints the Jellyfin package's `--ffmpeg` argument from the stock `ffmpeg7` binary (no NVENC) to the NVENC-capable one — no manual path change in the Jellyfin UI needed.
 
 The submenu resolves what it offers from the live catalog rather than a fixed list, so it only ever shows drivers that actually exist for your platform **and** your kernel:
 
