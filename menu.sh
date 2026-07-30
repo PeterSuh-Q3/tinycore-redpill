@@ -404,6 +404,11 @@ if [ "${offline}" = "NO" ]; then
       cecho g "###############################  This is Test Mode  ############################"
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+      # i18n.h 도 함께 갱신 - menu_m.sh 가 참조하는 MSGID 는 늘어나는데
+      # i18n.h 를 안 당겨오면 새 MSGID(예: MSGZZ72)가 로컬 파일에 없어
+      # load_zz() 에서 정의되지 않고, set -u 환경에서 "unbound variable"
+      # 로 죽는다(menu_m.sh 만 최신화하고 i18n.h 는 구버전으로 남는 상태).
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/i18n.h" "/home/tc/i18n.h" "function load_zz"
       chmod +x /home/tc/redpill-load/*.sh
       /bin/cp -vf /home/tc/redpill-load/build-loader_t.sh /home/tc/redpill-load/build-loader.sh
       /bin/cp -vf /home/tc/redpill-load/ext-manager_t.sh /home/tc/redpill-load/ext-manager.sh
@@ -420,6 +425,7 @@ if [ "${offline}" = "NO" ]; then
         echo "[!] extract_old_shell failed. Falling back to ${UPDATE_BRANCH} functions.sh ..."
         safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
         safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/i18n.h" "/home/tc/i18n.h" "function load_zz"
       fi
 
       get_dep_hashes "$oldver"
