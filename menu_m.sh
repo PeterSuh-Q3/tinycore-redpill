@@ -349,24 +349,32 @@ if [ -z "${NVIDIA_FFMPEG}" ]; then
     jsonfile=$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
 fi
 
-# enable/disable 자체의 진짜 출처는 여전히 bundled-exts.json(add-addons/
-# del-addon 이 실제로 로더 빌드에 반영하는 곳)이다. NVIDIA_ENABLED 는
-# 그 상태를 다른 설정들과 같은 방식(전역변수 + general.* 영구저장)으로
-# 노출하기 위한 거울(mirror) 값이다.
+# NVIDIA 애드온의 enable/disable 은 다른 general.* 값들과 성격이 다르다.
+# bay/VMTOOLS/NVMES 는 user_config.json 이 유일한 소비처라 저장값이 곧
+# 진실이지만, 이 항목의 실제 소비처는 bundled-exts.json 이다 - 빌드(my())
+# 가 "현재 bundled-exts 에는 있고 GitHub 기본값에는 없는 키" 를 골라
+# merged-addons.json 으로 캡처한 뒤 재적용하기 때문에, 그 파일에 키가
+# 없으면 general.nvidia_enabled 가 무엇이든 빌드에서 그냥 누락된다.
 #
-# 버그였던 지점: 예전엔 이 값을 매 부팅마다 bundled-exts.json 에서 무조건
-# 다시 계산해 general.nvidia_enabled 를 덮어썼다 - bay/VMTOOLS/NVMES 등
-# 다른 모든 general.* 값은 "읽고, 비어있을 때만 기본값" 인데 이것만
-# 예외였다. nvidiaMenu 의 enable/disable 토글이 general.nvidia_enabled 에
-# 이미 즉시 기록하므로(add-addons/del-addon 직후 writeConfigKey), 재부팅
-# 시엔 그냥 저장된 값을 그대로 읽으면 된다 - bundled-exts.json 이 최초
-# 한 번(이 키가 아직 없던 예전 설치)에만 기본값 추정용으로 필요하다.
-NVIDIA_ENABLED=$(readConfigKey "general" "nvidia_enabled")
-if [ -z "${NVIDIA_ENABLED}" ]; then
-    NVIDIA_ENABLED=$(jq -r 'if has("nvidiadriver") then "true" else "false" end' ~/redpill-load/bundled-exts.json 2>/dev/null)
-    [ -z "${NVIDIA_ENABLED}" ] && NVIDIA_ENABLED="false"
-    writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}"
+# 그래서 bundled-exts.json 을 진실의 원천으로 삼고 general.nvidia_enabled
+# 는 표시용 거울값으로 매 실행마다 재동기화한다. 한때 이 재계산을
+# "다른 항목과 컨벤션이 다르다" 는 이유로 제거했는데, 그게 사실은 두
+# 파일의 드리프트를 자동 치유하던 안전장치였다 - 제거하자 box 152 에서
+# general.nvidia_enabled=true 인데 bundled-exts 에는 키가 없어
+# merged-addons.json 이 {} 가 되고 빌드에서 애드온이 통째로 빠지는 상태가
+# 고착됐다.
+NVIDIA_ENABLED_SAVED=$(readConfigKey "general" "nvidia_enabled")
+NVIDIA_ENABLED=$(jq -r 'if has("nvidiadriver") then "true" else "false" end' ~/redpill-load/bundled-exts.json 2>/dev/null)
+[ -z "${NVIDIA_ENABLED}" ] && NVIDIA_ENABLED="false"
+# 자동 복구: 사용자가 메뉴에서 ENABLED 로 켜둔 기록(general.nvidia_enabled)
+# 이 있는데 bundled-exts.json 에 키가 없다면 위와 같은 드리프트 상태다.
+# 사용자의 의도는 "켜둔 것" 이므로 파일 쪽을 사용자 의도에 맞춘다.
+if [ "${NVIDIA_ENABLED_SAVED}" = "true" ] && [ "${NVIDIA_ENABLED}" != "true" ]; then
+    add-addons "nvidiadriver"
+    NVIDIA_ENABLED="true"
 fi
+writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}"
+unset NVIDIA_ENABLED_SAVED
 
 [ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
 
@@ -1821,7 +1829,12 @@ function nvidiaMenu() {
     # writeConfigKey 로 general.* 에 영구저장한다(아래 dispatch 참고).
     cur="${NVIDIA_DRIVER}"
     ffon="Off"; [ "${NVIDIA_FFMPEG}" = "true" ] && ffon="On"
-    has="no"; [ "${NVIDIA_ENABLED}" = "true" ] && has="yes"
+    # enable/disable 상태만은 전역변수가 아니라 bundled-exts.json 을 직접
+    # 본다 - 이 파일이 빌드가 실제로 읽는 곳이라 여기가 진실이고, 전역변수를
+    # 믿었다가 둘이 어긋나면 "메뉴엔 ENABLED 인데 빌드엔 누락" 이 된다.
+    has="no"
+    [ "$(jq 'has("nvidiadriver")' ~/redpill-load/bundled-exts.json 2>/dev/null)" = "true" ] && has="yes"
+    NVIDIA_ENABLED="false"; [ "$has" = "yes" ] && NVIDIA_ENABLED="true"
 
     local autolbl autosel=""
     [ -z "$cur" ] && autosel=" *"
