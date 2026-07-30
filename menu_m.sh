@@ -352,11 +352,21 @@ fi
 # enable/disable 자체의 진짜 출처는 여전히 bundled-exts.json(add-addons/
 # del-addon 이 실제로 로더 빌드에 반영하는 곳)이다. NVIDIA_ENABLED 는
 # 그 상태를 다른 설정들과 같은 방식(전역변수 + general.* 영구저장)으로
-# 노출하기 위한 거울(mirror) 값 - 매 부팅마다 bundled-exts.json 에서
-# 다시 계산해 general.nvidia_enabled 와 어긋나지 않게 한다.
-NVIDIA_ENABLED=$(jq -r 'if has("nvidiadriver") then "true" else "false" end' ~/redpill-load/bundled-exts.json 2>/dev/null)
-[ -z "${NVIDIA_ENABLED}" ] && NVIDIA_ENABLED="false"
-writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}"
+# 노출하기 위한 거울(mirror) 값이다.
+#
+# 버그였던 지점: 예전엔 이 값을 매 부팅마다 bundled-exts.json 에서 무조건
+# 다시 계산해 general.nvidia_enabled 를 덮어썼다 - bay/VMTOOLS/NVMES 등
+# 다른 모든 general.* 값은 "읽고, 비어있을 때만 기본값" 인데 이것만
+# 예외였다. nvidiaMenu 의 enable/disable 토글이 general.nvidia_enabled 에
+# 이미 즉시 기록하므로(add-addons/del-addon 직후 writeConfigKey), 재부팅
+# 시엔 그냥 저장된 값을 그대로 읽으면 된다 - bundled-exts.json 이 최초
+# 한 번(이 키가 아직 없던 예전 설치)에만 기본값 추정용으로 필요하다.
+NVIDIA_ENABLED=$(readConfigKey "general" "nvidia_enabled")
+if [ -z "${NVIDIA_ENABLED}" ]; then
+    NVIDIA_ENABLED=$(jq -r 'if has("nvidiadriver") then "true" else "false" end' ~/redpill-load/bundled-exts.json 2>/dev/null)
+    [ -z "${NVIDIA_ENABLED}" ] && NVIDIA_ENABLED="false"
+    writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}"
+fi
 
 [ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
 
@@ -1813,11 +1823,12 @@ function nvidiaMenu() {
     ffon="Off"; [ "${NVIDIA_FFMPEG}" = "true" ] && ffon="On"
     has="no"; [ "${NVIDIA_ENABLED}" = "true" ] && has="yes"
 
-    local autolbl
+    local autolbl autosel=""
+    [ -z "$cur" ] && autosel=" *"
     if [ -n "$gpuid" ]; then
-      autolbl="Auto — ${gname} (${gpuid}) → ${autover:-none}"
+      autolbl="Auto — ${gname} (${gpuid}) → ${autover:-none}${autosel}"
     else
-      autolbl="Auto — no NVIDIA GPU detected (default ${branch:-535})"
+      autolbl="Auto — no NVIDIA GPU detected (default ${branch:-535})${autosel}"
     fi
 
     # 문자키를 버전 문자열 자체가 아니라 목록에 오르는 순서대로 a,b,c...
