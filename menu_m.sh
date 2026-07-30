@@ -1752,6 +1752,7 @@ function nvidiaMenu() {
   [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" '.platforms[$p].drivers | keys | reverse[]' "$idx" 2>/dev/null)
   local autover; autover=$(echo "$vers" | grep "^${branch}" | head -1)
 
+  local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
   while true; do
     local cur ffon has
     cur=$(jq -r '.nvidia_driver // ""' "${userconfigfile}" 2>/dev/null)
@@ -1764,23 +1765,38 @@ function nvidiaMenu() {
     else
       autolbl="Auto — no NVIDIA GPU detected (default ${branch:-535})"
     fi
-    echo "a \"${autolbl}\"" > "${TMP_PATH}/menun"
+
+    # 문자키를 버전 문자열 자체가 아니라 목록에 오르는 순서대로 a,b,c...
+    # 순차 부여(macAddressMenu 와 동일한 방식). kind[] 로 각 항목의 실제
+    # 의미(auto/버전 고정값/ffmpeg 토글/enable-disable)를 함께 기록해두고
+    # 응답을 받은 뒤 배열을 순회해 매칭한다.
+    local -a keys=() labels=() kind=() verval=()
+    keys+=("${LETTERS:0:1}"); labels+=("${autolbl}"); kind+=("auto"); verval+=("")
     local v mk sel
     for v in ${vers}; do
       mk=""
       [ -n "$gpuid" ] && [ "$(jq -r --arg g "$gpuid" --arg v "$v" '(.gpus[$g].verified // []) | index($v)' "$sup" 2>/dev/null)" != "null" ] && mk=" (verified)"
       [ -z "$mk" ] && [ -n "$gpuid" ] && [ "$(jq -r --arg g "$gpuid" --arg v "$v" '(.gpus[$g].build_ok // []) | index($v)' "$sup" 2>/dev/null)" != "null" ] && mk=" (build-ok)"
       sel=""; [ "$v" = "$cur" ] && sel=" *"
-      echo "${v} \"${v}${mk}${sel}\"" >> "${TMP_PATH}/menun"
+      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${v}${mk}${sel}"); kind+=("ver"); verval+=("$v")
     done
-    echo "f \"NVENC ffmpeg (Jellyfin pkg): ${ffon}\"" >> "${TMP_PATH}/menun"
+    keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("NVENC ffmpeg (Jellyfin pkg): ${ffon}"); kind+=("ffmpeg"); verval+=("")
     if [ "$has" = "yes" ]; then
-      echo "x \"Disable addon  (Status -> DISABLED)\"" >> "${TMP_PATH}/menun"
+      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("Disable addon  (Status -> DISABLED)")
     else
-      echo "x \"Enable addon   (Status -> ENABLED)\""  >> "${TMP_PATH}/menun"
+      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("Enable addon   (Status -> ENABLED)")
     fi
-    eval "MSG73=\"\${MSG${tz}73}\""
-    echo "e \"${MSG73}\"" >> "${TMP_PATH}/menun"
+    kind+=("toggle"); verval+=("")
+    # Exit 는 위치와 무관하게 항상 z 고정, 문구도 언어별 MSGID 를 쓰지 않고
+    # "Exit" 리터럴로만 표기한다(요청사항).
+    keys+=("z"); labels+=("Exit"); kind+=("exit"); verval+=("")
+
+    > "${TMP_PATH}/menun"
+    local i=0
+    while [ $i -lt ${#keys[@]} ]; do
+      echo "${keys[$i]} \"${labels[$i]}\"" >> "${TMP_PATH}/menun"
+      i=$((i+1))
+    done
 
     local status
     if [ "$has" = "yes" ]; then
@@ -1788,28 +1804,36 @@ function nvidiaMenu() {
     else
       status="\Z1DISABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}  (choose Enable below)"
     fi
-    # 표준 OK/Cancel 방식으로 복원(--no-cancel 제거) - Cancel 버튼과 ESC
-    # 모두 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 돌아간다. 목록 맨 아래
-    # 'e' 항목은 같은 동작을 명시적 메뉴 항목으로도 제공한다(가시성 목적,
-    # Cancel/ESC 와 별개로 동일하게 return).
+    # 표준 OK/Cancel 방식(--no-cancel 미사용) - Cancel 버튼과 ESC 모두
+    # 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 복귀한다. 목록 맨 아래 z(Exit)
+    # 항목은 같은 동작을 명시적 메뉴 항목으로도 제공한다(가시성 목적).
     dialog --clear --backtitle "`backtitle`" --colors --no-tags \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
     [ $? -ne 0 ] && return
     local r; r=$(<${TMP_PATH}/respn); [ -z "$r" ] && return
-    case "$r" in
-      # version / Auto / ffmpeg = preference only (user_config); they do NOT
-      # change the Status. Only the Enable/Disable item toggles the addon.
-      a)  json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # Auto (clear pin)
-      f)  if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
-          else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
-          echo -E "${json}" | jq . > "${userconfigfile}" ;;
-      x)  if [ "$has" = "yes" ]; then del-addon "nvidiadriver"        # Disable
-          else add-addons "nvidiadriver"; fi ;;                       # Enable  (stays in submenu to show new Status)
-      e)  return ;;                                                   # Exit
-      *)  json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # pin version
-    esac
+
+    local matched="" i=0
+    while [ $i -lt ${#keys[@]} ]; do
+      if [ "$r" = "${keys[$i]}" ]; then
+        matched="${kind[$i]}"
+        case "$matched" in
+          # version / Auto / ffmpeg = preference only (user_config); they do
+          # NOT change the Status. Only Enable/Disable toggles the addon.
+          auto)   json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+          ver)    json="$(jq --arg v "${verval[$i]}" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
+          ffmpeg) if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
+                  else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
+                  echo -E "${json}" | jq . > "${userconfigfile}" ;;
+          toggle) if [ "$has" = "yes" ]; then del-addon "nvidiadriver"        # Disable
+                  else add-addons "nvidiadriver"; fi ;;                       # Enable (stays in submenu to show new Status)
+          exit)   return ;;
+        esac
+        break
+      fi
+      i=$((i+1))
+    done
     return   # OK applies the highlighted item then exits; re-open to change more
   done
 }
