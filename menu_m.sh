@@ -3173,8 +3173,8 @@ while true; do
     o) macMenu "eth5"
     [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && NEXT="t" || NEXT="p" ;;
     t) macMenu "eth6"
-    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="v" || NEXT="p" ;;
-    d) macMenu "eth7";    NEXT="p" ;; 
+    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="d" || NEXT="p" ;;
+    d) macMenu "eth7";    NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
     N) nvidiaMenu; NEXT="N" ;;
     k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜
