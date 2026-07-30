@@ -1164,17 +1164,28 @@ function macMenu() {
 # 시점 스냅샷이면 충분), 하나 처리한 뒤에는 다시 이 목록으로 돌아와
 # 여러 개를 연달아 설정할 수 있다. ESC/Cancel 로 메인메뉴로 복귀.
 function macAddressMenu() {
+  local LETTERS="abcdefgh"
   while true; do
     eval "MSG04=\"\${MSG${tz}04}\""
+    eval "MSG73=\"\${MSG${tz}73}\""
+    # 인덱스는 a 부터 순차 증가(eth 번호와 무관하게 목록에 실제로 올라간
+    # 순서대로 a,b,c...) - 최대 8개(eth0~eth7). eth0 은 항상 포함, 나머지는
+    # 실제 존재하는 것만.
+    local -a keys=() targets=()
+    keys+=("${LETTERS:0:1}"); targets+=("eth0")
+    local n
+    for n in 1 2 3 4 5 6 7; do
+      [ $(/sbin/ifconfig | grep "eth${n}" | wc -l) -gt 0 ] || continue
+      keys+=("${LETTERS:${#keys[@]}:1}")
+      targets+=("eth${n}")
+    done
     set --
-    set -- "$@" a "${MSG04} 1"
-    [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ] && set -- "$@" f "${MSG04} 2"
-    [ $(/sbin/ifconfig | grep eth2 | wc -l) -gt 0 ] && set -- "$@" g "${MSG04} 3"
-    [ $(/sbin/ifconfig | grep eth3 | wc -l) -gt 0 ] && set -- "$@" h "${MSG04} 4"
-    [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ] && set -- "$@" i "${MSG04} 5"
-    [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && set -- "$@" o "${MSG04} 6"
-    [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && set -- "$@" t "${MSG04} 7"
-    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && set -- "$@" d "${MSG04} 8"
+    local i=0
+    while [ $i -lt ${#keys[@]} ]; do
+      set -- "$@" "${keys[$i]}" "${MSG04} $((i+1))"
+      i=$((i+1))
+    done
+    set -- "$@" x "${MSG73}"
     dialog --clear --backtitle "`backtitle`" \
       --menu "${MSG04}" 0 0 $(dlgmenuheight $(($#/2))) \
       "$@" \
@@ -1182,16 +1193,15 @@ function macAddressMenu() {
     [ $? -ne 0 ] && return
     resp=$(<${TMP_PATH}/resp)
     [ -z "${resp}" ] && return
-    case "${resp}" in
-      a) macMenu "eth0" ;;
-      f) macMenu "eth1" ;;
-      g) macMenu "eth2" ;;
-      h) macMenu "eth3" ;;
-      i) macMenu "eth4" ;;
-      o) macMenu "eth5" ;;
-      t) macMenu "eth6" ;;
-      d) macMenu "eth7" ;;
-    esac
+    [ "${resp}" = "x" ] && return
+    i=0
+    while [ $i -lt ${#keys[@]} ]; do
+      if [ "${resp}" = "${keys[$i]}" ]; then
+        macMenu "${targets[$i]}"
+        break
+      fi
+      i=$((i+1))
+    done
   done
 }
 
@@ -1769,6 +1779,8 @@ function nvidiaMenu() {
     else
       echo "x \"Enable addon   (Status -> ENABLED)\""  >> "${TMP_PATH}/menun"
     fi
+    eval "MSG73=\"\${MSG${tz}73}\""
+    echo "e \"${MSG73}\"" >> "${TMP_PATH}/menun"
 
     local status
     if [ "$has" = "yes" ]; then
@@ -1776,7 +1788,11 @@ function nvidiaMenu() {
     else
       status="\Z1DISABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}  (choose Enable below)"
     fi
-    dialog --clear --backtitle "`backtitle`" --colors --no-tags --no-cancel \
+    # 표준 OK/Cancel 방식으로 복원(--no-cancel 제거) - Cancel 버튼과 ESC
+    # 모두 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 돌아간다. 목록 맨 아래
+    # 'e' 항목은 같은 동작을 명시적 메뉴 항목으로도 제공한다(가시성 목적,
+    # Cancel/ESC 와 별개로 동일하게 return).
+    dialog --clear --backtitle "`backtitle`" --colors --no-tags \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
@@ -1791,9 +1807,10 @@ function nvidiaMenu() {
           echo -E "${json}" | jq . > "${userconfigfile}" ;;
       x)  if [ "$has" = "yes" ]; then del-addon "nvidiadriver"        # Disable
           else add-addons "nvidiadriver"; fi ;;                       # Enable  (stays in submenu to show new Status)
+      e)  return ;;                                                   # Exit
       *)  json="$(jq --arg v "$r" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;   # pin version
     esac
-    return   # OK applies the highlighted item then exits (no Cancel button); re-open to change more
+    return   # OK applies the highlighted item then exits; re-open to change more
   done
 }
 
