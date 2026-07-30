@@ -3242,7 +3242,7 @@ while true; do
   eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"X \\\"\${MSG${tz}73}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \"o \\\"\${MSG${tz}73}\\\"\""               >> "${TMP_PATH}/menu"
   # 화면 크기에 맞춰 박스를 1행(backtitle 아래)부터 꽉 차게 그려 중앙배치
   # 여백/그림자 제거. (footer 버튼행은 dialog --menu 구조상 필수라 제거 불가,
   # 빈 여백만 최소화하고 그만큼 리스트 표시 행을 늘림)
@@ -3311,7 +3311,7 @@ while true; do
     q) showAutoUpdateMenu; NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
-    X) break ;;
+    o) break ;;
   esac
 done
 
