@@ -3214,7 +3214,7 @@ while true; do
     eval "echo \"s \\\"\${MSG${tz}03}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"a \\\"\${MSG${tz}72}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    [ "${nv_locked}" != "hide" ] && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
+    [ "${nv_locked}" != "hide" ] && eval "echo \"g \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     # k(selectldrmode) 와 c(seleudev) 는 최상위에서 빠지고 z(build-pre-option)
     # 의 하위메뉴 1·2번 항목으로 종속됐다 - 아래 build-pre-option() 참고.
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
@@ -3281,7 +3281,7 @@ while true; do
        fi
        NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
-    N) [ "${nv_locked}" = "yes" ] || nvidiaMenu "${kver}"; NEXT="N" ;;
+    g) [ "${nv_locked}" = "yes" ] || nvidiaMenu "${kver}"; NEXT="g" ;;
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
        # 두 번째 박스도 불필요하며, 설치는 misc addon 의 단일 노드 우회로 진행된다.
