@@ -3090,7 +3090,6 @@ while true; do
   fi
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
   echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
-  eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
   eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""     >> "${TMP_PATH}/menu"
   if [ -n "${MODEL}" ]; then
     eval "echo \"j \\\"\${MSG${tz}05} (${BUILD})\\\"\""  >> "${TMP_PATH}/menu"
@@ -3106,7 +3105,13 @@ while true; do
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
     echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
+    eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
+  else
+    # 'c' only *moved* - it does not depend on MODEL (seleudev just sets DMPM and
+    # swaps the ddsml/eudev addons), so keep it reachable before a model is
+    # picked instead of hiding it along with the build-workflow items above.
+    eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
   fi
   [ "$FRKRNL" = "YES" ] && \
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
@@ -3148,10 +3153,10 @@ while true; do
   [ ${dlgret} -ne 0 ] && continue
   case `<"${TMP_PATH}/resp"` in
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
-    1) NEXT="c" ;;   # ===== Main =====        → c
+    1) NEXT="m" ;;   # ===== Main =====        → m (첫 항목: c 가 p 앞으로 이동)
     2) NEXT="u" ;;   # ===== Environment ===== → u
     3) NEXT="n" ;;   # ===== Misc =====        → n
-    c) seleudev;        NEXT="m" ;;
+    c) seleudev;        NEXT="p" ;;   # c 는 이제 p 바로 위 → 다음은 빌드
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
     s) serialMenu;      NEXT="a" ;;
@@ -3172,7 +3177,7 @@ while true; do
     d) macMenu "eth7";    NEXT="p" ;; 
     z) build-pre-option ; NEXT="p" ;;
     N) nvidiaMenu; NEXT="N" ;;
-    k) selectldrmode ;    NEXT="p" ;;
+    k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
        # 두 번째 박스도 불필요하며, 설치는 misc addon 의 단일 노드 우회로 진행된다.
