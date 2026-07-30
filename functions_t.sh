@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.2"
+rploaderver="1.4.2.3"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -359,6 +359,23 @@ function history() {
              the moment a BMI2-less model is selected (new enforceBmi2VersionCap(), called from
              modelMenu()). Replaced the TinyCore /etc/motd (fetched from a stale main-branch path)
              with an alpine-redpill-branded colored logo; mshell-only, xTCRP is unaffected.
+    1.4.2.3 HEADLINE: End-to-end NVIDIA hardware-transcoding support, selectable from the main menu
+             (g) - driver version, optional NVENC ffmpeg for Jellyfin, addon enable, all resolved
+             live against kernel/platform capability (kernel 5.10.55: 470/535/550/580; kernel 4.4:
+             550 only, NVIDIA's own floor; kernel 3.10: unsupported). Verified on real hardware
+             (Quadro P620, epyc7002 + geminilake). Fixed the NVIDIA addon silently missing from
+             built loaders: bundled-exts.json (the file the build actually reads) is the source of
+             truth again, restoring it from an over-eager general.* refactor that let it drift out
+             of sync with the menu toggle; already-drifted installs self-repair on next run.
+             Generalized addon preservation across a build's bundled-exts.json reset via an
+             upstream-diff merged-addons.json, so any user-enabled addon survives, not just a
+             hardcoded list. Reworked the main menu (k/c moved under z, dtsmapping moved to z,
+             all-lowercase indices, MAC selection as its own up-to-8-interface submenu, panel size
+             shown in the title bar). Also fixed: 8-port MAC flow dropping out after eth6; `menu.sh
+             test` crashing on new message IDs (i18n.h wasn't refreshed alongside menu_m.sh);
+             --no-tags hiding submenu index letters; missing Mesa DRI packages leaving X's
+             framebuffer frozen while openbox/tint2/lxterminal ran (mesa-dri-gallium/gl/egl/gbm
+             added). 18 languages updated with 2 new translated strings.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -905,6 +922,17 @@ EOF
 # blocking DSM 7.4.0+ everywhere, including immediately at model-selection time. Replaced the stale
 # TinyCore /etc/motd with an alpine-redpill-branded colored logo (mshell only, xTCRP unaffected).
 
+# 2026.07.26 v1.4.2.3
+# HEADLINE: End-to-end NVIDIA hardware-transcoding support (main menu g) - driver version, optional
+# NVENC ffmpeg, addon enable, all resolved live against kernel/platform capability; verified on real
+# hardware (Quadro P620, epyc7002 + geminilake). Fixed the NVIDIA addon silently missing from built
+# loaders (bundled-exts.json restored as source of truth; drifted installs self-repair). Generalized
+# addon preservation via an upstream-diff merged-addons.json instead of a hardcoded capture list.
+# Reworked the main menu (k/c under z, dtsmapping moved, all-lowercase indices, MAC as its own
+# up-to-8-interface submenu, panel size in the title bar). Also fixed: 8-port MAC flow dropping out
+# after eth6; `menu.sh test` crashing on new message IDs; --no-tags hiding submenu index letters;
+# missing Mesa DRI packages leaving X's framebuffer frozen. 18 languages updated with 2 new strings.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1170,6 +1198,17 @@ function showlastupdate() {
 # BMI2-less CPU can now only use < 7.3.0 (all-modules) or 7.3.0-7.3.2 (custom-modules), consistently
 # blocking DSM 7.4.0+ everywhere, including immediately at model-selection time. Replaced the stale
 # TinyCore /etc/motd with an alpine-redpill-branded colored logo (mshell only, xTCRP unaffected).
+
+# 2026.07.26 v1.4.2.3
+# HEADLINE: End-to-end NVIDIA hardware-transcoding support (main menu g) - driver version, optional
+# NVENC ffmpeg, addon enable, all resolved live against kernel/platform capability; verified on real
+# hardware (Quadro P620, epyc7002 + geminilake). Fixed the NVIDIA addon silently missing from built
+# loaders (bundled-exts.json restored as source of truth; drifted installs self-repair). Generalized
+# addon preservation via an upstream-diff merged-addons.json instead of a hardcoded capture list.
+# Reworked the main menu (k/c under z, dtsmapping moved, all-lowercase indices, MAC as its own
+# up-to-8-interface submenu, panel size in the title bar). Also fixed: 8-port MAC flow dropping out
+# after eth6; `menu.sh test` crashing on new message IDs; --no-tags hiding submenu index letters;
+# missing Mesa DRI packages leaving X's framebuffer frozen. 18 languages updated with 2 new strings.
 
 EOF
 }
@@ -7155,7 +7194,7 @@ function my() {
       echo "y"|rploader backup
   fi
   return $errorcode
-#[ "$FRKRNL" = "YES" ] && readanswer
+#[ "$FRKRNL" = "YES" ] && readanswer  
 }
 
 if [ $# -gt 1 ]; then
