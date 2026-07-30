@@ -1816,7 +1816,11 @@ function nvidiaMenu() {
     # 표준 OK/Cancel 방식(--no-cancel 미사용) - Cancel 버튼과 ESC 모두
     # 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 복귀한다. 목록 맨 아래 z(Exit)
     # 항목은 같은 동작을 명시적 메뉴 항목으로도 제공한다(가시성 목적).
-    dialog --clear --backtitle "`backtitle`" --colors --no-tags \
+    # --no-tags 를 빼서 a/b/c...z 태그 열을 화면에 그대로 보여준다. 이걸
+    # 켜두면 태그값은 내부적으론 살아있지만 화면엔 안 보이고, 대신 dialog
+    # 가 설명 문구의 첫 글자를 임의로 강조 표시해 인덱스가 아예 없는
+    # 것처럼 보인다(실측 확인).
+    dialog --clear --backtitle "`backtitle`" --colors \
       --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
