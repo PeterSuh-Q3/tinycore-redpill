@@ -1897,7 +1897,9 @@ function nvidiaMenu() {
       fi
       i=$((i+1))
     done
-    return   # OK applies the highlighted item then exits; re-open to change more
+    # exit 항목만 위에서 직접 return 하고, 나머지는 전부 루프 맨 위로
+    # 돌아가 같은 하위메뉴를 갱신된 상태로 다시 그린다(요청사항) - 매번
+    # 상위 메뉴로 튕겨나가 g 를 다시 눌러야 했던 것을 없앴다.
   done
 }
 
