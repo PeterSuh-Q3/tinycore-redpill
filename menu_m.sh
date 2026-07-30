@@ -1727,9 +1727,18 @@ function del-addon() {
 # functions.sh bakes it to /addons/nvidia.conf and install.sh (junior) reads it.
 # Auto = leave nvidia_driver unset -> install.sh detects the GPU at boot.
 function nvidiaMenu() {
+  # $1 = 현재 선택된 모델의 커널버전(예: 5.10.55 / 4.4.302 / 4.4.180),
+  # resolveLiveKver 로 호출부(메인 루프)에서 이미 계산해 전달한다. index 의
+  # 같은 플랫폼이라도 커널마다 발행 브랜치가 다르므로(커널 4.4 는 550 만)
+  # 이 값으로 kernels[$k].drivers 를 우선 조회해야 정확한 목록이 나온다.
+  local mykver="${1:-}"
   local BEX="/home/tc/redpill-load/bundled-exts.json"
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
   local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
+  # tcrp-addons 의 nvidia-index.json 과 동일한 해석 규칙: 플랫폼이 커널별
+  # 'kernels' 맵을 가지면 그 커널의 drivers 를 쓰고(예: 4.4 계열은 550 만
+  # 존재), 없으면(kver5 플랫폼) 기존 평면 drivers 를 그대로 쓴다.
+  local DQ='(.platforms[$p].kernels[$k].drivers // .platforms[$p].drivers)'
   curl -skL "${RAW}/nvidia-index.json"       -o "$idx" 2>/dev/null
   curl -skL "${RAW}/nvidia-gpu-support.json" -o "$sup" 2>/dev/null
 
@@ -1749,7 +1758,7 @@ function nvidiaMenu() {
     }
   fi
   local vers=""
-  [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" '.platforms[$p].drivers | keys | reverse[]' "$idx" 2>/dev/null)
+  [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" --arg k "$mykver" "$DQ"' | keys | reverse[]' "$idx" 2>/dev/null)
   local autover; autover=$(echo "$vers" | grep "^${branch}" | head -1)
 
   local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
@@ -3167,6 +3176,18 @@ while true; do
   else
     nvlabel="NVIDIA H/W Trans. [OFF] - select to add"
   fi
+  # 커널별 NVIDIA 메뉴 가용성. 이 프로젝트가 다루는 세 커널 계열:
+  #   5.10.x - 470/535/550/580 전부 발행 (nvidiaMenu 내부에서 자동 판별)
+  #   4.4.x  - 550 만 발행. nvidiaMenu 는 이제 커널을 인자로 받아 index 의
+  #            kernels[$k].drivers 를 우선 조회하므로 자동으로 550 만 뜬다
+  #   3.10.x - NVIDIA 드라이버 자체가 이 커널로 빌드된 적이 없음. 메인메뉴
+  #            라벨부터 (Not Supported) 로 표기하고 하위메뉴 진입을 막는다
+  #            (nvidiaMenu 를 열어봐야 빈 목록만 보고 오해하게 두지 않음)
+  case "${kver}" in
+    5.10.*|4.4.*) nv_locked="no" ;;
+    3.10.*)       nv_locked="yes"; nvlabel="NVIDIA H/W Trans. (Not Supported)" ;;
+    *)            nv_locked="hide" ;;
+  esac
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
   echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
   eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""     >> "${TMP_PATH}/menu"
@@ -3175,7 +3196,7 @@ while true; do
     eval "echo \"s \\\"\${MSG${tz}03}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"a \\\"\${MSG${tz}72}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
-    echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
+    [ "${nv_locked}" != "hide" ] && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
     eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
@@ -3242,7 +3263,7 @@ while true; do
        fi
        NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
-    N) nvidiaMenu; NEXT="N" ;;
+    N) [ "${nv_locked}" = "yes" ] || nvidiaMenu "${kver}"; NEXT="N" ;;
     k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
