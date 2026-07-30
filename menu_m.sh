@@ -1991,7 +1991,6 @@ function additional() {
 
   eval "MSG50=\"\${MSG${tz}50}\""
   eval "MSG51=\"\${MSG${tz}51}\""
-  eval "MSG52=\"\${MSG${tz}52}\""
   eval "MSG53=\"\${MSG${tz}53}\""
   eval "MSG54=\"\${MSG${tz}54}\""
   eval "MSG55=\"\${MSG${tz}55}\""
@@ -2005,8 +2004,9 @@ function additional() {
 
   while true; do
     [ "${PREVENT_INIT}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
-    eval "echo \"c \\\"${MSG52}\\\"\"" > "${TMP_PATH}/menua"
-    eval "echo \"l \\\"${MSG60}\\\"\"" >> "${TMP_PATH}/menua"
+    # dtsmapping(구 c) 은 최상위 z(build-pre-option) 하위메뉴 3번 항목으로
+    # 이동했다 - 여기서는 제거.
+    eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
@@ -2025,7 +2025,6 @@ function additional() {
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/resp"` in
-    c) dtsmapping; default_resp="c";;    
     l) defaultchange; default_resp="l";;
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
@@ -2123,13 +2122,16 @@ function build-pre-option() {
   while true; do
     eval "echo \"a \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""  > "${TMP_PATH}/menud"
     eval "echo \"b \\\"\${MSG${tz}01}, (${DMPM})\\\"\""                          >> "${TMP_PATH}/menud"
+    # c(dtsmapping) 는 additional() 메뉴(n) 의 1번 항목이었던 것이 여기 3번
+    # 항목으로 옮겨온 것 - 문구(MSG52) 그대로 재사용, MSGID 변경 없음.
+    eval "echo \"c \\\"\${MSG${tz}52}\\\"\""                                    >> "${TMP_PATH}/menud"
     # DT (Device-tree) 모델은 sata_remap 미지원 → SataPort remap 메뉴 비노출
     if ! echo "${platform}" | grep -q "(DT)"; then
-      eval "echo \"c \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
+      eval "echo \"d \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
     fi
-    eval "echo \"d \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
-    eval "echo \"e \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
-    eval "echo \"f \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
+    eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
+    eval "echo \"g \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -2140,9 +2142,10 @@ function build-pre-option() {
     case `<"${TMP_PATH}/respd"` in
     a) selectldrmode ;    NEXT="z" ;;
     b) seleudev      ;    NEXT="z" ;;
-    c) remapsata     ;    NEXT="z" ;;
-    d) storagepanel;      NEXT="z" ;;
-    e)
+    c) dtsmapping    ;    NEXT="z" ;;
+    d) remapsata     ;    NEXT="z" ;;
+    e) storagepanel;      NEXT="z" ;;
+    f)
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
           "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
@@ -2166,7 +2169,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
       NEXT="z" ;;
-    f)
+    g)
       if [ "${VMTOOLS}" = "false" ]; then
         add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
       else
