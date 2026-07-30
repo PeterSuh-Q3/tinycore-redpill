@@ -321,6 +321,43 @@ if [ -z "${VMTOOLS}" ]; then
     writeConfigKey "general" "vmtools" "${VMTOOLS}"
 fi
 
+# nvidiaMenu(최상위 g) 의 세 항목을 다른 설정들과 동일한 방식으로
+# 전역변수화 + general.* 영구저장한다. 이전 버전은 .nvidia_driver /
+# .nvidia_ffmpeg 를 writeConfigKey 컨벤션과 다르게 최상위(top-level)에
+# 저장했다 - general 쪽이 비어 있고 구 최상위 키가 남아있으면 옮기고
+# 구 키는 지운다(실기 box 152 에서 nvidia_driver=580.173.02,
+# nvidia_ffmpeg=true 로 이렇게 저장돼 있던 것 확인).
+NVIDIA_DRIVER=$(readConfigKey "general" "nvidia_driver")
+if [ -z "${NVIDIA_DRIVER}" ]; then
+    _legacy_nvd=$(jq -r '.nvidia_driver // empty' "${userconfigfile}" 2>/dev/null)
+    if [ -n "${_legacy_nvd}" ]; then
+        NVIDIA_DRIVER="${_legacy_nvd}"
+        writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}"
+        jsonfile=$(jq 'del(.nvidia_driver)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
+    fi
+fi
+
+NVIDIA_FFMPEG=$(readConfigKey "general" "nvidia_ffmpeg")
+if [ -z "${NVIDIA_FFMPEG}" ]; then
+    _legacy_nvf=$(jq -r '.nvidia_ffmpeg // empty' "${userconfigfile}" 2>/dev/null)
+    if [ -n "${_legacy_nvf}" ]; then
+        NVIDIA_FFMPEG="${_legacy_nvf}"
+    else
+        NVIDIA_FFMPEG="false"
+    fi
+    writeConfigKey "general" "nvidia_ffmpeg" "${NVIDIA_FFMPEG}"
+    jsonfile=$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
+fi
+
+# enable/disable 자체의 진짜 출처는 여전히 bundled-exts.json(add-addons/
+# del-addon 이 실제로 로더 빌드에 반영하는 곳)이다. NVIDIA_ENABLED 는
+# 그 상태를 다른 설정들과 같은 방식(전역변수 + general.* 영구저장)으로
+# 노출하기 위한 거울(mirror) 값 - 매 부팅마다 bundled-exts.json 에서
+# 다시 계산해 general.nvidia_enabled 와 어긋나지 않게 한다.
+NVIDIA_ENABLED=$(jq -r 'if has("nvidiadriver") then "true" else "false" end' ~/redpill-load/bundled-exts.json 2>/dev/null)
+[ -z "${NVIDIA_ENABLED}" ] && NVIDIA_ENABLED="false"
+writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}"
+
 [ "${NVMES}" = "false" ] && BLOCK_DDSML="N" || BLOCK_DDSML="Y"
 
 # FIX FRIEND, No Jot Mode
@@ -1737,7 +1774,6 @@ function nvidiaMenu() {
   # 같은 플랫폼이라도 커널마다 발행 브랜치가 다르므로(커널 4.4 는 550 만)
   # 이 값으로 kernels[$k].drivers 를 우선 조회해야 정확한 목록이 나온다.
   local mykver="${1:-}"
-  local BEX="/home/tc/redpill-load/bundled-exts.json"
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
   local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
   # tcrp-addons 의 nvidia-index.json 과 동일한 해석 규칙: 플랫폼이 커널별
@@ -1769,9 +1805,13 @@ function nvidiaMenu() {
   local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
   while true; do
     local cur ffon has
-    cur=$(jq -r '.nvidia_driver // ""' "${userconfigfile}" 2>/dev/null)
-    ffon=$(jq -r 'if .nvidia_ffmpeg==true then "On" else "Off" end' "${userconfigfile}" 2>/dev/null)
-    [ "$(jq 'has("nvidiadriver")' "$BEX" 2>/dev/null)" = "true" ] && has="yes" || has="no"
+    # bay/VMTOOLS/NVMES 등과 동일한 방식 - 매번 파일을 다시 읽지 않고
+    # 시작 시점에 초기화해둔 전역변수(NVIDIA_DRIVER/NVIDIA_FFMPEG/
+    # NVIDIA_ENABLED)를 그대로 쓴다. 변경 시에도 이 전역변수를 갱신하고
+    # writeConfigKey 로 general.* 에 영구저장한다(아래 dispatch 참고).
+    cur="${NVIDIA_DRIVER}"
+    ffon="Off"; [ "${NVIDIA_FFMPEG}" = "true" ] && ffon="On"
+    has="no"; [ "${NVIDIA_ENABLED}" = "true" ] && has="yes"
 
     local autolbl
     if [ -n "$gpuid" ]; then
@@ -1839,13 +1879,18 @@ function nvidiaMenu() {
         case "$matched" in
           # version / Auto / ffmpeg = preference only (user_config); they do
           # NOT change the Status. Only Enable/Disable toggles the addon.
-          auto)   json="$(jq 'del(.nvidia_driver)' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
-          ver)    json="$(jq --arg v "${verval[$i]}" '.nvidia_driver=$v' "${userconfigfile}")" && echo -E "${json}" | jq . > "${userconfigfile}" ;;
-          ffmpeg) if [ "$ffon" = "On" ]; then json="$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}")"
-                  else json="$(jq '.nvidia_ffmpeg=true' "${userconfigfile}")"; fi
-                  echo -E "${json}" | jq . > "${userconfigfile}" ;;
-          toggle) if [ "$has" = "yes" ]; then del-addon "nvidiadriver"        # Disable
-                  else add-addons "nvidiadriver"; fi ;;                       # Enable (stays in submenu to show new Status)
+          # 다른 설정들(bay/vmtools/nvmesystem 등)과 동일하게 전역변수를
+          # 갱신하고 writeConfigKey 로 general.* 에 영구저장한다.
+          auto)   NVIDIA_DRIVER=""; writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}" ;;
+          ver)    NVIDIA_DRIVER="${verval[$i]}"; writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}" ;;
+          ffmpeg) if [ "${NVIDIA_FFMPEG}" = "true" ]; then NVIDIA_FFMPEG="false"; else NVIDIA_FFMPEG="true"; fi
+                  writeConfigKey "general" "nvidia_ffmpeg" "${NVIDIA_FFMPEG}" ;;
+          toggle) if [ "$has" = "yes" ]; then
+                    del-addon "nvidiadriver"; NVIDIA_ENABLED="false"          # Disable
+                  else
+                    add-addons "nvidiadriver"; NVIDIA_ENABLED="true"         # Enable (stays in submenu to show new Status)
+                  fi
+                  writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}" ;;
           exit)   return ;;
         esac
         break
@@ -3187,9 +3232,9 @@ while true; do
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
-  if [ "$(jq 'has("nvidiadriver")' ~/redpill-load/bundled-exts.json 2>/dev/null)" = "true" ]; then
-    nvsel="$(jq -r '.nvidia_driver // "Auto"' "${userconfigfile}" 2>/dev/null)"
-    [ "$(jq -r '.nvidia_ffmpeg // false' "${userconfigfile}" 2>/dev/null)" = "true" ] && nvsel="${nvsel}+ffmpeg"
+  if [ "${NVIDIA_ENABLED}" = "true" ]; then
+    nvsel="${NVIDIA_DRIVER:-Auto}"
+    [ "${NVIDIA_FFMPEG}" = "true" ] && nvsel="${nvsel}+ffmpeg"
     nvlabel="NVIDIA H/W Trans. [ON: ${nvsel}]"
   else
     nvlabel="NVIDIA H/W Trans. [OFF] - select to add"
