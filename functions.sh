@@ -5166,8 +5166,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # choice (driver version / ffmpeg layer) into /addons/nvidia.conf for its
     # install.sh (on_patches). Empty driver => Auto (install.sh detects the GPU).
     if grep -q '"nvidiadriver"' /home/tc/redpill-load/bundled-exts.json 2>/dev/null; then
-      NVDRV=$(jq -r '.nvidia_driver // empty' "${userconfigfile}" 2>/dev/null)
-      NVFF=$(jq -r '.nvidia_ffmpeg // empty' "${userconfigfile}" 2>/dev/null)
+      NVDRV=$(jq -r '.general.nvidia_driver // empty' "${userconfigfile}" 2>/dev/null)
+      NVFF=$(jq -r '.general.nvidia_ffmpeg // empty' "${userconfigfile}" 2>/dev/null)
       { [ -n "$NVDRV" ] && echo "nvidia_driver=$NVDRV"
         [ -n "$NVFF"  ] && echo "nvidia_ffmpeg=$NVFF"; } | sudo tee "${RAMDISK_PATH}/addons/nvidia.conf" >/dev/null
       echo "nvidiadriver: baked /addons/nvidia.conf (driver=${NVDRV:-auto} ffmpeg=${NVFF:-off})"
@@ -5706,7 +5706,7 @@ function upgrademan() {
 
     [ ! -d /home/tc/friend ] && mkdir /home/tc/friend/ && cd /home/tc/friend
     
-    friendautoupd="$(jq -r -e '.general .friendautoupd' $userconfigfile)"
+    friendautoupd="$(jq -r -e '.general.friendautoupd' $userconfigfile)"
     if [ "${friendautoupd}" = "false" ]; then
         echo -en "\r$(msgwarning "TCRP Friend auto update disabled")\n"
     else
