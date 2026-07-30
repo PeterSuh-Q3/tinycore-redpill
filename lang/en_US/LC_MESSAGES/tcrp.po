@@ -269,3 +269,11 @@ msgstr "DHCP freeze: %s IP %s pinned (renew stopped)"
 #: MSGUS71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+
+#: MSGUS72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Choose a mac address (up to 8 supported)"
+
+#: MSGUS73 
+msgid "Exit Menu"
+msgstr "Exit Menu"

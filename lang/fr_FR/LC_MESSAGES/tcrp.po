@@ -269,3 +269,11 @@ msgstr "Gel DHCP : %s IP %s figée (renouvellement arrêté)"
 #: MSGFR71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Gel DHCP : udhcpc arrêté - renouvellement du bail supprimé"
+
+#: MSGFR72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Choisir une adresse Mac (jusqu'à 8 prises en charge)"
+
+#: MSGFR73 
+msgid "Exit Menu"
+msgstr "Quitter le menu"

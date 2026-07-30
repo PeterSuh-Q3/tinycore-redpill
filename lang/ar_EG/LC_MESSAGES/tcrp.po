@@ -269,3 +269,11 @@ msgstr "تجميد DHCP: تم تثبيت %s IP %s (تم إيقاف التجدي�
 #: MSGEG71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "تجميد DHCP: تم إيقاف udhcpc - تم كبح تجديد الإيجار"
+
+#: MSGEG72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "اختر عنوان Mac (يدعم حتى 8)"
+
+#: MSGEG73 
+msgid "Exit Menu"
+msgstr "الخروج من القائمة"

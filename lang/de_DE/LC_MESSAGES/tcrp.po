@@ -269,3 +269,11 @@ msgstr "DHCP-Freeze: %s IP %s festgesetzt (Erneuerung gestoppt)"
 #: MSGDE71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP-Freeze: udhcpc gestoppt - Lease-Erneuerung unterdrückt"
+
+#: MSGDE72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Mac-Adresse wählen (bis zu 8 unterstützt)"
+
+#: MSGDE73 
+msgid "Exit Menu"
+msgstr "Menü beenden"

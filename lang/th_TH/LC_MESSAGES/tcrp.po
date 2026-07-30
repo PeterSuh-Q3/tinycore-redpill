@@ -269,3 +269,11 @@ msgstr "การตรึง DHCP: %s IP %s ถูกตรึงไว้ (ห
 #: MSGTH71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "การตรึง DHCP: udhcpc หยุดแล้ว - ระงับการต่ออายุสัญญาเช่า"
+
+#: MSGTH72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "เลือกที่อยู่ Mac (รองรับสูงสุด 8 รายการ)"
+
+#: MSGTH73 
+msgid "Exit Menu"
+msgstr "ออกจากเมนู"

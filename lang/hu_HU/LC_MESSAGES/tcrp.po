@@ -269,3 +269,11 @@ msgstr "DHCP-befagyasztás: %s IP %s rögzítve (megújítás leállítva)"
 #: MSGHU71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP-befagyasztás: udhcpc leállítva - bérlet megújítása elnyomva"
+
+#: MSGHU72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Mac-cím kiválasztása (legfeljebb 8 támogatott)"
+
+#: MSGHU73 
+msgid "Exit Menu"
+msgstr "Kilépés a menüből"

@@ -269,3 +269,11 @@ msgstr "Blocco DHCP: %s IP %s fissato (rinnovo interrotto)"
 #: MSGIT71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Blocco DHCP: udhcpc arrestato - rinnovo del lease soppresso"
+
+#: MSGIT72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Scegli un indirizzo Mac (fino a 8 supportati)"
+
+#: MSGIT73 
+msgid "Exit Menu"
+msgstr "Esci dal menu"

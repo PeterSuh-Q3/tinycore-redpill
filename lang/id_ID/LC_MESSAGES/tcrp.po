@@ -269,3 +269,11 @@ msgstr "Pembekuan DHCP: %s IP %s dikunci (pembaruan dihentikan)"
 #: MSGID71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Pembekuan DHCP: udhcpc dihentikan - pembaruan sewa ditekan"
+
+#: MSGID72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Pilih alamat Mac (mendukung hingga 8)"
+
+#: MSGID73 
+msgid "Exit Menu"
+msgstr "Keluar Menu"

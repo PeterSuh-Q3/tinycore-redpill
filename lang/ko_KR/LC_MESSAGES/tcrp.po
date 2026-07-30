@@ -269,3 +269,11 @@ msgstr "DHCP 동결: %s IP %s 고정 (갱신 중단)"
 #: MSGKR71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP 동결: udhcpc 종료 — 임대 갱신 억제됨"
+
+#: MSGKR72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "선택 Mac 주소 (최대 8개지원)"
+
+#: MSGKR73 
+msgid "Exit Menu"
+msgstr "메뉴종료"

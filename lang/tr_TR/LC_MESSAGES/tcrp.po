@@ -269,3 +269,11 @@ msgstr "DHCP dondurma: %s IP %s sabitlendi (yenileme durduruldu)"
 #: MSGTR71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP dondurma: udhcpc durduruldu - kira yenileme engellendi"
+
+#: MSGTR72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Mac adresi seçin (en fazla 8 desteklenir)"
+
+#: MSGTR73 
+msgid "Exit Menu"
+msgstr "Menüden Çık"

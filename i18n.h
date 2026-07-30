@@ -68,5 +68,7 @@ MSGZZ68=$(gettext "tcrp" "Format System Partition(md0) for New Install")
 MSGZZ69=$(gettext "tcrp" "DHCP freeze: no resident udhcpc daemon - suppression not needed")
 MSGZZ70=$(gettext "tcrp" "DHCP freeze: %s IP %s pinned (renew stopped)")
 MSGZZ71=$(gettext "tcrp" "DHCP freeze: udhcpc stopped - lease renewal suppressed")
+MSGZZ72=$(gettext "tcrp" "Choose a mac address (up to 8 supported)")
+MSGZZ73=$(gettext "tcrp" "Exit Menu")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
 }

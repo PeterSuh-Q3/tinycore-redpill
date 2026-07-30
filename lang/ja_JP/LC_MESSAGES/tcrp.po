@@ -269,3 +269,11 @@ msgstr "DHCP フリーズ: %s IP %s を固定 (更新停止)"
 #: MSGJP71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP フリーズ: udhcpc 停止 — リース更新を抑制しました"
+
+#: MSGJP72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Macアドレスを選択 (最大8個対応)"
+
+#: MSGJP73 
+msgid "Exit Menu"
+msgstr "メニュー終了"

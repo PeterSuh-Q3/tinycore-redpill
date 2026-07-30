@@ -269,3 +269,11 @@ msgstr "Заморозка DHCP: %s IP %s закреплён (обновлени
 #: MSGRU71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Заморозка DHCP: udhcpc остановлен — обновление аренды подавлено"
+
+#: MSGRU72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Выбрать Mac-адрес (поддерживается до 8)"
+
+#: MSGRU73 
+msgid "Exit Menu"
+msgstr "Выход из меню"

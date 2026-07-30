@@ -269,3 +269,11 @@ msgstr "Congelación DHCP: %s IP %s fijada (renovación detenida)"
 #: MSGES71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Congelación DHCP: udhcpc detenido - renovación de concesión suprimida"
+
+#: MSGES72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Elegir una dirección Mac (hasta 8 admitidas)"
+
+#: MSGES73 
+msgid "Exit Menu"
+msgstr "Salir del menú"

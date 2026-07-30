@@ -269,3 +269,11 @@ msgstr "DHCP 凍結：%s IP %s 已固定（停止續租）"
 #: MSGTW71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP 凍結：udhcpc 已停止 — 已抑制租約續約"
+
+#: MSGTW72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "選擇 Mac 位址（最多支援8個）"
+
+#: MSGTW73 
+msgid "Exit Menu"
+msgstr "退出選單"

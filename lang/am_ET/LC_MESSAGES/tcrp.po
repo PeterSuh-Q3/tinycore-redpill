@@ -269,3 +269,11 @@ msgstr "DHCP ማቀዝቀዝ፦ %s IP %s ተስተካክሏል (እድሳት ቆ
 #: MSGET71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP ማቀዝቀዝ፦ udhcpc ቆሟል - የኪራይ እድሳት ተገቷል"
+
+#: MSGET72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "የMac አድራሻ ይምረጡ (እስከ 8 ይደገፋል)"
+
+#: MSGET73 
+msgid "Exit Menu"
+msgstr "ከምናሌ ውጣ"

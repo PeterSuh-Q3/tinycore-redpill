@@ -1157,6 +1157,44 @@ function macMenu() {
   sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
 }
 
+# MAC 주소 선택 하위메뉴 - 최대 8개(eth0~eth7) 인터페이스를 순차가 아니라
+# 목록에서 골라 설정한다. 문자키(a f g h i o t d)와 안내문(MSG${tz}04)은
+# 기존 메인메뉴에서 쓰던 것을 그대로 재사용 - MSGID 변경 없음. 실제
+# 네트워크 인터페이스가 있는 것만 나열하고(핫플러그 없는 환경이라 진입
+# 시점 스냅샷이면 충분), 하나 처리한 뒤에는 다시 이 목록으로 돌아와
+# 여러 개를 연달아 설정할 수 있다. ESC/Cancel 로 메인메뉴로 복귀.
+function macAddressMenu() {
+  while true; do
+    eval "MSG04=\"\${MSG${tz}04}\""
+    set --
+    set -- "$@" a "${MSG04} 1"
+    [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ] && set -- "$@" f "${MSG04} 2"
+    [ $(/sbin/ifconfig | grep eth2 | wc -l) -gt 0 ] && set -- "$@" g "${MSG04} 3"
+    [ $(/sbin/ifconfig | grep eth3 | wc -l) -gt 0 ] && set -- "$@" h "${MSG04} 4"
+    [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ] && set -- "$@" i "${MSG04} 5"
+    [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && set -- "$@" o "${MSG04} 6"
+    [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && set -- "$@" t "${MSG04} 7"
+    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && set -- "$@" d "${MSG04} 8"
+    dialog --clear --backtitle "`backtitle`" \
+      --menu "${MSG04}" 0 0 $(dlgmenuheight $(($#/2))) \
+      "$@" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    resp=$(<${TMP_PATH}/resp)
+    [ -z "${resp}" ] && return
+    case "${resp}" in
+      a) macMenu "eth0" ;;
+      f) macMenu "eth1" ;;
+      g) macMenu "eth2" ;;
+      h) macMenu "eth3" ;;
+      i) macMenu "eth4" ;;
+      o) macMenu "eth5" ;;
+      t) macMenu "eth6" ;;
+      d) macMenu "eth7" ;;
+    esac
+  done
+}
+
 function prevent() {
     if [ "${PREVENT_INIT}" = "OFF" ]; then
         PREVENT_INIT="ON"
@@ -3094,14 +3132,7 @@ while true; do
   if [ -n "${MODEL}" ]; then
     eval "echo \"j \\\"\${MSG${tz}05} (${BUILD})\\\"\""  >> "${TMP_PATH}/menu"
     eval "echo \"s \\\"\${MSG${tz}03}\\\"\""             >> "${TMP_PATH}/menu"
-    eval "echo \"a \\\"\${MSG${tz}04} 1\\\"\""           >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ] && eval "echo \"f \\\"\${MSG${tz}04} 2\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth2 | wc -l) -gt 0 ] && eval "echo \"g \\\"\${MSG${tz}04} 3\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth3 | wc -l) -gt 0 ] && eval "echo \"h \\\"\${MSG${tz}04} 4\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ] && eval "echo \"i \\\"\${MSG${tz}04} 5\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && eval "echo \"o \\\"\${MSG${tz}04} 6\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && eval "echo \"t \\\"\${MSG${tz}04} 7\\\"\""         >> "${TMP_PATH}/menu"
-    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && eval "echo \"d \\\"\${MSG${tz}04} 8\\\"\""         >> "${TMP_PATH}/menu"
+    eval "echo \"a \\\"\${MSG${tz}72}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
     echo "${kver5platforms}" | grep -qw "${platform%%(*}" && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
@@ -3131,7 +3162,7 @@ while true; do
   eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
-  echo 'X "메뉴종료 (exit menu)"'                        >> "${TMP_PATH}/menu"
+  eval "echo \"X \\\"\${MSG${tz}73}\\\"\""               >> "${TMP_PATH}/menu"
   # 화면 크기에 맞춰 박스를 1행(backtitle 아래)부터 꽉 차게 그려 중앙배치
   # 여백/그림자 제거. (footer 버튼행은 dialog --menu 구조상 필수라 제거 불가,
   # 빈 여백만 최소화하고 그만큼 리스트 표시 행을 늘림)
@@ -3160,21 +3191,7 @@ while true; do
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
     s) serialMenu;      NEXT="a" ;;
-    a) macMenu "eth0"
-    [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ] && NEXT="f" || NEXT="p" ;;
-    f) macMenu "eth1"
-    [ $(/sbin/ifconfig | grep eth2 | wc -l) -gt 0 ] && NEXT="g" || NEXT="p" ;;
-    g) macMenu "eth2"
-    [ $(/sbin/ifconfig | grep eth3 | wc -l) -gt 0 ] && NEXT="h" || NEXT="p" ;;
-    h) macMenu "eth3"
-    [ $(/sbin/ifconfig | grep eth4 | wc -l) -gt 0 ] && NEXT="i" || NEXT="p" ;;
-    i) macMenu "eth4"
-    [ $(/sbin/ifconfig | grep eth5 | wc -l) -gt 0 ] && NEXT="o" || NEXT="p" ;;
-    o) macMenu "eth5"
-    [ $(/sbin/ifconfig | grep eth6 | wc -l) -gt 0 ] && NEXT="t" || NEXT="p" ;;
-    t) macMenu "eth6"
-    [ $(/sbin/ifconfig | grep eth7 | wc -l) -gt 0 ] && NEXT="d" || NEXT="p" ;;
-    d) macMenu "eth7";    NEXT="p" ;;
+    a) macAddressMenu;  NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
     N) nvidiaMenu; NEXT="N" ;;
     k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜

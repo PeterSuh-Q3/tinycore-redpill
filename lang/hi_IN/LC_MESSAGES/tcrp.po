@@ -269,3 +269,11 @@ msgstr "DHCP फ्रीज: %s IP %s स्थिर किया गया (�
 #: MSGIN71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "DHCP फ्रीज: udhcpc रोका गया - लीज नवीनीकरण दबाया गया"
+
+#: MSGIN72 
+msgid "Choose a mac address (up to 8 supported)"
+msgstr "Mac पता चुनें (अधिकतम 8 समर्थित)"
+
+#: MSGIN73 
+msgid "Exit Menu"
+msgstr "मेनू से बाहर निकलें"
