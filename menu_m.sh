@@ -385,7 +385,12 @@ function backtitle() {
     [[ -n "${!varname}" && "${!varname}" != "null" ]] && BACKTITLE+=" ${!varname}"
   done
   
-  [ -n "${KEYMAP}" ] && BACKTITLE+=" (${LAYOUT}/${KEYMAP})" || BACKTITLE+=" (qwerty/us)"
+  # 키맵(qwerty/us) 대신 저장소 패널 크기를 표시한다. bay 는 이미 전역
+  # 변수로 관리되고 있다 - 모델 선택 시 모델별 기본값이 설정되고
+  # (modelMenu 의 case 문), storagepanel() 에서 사용자가 바꾸면
+  # user_config.json 의 general.bay 에 저장되며, 메인 루프가 매 반복
+  # readConfigKey 로 다시 읽어들인다(box 152 실기 확인: "bay": "RACK_12_Bay").
+  [ -n "${bay}" ] && BACKTITLE+=" (${bay})" || BACKTITLE+=" (no panel size)"
   echo ${BACKTITLE}
 }
 
