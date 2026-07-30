@@ -3191,7 +3191,15 @@ while true; do
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
     s) serialMenu;      NEXT="a" ;;
-    a) macAddressMenu;  NEXT="p" ;;
+    a) # NIC 1개(eth0 뿐)면 목록 하위메뉴를 거칠 이유가 없다 - 고를 대상이
+       # 하나뿐이므로 바로 최하단 메뉴(macMenu, real/random/manual 선택)로
+       # 진입한다. NIC 이 2개 이상일 때만 macAddressMenu 목록을 연다.
+       if [ $(/sbin/ifconfig | grep eth1 | wc -l) -gt 0 ]; then
+         macAddressMenu
+       else
+         macMenu "eth0"
+       fi
+       NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
     N) nvidiaMenu; NEXT="N" ;;
     k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜
