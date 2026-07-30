@@ -2107,31 +2107,37 @@ function synopart() {
 
 function build-pre-option() {
 
-  default_resp="z"
+  # a(selectldrmode), b(seleudev) 는 최상위 메뉴의 k/c 가 여기로 종속된
+  # 것이다 - 문구(MSG06/MSG01)는 원래 최상위에서 쓰던 것을 그대로 재사용
+  # (MSGID 변경 없음). 최초 진입 시 a(구 k)가 디폴트 인덱스로 선택된다.
+  # 나머지 항목(구 b/c/d/e)은 앞으로 두 칸씩 밀려 c/d/e/f 로 재배치.
+  default_resp="a"
 
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
+    eval "echo \"a \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""  > "${TMP_PATH}/menud"
+    eval "echo \"b \\\"\${MSG${tz}01}, (${DMPM})\\\"\""                          >> "${TMP_PATH}/menud"
     # DT (Device-tree) 모델은 sata_remap 미지원 → SataPort remap 메뉴 비노출
-    if echo "${platform}" | grep -q "(DT)"; then
-      : > "${TMP_PATH}/menud"
-    else
-      eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                          > "${TMP_PATH}/menud"
+    if ! echo "${platform}" | grep -q "(DT)"; then
+      eval "echo \"c \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
     fi
-    eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
-    eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
-    eval "echo \"e \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
-    echo "z exit"                                                       >> "${TMP_PATH}/menud"
-    
+    eval "echo \"d \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
+    eval "echo \"e \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
+    echo "z exit"                                                               >> "${TMP_PATH}/menud"
+
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menud")) --file "${TMP_PATH}/menud" \
     2>${TMP_PATH}/respd
     [ $? -ne 0 ] && return
 
     case `<"${TMP_PATH}/respd"` in
-    b) remapsata     ;    NEXT="z" ;;
-    c) storagepanel;      NEXT="z" ;;    
-    d) 
+    a) selectldrmode ;    NEXT="z" ;;
+    b) seleudev      ;    NEXT="z" ;;
+    c) remapsata     ;    NEXT="z" ;;
+    d) storagepanel;      NEXT="z" ;;
+    e)
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
           "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
@@ -2145,28 +2151,28 @@ Do you really want to continue enabling nvmesystem?" 0 0
           NVMES="true"
           BLOCK_DDSML="Y"
           DMPM="EUDEV"
-        fi  
-      else  
+        fi
+      else
         del-addon "nvmesystem"
         NVMES="false"
         BLOCK_DDSML="N"
         DMPM="DDSML"
-      fi  
+      fi
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
       NEXT="z" ;;
-    e)       
-      if [ "${VMTOOLS}" = "false" ]; then 
+    f)
+      if [ "${VMTOOLS}" = "false" ]; then
         add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
-      else  
+      else
         del-addon "vmtools" && VMTOOLS="false"
-      fi  
+      fi
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
       NEXT="z" ;;
-    z) return;;  
+    z) return;;
     *) return;;
     esac
-    
+
   done
 
 }
@@ -3201,8 +3207,8 @@ while true; do
     eval "echo \"a \\\"\${MSG${tz}72}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
     [ "${nv_locked}" != "hide" ] && eval "echo \"N \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
-    eval "echo \"k \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
-    eval "echo \"c \\\"\${MSG${tz}01}, (${DMPM})\\\"\""      >> "${TMP_PATH}/menu"
+    # k(selectldrmode) 와 c(seleudev) 는 최상위에서 빠지고 z(build-pre-option)
+    # 의 하위메뉴 1·2번 항목으로 종속됐다 - 아래 build-pre-option() 참고.
     eval "echo \"p \\\"\${MSG${tz}18} (${BUILD}, ${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""   >> "${TMP_PATH}/menu"
   else
     # 'c' only *moved* - it does not depend on MODEL (seleudev just sets DMPM and
@@ -3268,7 +3274,6 @@ while true; do
        NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
     N) [ "${nv_locked}" = "yes" ] || nvidiaMenu "${kver}"; NEXT="N" ;;
-    k) selectldrmode ;    NEXT="c" ;;   # k 다음이 c 로 바뀜
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로
        # 두 번째 박스도 불필요하며, 설치는 misc addon 의 단일 노드 우회로 진행된다.
