@@ -7,59 +7,6 @@
 
 https://paypal.me/PeterSuhQ3
 
--------------------------------------------------------------------------------
-
-### About Synology 3rd party Custom Package Change Panel Size 
-
-This is a supplementary custom package required to handle the StoragePanel Addon included as a default installation Addon in Mshell. 
-
-Please select the appropriate .spk package source for your Synology DSM version and platform and proceed with manual installation from Synology Package Center.
-
-The storage panel size shown (Drive Infomation) in the Storage Manager overview is only a design element and does not affect Synology's functions.
-
-
-<img width="604" height="259" alt="스크린샷 2025-07-27 오전 10 16 57" src="https://github.com/user-attachments/assets/d55a4567-b01b-4781-a02b-e940295836b0" />
-
-
-https://github.com/PeterSuh-Q3/ChangePanelSize/releases
-
-
-<img width="784" height="418" alt="스크린샷 2025-07-27 오전 10 17 46" src="https://github.com/user-attachments/assets/643af338-479d-4b34-95f0-df033f254eb5" />
-
-
-<img width="1406" height="416" alt="스크린샷 2025-07-27 오전 10 18 59" src="https://github.com/user-attachments/assets/7e2714b1-9643-4b5c-ab07-6a3011fa6213" />
-
-
-<img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
-
-
-# < Caution >
-
-Changepanelsize synology user must be granted the authority to process with sudoers.
-
-Check if the file already exists with the command below, and if not,
-
-sudoers processing as below is absolutely necessary.
-
-If sudoers does not exist, panel size change will not be processed due to insufficient authority.
-
-
-```
-sudo -i
-ll /etc/sudoers.d/Changepanelsize
-```
-
-```
-sudo -i
-echo "Changepanelsize ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/Changepanelsize
-chmod 0440 /etc/sudoers.d/Changepanelsize
-```
-
--------------------------------------------------------------------------------
-
-
-### Please note that minimum recommended memory size for configuring the loader is 4GB
-
 
 # Instructions
 
@@ -152,42 +99,59 @@ Below is what the menu looks like once a model has been chosen (before that, sec
 | `e` | Power Off | Shuts the loader environment down. |
 | `o` | Exit Menu | Leaves `menu.sh` and drops to a shell, without rebooting or powering off. |
 
-< Version History >
+-------------------------------------------------------------------------------
 
-    1.0.1.1 Fix monitor fuction about ethernet infomation
-    1.0.1.2 Fix for SA6400
-    1.0.2.0 Remove restrictions on use of DT-based models when using HBA (apply mpt3sas blacklist instead)
-    1.0.2.1 Changed extension file organization method
-    1.0.2.2 Recycle initrd-dsm instead of custom.gz (extract /exts), The priority starts from custom.gz
-    1.0.2.3 Added RedPill bootloader hard disk porting function
-    1.0.2.4 Added NVMe bootloader support
-    ...
-    1.0.5.0 Improved internet check function in menu.sh
-    ...
-    1.0.6.2 Changed to use only the first one when multiple bootloaders exist
-    1.0.6.3 Added ability to force loading mmc and sd modules when loading alpine Linux
-    1.0.6.4 Expanded MAC address support from 4 to 8.
-    1.0.6.5 Includes alpine linux scsi module for scsi type bootloader support.
-    1.0.6.6 Discontinuing support for DS3615xs.
-    1.0.6.7 Applying REDPILL background image to grub boot
-    1.0.6.8 i915.modeset=0 menu processing improvement (FRIEND guidance console is activated when i915 transcoding is disabled)
-    1.1.0.0 Added features for distribution of xTCRP (alpine Linux stripped down version)
-    1.1.0.1 When using a single m.2 NVMe volume, the DDSML error issue has occurred, so menu usage has been excluded and related support has been strengthened.
-    1.2.0.0 Added new platforms purley, broadwellnkv2, broadwellntbap and started supporting all models for each platform
-    1.2.1.0 Create alpine-mshell and xTCRP together in grub boot. Merge Re-install boot entries without USB/SATA distinction and fix KP bug.
-    1.2.1.1 Renewal of SynoDisk bootloader injection function
-    1.2.1.2 SynoDisk with Bootloader Injection Supports NVMe DISK
-    1.2.1.3 SynoDisk with Bootloader Injection Supports Single SHR DISK
-    1.2.1.4 SynoDisk with Bootloader Injection Stop Supports BASIC or JBOD DISK
-    1.2.1.5 SynoDisk with bootloader injection uses UUID 8765-4321 instead of 6234-C863
-    1.2.1.6 DS3615xs(bromolow) support again, LEGACY boot mode must be used!
-    1.2.1.7 SynoDisk with Bootloader Injection Supports 2.4GB /dev/md0 size (before dsm 7.1.1)
-    1.2.1.8 Modify the method of checking Internet connection in menu.sh
-    1.2.1.9 Fixed to keep graphic console screen even in Jot Mode/Legacy Boot environment (use gfxpayload=keep)
-    1.2.2.0 Activate alpine TTYD web console (port 7681, login use tc/P@ssw0rd)
-    1.2.2.1 TTYD web console baremetal headless support fix
-    1.2.2.2 Added to change the default value of the Grub boot entry (in the submenu)
-    1.2.2.3 Added a feature to immediately reflect changes to user_config.json (no need for loader build)
+### About Synology 3rd party Custom Package Change Panel Size 
+
+This is a supplementary custom package required to handle the StoragePanel Addon included as a default installation Addon in Mshell. 
+
+Please select the appropriate .spk package source for your Synology DSM version and platform and proceed with manual installation from Synology Package Center.
+
+The storage panel size shown (Drive Infomation) in the Storage Manager overview is only a design element and does not affect Synology's functions.
+
+
+<img width="604" height="259" alt="스크린샷 2025-07-27 오전 10 16 57" src="https://github.com/user-attachments/assets/d55a4567-b01b-4781-a02b-e940295836b0" />
+
+
+https://github.com/PeterSuh-Q3/ChangePanelSize/releases
+
+
+<img width="784" height="418" alt="스크린샷 2025-07-27 오전 10 17 46" src="https://github.com/user-attachments/assets/643af338-479d-4b34-95f0-df033f254eb5" />
+
+
+<img width="1406" height="416" alt="스크린샷 2025-07-27 오전 10 18 59" src="https://github.com/user-attachments/assets/7e2714b1-9643-4b5c-ab07-6a3011fa6213" />
+
+
+<img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
+
+
+# < Caution >
+
+Changepanelsize synology user must be granted the authority to process with sudoers.
+
+Check if the file already exists with the command below, and if not,
+
+sudoers processing as below is absolutely necessary.
+
+If sudoers does not exist, panel size change will not be processed due to insufficient authority.
+
+
+```
+sudo -i
+ll /etc/sudoers.d/Changepanelsize
+```
+
+```
+sudo -i
+echo "Changepanelsize ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/Changepanelsize
+chmod 0440 /etc/sudoers.d/Changepanelsize
+```
+
+-------------------------------------------------------------------------------
+
+
+### Please note that minimum recommended memory size for configuring the loader is 4GB
+
 
 -------------------------------------------------------------------------------
 
