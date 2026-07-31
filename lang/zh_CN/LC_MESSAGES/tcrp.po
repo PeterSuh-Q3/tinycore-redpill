@@ -277,3 +277,52 @@ msgstr "选择 Mac 地址（最多支持8个）"
 #: MSGCN73 
 msgid "Exit Menu"
 msgstr "退出菜单"
+
+#: MSGCN74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGCN75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - 选择以添加"
+
+#: MSGCN76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (不支持)"
+
+#: MSGCN77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA 硬件转码"
+
+#: MSGCN78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — 未检测到 NVIDIA GPU (默认 %s)"
+
+#: MSGCN79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGCN80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGCN81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGCN82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGCN83
+msgid "Status"
+msgstr "Status"
+
+#: MSGCN84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGCN85
+msgid "(choose Enable below)"
+msgstr "(请在下方选择 Enable)"
+

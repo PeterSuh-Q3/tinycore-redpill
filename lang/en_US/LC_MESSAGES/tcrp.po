@@ -277,3 +277,52 @@ msgstr "Choose a mac address (up to 8 supported)"
 #: MSGUS73 
 msgid "Exit Menu"
 msgstr "Exit Menu"
+
+#: MSGUS74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGUS75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - select to add"
+
+#: MSGUS76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (Not Supported)"
+
+#: MSGUS77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA H/W Transcoding"
+
+#: MSGUS78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — no NVIDIA GPU detected (default %s)"
+
+#: MSGUS79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGUS80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGUS81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGUS82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGUS83
+msgid "Status"
+msgstr "Status"
+
+#: MSGUS84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGUS85
+msgid "(choose Enable below)"
+msgstr "(choose Enable below)"
+

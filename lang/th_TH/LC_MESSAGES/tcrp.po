@@ -277,3 +277,52 @@ msgstr "เลือกที่อยู่ Mac (รองรับสูงส
 #: MSGTH73 
 msgid "Exit Menu"
 msgstr "ออกจากเมนู"
+
+#: MSGTH74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGTH75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - เลือกเพื่อเพิ่ม"
+
+#: MSGTH76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (ไม่รองรับ)"
+
+#: MSGTH77
+msgid "NVIDIA H/W Transcoding"
+msgstr "การถอดรหัสฮาร์ดแวร์ NVIDIA"
+
+#: MSGTH78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — ไม่พบ NVIDIA GPU (ค่าเริ่มต้น %s)"
+
+#: MSGTH79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGTH80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGTH81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGTH82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGTH83
+msgid "Status"
+msgstr "Status"
+
+#: MSGTH84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGTH85
+msgid "(choose Enable below)"
+msgstr "(เลือก Enable ด้านล่าง)"
+

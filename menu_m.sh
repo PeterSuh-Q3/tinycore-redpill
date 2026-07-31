@@ -1792,6 +1792,15 @@ function nvidiaMenu() {
   # 같은 플랫폼이라도 커널마다 발행 브랜치가 다르므로(커널 4.4 는 550 만)
   # 이 값으로 kernels[$k].drivers 를 우선 조회해야 정확한 목록이 나온다.
   local mykver="${1:-}"
+  eval "MSG77=\"\${MSG${tz}77}\""
+  eval "MSG78=\"\${MSG${tz}78}\""
+  eval "MSG79=\"\${MSG${tz}79}\""
+  eval "MSG80=\"\${MSG${tz}80}\""
+  eval "MSG81=\"\${MSG${tz}81}\""
+  eval "MSG82=\"\${MSG${tz}82}\""
+  eval "MSG83=\"\${MSG${tz}83}\""
+  eval "MSG84=\"\${MSG${tz}84}\""
+  eval "MSG85=\"\${MSG${tz}85}\""
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
   local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
   # tcrp-addons 의 nvidia-index.json 과 동일한 해석 규칙: 플랫폼이 커널별
@@ -1839,9 +1848,9 @@ function nvidiaMenu() {
     local autolbl autosel=""
     [ -z "$cur" ] && autosel=" *"
     if [ -n "$gpuid" ]; then
-      autolbl="Auto — ${gname} (${gpuid}) → ${autover:-none}${autosel}"
+      autolbl="$(printf "${MSG79}" "${gname}" "${gpuid}" "${autover:-none}")${autosel}"
     else
-      autolbl="Auto — no NVIDIA GPU detected (default ${branch:-535})${autosel}"
+      autolbl="$(printf "${MSG78}" "${branch:-535}")${autosel}"
     fi
 
     # 문자키를 버전 문자열 자체가 아니라 목록에 오르는 순서대로 a,b,c...
@@ -1858,11 +1867,11 @@ function nvidiaMenu() {
       sel=""; [ "$v" = "$cur" ] && sel=" *"
       keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${v}${mk}${sel}"); kind+=("ver"); verval+=("$v")
     done
-    keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("NVENC ffmpeg (Jellyfin pkg): ${ffon}"); kind+=("ffmpeg"); verval+=("")
+    keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("$(printf "${MSG80}" "${ffon}")"); kind+=("ffmpeg"); verval+=("")
     if [ "$has" = "yes" ]; then
-      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("Disable addon  (Status -> DISABLED)")
+      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${MSG81}")
     else
-      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("Enable addon   (Status -> ENABLED)")
+      keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${MSG82}")
     fi
     kind+=("toggle"); verval+=("")
     # Exit 는 위치와 무관하게 항상 z 고정, 문구도 언어별 MSGID 를 쓰지 않고
@@ -1878,9 +1887,9 @@ function nvidiaMenu() {
 
     local status
     if [ "$has" = "yes" ]; then
-      status="\Z2ENABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}"
+      status="\Z2ENABLED\Zn — $(printf "${MSG84}" "${cur:-Auto}" "${ffon}")"
     else
-      status="\Z1DISABLED\Zn — driver: ${cur:-Auto}, ffmpeg: ${ffon}  (choose Enable below)"
+      status="\Z1DISABLED\Zn — $(printf "${MSG84}" "${cur:-Auto}" "${ffon}")  ${MSG85}"
     fi
     # 표준 OK/Cancel 방식(--no-cancel 미사용) - Cancel 버튼과 ESC 모두
     # 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 복귀한다. 목록 맨 아래 z(Exit)
@@ -1890,7 +1899,7 @@ function nvidiaMenu() {
     # 가 설명 문구의 첫 글자를 임의로 강조 표시해 인덱스가 아예 없는
     # 것처럼 보인다(실측 확인).
     dialog --clear --backtitle "`backtitle`" --colors \
-      --menu "NVIDIA H/W Transcoding\n  Status: ${status}" 0 0 \
+      --menu "${MSG77}\n  ${MSG83}: ${status}" 0 0 \
       $(dlgmenuheight $(wc -l < "${TMP_PATH}/menun")) --file "${TMP_PATH}/menun" \
       2>${TMP_PATH}/respn
     [ $? -ne 0 ] && return
@@ -3258,12 +3267,15 @@ while true; do
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
   [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
+  eval "MSG74=\"\${MSG${tz}74}\""
+  eval "MSG75=\"\${MSG${tz}75}\""
+  eval "MSG76=\"\${MSG${tz}76}\""
   if [ "${NVIDIA_ENABLED}" = "true" ]; then
     nvsel="${NVIDIA_DRIVER:-Auto}"
     [ "${NVIDIA_FFMPEG}" = "true" ] && nvsel="${nvsel}+ffmpeg"
-    nvlabel="NVIDIA H/W Trans. [ON: ${nvsel}]"
+    nvlabel="$(printf "${MSG74}" "${nvsel}")"
   else
-    nvlabel="NVIDIA H/W Trans. [OFF] - select to add"
+    nvlabel="${MSG75}"
   fi
   # 커널별 NVIDIA 메뉴 가용성. 이 프로젝트가 다루는 세 커널 계열:
   #   5.10.x - 470/535/550/580 전부 발행 (nvidiaMenu 내부에서 자동 판별)
@@ -3274,7 +3286,7 @@ while true; do
   #            (nvidiaMenu 를 열어봐야 빈 목록만 보고 오해하게 두지 않음)
   case "${kver}" in
     5.10.*|4.4.*) nv_locked="no" ;;
-    3.10.*)       nv_locked="yes"; nvlabel="NVIDIA H/W Trans. (Not Supported)" ;;
+    3.10.*)       nv_locked="yes"; nvlabel="${MSG76}" ;;
     *)            nv_locked="hide" ;;
   esac
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)

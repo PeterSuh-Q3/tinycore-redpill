@@ -277,3 +277,52 @@ msgstr "Mac पता चुनें (अधिकतम 8 समर्थि�
 #: MSGIN73 
 msgid "Exit Menu"
 msgstr "मेनू से बाहर निकलें"
+
+#: MSGIN74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGIN75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - जोड़ने के लिए चुनें"
+
+#: MSGIN76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (असमर्थित)"
+
+#: MSGIN77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA हार्डवेयर ट्रांसकोडिंग"
+
+#: MSGIN78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — कोई NVIDIA GPU नहीं मिला (डिफ़ॉल्ट %s)"
+
+#: MSGIN79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGIN80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGIN81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGIN82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGIN83
+msgid "Status"
+msgstr "Status"
+
+#: MSGIN84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGIN85
+msgid "(choose Enable below)"
+msgstr "(नीचे Enable चुनें)"
+

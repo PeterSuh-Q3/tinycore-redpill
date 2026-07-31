@@ -277,3 +277,52 @@ msgstr "Macアドレスを選択 (最大8個対応)"
 #: MSGJP73 
 msgid "Exit Menu"
 msgstr "メニュー終了"
+
+#: MSGJP74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGJP75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - 追加するには選択"
+
+#: MSGJP76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (非対応)"
+
+#: MSGJP77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA H/W トランスコーディング"
+
+#: MSGJP78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — NVIDIA GPU未検出 (デフォルト %s)"
+
+#: MSGJP79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGJP80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGJP81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGJP82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGJP83
+msgid "Status"
+msgstr "Status"
+
+#: MSGJP84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGJP85
+msgid "(choose Enable below)"
+msgstr "(下のEnableを選択)"
+

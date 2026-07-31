@@ -277,3 +277,52 @@ msgstr "የMac አድራሻ ይምረጡ (እስከ 8 ይደገፋል)"
 #: MSGET73 
 msgid "Exit Menu"
 msgstr "ከምናሌ ውጣ"
+
+#: MSGET74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGET75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - ለመጨመር ይምረጡ"
+
+#: MSGET76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (አይደገፍም)"
+
+#: MSGET77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA ሃርድዌር ትራንስኮዲንግ"
+
+#: MSGET78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — NVIDIA GPU አልተገኘም (ነባሪ %s)"
+
+#: MSGET79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGET80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGET81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGET82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGET83
+msgid "Status"
+msgstr "Status"
+
+#: MSGET84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGET85
+msgid "(choose Enable below)"
+msgstr "(ከታች Enable ይምረጡ)"
+

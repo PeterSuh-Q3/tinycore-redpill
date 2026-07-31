@@ -277,3 +277,52 @@ msgstr "Mac-cím kiválasztása (legfeljebb 8 támogatott)"
 #: MSGHU73 
 msgid "Exit Menu"
 msgstr "Kilépés a menüből"
+
+#: MSGHU74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGHU75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - válassza a hozzáadáshoz"
+
+#: MSGHU76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (Nem támogatott)"
+
+#: MSGHU77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA hardveres transzkódolás"
+
+#: MSGHU78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — nem található NVIDIA GPU (alapértelmezett %s)"
+
+#: MSGHU79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGHU80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGHU81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGHU82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGHU83
+msgid "Status"
+msgstr "Status"
+
+#: MSGHU84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGHU85
+msgid "(choose Enable below)"
+msgstr "(válassza az Enable-t alább)"
+

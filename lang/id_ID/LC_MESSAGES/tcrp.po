@@ -277,3 +277,52 @@ msgstr "Pilih alamat Mac (mendukung hingga 8)"
 #: MSGID73 
 msgid "Exit Menu"
 msgstr "Keluar Menu"
+
+#: MSGID74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGID75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - pilih untuk menambahkan"
+
+#: MSGID76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (Tidak Didukung)"
+
+#: MSGID77
+msgid "NVIDIA H/W Transcoding"
+msgstr "Transcoding Perangkat Keras NVIDIA"
+
+#: MSGID78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — GPU NVIDIA tidak terdeteksi (default %s)"
+
+#: MSGID79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGID80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGID81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGID82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGID83
+msgid "Status"
+msgstr "Status"
+
+#: MSGID84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGID85
+msgid "(choose Enable below)"
+msgstr "(pilih Enable di bawah)"
+

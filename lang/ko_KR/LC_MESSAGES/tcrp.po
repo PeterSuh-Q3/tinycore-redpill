@@ -277,3 +277,52 @@ msgstr "선택 Mac 주소 (최대 8개지원)"
 #: MSGKR73 
 msgid "Exit Menu"
 msgstr "메뉴종료"
+
+#: MSGKR74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGKR75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - 추가하려면 선택"
+
+#: MSGKR76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (지원 안 됨)"
+
+#: MSGKR77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA H/W 트랜스코딩"
+
+#: MSGKR78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — NVIDIA GPU 감지되지 않음 (기본값 %s)"
+
+#: MSGKR79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGKR80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGKR81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGKR82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGKR83
+msgid "Status"
+msgstr "Status"
+
+#: MSGKR84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGKR85
+msgid "(choose Enable below)"
+msgstr "(아래에서 Enable 선택)"
+

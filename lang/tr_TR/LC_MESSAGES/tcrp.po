@@ -277,3 +277,52 @@ msgstr "Mac adresi seçin (en fazla 8 desteklenir)"
 #: MSGTR73 
 msgid "Exit Menu"
 msgstr "Menüden Çık"
+
+#: MSGTR74
+msgid "NVIDIA H/W Trans. [ON: %s]"
+msgstr "NVIDIA H/W Trans. [ON: %s]"
+
+#: MSGTR75
+msgid "NVIDIA H/W Trans. [OFF] - select to add"
+msgstr "NVIDIA H/W Trans. [OFF] - eklemek için seçin"
+
+#: MSGTR76
+msgid "NVIDIA H/W Trans. (Not Supported)"
+msgstr "NVIDIA H/W Trans. (Desteklenmiyor)"
+
+#: MSGTR77
+msgid "NVIDIA H/W Transcoding"
+msgstr "NVIDIA Donanım Transkodlama"
+
+#: MSGTR78
+msgid "Auto — no NVIDIA GPU detected (default %s)"
+msgstr "Auto — NVIDIA GPU algılanmadı (varsayılan %s)"
+
+#: MSGTR79
+msgid "Auto — %s (%s) → %s"
+msgstr "Auto — %s (%s) → %s"
+
+#: MSGTR80
+msgid "NVENC ffmpeg (Jellyfin pkg): %s"
+msgstr "NVENC ffmpeg (Jellyfin pkg): %s"
+
+#: MSGTR81
+msgid "Disable addon  (Status -> DISABLED)"
+msgstr "Disable addon  (Status -> DISABLED)"
+
+#: MSGTR82
+msgid "Enable addon   (Status -> ENABLED)"
+msgstr "Enable addon   (Status -> ENABLED)"
+
+#: MSGTR83
+msgid "Status"
+msgstr "Status"
+
+#: MSGTR84
+msgid "driver: %s, ffmpeg: %s"
+msgstr "driver: %s, ffmpeg: %s"
+
+#: MSGTR85
+msgid "(choose Enable below)"
+msgstr "(aşağıdan Enable seçin)"
+
