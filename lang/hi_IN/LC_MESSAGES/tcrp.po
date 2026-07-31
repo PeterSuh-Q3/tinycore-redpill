@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "पहले से नवीनतम संस्करण है।"
 
 #: MSGIN116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "अपडेट पूर्ण।\nरीबूट आवश्यक है।\n\nरीबूट के लिए Enter दबाएं..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "अपडेट पूर्ण।\\nरीबूट आवश्यक है।\\n\\nरीबूट के लिए Enter दबाएं..."
 
 #: MSGIN117
 msgid "Update cancelled by user."
 msgstr "उपयोगकर्ता द्वारा अपडेट रद्द किया गया।"
 
 #: MSGIN118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "अपडेट विफल (कोड: %s)\nनेटवर्क जांचें और पुनः प्रयास करें।"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "अपडेट विफल (कोड: %s)\\nनेटवर्क जांचें और पुनः प्रयास करें।"
 
 #: MSGIN119
 msgid "Update complete."
 msgstr "अपडेट पूर्ण।"
 
 #: MSGIN120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "अपडेट विफल (कोड: %s)\nलॉग जांचें और पुनः प्रयास करें।"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "अपडेट विफल (कोड: %s)\\nलॉग जांचें और पुनः प्रयास करें।"
 
 #: MSGIN121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "सहेजें और बाहर निकलें"
 
 #: MSGIN130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: चयनित आइटम ON/OFF टॉगल करें\nSave & Exit: सहेजें और बाहर निकलें"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: चयनित आइटम ON/OFF टॉगल करें\\nSave & Exit: सहेजें और बाहर निकलें"
 

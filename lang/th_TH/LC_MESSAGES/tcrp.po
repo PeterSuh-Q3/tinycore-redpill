@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "เป็นเวอร์ชันล่าสุดอยู่แล้ว"
 
 #: MSGTH116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "อัปเดตเสร็จสมบูรณ์\nต้องรีบูต\n\nกด Enter เพื่อรีบูต..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "อัปเดตเสร็จสมบูรณ์\\nต้องรีบูต\\n\\nกด Enter เพื่อรีบูต..."
 
 #: MSGTH117
 msgid "Update cancelled by user."
 msgstr "ผู้ใช้ยกเลิกการอัปเดต"
 
 #: MSGTH118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "อัปเดตล้มเหลว (รหัส: %s)\nตรวจสอบเครือข่ายแล้วลองอีกครั้ง"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "อัปเดตล้มเหลว (รหัส: %s)\\nตรวจสอบเครือข่ายแล้วลองอีกครั้ง"
 
 #: MSGTH119
 msgid "Update complete."
 msgstr "อัปเดตเสร็จสมบูรณ์"
 
 #: MSGTH120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "อัปเดตล้มเหลว (รหัส: %s)\nตรวจสอบล็อกแล้วลองอีกครั้ง"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "อัปเดตล้มเหลว (รหัส: %s)\\nตรวจสอบล็อกแล้วลองอีกครั้ง"
 
 #: MSGTH121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "บันทึกแล้วออก"
 
 #: MSGTH130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: สลับรายการที่เลือก ON/OFF\nSave & Exit: บันทึกแล้วออก"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: สลับรายการที่เลือก ON/OFF\\nSave & Exit: บันทึกแล้วออก"
 

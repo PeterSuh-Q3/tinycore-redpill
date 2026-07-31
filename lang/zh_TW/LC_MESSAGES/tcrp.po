@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "已是最新版本。"
 
 #: MSGTW116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "更新完成。\n需要重新啟動。\n\n按 Enter 重新啟動..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "更新完成。\\n需要重新啟動。\\n\\n按 Enter 重新啟動..."
 
 #: MSGTW117
 msgid "Update cancelled by user."
 msgstr "使用者已取消更新。"
 
 #: MSGTW118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "更新失敗 (代碼: %s)\n請檢查網路後重試。"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "更新失敗 (代碼: %s)\\n請檢查網路後重試。"
 
 #: MSGTW119
 msgid "Update complete."
 msgstr "更新完成。"
 
 #: MSGTW120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "更新失敗 (代碼: %s)\n請檢查記錄後重試。"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "更新失敗 (代碼: %s)\\n請檢查記錄後重試。"
 
 #: MSGTW121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "儲存並離開"
 
 #: MSGTW130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: 切換所選項目 ON/OFF\nSave & Exit: 儲存並離開"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: 切換所選項目 ON/OFF\\nSave & Exit: 儲存並離開"
 

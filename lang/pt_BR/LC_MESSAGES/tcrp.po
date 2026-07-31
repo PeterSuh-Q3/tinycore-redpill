@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Já está na versão mais recente."
 
 #: MSGBR116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Atualização concluída.\nReinicialização necessária.\n\nPressione Enter para reiniciar..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Atualização concluída.\\nReinicialização necessária.\\n\\nPressione Enter para reiniciar..."
 
 #: MSGBR117
 msgid "Update cancelled by user."
 msgstr "Atualização cancelada pelo usuário."
 
 #: MSGBR118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Falha na atualização (código: %s)\nVerifique a rede e tente novamente."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Falha na atualização (código: %s)\\nVerifique a rede e tente novamente."
 
 #: MSGBR119
 msgid "Update complete."
 msgstr "Atualização concluída."
 
 #: MSGBR120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Falha na atualização (código: %s)\nVerifique os logs e tente novamente."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Falha na atualização (código: %s)\\nVerifique os logs e tente novamente."
 
 #: MSGBR121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Salvar e sair"
 
 #: MSGBR130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Alternar item selecionado ON/OFF\nSave & Exit: Salvar e sair"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Alternar item selecionado ON/OFF\\nSave & Exit: Salvar e sair"
 

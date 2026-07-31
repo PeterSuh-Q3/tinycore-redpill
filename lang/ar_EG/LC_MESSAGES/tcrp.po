@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "أحدث إصدار بالفعل."
 
 #: MSGEG116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "اكتمل التحديث.\nإعادة التشغيل مطلوبة.\n\nاضغط Enter لإعادة التشغيل..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "اكتمل التحديث.\\nإعادة التشغيل مطلوبة.\\n\\nاضغط Enter لإعادة التشغيل..."
 
 #: MSGEG117
 msgid "Update cancelled by user."
 msgstr "تم إلغاء التحديث بواسطة المستخدم."
 
 #: MSGEG118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "فشل التحديث (الرمز: %s)\nتحقق من الشبكة وحاول مرة أخرى."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "فشل التحديث (الرمز: %s)\\nتحقق من الشبكة وحاول مرة أخرى."
 
 #: MSGEG119
 msgid "Update complete."
 msgstr "اكتمل التحديث."
 
 #: MSGEG120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "فشل التحديث (الرمز: %s)\nتحقق من السجلات وحاول مرة أخرى."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "فشل التحديث (الرمز: %s)\\nتحقق من السجلات وحاول مرة أخرى."
 
 #: MSGEG121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "حفظ وخروج"
 
 #: MSGEG130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: تبديل العنصر المحدد ON/OFF\nSave & Exit: حفظ وخروج"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: تبديل العنصر المحدد ON/OFF\\nSave & Exit: حفظ وخروج"
 

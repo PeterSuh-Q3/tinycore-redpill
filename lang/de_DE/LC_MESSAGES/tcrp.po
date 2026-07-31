@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Bereits die neueste Version."
 
 #: MSGDE116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Update abgeschlossen.\nNeustart erforderlich.\n\nEnter drücken zum Neustart..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Update abgeschlossen.\\nNeustart erforderlich.\\n\\nEnter drücken zum Neustart..."
 
 #: MSGDE117
 msgid "Update cancelled by user."
 msgstr "Update vom Benutzer abgebrochen."
 
 #: MSGDE118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Update fehlgeschlagen (Code: %s)\nNetzwerk prüfen und erneut versuchen."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Update fehlgeschlagen (Code: %s)\\nNetzwerk prüfen und erneut versuchen."
 
 #: MSGDE119
 msgid "Update complete."
 msgstr "Update abgeschlossen."
 
 #: MSGDE120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Update fehlgeschlagen (Code: %s)\nProtokolle prüfen und erneut versuchen."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Update fehlgeschlagen (Code: %s)\\nProtokolle prüfen und erneut versuchen."
 
 #: MSGDE121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Speichern & Beenden"
 
 #: MSGDE130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Ausgewähltes Element EIN/AUS umschalten\nSave & Exit: Speichern und beenden"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Ausgewähltes Element EIN/AUS umschalten\\nSave & Exit: Speichern und beenden"
 

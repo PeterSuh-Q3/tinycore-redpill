@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "이미 최신 버전입니다."
 
 #: MSGKR116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "업데이트 완료.\n재부팅이 필요합니다.\n\n재부팅하려면 Enter를 누르세요..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "업데이트 완료.\\n재부팅이 필요합니다.\\n\\n재부팅하려면 Enter를 누르세요..."
 
 #: MSGKR117
 msgid "Update cancelled by user."
 msgstr "사용자가 업데이트를 취소했습니다."
 
 #: MSGKR118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "업데이트 실패 (코드: %s)\n네트워크를 확인하고 다시 시도하세요."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "업데이트 실패 (코드: %s)\\n네트워크를 확인하고 다시 시도하세요."
 
 #: MSGKR119
 msgid "Update complete."
 msgstr "업데이트 완료."
 
 #: MSGKR120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "업데이트 실패 (코드: %s)\n로그를 확인하고 다시 시도하세요."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "업데이트 실패 (코드: %s)\\n로그를 확인하고 다시 시도하세요."
 
 #: MSGKR121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "저장 후 종료"
 
 #: MSGKR130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: 선택 항목 ON/OFF 전환\nSave & Exit: 저장 후 종료"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: 선택 항목 ON/OFF 전환\\nSave & Exit: 저장 후 종료"
 

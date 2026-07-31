@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "既に最新バージョンです。"
 
 #: MSGJP116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "更新完了。\n再起動が必要です。\n\nEnterキーで再起動..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "更新完了。\\n再起動が必要です。\\n\\nEnterキーで再起動..."
 
 #: MSGJP117
 msgid "Update cancelled by user."
 msgstr "ユーザーが更新をキャンセルしました。"
 
 #: MSGJP118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "更新失敗 (コード: %s)\nネットワークを確認して再試行してください。"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "更新失敗 (コード: %s)\\nネットワークを確認して再試行してください。"
 
 #: MSGJP119
 msgid "Update complete."
 msgstr "更新完了。"
 
 #: MSGJP120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "更新失敗 (コード: %s)\nログを確認して再試行してください。"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "更新失敗 (コード: %s)\\nログを確認して再試行してください。"
 
 #: MSGJP121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "保存して終了"
 
 #: MSGJP130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: 選択項目のON/OFF切替\nSave & Exit: 保存して終了"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: 選択項目のON/OFF切替\\nSave & Exit: 保存して終了"
 

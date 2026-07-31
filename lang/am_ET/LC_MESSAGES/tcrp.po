@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "ቀድሞውኑ የቅርብ ጊዜ ስሪት ነው።"
 
 #: MSGET116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "ማዘመን ተጠናቅቋል።\nዳግም ማስጀመር ያስፈልጋል።\n\nለዳግም ማስጀመር Enter ይጫኑ..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "ማዘመን ተጠናቅቋል።\\nዳግም ማስጀመር ያስፈልጋል።\\n\\nለዳግም ማስጀመር Enter ይጫኑ..."
 
 #: MSGET117
 msgid "Update cancelled by user."
 msgstr "ማዘመን በተጠቃሚ ተሰርዟል።"
 
 #: MSGET118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "ማዘመን አልተሳካም (ኮድ: %s)\nአውታረ መረብን ያረጋግጡ እና እንደገና ይሞክሩ።"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "ማዘመን አልተሳካም (ኮድ: %s)\\nአውታረ መረብን ያረጋግጡ እና እንደገና ይሞክሩ።"
 
 #: MSGET119
 msgid "Update complete."
 msgstr "ማዘመን ተጠናቅቋል።"
 
 #: MSGET120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "ማዘመን አልተሳካም (ኮድ: %s)\nምዝግቦችን ያረጋግጡ እና እንደገና ይሞክሩ።"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "ማዘመን አልተሳካም (ኮድ: %s)\\nምዝግቦችን ያረጋግጡ እና እንደገና ይሞክሩ።"
 
 #: MSGET121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "አስቀምጥ እና ውጣ"
 
 #: MSGET130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: የተመረጠውን ንጥል ON/OFF ቀያይር\nSave & Exit: አስቀምጥ እና ውጣ"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: የተመረጠውን ንጥል ON/OFF ቀያይር\\nSave & Exit: አስቀምጥ እና ውጣ"
 

@@ -1560,8 +1560,12 @@ toggle_verbose_menu() {
             desc="\Z2${MSG100}\Zn\n  - ${MSG101}\n  - ${MSG102}\n  - ${MSG103}\n  - ${MSG104}"
         fi
 
+        # 높이/폭은 명시값 사용 - 0(자동)으로 두면 설명문 줄수만큼 상자가
+        # 커져 24행 콘솔(시리얼/tty)에서 화면을 넘겨 dialog 가 255 로 실패하고,
+        # 그러면 아래 [ $? -ne 0 ] 에 걸려 하위메뉴가 열리자마자 닫힌 것처럼
+        # 보인다(152 실기 확인). 설명 5줄 + 항목 3줄 기준으로 18행이면 충분.
         dialog --clear --backtitle "`backtitle`" --colors --title "${MSG89}" \
-            --menu "${MSG90} ${modeval}\n\n[${MSG94}]\n${desc}\n" 0 70 3 \
+            --menu "${MSG90} ${modeval}\n\n${MSG94}\n${desc}" 18 72 3 \
             "1" "${MSG91}" \
             "2" "${MSG92}" \
             "3" "${MSG93}" \

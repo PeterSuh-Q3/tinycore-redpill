@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Zaten en son sürüm."
 
 #: MSGTR116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Güncelleme tamamlandı.\nYeniden başlatma gerekli.\n\nYeniden başlatmak için Enter'a basın..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Güncelleme tamamlandı.\\nYeniden başlatma gerekli.\\n\\nYeniden başlatmak için Enter'a basın..."
 
 #: MSGTR117
 msgid "Update cancelled by user."
 msgstr "Güncelleme kullanıcı tarafından iptal edildi."
 
 #: MSGTR118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Güncelleme başarısız (kod: %s)\nAğı kontrol edip tekrar deneyin."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Güncelleme başarısız (kod: %s)\\nAğı kontrol edip tekrar deneyin."
 
 #: MSGTR119
 msgid "Update complete."
 msgstr "Güncelleme tamamlandı."
 
 #: MSGTR120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Güncelleme başarısız (kod: %s)\nGünlükleri kontrol edip tekrar deneyin."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Güncelleme başarısız (kod: %s)\\nGünlükleri kontrol edip tekrar deneyin."
 
 #: MSGTR121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Kaydet ve Çık"
 
 #: MSGTR130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Seçili öğeyi ON/OFF değiştir\nSave & Exit: Kaydet ve çık"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Seçili öğeyi ON/OFF değiştir\\nSave & Exit: Kaydet ve çık"
 

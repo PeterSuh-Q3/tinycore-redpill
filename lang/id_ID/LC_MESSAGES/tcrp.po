@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Sudah versi terbaru."
 
 #: MSGID116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Pembaruan selesai.\nPerlu reboot.\n\nTekan Enter untuk reboot..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Pembaruan selesai.\\nPerlu reboot.\\n\\nTekan Enter untuk reboot..."
 
 #: MSGID117
 msgid "Update cancelled by user."
 msgstr "Pembaruan dibatalkan oleh pengguna."
 
 #: MSGID118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Pembaruan gagal (kode: %s)\nPeriksa jaringan dan coba lagi."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Pembaruan gagal (kode: %s)\\nPeriksa jaringan dan coba lagi."
 
 #: MSGID119
 msgid "Update complete."
 msgstr "Pembaruan selesai."
 
 #: MSGID120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Pembaruan gagal (kode: %s)\nPeriksa log dan coba lagi."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Pembaruan gagal (kode: %s)\\nPeriksa log dan coba lagi."
 
 #: MSGID121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Simpan & Keluar"
 
 #: MSGID130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Alihkan item terpilih ON/OFF\nSave & Exit: Simpan dan keluar"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Alihkan item terpilih ON/OFF\\nSave & Exit: Simpan dan keluar"
 

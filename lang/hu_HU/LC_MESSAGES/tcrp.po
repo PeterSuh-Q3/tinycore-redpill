@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Már a legújabb verzió."
 
 #: MSGHU116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Frissítés kész.\nÚjraindítás szükséges.\n\nNyomjon Entert az újraindításhoz..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Frissítés kész.\\nÚjraindítás szükséges.\\n\\nNyomjon Entert az újraindításhoz..."
 
 #: MSGHU117
 msgid "Update cancelled by user."
 msgstr "A frissítést a felhasználó megszakította."
 
 #: MSGHU118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Sikertelen frissítés (kód: %s)\nEllenőrizze a hálózatot és próbálja újra."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Sikertelen frissítés (kód: %s)\\nEllenőrizze a hálózatot és próbálja újra."
 
 #: MSGHU119
 msgid "Update complete."
 msgstr "Frissítés kész."
 
 #: MSGHU120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Sikertelen frissítés (kód: %s)\nEllenőrizze a naplókat és próbálja újra."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Sikertelen frissítés (kód: %s)\\nEllenőrizze a naplókat és próbálja újra."
 
 #: MSGHU121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Mentés és kilépés"
 
 #: MSGHU130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Kiválasztott elem ON/OFF váltása\nSave & Exit: Mentés és kilépés"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Kiválasztott elem ON/OFF váltása\\nSave & Exit: Mentés és kilépés"
 

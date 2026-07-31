@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Уже установлена последняя версия."
 
 #: MSGRU116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Обновление завершено.\nТребуется перезагрузка.\n\nНажмите Enter для перезагрузки..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Обновление завершено.\\nТребуется перезагрузка.\\n\\nНажмите Enter для перезагрузки..."
 
 #: MSGRU117
 msgid "Update cancelled by user."
 msgstr "Обновление отменено пользователем."
 
 #: MSGRU118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Ошибка обновления (код: %s)\nПроверьте сеть и повторите попытку."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Ошибка обновления (код: %s)\\nПроверьте сеть и повторите попытку."
 
 #: MSGRU119
 msgid "Update complete."
 msgstr "Обновление завершено."
 
 #: MSGRU120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Ошибка обновления (код: %s)\nПроверьте журналы и повторите попытку."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Ошибка обновления (код: %s)\\nПроверьте журналы и повторите попытку."
 
 #: MSGRU121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Сохранить и выйти"
 
 #: MSGRU130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: переключить выбранный элемент ON/OFF\nSave & Exit: сохранить и выйти"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: переключить выбранный элемент ON/OFF\\nSave & Exit: сохранить и выйти"
 

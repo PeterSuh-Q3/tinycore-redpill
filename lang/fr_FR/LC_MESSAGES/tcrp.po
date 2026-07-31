@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Déjà à la dernière version."
 
 #: MSGFR116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Mise à jour terminée.\nRedémarrage requis.\n\nAppuyez sur Entrée pour redémarrer..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Mise à jour terminée.\\nRedémarrage requis.\\n\\nAppuyez sur Entrée pour redémarrer..."
 
 #: MSGFR117
 msgid "Update cancelled by user."
 msgstr "Mise à jour annulée par l'utilisateur."
 
 #: MSGFR118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Échec de la mise à jour (code : %s)\nVérifiez le réseau et réessayez."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Échec de la mise à jour (code : %s)\\nVérifiez le réseau et réessayez."
 
 #: MSGFR119
 msgid "Update complete."
 msgstr "Mise à jour terminée."
 
 #: MSGFR120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Échec de la mise à jour (code : %s)\nVérifiez les journaux et réessayez."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Échec de la mise à jour (code : %s)\\nVérifiez les journaux et réessayez."
 
 #: MSGFR121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Enregistrer et quitter"
 
 #: MSGFR130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER : Basculer l'élément sélectionné ON/OFF\nSave & Exit : Enregistrer et quitter"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER : Basculer l'élément sélectionné ON/OFF\\nSave & Exit : Enregistrer et quitter"
 

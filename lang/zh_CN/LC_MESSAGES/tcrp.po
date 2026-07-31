@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "已是最新版本。"
 
 #: MSGCN116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "更新完成。\n需要重启。\n\n按 Enter 重启..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "更新完成。\\n需要重启。\\n\\n按 Enter 重启..."
 
 #: MSGCN117
 msgid "Update cancelled by user."
 msgstr "用户已取消更新。"
 
 #: MSGCN118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "更新失败 (代码: %s)\n请检查网络后重试。"
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "更新失败 (代码: %s)\\n请检查网络后重试。"
 
 #: MSGCN119
 msgid "Update complete."
 msgstr "更新完成。"
 
 #: MSGCN120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "更新失败 (代码: %s)\n请检查日志后重试。"
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "更新失败 (代码: %s)\\n请检查日志后重试。"
 
 #: MSGCN121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "保存并退出"
 
 #: MSGCN130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: 切换所选项目 ON/OFF\nSave & Exit: 保存并退出"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: 切换所选项目 ON/OFF\\nSave & Exit: 保存并退出"
 

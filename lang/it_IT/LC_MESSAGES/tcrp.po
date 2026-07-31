@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Già alla versione più recente."
 
 #: MSGIT116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Aggiornamento completato.\nRiavvio richiesto.\n\nPremi Invio per riavviare..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Aggiornamento completato.\\nRiavvio richiesto.\\n\\nPremi Invio per riavviare..."
 
 #: MSGIT117
 msgid "Update cancelled by user."
 msgstr "Aggiornamento annullato dall'utente."
 
 #: MSGIT118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Aggiornamento fallito (codice: %s)\nControlla la rete e riprova."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Aggiornamento fallito (codice: %s)\\nControlla la rete e riprova."
 
 #: MSGIT119
 msgid "Update complete."
 msgstr "Aggiornamento completato."
 
 #: MSGIT120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Aggiornamento fallito (codice: %s)\nControlla i log e riprova."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Aggiornamento fallito (codice: %s)\\nControlla i log e riprova."
 
 #: MSGIT121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Salva ed esci"
 
 #: MSGIT130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Attiva/disattiva elemento selezionato ON/OFF\nSave & Exit: Salva ed esci"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Attiva/disattiva elemento selezionato ON/OFF\\nSave & Exit: Salva ed esci"
 

@@ -452,24 +452,24 @@ msgid "Already latest version."
 msgstr "Already latest version."
 
 #: MSGUS116
-msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
-msgstr "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgid "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
+msgstr "Update complete.\\nReboot required.\\n\\nPress Enter to Reboot..."
 
 #: MSGUS117
 msgid "Update cancelled by user."
 msgstr "Update cancelled by user."
 
 #: MSGUS118
-msgid "Update failed (code: %s)\nCheck network and try again."
-msgstr "Update failed (code: %s)\nCheck network and try again."
+msgid "Update failed (code: %s)\\nCheck network and try again."
+msgstr "Update failed (code: %s)\\nCheck network and try again."
 
 #: MSGUS119
 msgid "Update complete."
 msgstr "Update complete."
 
 #: MSGUS120
-msgid "Update failed (code: %s)\nCheck logs and try again."
-msgstr "Update failed (code: %s)\nCheck logs and try again."
+msgid "Update failed (code: %s)\\nCheck logs and try again."
+msgstr "Update failed (code: %s)\\nCheck logs and try again."
 
 #: MSGUS121
 msgid "dbgutils Addon"
@@ -508,6 +508,6 @@ msgid "Save & Exit"
 msgstr "Save & Exit"
 
 #: MSGUS130
-msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
-msgstr "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
+msgstr "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 
