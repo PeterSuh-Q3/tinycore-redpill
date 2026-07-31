@@ -20,49 +20,15 @@ A typical build process starts with:
 
 2. Boot alpine — `menu.sh` starts automatically and shows the main menu below.
 
+All screenshots below are real captures taken from a live build (SA6400 / epyc7002, DSM 7.4.1-90080), running English (`en_US`).
+
 ## Main Menu
 
-The main menu is grouped into three sections. Selecting a section header (`1`, `2`, `3`) just jumps the cursor to that section's first item — it isn't a separate screen. The title bar always shows the current loader version, dev-mod handling (DDSML/EUDEV), language, loader mode, module pack, model, DSM build, serial, IP, MAC address(es), and storage panel size, e.g.:
+The main menu is grouped into three sections. Selecting a section header (`1`, `2`, `3`) just jumps the cursor to that section's first item — it isn't a separate screen. The title bar always shows the current loader version, dev-mod handling (DDSML/EUDEV), language, loader mode, module pack, model, DSM build, serial, IP, MAC address(es), and storage panel size.
 
-```
-TCRP-mshell v1.4.2.3 EUDEV en_US FRIEND all-modules IML SA6400 7.4.1-90080-0 1234567890AB 192.168.1.50 001132AABBCC (RACK_12_Bay)
-```
+<img width="700" alt="Main menu" src="guide_img/menu_main.png">
 
-Below is what the menu looks like once a model has been chosen (before that, section 1 only shows item `c`, since every other build-workflow item needs a model selected first):
-
-```
-+----------------------------------------------------------------------------+
-| TCRP-mshell v1.4.2.3 EUDEV en_US FRIEND all-modules IML SA6400 ...         |
-+----------------------------------------------------------------------------+
-|                                                                            |
-|   1   =============== Main ===============                               |
-|   m   Choose a Synology Model, (SA6400)                                   |
-|   j   Choose a DSM VERSION, Current (7.4.1-90080)                         |
-|   s   Choose a Synology Serial Number                                     |
-|   a   Choose a mac address (up to 8 supported)                            |
-|   z   Select build pre-option (required or not required)                  |
-|   g   NVIDIA H/W Trans. [OFF] - select to add                             |
-|   p   Build the loader (7.4.1-90080, i915+amdgpu, all-modules:IML)        |
-|                                                                            |
-|   2   =============== Environment ===============                        |
-|   u   Edit user config file manually                                     |
-|   v   Verbose Mode (OFF)                                                  |
-|   l   Choose a language                                                  |
-|                                                                            |
-|   3   =============== Misc ===============                               |
-|   n   Additional Functions                                               |
-|   x   Syno disk and partition handling                                   |
-|   b   Backup TCRP                                                        |
-|   w   Rebuild Previous Version                                           |
-|   q   TCB, FKC Automatic Update Management                               |
-|   r   Reboot                                                             |
-|   e   Power Off                                                          |
-|   o   Exit Menu                                                          |
-|                                                                            |
-+----------------------------------------------------------------------------+
-|                    <  OK  >              <Cancel>                        |
-+----------------------------------------------------------------------------+
-```
+Section 1 (`Main`) only shows item `c` before a model is picked — every other build-workflow item needs a model selected first.
 
 ### Section 1 — Main (the build workflow, follow top to bottom)
 
@@ -73,8 +39,8 @@ Below is what the menu looks like once a model has been chosen (before that, sec
 | `j` | Choose a DSM VERSION | Lists up to 12 revisions for the selected model, newest first, pulled live from `pats.json`. On a BMI2-less CPU (kernel-5.10.55 platforms only), DSM 7.4.0+ entries are filtered out since neither `all-modules` (needs BMI2) nor `custom-modules` (only built through 7.3.2) can boot there. |
 | `s` | Choose a Synology Serial Number | Generate a random serial or enter a real one. Required before building. |
 | `a` | Choose a mac address (up to 8 supported) | Opens a submenu listing every present NIC (`a`–`h`); picking one lets you use the real MAC, generate a random one, or type one in. With only one NIC it skips straight to the address picker. |
-| `z` | Select build pre-option | Submenu covering, in order: loader mode (FRIEND vs Direct-Boot), DDSML/EUDEV, DTS mapping, SATA-port remap, and storage panel size — the platform/hardware-shape choices that need to be locked in before a build. |
-| `g` | NVIDIA H/W Trans. | Only shown on kernel 5.10.55/4.4 platforms (kernel 3.10 shows `(Not Supported)` and can't be entered, kernel 3.x hides the item entirely). Pick a no-auth NVIDIA driver version, optionally bundle an NVENC-capable ffmpeg for the Jellyfin package, and enable the addon. The submenu only offers driver versions that actually exist for the current platform *and* kernel. |
+| `z` | Select build pre-option | Submenu covering the loader mode, DDSML/EUDEV, DTS mapping, SATA-port remap, storage panel size, and two addon toggles — see [below](#z--select-build-pre-option). |
+| `g` | NVIDIA H/W Trans. | Only shown on kernel 5.10.55/4.4 platforms (kernel 3.10 shows `(Not Supported)` and can't be entered, kernel 3.x hides the item entirely). Driver version, optional NVENC ffmpeg, and addon enable/disable — see [below](#g--nvidia-hw-transcoding). |
 | `p` | Build the loader | Runs the actual build with everything selected above. The label always shows the current DSM build, DRM mode, and module pack so you can sanity-check before committing. |
 | `y` | Boot the loader | Only shown once a FRIEND-mode loader has already been built (`FRKRNL=YES`) — boots straight into it without rebuilding. |
 
@@ -90,8 +56,8 @@ Below is what the menu looks like once a model has been chosen (before that, sec
 
 | Key | Item | What it does |
 |---|---|---|
-| `n` | Additional Functions | Submenu for DSM-side maintenance once a loader has booted DSM: change the DSM password, add a new DSM user, clean/format the system partition, fix a broken boot entry, format data disks, mount a Syno volume, and expand a legacy `md0`. |
-| `x` | Syno disk and partition handling | Submenu for burning/cloning the loader itself, injecting or removing a bootloader partition on a Synology data disk, packing the loader for remote update, and viewing the running loader's error log. |
+| `n` | Additional Functions | Submenu for loader-side maintenance and extras (GRUB default entry, addons, SATADOM, error log, burn/clone, packing, keymap) — see [below](#n--additional-functions). |
+| `x` | Syno disk and partition handling | Submenu for DSM-side disk/partition operations once a loader has booted DSM (password/user, `md0` cleanup, boot-entry repair, formatting, volume mounting) — see [below](#x--syno-disk-and-partition-handling). |
 | `b` | Backup TCRP | Backs up the current loader state so it survives a reboot without needing a full rebuild. |
 | `w` | Rebuild Previous Version | Re-downloads and rebuilds whichever loader version was in use before the current one, without walking through the whole model/version picker again. |
 | `q` | TCB, FKC Automatic Update Management | Manages automatic-update settings for TCRP itself and for FKC (FriendConfig) style extensions. |
@@ -99,31 +65,74 @@ Below is what the menu looks like once a model has been chosen (before that, sec
 | `e` | Power Off | Shuts the loader environment down. |
 | `o` | Exit Menu | Leaves `menu.sh` and drops to a shell, without rebooting or powering off. |
 
--------------------------------------------------------------------------------
+## `z` — Select build pre-option
 
-### About Synology 3rd party Custom Package Change Panel Size 
+<img width="700" alt="Build pre-option submenu" src="guide_img/menu_z_buildpreoption.png">
 
-This is a supplementary custom package required to handle the StoragePanel Addon included as a default installation Addon in Mshell. 
+| Key | Item | What it does |
+|---|---|---|
+| `a` | Choose a loader Mode | FRIEND (current, most recently stabilized) vs Direct-Boot (the old pre-FRIEND way). Label shows the current DRM mode and module pack. |
+| `b` | Choose a Dev Mod handling method, DDSML/EUDEV | Same DDSML/EUDEV switch as top-level `c`, reachable again here once a model is already selected. |
+| `c` | User model.dts file SATA port mapping | Lets you supply/edit a custom `.dts` file for SATA port mapping on this model. |
+| `d` | sata_remap processing for SataPort reordering | Reorders SATA ports as seen by DSM. **Hidden on DT (Device-Tree) platforms**, which don't support `sata_remap` — not shown in the screenshot above because this box (`epyc7002(DT)`) is a DT platform. |
+| `e` | Choose a Storage Panel Size | Sets the drive-bay panel size DSM's Storage Manager displays (cosmetic only, e.g. `RACK_12_Bay`). |
+| `f` | Add/Remove nvmesystem Addon | Enables using a single NVMe device as a standalone volume. Marked experimental/risky in-menu; a confirmation warning is shown before enabling. |
+| `g` | Add/Remove vmtools addon | Bundles `qemu-guest-agent` support for virtualized deployments. |
+| `z` | exit | Returns to the main menu. |
 
-Please select the appropriate .spk package source for your Synology DSM version and platform and proceed with manual installation from Synology Package Center.
+## `g` — NVIDIA H/W Transcoding
 
-The storage panel size shown (Drive Infomation) in the Storage Manager overview is only a design element and does not affect Synology's functions.
+<img width="700" alt="NVIDIA H/W transcoding submenu" src="guide_img/menu_g_nvidia.png">
 
+The no-auth NVIDIA driver (physical/passthrough GPUs only — no vGPU, no license server) submenu. It resolves what to offer from the live driver catalog, so it only ever lists versions that actually exist for the current platform **and** kernel (kernel 5.10.55: 470/535/550/580; kernel 4.4: 550 only — NVIDIA's own floor; kernel 3.10: not enterable at all).
 
-<img width="604" height="259" alt="스크린샷 2025-07-27 오전 10 16 57" src="https://github.com/user-attachments/assets/d55a4567-b01b-4781-a02b-e940295836b0" />
+| Key | Item | What it does |
+|---|---|---|
+| `a` | Auto | Let the loader auto-detect and pick a suitable driver at build time (falls back to a safe default, e.g. 535, if no GPU is detected yet). |
+| `b`–`e` | Specific driver versions (e.g. `580.173.02`, `550.163.01`, `535.230.02`, `470.256.02`) | Pin an exact driver version. The currently-active one is marked with `*`. On Ada/Blackwell cards, 580 is quietly not recommended (GSP firmware for those isn't in NVIDIA's `.run`) — pick 550 there instead. |
+| `f` | NVENC ffmpeg (Jellyfin pkg) | Toggle bundling an NVENC-capable ffmpeg build alongside the driver. When enabled, a boot hook automatically repoints the SynoCommunity Jellyfin package's `--ffmpeg` argument at this build instead of the stock (non-NVENC) `ffmpeg7` binary — no manual path change needed in the Jellyfin UI. |
+| `g` | Disable addon | Turns the whole NVIDIA addon off; the main-menu label reverts to `NVIDIA H/W Trans. [OFF] - select to add`. |
+| `z` | Exit | Returns to the main menu. |
 
+## `n` — Additional Functions
 
-https://github.com/PeterSuh-Q3/ChangePanelSize/releases
+<img width="700" alt="Additional Functions submenu" src="guide_img/menu_n_additional.png">
 
+Loader-side maintenance and extras — everything here runs against the *loader environment*, not a booted DSM.
 
-<img width="784" height="418" alt="스크린샷 2025-07-27 오전 10 17 46" src="https://github.com/user-attachments/assets/643af338-479d-4b34-95f0-df033f254eb5" />
+| Key | Item | What it does |
+|---|---|---|
+| `l` | Change GRUB boot entry default value | Changes which GRUB menu entry boots by default. |
+| `a` | Add/Remove Mac-spoof Addon | Toggles the MAC-spoof addon. |
+| `y` | Add/Remove dbgutils Addon | Toggles the debug-utilities addon. |
+| `j` | Change Satadom Option | Cycles the fake-SATADOM setting (Disable / Native / Fake). |
+| `z` | Enable/Disable i915 module | Only shown on `geminilake(DT)`/`apollolake` — toggles the i915 kernel module. |
+| `b` | Prevent SataPortMap,DiskIdxMap initialization | Toggles whether the loader is allowed to (re)initialize `SataPortMap`/`DiskIdxMap` on this model. |
+| `d` | Show error log of running loader | Displays the current loader's error log. |
+| `e` | Burn TCRP Bootloader Img to USB or SSD | Writes a fresh loader image to another disk (see `burnloader()`). |
+| `f` | Clone Current TCRP Bootloader to USB or SSD | Clones the *currently running* loader (not a fresh download) to another disk. |
+| `h` | Inject Bootloader to Syno DISK | Only shown in Direct-Boot mode (`FRKRNL=NO`) on non-DT epyc7002/epyc7003ntb/epyc7003/icelaked platforms — injects a bootloader partition directly onto a Synology data disk. |
+| `m` | Remove the injected bootloader partition | Same visibility rule as `h` — removes an injected bootloader partition. |
+| `i` | Packing loader file for remote update | Packages the loader for distribution/remote update. |
+| `k` | Choose a keymap | Sets the console keyboard layout. |
 
+## `x` — Syno disk and partition handling
 
-<img width="1406" height="416" alt="스크린샷 2025-07-27 오전 10 18 59" src="https://github.com/user-attachments/assets/7e2714b1-9643-4b5c-ab07-6a3011fa6213" />
+<img width="700" alt="Syno disk and partition handling submenu" src="guide_img/menu_x_synopart.png">
 
+DSM-side disk and partition operations — most of these are only meaningful once a loader has actually booted into DSM.
 
-<img width="901" height="933" alt="스크린샷 2025-07-26 오후 10 21 57" src="https://github.com/user-attachments/assets/bb956d7b-23d6-44c6-b4a0-6140bbc6bfe9" />
-
+| Key | Item | What it does |
+|---|---|---|
+| `a` | Change DSM New Password | Resets the DSM admin password. |
+| `b` | Add New DSM User | Creates a new DSM user account. |
+| `c` | Clean System Partition(md0) | Cleans the DSM system partition. |
+| `d` | Bootentry Update version correction | Fixes a mismatched/broken GRUB boot-entry version reference. |
+| `e` | Format Disk(s) | Formats data disk(s), excluding the loader disk itself. |
+| `f` | Mount Syno Disk Volume(Ext4 only) | Mounts an existing Synology Ext4 volume for inspection/recovery. |
+| `g` | Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol | Adds a rescue GRUB entry that boots a TinyCore v9 environment for mounting a BTRFS volume. |
+| `h` | Format System Partition(md0) for New Install | Formats `md0` in preparation for a fresh DSM install. |
+| `i` | Check / Expand System Partition (md0) Capacity | Detects an undersized legacy `md0` (e.g. a 2.4GB partition that blocks a DSM 7.4 upgrade) and grows it to fill the partition. |
 
 # < Caution >
 
