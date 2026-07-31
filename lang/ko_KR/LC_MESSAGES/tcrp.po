@@ -511,3 +511,7 @@ msgstr "저장 후 종료"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: 선택 항목 ON/OFF 전환\\nSave & Exit: 저장 후 종료"
 
+
+#: MSGKR131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA 컨테이너 런타임 (Docker): %s"

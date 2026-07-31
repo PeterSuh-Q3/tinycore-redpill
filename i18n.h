@@ -127,5 +127,6 @@ MSGZZ127=$(gettext "tcrp" "[ Auto Update ]")
 MSGZZ128=$(gettext "tcrp" "Select")
 MSGZZ129=$(gettext "tcrp" "Save & Exit")
 MSGZZ130=$(gettext "tcrp" "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit")
+MSGZZ131=$(gettext "tcrp" "NVIDIA container runtime (Docker): %s")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
 }

@@ -511,3 +511,7 @@ msgstr "Mentés és kilépés"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: Kiválasztott elem ON/OFF váltása\\nSave & Exit: Mentés és kilépés"
 
+
+#: MSGHU131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA konténer futtatókörnyezet (Docker): %s"

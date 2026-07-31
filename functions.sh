@@ -5188,14 +5188,17 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu
-    # choice (driver version / ffmpeg layer) into /addons/nvidia.conf for its
-    # install.sh (on_patches). Empty driver => Auto (install.sh detects the GPU).
+    # choice (driver version / ffmpeg layer / container runtime) into
+    # /addons/nvidia.conf for its install.sh (on_patches). Empty driver => Auto
+    # (install.sh detects the GPU).
     if grep -q '"nvidiadriver"' /home/tc/redpill-load/bundled-exts.json 2>/dev/null; then
       NVDRV=$(jq -r '.general.nvidia_driver // empty' "${userconfigfile}" 2>/dev/null)
       NVFF=$(jq -r '.general.nvidia_ffmpeg // empty' "${userconfigfile}" 2>/dev/null)
+      NVCR=$(jq -r '.general.nvidia_container_runtime // empty' "${userconfigfile}" 2>/dev/null)
       { [ -n "$NVDRV" ] && echo "nvidia_driver=$NVDRV"
-        [ -n "$NVFF"  ] && echo "nvidia_ffmpeg=$NVFF"; } | sudo tee "${RAMDISK_PATH}/addons/nvidia.conf" >/dev/null
-      echo "nvidiadriver: baked /addons/nvidia.conf (driver=${NVDRV:-auto} ffmpeg=${NVFF:-off})"
+        [ -n "$NVFF"  ] && echo "nvidia_ffmpeg=$NVFF"
+        [ -n "$NVCR"  ] && echo "nvidia_container_runtime=$NVCR"; } | sudo tee "${RAMDISK_PATH}/addons/nvidia.conf" >/dev/null
+      echo "nvidiadriver: baked /addons/nvidia.conf (driver=${NVDRV:-auto} ffmpeg=${NVFF:-off} container-runtime=${NVCR:-off})"
     fi
 
     # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 — 피어/이중 컨트롤러

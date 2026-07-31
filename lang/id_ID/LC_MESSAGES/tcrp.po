@@ -511,3 +511,7 @@ msgstr "Simpan & Keluar"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: Alihkan item terpilih ON/OFF\\nSave & Exit: Simpan dan keluar"
 
+
+#: MSGID131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "Runtime kontainer NVIDIA (Docker): %s"

@@ -511,3 +511,7 @@ msgstr "保存して終了"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: 選択項目のON/OFF切替\\nSave & Exit: 保存して終了"
 
+
+#: MSGJP131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA コンテナランタイム (Docker): %s"

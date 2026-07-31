@@ -511,3 +511,7 @@ msgstr "አስቀምጥ እና ውጣ"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: የተመረጠውን ንጥል ON/OFF ቀያይር\\nSave & Exit: አስቀምጥ እና ውጣ"
 
+
+#: MSGET131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "የNVIDIA ኮንቴይነር ማስኬጃ (Docker): %s"

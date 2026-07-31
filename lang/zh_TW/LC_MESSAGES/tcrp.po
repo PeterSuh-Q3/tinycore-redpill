@@ -511,3 +511,7 @@ msgstr "儲存並離開"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: 切換所選項目 ON/OFF\\nSave & Exit: 儲存並離開"
 
+
+#: MSGTW131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA 容器執行環境 (Docker): %s"

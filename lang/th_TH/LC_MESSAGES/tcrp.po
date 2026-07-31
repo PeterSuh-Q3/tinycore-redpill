@@ -511,3 +511,7 @@ msgstr "บันทึกแล้วออก"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: สลับรายการที่เลือก ON/OFF\\nSave & Exit: บันทึกแล้วออก"
 
+
+#: MSGTH131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA คอนเทนเนอร์รันไทม์ (Docker): %s"

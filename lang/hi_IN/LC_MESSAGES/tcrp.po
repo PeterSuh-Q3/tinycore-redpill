@@ -511,3 +511,7 @@ msgstr "सहेजें और बाहर निकलें"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: चयनित आइटम ON/OFF टॉगल करें\\nSave & Exit: सहेजें और बाहर निकलें"
 
+
+#: MSGIN131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "NVIDIA कंटेनर रनटाइम (Docker): %s"

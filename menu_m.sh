@@ -349,6 +349,16 @@ if [ -z "${NVIDIA_FFMPEG}" ]; then
     jsonfile=$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
 fi
 
+# Docker(Container Manager)용 nvidia 컨테이너 런타임 레이어. 기본 off -
+# 도커에서 GPU 를 쓰지 않는 사용자에게는 10MB 를 매 부팅 더 받는 것 뿐이다.
+# 켜면 install.sh 가 레이어를 설치하고 dockerd.json 에 'nvidia' 런타임을
+# 등록해 --runtime=nvidia 컨테이너가 GPU 를 볼 수 있게 된다.
+NVIDIA_CR=$(readConfigKey "general" "nvidia_container_runtime")
+if [ -z "${NVIDIA_CR}" ]; then
+    NVIDIA_CR="false"
+    writeConfigKey "general" "nvidia_container_runtime" "${NVIDIA_CR}"
+fi
+
 # NVIDIA 애드온의 enable/disable 은 다른 general.* 값들과 성격이 다르다.
 # bay/VMTOOLS/NVMES 는 user_config.json 이 유일한 소비처라 저장값이 곧
 # 진실이지만, 이 항목의 실제 소비처는 bundled-exts.json 이다 - 빌드(my())
@@ -1801,6 +1811,7 @@ function nvidiaMenu() {
   eval "MSG83=\"\${MSG${tz}83}\""
   eval "MSG84=\"\${MSG${tz}84}\""
   eval "MSG85=\"\${MSG${tz}85}\""
+  eval "MSG131=\"\${MSG${tz}131}\""
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
   local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
   # tcrp-addons 의 nvidia-index.json 과 동일한 해석 규칙: 플랫폼이 커널별
@@ -1831,13 +1842,14 @@ function nvidiaMenu() {
 
   local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
   while true; do
-    local cur ffon has
+    local cur ffon cron has
     # bay/VMTOOLS/NVMES 등과 동일한 방식 - 매번 파일을 다시 읽지 않고
     # 시작 시점에 초기화해둔 전역변수(NVIDIA_DRIVER/NVIDIA_FFMPEG/
     # NVIDIA_ENABLED)를 그대로 쓴다. 변경 시에도 이 전역변수를 갱신하고
     # writeConfigKey 로 general.* 에 영구저장한다(아래 dispatch 참고).
     cur="${NVIDIA_DRIVER}"
     ffon="Off"; [ "${NVIDIA_FFMPEG}" = "true" ] && ffon="On"
+    cron="Off"; [ "${NVIDIA_CR}" = "true" ] && cron="On"
     # enable/disable 상태만은 전역변수가 아니라 bundled-exts.json 을 직접
     # 본다 - 이 파일이 빌드가 실제로 읽는 곳이라 여기가 진실이고, 전역변수를
     # 믿었다가 둘이 어긋나면 "메뉴엔 ENABLED 인데 빌드엔 누락" 이 된다.
@@ -1868,6 +1880,7 @@ function nvidiaMenu() {
       keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${v}${mk}${sel}"); kind+=("ver"); verval+=("$v")
     done
     keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("$(printf "${MSG80}" "${ffon}")"); kind+=("ffmpeg"); verval+=("")
+    keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("$(printf "${MSG131}" "${cron}")"); kind+=("crt"); verval+=("")
     if [ "$has" = "yes" ]; then
       keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${MSG81}")
     else
@@ -1918,6 +1931,8 @@ function nvidiaMenu() {
           ver)    NVIDIA_DRIVER="${verval[$i]}"; writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}" ;;
           ffmpeg) if [ "${NVIDIA_FFMPEG}" = "true" ]; then NVIDIA_FFMPEG="false"; else NVIDIA_FFMPEG="true"; fi
                   writeConfigKey "general" "nvidia_ffmpeg" "${NVIDIA_FFMPEG}" ;;
+          crt)    if [ "${NVIDIA_CR}" = "true" ]; then NVIDIA_CR="false"; else NVIDIA_CR="true"; fi
+                  writeConfigKey "general" "nvidia_container_runtime" "${NVIDIA_CR}" ;;
           toggle) if [ "$has" = "yes" ]; then
                     del-addon "nvidiadriver"; NVIDIA_ENABLED="false"          # Disable
                   else
@@ -3289,6 +3304,7 @@ while true; do
   if [ "${NVIDIA_ENABLED}" = "true" ]; then
     nvsel="${NVIDIA_DRIVER:-Auto}"
     [ "${NVIDIA_FFMPEG}" = "true" ] && nvsel="${nvsel}+ffmpeg"
+    [ "${NVIDIA_CR}" = "true" ] && nvsel="${nvsel}+docker"
     nvlabel="$(printf "${MSG74}" "${nvsel}")"
   else
     nvlabel="${MSG75}"

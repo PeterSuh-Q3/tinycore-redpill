@@ -511,3 +511,7 @@ msgstr "Salva ed esci"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER: Attiva/disattiva elemento selezionato ON/OFF\\nSave & Exit: Salva ed esci"
 
+
+#: MSGIT131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "Runtime per container NVIDIA (Docker): %s"

@@ -511,3 +511,7 @@ msgstr "Enregistrer et quitter"
 msgid "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 msgstr "ENTER : Basculer l'élément sélectionné ON/OFF\\nSave & Exit : Enregistrer et quitter"
 
+
+#: MSGFR131
+msgid "NVIDIA container runtime (Docker): %s"
+msgstr "Environnement d'exécution de conteneurs NVIDIA (Docker) : %s"
