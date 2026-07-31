@@ -2079,6 +2079,9 @@ function additional() {
   eval "MSG61=\"\${MSG${tz}61}\""
   eval "MSG62=\"\${MSG${tz}62}\""
   eval "MSG63=\"\${MSG${tz}63}\""
+  eval "MSG121=\"\${MSG${tz}121}\""
+  eval "MSG122=\"\${MSG${tz}122}\""
+  eval "MSG123=\"\${MSG${tz}123}\""
 
   default_resp="l"
 
@@ -2088,9 +2091,9 @@ function additional() {
     # 이동했다 - 여기서는 제거.
     eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
     eval "echo \"a \\\"${spoof} ${MSG50}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"y \\\"${dbgutils} dbgutils Addon\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"j \\\"Change Satadom Option (${DOMKIND}) \\\"\"" >> "${TMP_PATH}/menua"
-    [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"${DISPLAYI915} i915 module \\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"y \\\"${dbgutils} ${MSG121}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"j \\\"$(printf "${MSG122}" "${DOMKIND}") \\\"\"" >> "${TMP_PATH}/menua"
+    [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"$(printf "${MSG123}" "${DISPLAYI915}") \\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}: ${PREVENT_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
@@ -2150,7 +2153,7 @@ function synopart() {
   eval "MSG65=\"\${MSG${tz}65}\""
   eval "MSG66=\"\${MSG${tz}66}\""
   eval "MSG68=\"\${MSG${tz}68}\""
-  MSG69="Check / Expand System Partition (md0) Capacity"
+  eval "MSG69=\"\${MSG${tz}124}\""
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
@@ -2500,7 +2503,7 @@ select_and_run_menu() {
 
     # 6094 >= 6GB 판단
     local MIN_MB=6094
-    
+
     # ucode 기반 언어 설정 먼저 해서 메시지 분기에 사용
     if [ "${ucode}" = "ko_KR" ]; then
         local LANG_KR=true
@@ -2509,15 +2512,12 @@ select_and_run_menu() {
     fi
 
     if [ "$MEM_MB" -lt "$MIN_MB" ]; then
-        if [ "${LANG_KR}" = true ]; then
-            echo "이전 버전 재빌드를 위해서는 최소 6GB 이상의 메모리가 필요합니다."
-            echo "현재 시스템 메모리: ${MEM_MB}MB"
-            echo -n "계속하려면 아무 키나 누르세요..."
-        else
-            echo "At least 6GB of memory is required to rebuild the previous version."
-            echo "Current system memory: ${MEM_MB}MB"
-            echo -n "Press any key to continue..."
-        fi
+        eval "MSG125=\"\${MSG${tz}125}\""
+        eval "MSG126=\"\${MSG${tz}126}\""
+        eval "MSG35=\"\${MSG${tz}35}\""
+        echo "${MSG125}"
+        echo "$(printf "${MSG126}" "${MEM_MB}")"
+        echo -n "${MSG35}"
         # 아무 키 입력 대기
         read -r -n1 _
         echo
@@ -2675,9 +2675,26 @@ function getLabel() {
 # ─── 메인 메뉴 함수 ──────────────────────────────────────────────
 function showAutoUpdateMenu() {
 
+  eval "MSG109=\"\${MSG${tz}109}\""
+  eval "MSG110=\"\${MSG${tz}110}\""
+  eval "MSG111=\"\${MSG${tz}111}\""
+  eval "MSG112=\"\${MSG${tz}112}\""
+  eval "MSG113=\"\${MSG${tz}113}\""
+  eval "MSG114=\"\${MSG${tz}114}\""
+  eval "MSG115=\"\${MSG${tz}115}\""
+  eval "MSG116=\"\${MSG${tz}116}\""
+  eval "MSG117=\"\${MSG${tz}117}\""
+  eval "MSG118=\"\${MSG${tz}118}\""
+  eval "MSG119=\"\${MSG${tz}119}\""
+  eval "MSG120=\"\${MSG${tz}120}\""
+  eval "MSG127=\"\${MSG${tz}127}\""
+  eval "MSG128=\"\${MSG${tz}128}\""
+  eval "MSG129=\"\${MSG${tz}129}\""
+  eval "MSG130=\"\${MSG${tz}130}\""
+
   # 누락 시 기본값 ON
   [[ "$TCB" != "true" && "$TCB" != "false" ]] && TCB="true"
-  [[ "$FKC" != "true" && "$FKC" != "false" ]] && FKC="true"  
+  [[ "$FKC" != "true" && "$FKC" != "false" ]] && FKC="true"
 
   while true; do
     local TCB_LABEL FKC_LABEL CHOICE EXIT_CODE
@@ -2686,16 +2703,16 @@ function showAutoUpdateMenu() {
 
     CHOICE=$(dialog \
       --clear \
-      --backtitle "Auto Update Settings" \
-      --title "[ Auto Update ]" \
-      --ok-label "Select" \
-      --cancel-label "Save & Exit" \
-      --menu "\nENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit\n" \
+      --backtitle "${MSG109}" \
+      --title "${MSG127}" \
+      --ok-label "${MSG128}" \
+      --cancel-label "${MSG129}" \
+      --menu "\n${MSG130}\n" \
       14 60 4 \
-      "a" "Tinycore Loader Builder Auto Update  [ ${TCB_LABEL} ]" \
-      "b" "FRIEND Kernel Console Auto Update    [ ${FKC_LABEL} ]" \
-      "c" "Run Tinycore Loader Builder Update" \
-      "d" "Run Friend Kernel Console Update" \
+      "a" "${MSG110}  [ ${TCB_LABEL} ]" \
+      "b" "${MSG111}    [ ${FKC_LABEL} ]" \
+      "c" "${MSG112}" \
+      "d" "${MSG113}" \
       3>&1 1>&2 2>&3)
 
     EXIT_CODE=$?
@@ -2704,7 +2721,7 @@ function showAutoUpdateMenu() {
     if [ ${EXIT_CODE} -ne 0 ]; then
       writeConfigKey "general" "tcbautoupd"    "${TCB}"
       writeConfigKey "general" "friendautoupd" "${FKC}"
-      dialog --infobox "Settings saved." 3 25
+      dialog --infobox "${MSG114}" 3 25
       sleep 1
       backuploader
       clear
@@ -2726,18 +2743,18 @@ function showAutoUpdateMenu() {
         local retval=$?
         case $retval in
           0)
-            dialog --msgbox "Already latest version." 6 40
+            dialog --msgbox "${MSG115}" 6 40
             ;;
           1)
-            dialog --msgbox "\nUpdate complete.\nReboot required.\n\nPress Enter to Reboot..." 9 50
+            dialog --msgbox "\n${MSG116}" 9 50
             clear
             sudo reboot
             ;;
           2)
-            dialog --msgbox "Update cancelled by user." 6 40
+            dialog --msgbox "${MSG117}" 6 40
             ;;
           3)
-            dialog --msgbox "Update failed (code: $retval)\nCheck network and try again." 7 45
+            dialog --msgbox "$(printf "${MSG118}" "$retval")" 7 45
             ;;
         esac
         ;;
@@ -2746,13 +2763,13 @@ function showAutoUpdateMenu() {
         local retval=$?
         case $retval in
           0)
-            dialog --msgbox "Already latest version." 6 40
+            dialog --msgbox "${MSG115}" 6 40
             ;;
           1)
-            dialog --msgbox "Update complete." 9 50
+            dialog --msgbox "${MSG119}" 9 50
             ;;
           2|3)
-            dialog --msgbox "Update failed (code: $retval)\nCheck logs and try again." 7 45
+            dialog --msgbox "$(printf "${MSG120}" "$retval")" 7 45
             ;;
         esac
         ;;
@@ -3313,7 +3330,8 @@ while true; do
   # ===== Environment ===== (설정/환경 옵션)
   echo '2 "=============== Environment ==============="'                     >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"v \\\"Verbose Mode (${VERBOSE_MODE})\\\"\""   >> "${TMP_PATH}/menu"
+  eval "MSG86=\"\${MSG${tz}86}\""
+  eval "echo \"v \\\"$(printf "${MSG86}" "${VERBOSE_MODE}")\\\"\""   >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
 
   # ===== Misc ===== (유지보수/시스템)
@@ -3321,8 +3339,8 @@ while true; do
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"w \\\"Rebuild Previous Version\\\"\""     >> "${TMP_PATH}/menu"
-  eval "echo \"q \\\"TCB, FKC Automatic Update Management\\\"\""     >> "${TMP_PATH}/menu"
+  eval "echo \"w \\\"\${MSG${tz}87}\\\"\""               >> "${TMP_PATH}/menu"
+  eval "echo \"q \\\"\${MSG${tz}88}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"o \\\"\${MSG${tz}73}\\\"\""               >> "${TMP_PATH}/menu"

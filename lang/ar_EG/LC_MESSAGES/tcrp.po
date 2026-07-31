@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(اختر Enable أدناه)"
 
+
+#: MSGEG68
+msgid "Format System Partition(md0) for New Install"
+msgstr "تهيئة قسم النظام(md0) لتثبيت جديد"
+
+#: MSGEG86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGEG87
+msgid "Rebuild Previous Version"
+msgstr "إعادة بناء الإصدار السابق"
+
+#: MSGEG88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "إدارة التحديث التلقائي TCB, FKC"
+
+#: MSGEG89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "إعداد وضع Verbose"
+
+#: MSGEG90
+msgid "Current Mode:"
+msgstr "الوضع الحالي:"
+
+#: MSGEG91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "تفعيل وضع Verbose (عرض كل ناتج البناء)"
+
+#: MSGEG92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "تعطيل وضع Verbose (عرض التقدم والأخطاء فقط)"
+
+#: MSGEG93
+msgid "Return to Main Menu"
+msgstr "العودة إلى القائمة الرئيسية"
+
+#: MSGEG94
+msgid "[Mode Description]"
+msgstr "[وصف الوضع]"
+
+#: MSGEG95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE مفعّل - الإعداد الحالي"
+
+#: MSGEG96
+msgid "Displays all compilation steps"
+msgstr "يعرض جميع خطوات التجميع"
+
+#: MSGEG97
+msgid "Shows detailed error messages"
+msgstr "يعرض رسائل الخطأ التفصيلية"
+
+#: MSGEG98
+msgid "Displays backup process details"
+msgstr "يعرض تفاصيل عملية النسخ الاحتياطي"
+
+#: MSGEG99
+msgid "Slower console output (more I/O)"
+msgstr "إخراج أبطأ للطرفية (المزيد من I/O)"
+
+#: MSGEG100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE معطّل - الإعداد الحالي"
+
+#: MSGEG101
+msgid "Progress bar display only"
+msgstr "عرض شريط التقدم فقط"
+
+#: MSGEG102
+msgid "Displays errors and warnings"
+msgstr "يعرض الأخطاء والتحذيرات"
+
+#: MSGEG103
+msgid "Displays backup process (always visible)"
+msgstr "عملية النسخ الاحتياطي مرئية دائمًا"
+
+#: MSGEG104
+msgid "Fast, clean console output"
+msgstr "إخراج طرفية سريع ونظيف"
+
+#: MSGEG105
+msgid "Select option [1-3]: "
+msgstr "اختر خيارًا [1-3]: "
+
+#: MSGEG106
+msgid "Verbose mode enabled"
+msgstr "تم تفعيل وضع Verbose"
+
+#: MSGEG107
+msgid "Verbose mode disabled"
+msgstr "تم تعطيل وضع Verbose"
+
+#: MSGEG108
+msgid "Invalid selection"
+msgstr "اختيار غير صالح"
+
+#: MSGEG109
+msgid "Auto Update Settings"
+msgstr "إعدادات التحديث التلقائي"
+
+#: MSGEG110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "التحديث التلقائي لـ Tinycore Loader Builder"
+
+#: MSGEG111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "التحديث التلقائي لـ FRIEND Kernel Console"
+
+#: MSGEG112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "تشغيل تحديث Tinycore Loader Builder"
+
+#: MSGEG113
+msgid "Run Friend Kernel Console Update"
+msgstr "تشغيل تحديث Friend Kernel Console"
+
+#: MSGEG114
+msgid "Settings saved."
+msgstr "تم حفظ الإعدادات."
+
+#: MSGEG115
+msgid "Already latest version."
+msgstr "أحدث إصدار بالفعل."
+
+#: MSGEG116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "اكتمل التحديث.\nإعادة التشغيل مطلوبة.\n\nاضغط Enter لإعادة التشغيل..."
+
+#: MSGEG117
+msgid "Update cancelled by user."
+msgstr "تم إلغاء التحديث بواسطة المستخدم."
+
+#: MSGEG118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "فشل التحديث (الرمز: %s)\nتحقق من الشبكة وحاول مرة أخرى."
+
+#: MSGEG119
+msgid "Update complete."
+msgstr "اكتمل التحديث."
+
+#: MSGEG120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "فشل التحديث (الرمز: %s)\nتحقق من السجلات وحاول مرة أخرى."
+
+#: MSGEG121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGEG122
+msgid "Change Satadom Option (%s)"
+msgstr "تغيير خيار Satadom (%s)"
+
+#: MSGEG123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGEG124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "التحقق من/توسيع سعة قسم النظام(md0)"
+
+#: MSGEG125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "يلزم 6 جيجابايت من الذاكرة على الأقل لإعادة بناء الإصدار السابق."
+
+#: MSGEG126
+msgid "Current system memory: %sMB"
+msgstr "ذاكرة النظام الحالية: %sMB"
+
+#: MSGEG127
+msgid "[ Auto Update ]"
+msgstr "[ التحديث التلقائي ]"
+
+#: MSGEG128
+msgid "Select"
+msgstr "اختيار"
+
+#: MSGEG129
+msgid "Save & Exit"
+msgstr "حفظ وخروج"
+
+#: MSGEG130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: تبديل العنصر المحدد ON/OFF\nSave & Exit: حفظ وخروج"
+

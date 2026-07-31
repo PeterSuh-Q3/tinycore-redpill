@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(ከታች Enable ይምረጡ)"
 
+
+#: MSGET68
+msgid "Format System Partition(md0) for New Install"
+msgstr "ለአዲስ ጭነት የስርዓት ክፍልፍል(md0) ቅርጸት"
+
+#: MSGET86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGET87
+msgid "Rebuild Previous Version"
+msgstr "የቀድሞውን ስሪት እንደገና ገንባ"
+
+#: MSGET88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "TCB, FKC ራስ-ሰር ማዘመኛ አስተዳደር"
+
+#: MSGET89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "የVERBOSE ሁነታ ውቅር"
+
+#: MSGET90
+msgid "Current Mode:"
+msgstr "የአሁኑ ሁነታ:"
+
+#: MSGET91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "Verbose ሁነታን አንቃ (ሁሉንም የግንባታ ውጤት አሳይ)"
+
+#: MSGET92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "Verbose ሁነታን አሰናክል (እድገት እና ስህተቶች ብቻ አሳይ)"
+
+#: MSGET93
+msgid "Return to Main Menu"
+msgstr "ወደ ዋና ማውጫ ተመለስ"
+
+#: MSGET94
+msgid "[Mode Description]"
+msgstr "[የሁነታ መግለጫ]"
+
+#: MSGET95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE በርቷል - የአሁኑ ቅንብር"
+
+#: MSGET96
+msgid "Displays all compilation steps"
+msgstr "ሁሉንም የማጠናቀር ደረጃዎች ያሳያል"
+
+#: MSGET97
+msgid "Shows detailed error messages"
+msgstr "ዝርዝር የስህተት መልእክቶችን ያሳያል"
+
+#: MSGET98
+msgid "Displays backup process details"
+msgstr "የመጠባበቂያ ሂደት ዝርዝሮችን ያሳያል"
+
+#: MSGET99
+msgid "Slower console output (more I/O)"
+msgstr "ቀርፋፋ የኮንሶል ውጤት (ተጨማሪ I/O)"
+
+#: MSGET100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE ጠፍቷል - የአሁኑ ቅንብር"
+
+#: MSGET101
+msgid "Progress bar display only"
+msgstr "የእድገት አሞሌ ብቻ"
+
+#: MSGET102
+msgid "Displays errors and warnings"
+msgstr "ስህተቶችን እና ማስጠንቀቂያዎችን ያሳያል"
+
+#: MSGET103
+msgid "Displays backup process (always visible)"
+msgstr "የመጠባበቂያ ሂደት ሁልጊዜ ይታያል"
+
+#: MSGET104
+msgid "Fast, clean console output"
+msgstr "ፈጣን፣ ንፁህ የኮንሶል ውጤት"
+
+#: MSGET105
+msgid "Select option [1-3]: "
+msgstr "አማራጭ ይምረጡ [1-3]: "
+
+#: MSGET106
+msgid "Verbose mode enabled"
+msgstr "Verbose ሁነታ ነቅቷል"
+
+#: MSGET107
+msgid "Verbose mode disabled"
+msgstr "Verbose ሁነታ ጠፍቷል"
+
+#: MSGET108
+msgid "Invalid selection"
+msgstr "ልክ ያልሆነ ምርጫ"
+
+#: MSGET109
+msgid "Auto Update Settings"
+msgstr "ራስ-ሰር ማዘመኛ ቅንብሮች"
+
+#: MSGET110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Tinycore Loader Builder ራስ-ሰር ማዘመኛ"
+
+#: MSGET111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "FRIEND Kernel Console ራስ-ሰር ማዘመኛ"
+
+#: MSGET112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "Tinycore Loader Builder ማዘመኛን አስኪድ"
+
+#: MSGET113
+msgid "Run Friend Kernel Console Update"
+msgstr "Friend Kernel Console ማዘመኛን አስኪድ"
+
+#: MSGET114
+msgid "Settings saved."
+msgstr "ቅንብሮች ተቀምጠዋል።"
+
+#: MSGET115
+msgid "Already latest version."
+msgstr "ቀድሞውኑ የቅርብ ጊዜ ስሪት ነው።"
+
+#: MSGET116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "ማዘመን ተጠናቅቋል።\nዳግም ማስጀመር ያስፈልጋል።\n\nለዳግም ማስጀመር Enter ይጫኑ..."
+
+#: MSGET117
+msgid "Update cancelled by user."
+msgstr "ማዘመን በተጠቃሚ ተሰርዟል።"
+
+#: MSGET118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "ማዘመን አልተሳካም (ኮድ: %s)\nአውታረ መረብን ያረጋግጡ እና እንደገና ይሞክሩ።"
+
+#: MSGET119
+msgid "Update complete."
+msgstr "ማዘመን ተጠናቅቋል።"
+
+#: MSGET120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "ማዘመን አልተሳካም (ኮድ: %s)\nምዝግቦችን ያረጋግጡ እና እንደገና ይሞክሩ።"
+
+#: MSGET121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGET122
+msgid "Change Satadom Option (%s)"
+msgstr "የSatadom አማራጭን ቀይር (%s)"
+
+#: MSGET123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGET124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "የስርዓት ክፍልፍል(md0) አቅምን ያረጋግጡ / ያስፉ"
+
+#: MSGET125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "የቀድሞውን ስሪት እንደገና ለመገንባት ቢያንስ 6ጂቢ ማህደረ ትውስታ ያስፈልጋል።"
+
+#: MSGET126
+msgid "Current system memory: %sMB"
+msgstr "የአሁኑ የስርዓት ማህደረ ትውስታ: %sMB"
+
+#: MSGET127
+msgid "[ Auto Update ]"
+msgstr "[ ራስ-ሰር ማዘመኛ ]"
+
+#: MSGET128
+msgid "Select"
+msgstr "ምረጥ"
+
+#: MSGET129
+msgid "Save & Exit"
+msgstr "አስቀምጥ እና ውጣ"
+
+#: MSGET130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: የተመረጠውን ንጥል ON/OFF ቀያይር\nSave & Exit: አስቀምጥ እና ውጣ"
+

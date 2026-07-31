@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(請在下方選擇 Enable)"
 
+
+#: MSGTW68
+msgid "Format System Partition(md0) for New Install"
+msgstr "格式化系統分割區(md0)以進行全新安裝"
+
+#: MSGTW86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGTW87
+msgid "Rebuild Previous Version"
+msgstr "重建先前的版本"
+
+#: MSGTW88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "TCB, FKC 自動更新管理"
+
+#: MSGTW89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "VERBOSE 模式設定"
+
+#: MSGTW90
+msgid "Current Mode:"
+msgstr "目前模式:"
+
+#: MSGTW91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "啟用 Verbose 模式 (顯示全部建置輸出)"
+
+#: MSGTW92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "停用 Verbose 模式 (僅顯示進度和錯誤)"
+
+#: MSGTW93
+msgid "Return to Main Menu"
+msgstr "返回主選單"
+
+#: MSGTW94
+msgid "[Mode Description]"
+msgstr "[模式說明]"
+
+#: MSGTW95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE ON - 目前設定"
+
+#: MSGTW96
+msgid "Displays all compilation steps"
+msgstr "顯示所有編譯步驟"
+
+#: MSGTW97
+msgid "Shows detailed error messages"
+msgstr "顯示詳細錯誤訊息"
+
+#: MSGTW98
+msgid "Displays backup process details"
+msgstr "顯示備份過程詳情"
+
+#: MSGTW99
+msgid "Slower console output (more I/O)"
+msgstr "主控台輸出較慢 (I/O 增加)"
+
+#: MSGTW100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE OFF - 目前設定"
+
+#: MSGTW101
+msgid "Progress bar display only"
+msgstr "僅顯示進度列"
+
+#: MSGTW102
+msgid "Displays errors and warnings"
+msgstr "顯示錯誤與警告"
+
+#: MSGTW103
+msgid "Displays backup process (always visible)"
+msgstr "備份過程一律顯示"
+
+#: MSGTW104
+msgid "Fast, clean console output"
+msgstr "快速、簡潔的主控台輸出"
+
+#: MSGTW105
+msgid "Select option [1-3]: "
+msgstr "請選擇選項 [1-3]: "
+
+#: MSGTW106
+msgid "Verbose mode enabled"
+msgstr "Verbose 模式已啟用"
+
+#: MSGTW107
+msgid "Verbose mode disabled"
+msgstr "Verbose 模式已停用"
+
+#: MSGTW108
+msgid "Invalid selection"
+msgstr "無效的選擇"
+
+#: MSGTW109
+msgid "Auto Update Settings"
+msgstr "自動更新設定"
+
+#: MSGTW110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Tinycore Loader Builder 自動更新"
+
+#: MSGTW111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "FRIEND Kernel Console 自動更新"
+
+#: MSGTW112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "執行 Tinycore Loader Builder 更新"
+
+#: MSGTW113
+msgid "Run Friend Kernel Console Update"
+msgstr "執行 Friend Kernel Console 更新"
+
+#: MSGTW114
+msgid "Settings saved."
+msgstr "設定已儲存。"
+
+#: MSGTW115
+msgid "Already latest version."
+msgstr "已是最新版本。"
+
+#: MSGTW116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "更新完成。\n需要重新啟動。\n\n按 Enter 重新啟動..."
+
+#: MSGTW117
+msgid "Update cancelled by user."
+msgstr "使用者已取消更新。"
+
+#: MSGTW118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "更新失敗 (代碼: %s)\n請檢查網路後重試。"
+
+#: MSGTW119
+msgid "Update complete."
+msgstr "更新完成。"
+
+#: MSGTW120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "更新失敗 (代碼: %s)\n請檢查記錄後重試。"
+
+#: MSGTW121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGTW122
+msgid "Change Satadom Option (%s)"
+msgstr "變更 Satadom 選項 (%s)"
+
+#: MSGTW123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGTW124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "檢查/擴充系統分割區(md0)容量"
+
+#: MSGTW125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "重建先前的版本至少需要 6GB 記憶體。"
+
+#: MSGTW126
+msgid "Current system memory: %sMB"
+msgstr "目前系統記憶體: %sMB"
+
+#: MSGTW127
+msgid "[ Auto Update ]"
+msgstr "[ 自動更新 ]"
+
+#: MSGTW128
+msgid "Select"
+msgstr "選擇"
+
+#: MSGTW129
+msgid "Save & Exit"
+msgstr "儲存並離開"
+
+#: MSGTW130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: 切換所選項目 ON/OFF\nSave & Exit: 儲存並離開"
+

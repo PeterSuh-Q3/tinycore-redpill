@@ -1525,64 +1525,67 @@ show_backup_error_info() {
 #################################################################################
 toggle_verbose_menu() {
     local TMP_PATH="${TMP_PATH:-.}"
-    local NEXT="r"
-    
+
+    eval "MSG89=\"\${MSG${tz}89}\""
+    eval "MSG90=\"\${MSG${tz}90}\""
+    eval "MSG91=\"\${MSG${tz}91}\""
+    eval "MSG92=\"\${MSG${tz}92}\""
+    eval "MSG93=\"\${MSG${tz}93}\""
+    eval "MSG94=\"\${MSG${tz}94}\""
+    eval "MSG95=\"\${MSG${tz}95}\""
+    eval "MSG96=\"\${MSG${tz}96}\""
+    eval "MSG97=\"\${MSG${tz}97}\""
+    eval "MSG98=\"\${MSG${tz}98}\""
+    eval "MSG99=\"\${MSG${tz}99}\""
+    eval "MSG100=\"\${MSG${tz}100}\""
+    eval "MSG101=\"\${MSG${tz}101}\""
+    eval "MSG102=\"\${MSG${tz}102}\""
+    eval "MSG103=\"\${MSG${tz}103}\""
+    eval "MSG104=\"\${MSG${tz}104}\""
+    eval "MSG106=\"\${MSG${tz}106}\""
+    eval "MSG107=\"\${MSG${tz}107}\""
+
     while true; do
-        clear
-        
-        echo "╔═══════════════════════════════════════════════════════════════╗"
-        echo "║         VERBOSE MODE CONFIGURATION                           ║"
-        echo "╚═══════════════════════════════════════════════════════════════╝"
-        echo ""
-        echo "  Current Mode: $([ "$VERBOSE_MODE" = "ON" ] && echo -e '\033[1;32m[ON]\033[0m' || echo -e '\033[1;31m[OFF]\033[0m')"
-        echo ""
-        echo "┌─────────────────────────────────────────────────────────────┐"
-        echo "│  1. Enable Verbose Mode (Show all build output)             │"
-        echo "│  2. Disable Verbose Mode (Show only progress & errors)      │"
-        echo "│  3. Return to Main Menu                                     │"
-        echo "└─────────────────────────────────────────────────────────────┘"
-        echo ""
-        echo "  [Mode Description]"
-        echo ""
-        
+        local modeval
         if [ "$VERBOSE_MODE" = "ON" ]; then
-            echo "  ✓ VERBOSE ON - Current Setting"
-            echo "    • Displays all compilation steps"
-            echo "    • Shows detailed error messages"
-            echo "    • Displays backup process details"
-            echo "    • Slower console output (more I/O)"
-            echo ""
+            modeval="\Z2[ON]\Zn"
         else
-            echo "  ✓ VERBOSE OFF - Current Setting"
-            echo "    • Progress bar display only"
-            echo "    • Displays errors and warnings"
-            echo "    • Displays backup process (always visible)"
-            echo "    • Fast, clean console output"
-            echo ""
+            modeval="\Z1[OFF]\Zn"
         fi
-        
-        read -p "Select option [1-3]: " choice
-        
+
+        local desc
+        if [ "$VERBOSE_MODE" = "ON" ]; then
+            desc="\Z2${MSG95}\Zn\n  - ${MSG96}\n  - ${MSG97}\n  - ${MSG98}\n  - ${MSG99}"
+        else
+            desc="\Z2${MSG100}\Zn\n  - ${MSG101}\n  - ${MSG102}\n  - ${MSG103}\n  - ${MSG104}"
+        fi
+
+        dialog --clear --backtitle "`backtitle`" --colors --title "${MSG89}" \
+            --menu "${MSG90} ${modeval}\n\n[${MSG94}]\n${desc}\n" 0 70 3 \
+            "1" "${MSG91}" \
+            "2" "${MSG92}" \
+            "3" "${MSG93}" \
+            2>"${TMP_PATH}/respv"
+
+        [ $? -ne 0 ] && { clear; return 0; }
+        local choice; choice=$(<"${TMP_PATH}/respv")
+
         case "$choice" in
             1)
                 VERBOSE_MODE="ON"
                 VERBOSE_FLAG="-v"
-                echo -e "\n\033[1;32m✓ Verbose mode enabled\033[0m"
-                sleep 1.5
+                dialog --colors --infobox "\Z2${MSG106}\Zn" 3 40
+                sleep 1
                 ;;
             2)
                 VERBOSE_MODE="OFF"
                 VERBOSE_FLAG=""
-                echo -e "\n\033[1;32m✓ Verbose mode disabled\033[0m"
-                sleep 1.5
+                dialog --colors --infobox "\Z2${MSG107}\Zn" 3 40
+                sleep 1
                 ;;
             3)
-                NEXT="r"
+                clear
                 return 0
-                ;;
-            *)
-                echo -e "\033[1;31m✗ Invalid selection\033[0m"
-                sleep 1.5
                 ;;
         esac
     done

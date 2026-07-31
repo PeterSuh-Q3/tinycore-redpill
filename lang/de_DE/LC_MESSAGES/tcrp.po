@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(unten Enable wählen)"
 
+
+#: MSGDE68
+msgid "Format System Partition(md0) for New Install"
+msgstr "Systempartition(md0) für Neuinstallation formatieren"
+
+#: MSGDE86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGDE87
+msgid "Rebuild Previous Version"
+msgstr "Vorherige Version neu erstellen"
+
+#: MSGDE88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "TCB, FKC automatische Updateverwaltung"
+
+#: MSGDE89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "VERBOSE-MODUS-KONFIGURATION"
+
+#: MSGDE90
+msgid "Current Mode:"
+msgstr "Aktueller Modus:"
+
+#: MSGDE91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "Verbose-Modus aktivieren (Alle Build-Ausgaben anzeigen)"
+
+#: MSGDE92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "Verbose-Modus deaktivieren (Nur Fortschritt & Fehler anzeigen)"
+
+#: MSGDE93
+msgid "Return to Main Menu"
+msgstr "Zurück zum Hauptmenü"
+
+#: MSGDE94
+msgid "[Mode Description]"
+msgstr "[Modusbeschreibung]"
+
+#: MSGDE95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE AN - Aktuelle Einstellung"
+
+#: MSGDE96
+msgid "Displays all compilation steps"
+msgstr "Zeigt alle Kompilierungsschritte"
+
+#: MSGDE97
+msgid "Shows detailed error messages"
+msgstr "Zeigt detaillierte Fehlermeldungen"
+
+#: MSGDE98
+msgid "Displays backup process details"
+msgstr "Zeigt Details des Sicherungsvorgangs"
+
+#: MSGDE99
+msgid "Slower console output (more I/O)"
+msgstr "Langsamere Konsolenausgabe (mehr I/O)"
+
+#: MSGDE100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE AUS - Aktuelle Einstellung"
+
+#: MSGDE101
+msgid "Progress bar display only"
+msgstr "Nur Fortschrittsanzeige"
+
+#: MSGDE102
+msgid "Displays errors and warnings"
+msgstr "Zeigt Fehler und Warnungen"
+
+#: MSGDE103
+msgid "Displays backup process (always visible)"
+msgstr "Sicherungsvorgang immer sichtbar"
+
+#: MSGDE104
+msgid "Fast, clean console output"
+msgstr "Schnelle, saubere Konsolenausgabe"
+
+#: MSGDE105
+msgid "Select option [1-3]: "
+msgstr "Option wählen [1-3]: "
+
+#: MSGDE106
+msgid "Verbose mode enabled"
+msgstr "Verbose-Modus aktiviert"
+
+#: MSGDE107
+msgid "Verbose mode disabled"
+msgstr "Verbose-Modus deaktiviert"
+
+#: MSGDE108
+msgid "Invalid selection"
+msgstr "Ungültige Auswahl"
+
+#: MSGDE109
+msgid "Auto Update Settings"
+msgstr "Automatische Update-Einstellungen"
+
+#: MSGDE110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Tinycore Loader Builder automatisches Update"
+
+#: MSGDE111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "FRIEND Kernel Console automatisches Update"
+
+#: MSGDE112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "Tinycore Loader Builder Update ausführen"
+
+#: MSGDE113
+msgid "Run Friend Kernel Console Update"
+msgstr "Friend Kernel Console Update ausführen"
+
+#: MSGDE114
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+#: MSGDE115
+msgid "Already latest version."
+msgstr "Bereits die neueste Version."
+
+#: MSGDE116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "Update abgeschlossen.\nNeustart erforderlich.\n\nEnter drücken zum Neustart..."
+
+#: MSGDE117
+msgid "Update cancelled by user."
+msgstr "Update vom Benutzer abgebrochen."
+
+#: MSGDE118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "Update fehlgeschlagen (Code: %s)\nNetzwerk prüfen und erneut versuchen."
+
+#: MSGDE119
+msgid "Update complete."
+msgstr "Update abgeschlossen."
+
+#: MSGDE120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "Update fehlgeschlagen (Code: %s)\nProtokolle prüfen und erneut versuchen."
+
+#: MSGDE121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGDE122
+msgid "Change Satadom Option (%s)"
+msgstr "Satadom-Option ändern (%s)"
+
+#: MSGDE123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGDE124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "Systempartition(md0)-Kapazität prüfen/erweitern"
+
+#: MSGDE125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "Für die Neuerstellung der vorherigen Version sind mindestens 6GB Arbeitsspeicher erforderlich."
+
+#: MSGDE126
+msgid "Current system memory: %sMB"
+msgstr "Aktueller Systemspeicher: %sMB"
+
+#: MSGDE127
+msgid "[ Auto Update ]"
+msgstr "[ Automatisches Update ]"
+
+#: MSGDE128
+msgid "Select"
+msgstr "Auswählen"
+
+#: MSGDE129
+msgid "Save & Exit"
+msgstr "Speichern & Beenden"
+
+#: MSGDE130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: Ausgewähltes Element EIN/AUS umschalten\nSave & Exit: Speichern und beenden"
+

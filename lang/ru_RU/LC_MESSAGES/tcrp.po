@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(выберите Enable ниже)"
 
+
+#: MSGRU68
+msgid "Format System Partition(md0) for New Install"
+msgstr "Форматировать системный раздел(md0) для новой установки"
+
+#: MSGRU86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGRU87
+msgid "Rebuild Previous Version"
+msgstr "Пересобрать предыдущую версию"
+
+#: MSGRU88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "Управление автообновлением TCB, FKC"
+
+#: MSGRU89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "НАСТРОЙКА РЕЖИМА VERBOSE"
+
+#: MSGRU90
+msgid "Current Mode:"
+msgstr "Текущий режим:"
+
+#: MSGRU91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "Включить режим Verbose (показывать весь вывод сборки)"
+
+#: MSGRU92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "Отключить режим Verbose (показывать только прогресс и ошибки)"
+
+#: MSGRU93
+msgid "Return to Main Menu"
+msgstr "Вернуться в главное меню"
+
+#: MSGRU94
+msgid "[Mode Description]"
+msgstr "[Описание режима]"
+
+#: MSGRU95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE ВКЛ - Текущая настройка"
+
+#: MSGRU96
+msgid "Displays all compilation steps"
+msgstr "Показывает все этапы компиляции"
+
+#: MSGRU97
+msgid "Shows detailed error messages"
+msgstr "Показывает подробные сообщения об ошибках"
+
+#: MSGRU98
+msgid "Displays backup process details"
+msgstr "Показывает детали процесса резервного копирования"
+
+#: MSGRU99
+msgid "Slower console output (more I/O)"
+msgstr "Более медленный вывод в консоль (больше I/O)"
+
+#: MSGRU100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE ВЫКЛ - Текущая настройка"
+
+#: MSGRU101
+msgid "Progress bar display only"
+msgstr "Только индикатор прогресса"
+
+#: MSGRU102
+msgid "Displays errors and warnings"
+msgstr "Показывает ошибки и предупреждения"
+
+#: MSGRU103
+msgid "Displays backup process (always visible)"
+msgstr "Процесс резервного копирования всегда виден"
+
+#: MSGRU104
+msgid "Fast, clean console output"
+msgstr "Быстрый, чистый вывод в консоль"
+
+#: MSGRU105
+msgid "Select option [1-3]: "
+msgstr "Выберите опцию [1-3]: "
+
+#: MSGRU106
+msgid "Verbose mode enabled"
+msgstr "Режим Verbose включен"
+
+#: MSGRU107
+msgid "Verbose mode disabled"
+msgstr "Режим Verbose отключен"
+
+#: MSGRU108
+msgid "Invalid selection"
+msgstr "Неверный выбор"
+
+#: MSGRU109
+msgid "Auto Update Settings"
+msgstr "Настройки автообновления"
+
+#: MSGRU110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Автообновление Tinycore Loader Builder"
+
+#: MSGRU111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "Автообновление FRIEND Kernel Console"
+
+#: MSGRU112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "Запустить обновление Tinycore Loader Builder"
+
+#: MSGRU113
+msgid "Run Friend Kernel Console Update"
+msgstr "Запустить обновление Friend Kernel Console"
+
+#: MSGRU114
+msgid "Settings saved."
+msgstr "Настройки сохранены."
+
+#: MSGRU115
+msgid "Already latest version."
+msgstr "Уже установлена последняя версия."
+
+#: MSGRU116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "Обновление завершено.\nТребуется перезагрузка.\n\nНажмите Enter для перезагрузки..."
+
+#: MSGRU117
+msgid "Update cancelled by user."
+msgstr "Обновление отменено пользователем."
+
+#: MSGRU118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "Ошибка обновления (код: %s)\nПроверьте сеть и повторите попытку."
+
+#: MSGRU119
+msgid "Update complete."
+msgstr "Обновление завершено."
+
+#: MSGRU120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "Ошибка обновления (код: %s)\nПроверьте журналы и повторите попытку."
+
+#: MSGRU121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGRU122
+msgid "Change Satadom Option (%s)"
+msgstr "Изменить параметр Satadom (%s)"
+
+#: MSGRU123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGRU124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "Проверить/расширить ёмкость системного раздела(md0)"
+
+#: MSGRU125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "Для пересборки предыдущей версии требуется не менее 6ГБ памяти."
+
+#: MSGRU126
+msgid "Current system memory: %sMB"
+msgstr "Текущая память системы: %sMB"
+
+#: MSGRU127
+msgid "[ Auto Update ]"
+msgstr "[ Автообновление ]"
+
+#: MSGRU128
+msgid "Select"
+msgstr "Выбрать"
+
+#: MSGRU129
+msgid "Save & Exit"
+msgstr "Сохранить и выйти"
+
+#: MSGRU130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: переключить выбранный элемент ON/OFF\nSave & Exit: сохранить и выйти"
+

@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(नीचे Enable चुनें)"
 
+
+#: MSGIN68
+msgid "Format System Partition(md0) for New Install"
+msgstr "नई इंस्टॉल के लिए सिस्टम पार्टीशन(md0) फ़ॉर्मेट करें"
+
+#: MSGIN86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGIN87
+msgid "Rebuild Previous Version"
+msgstr "पिछला संस्करण फिर से बनाएं"
+
+#: MSGIN88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "TCB, FKC स्वचालित अपडेट प्रबंधन"
+
+#: MSGIN89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "VERBOSE मोड कॉन्फ़िगरेशन"
+
+#: MSGIN90
+msgid "Current Mode:"
+msgstr "वर्तमान मोड:"
+
+#: MSGIN91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "Verbose मोड सक्षम करें (सभी बिल्ड आउटपुट दिखाएं)"
+
+#: MSGIN92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "Verbose मोड अक्षम करें (केवल प्रगति और त्रुटियां दिखाएं)"
+
+#: MSGIN93
+msgid "Return to Main Menu"
+msgstr "मुख्य मेनू पर वापस जाएं"
+
+#: MSGIN94
+msgid "[Mode Description]"
+msgstr "[मोड विवरण]"
+
+#: MSGIN95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE ON - वर्तमान सेटिंग"
+
+#: MSGIN96
+msgid "Displays all compilation steps"
+msgstr "सभी संकलन चरण दिखाता है"
+
+#: MSGIN97
+msgid "Shows detailed error messages"
+msgstr "विस्तृत त्रुटि संदेश दिखाता है"
+
+#: MSGIN98
+msgid "Displays backup process details"
+msgstr "बैकअप प्रक्रिया का विवरण दिखाता है"
+
+#: MSGIN99
+msgid "Slower console output (more I/O)"
+msgstr "धीमा कंसोल आउटपुट (अधिक I/O)"
+
+#: MSGIN100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE OFF - वर्तमान सेटिंग"
+
+#: MSGIN101
+msgid "Progress bar display only"
+msgstr "केवल प्रगति बार दिखाता है"
+
+#: MSGIN102
+msgid "Displays errors and warnings"
+msgstr "त्रुटियां और चेतावनियां दिखाता है"
+
+#: MSGIN103
+msgid "Displays backup process (always visible)"
+msgstr "बैकअप प्रक्रिया हमेशा दिखाई देती है"
+
+#: MSGIN104
+msgid "Fast, clean console output"
+msgstr "तेज़, साफ कंसोल आउटपुट"
+
+#: MSGIN105
+msgid "Select option [1-3]: "
+msgstr "एक विकल्प चुनें [1-3]: "
+
+#: MSGIN106
+msgid "Verbose mode enabled"
+msgstr "Verbose मोड सक्षम किया गया"
+
+#: MSGIN107
+msgid "Verbose mode disabled"
+msgstr "Verbose मोड अक्षम किया गया"
+
+#: MSGIN108
+msgid "Invalid selection"
+msgstr "अमान्य चयन"
+
+#: MSGIN109
+msgid "Auto Update Settings"
+msgstr "स्वचालित अपडेट सेटिंग्स"
+
+#: MSGIN110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Tinycore Loader Builder स्वचालित अपडेट"
+
+#: MSGIN111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "FRIEND Kernel Console स्वचालित अपडेट"
+
+#: MSGIN112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "Tinycore Loader Builder अपडेट चलाएं"
+
+#: MSGIN113
+msgid "Run Friend Kernel Console Update"
+msgstr "Friend Kernel Console अपडेट चलाएं"
+
+#: MSGIN114
+msgid "Settings saved."
+msgstr "सेटिंग्स सहेजी गईं।"
+
+#: MSGIN115
+msgid "Already latest version."
+msgstr "पहले से नवीनतम संस्करण है।"
+
+#: MSGIN116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "अपडेट पूर्ण।\nरीबूट आवश्यक है।\n\nरीबूट के लिए Enter दबाएं..."
+
+#: MSGIN117
+msgid "Update cancelled by user."
+msgstr "उपयोगकर्ता द्वारा अपडेट रद्द किया गया।"
+
+#: MSGIN118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "अपडेट विफल (कोड: %s)\nनेटवर्क जांचें और पुनः प्रयास करें।"
+
+#: MSGIN119
+msgid "Update complete."
+msgstr "अपडेट पूर्ण।"
+
+#: MSGIN120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "अपडेट विफल (कोड: %s)\nलॉग जांचें और पुनः प्रयास करें।"
+
+#: MSGIN121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGIN122
+msgid "Change Satadom Option (%s)"
+msgstr "Satadom विकल्प बदलें (%s)"
+
+#: MSGIN123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGIN124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "सिस्टम पार्टीशन(md0) क्षमता जांचें / बढ़ाएं"
+
+#: MSGIN125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "पिछले संस्करण को फिर से बनाने के लिए कम से कम 6GB मेमोरी आवश्यक है।"
+
+#: MSGIN126
+msgid "Current system memory: %sMB"
+msgstr "वर्तमान सिस्टम मेमोरी: %sMB"
+
+#: MSGIN127
+msgid "[ Auto Update ]"
+msgstr "[ स्वचालित अपडेट ]"
+
+#: MSGIN128
+msgid "Select"
+msgstr "चुनें"
+
+#: MSGIN129
+msgid "Save & Exit"
+msgstr "सहेजें और बाहर निकलें"
+
+#: MSGIN130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: चयनित आइटम ON/OFF टॉगल करें\nSave & Exit: सहेजें और बाहर निकलें"
+

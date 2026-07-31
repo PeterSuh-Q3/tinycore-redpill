@@ -326,3 +326,188 @@ msgstr "driver: %s, ffmpeg: %s"
 msgid "(choose Enable below)"
 msgstr "(elija Enable abajo)"
 
+
+#: MSGES68
+msgid "Format System Partition(md0) for New Install"
+msgstr "Formatear la partición del sistema(md0) para una instalación nueva"
+
+#: MSGES86
+msgid "Verbose Mode (%s)"
+msgstr "Verbose Mode (%s)"
+
+#: MSGES87
+msgid "Rebuild Previous Version"
+msgstr "Reconstruir la versión anterior"
+
+#: MSGES88
+msgid "TCB, FKC Automatic Update Management"
+msgstr "Gestión de actualizaciones automáticas TCB, FKC"
+
+#: MSGES89
+msgid "VERBOSE MODE CONFIGURATION"
+msgstr "CONFIGURACIÓN DEL MODO VERBOSE"
+
+#: MSGES90
+msgid "Current Mode:"
+msgstr "Modo actual:"
+
+#: MSGES91
+msgid "Enable Verbose Mode (Show all build output)"
+msgstr "Activar modo Verbose (Mostrar toda la salida de compilación)"
+
+#: MSGES92
+msgid "Disable Verbose Mode (Show only progress & errors)"
+msgstr "Desactivar modo Verbose (Mostrar solo progreso y errores)"
+
+#: MSGES93
+msgid "Return to Main Menu"
+msgstr "Volver al menú principal"
+
+#: MSGES94
+msgid "[Mode Description]"
+msgstr "[Descripción del modo]"
+
+#: MSGES95
+msgid "VERBOSE ON - Current Setting"
+msgstr "VERBOSE ACTIVADO - Ajuste actual"
+
+#: MSGES96
+msgid "Displays all compilation steps"
+msgstr "Muestra todos los pasos de compilación"
+
+#: MSGES97
+msgid "Shows detailed error messages"
+msgstr "Muestra mensajes de error detallados"
+
+#: MSGES98
+msgid "Displays backup process details"
+msgstr "Muestra detalles del proceso de copia de seguridad"
+
+#: MSGES99
+msgid "Slower console output (more I/O)"
+msgstr "Salida de consola más lenta (más E/S)"
+
+#: MSGES100
+msgid "VERBOSE OFF - Current Setting"
+msgstr "VERBOSE DESACTIVADO - Ajuste actual"
+
+#: MSGES101
+msgid "Progress bar display only"
+msgstr "Solo muestra la barra de progreso"
+
+#: MSGES102
+msgid "Displays errors and warnings"
+msgstr "Muestra errores y advertencias"
+
+#: MSGES103
+msgid "Displays backup process (always visible)"
+msgstr "El proceso de copia de seguridad siempre visible"
+
+#: MSGES104
+msgid "Fast, clean console output"
+msgstr "Salida de consola rápida y limpia"
+
+#: MSGES105
+msgid "Select option [1-3]: "
+msgstr "Seleccione una opción [1-3]: "
+
+#: MSGES106
+msgid "Verbose mode enabled"
+msgstr "Modo Verbose activado"
+
+#: MSGES107
+msgid "Verbose mode disabled"
+msgstr "Modo Verbose desactivado"
+
+#: MSGES108
+msgid "Invalid selection"
+msgstr "Selección inválida"
+
+#: MSGES109
+msgid "Auto Update Settings"
+msgstr "Configuración de actualización automática"
+
+#: MSGES110
+msgid "Tinycore Loader Builder Auto Update"
+msgstr "Actualización automática de Tinycore Loader Builder"
+
+#: MSGES111
+msgid "FRIEND Kernel Console Auto Update"
+msgstr "Actualización automática de FRIEND Kernel Console"
+
+#: MSGES112
+msgid "Run Tinycore Loader Builder Update"
+msgstr "Ejecutar actualización de Tinycore Loader Builder"
+
+#: MSGES113
+msgid "Run Friend Kernel Console Update"
+msgstr "Ejecutar actualización de Friend Kernel Console"
+
+#: MSGES114
+msgid "Settings saved."
+msgstr "Configuración guardada."
+
+#: MSGES115
+msgid "Already latest version."
+msgstr "Ya está en la última versión."
+
+#: MSGES116
+msgid "Update complete.\nReboot required.\n\nPress Enter to Reboot..."
+msgstr "Actualización completa.\nSe requiere reinicio.\n\nPresione Enter para reiniciar..."
+
+#: MSGES117
+msgid "Update cancelled by user."
+msgstr "Actualización cancelada por el usuario."
+
+#: MSGES118
+msgid "Update failed (code: %s)\nCheck network and try again."
+msgstr "Actualización fallida (código: %s)\nVerifique la red e intente de nuevo."
+
+#: MSGES119
+msgid "Update complete."
+msgstr "Actualización completa."
+
+#: MSGES120
+msgid "Update failed (code: %s)\nCheck logs and try again."
+msgstr "Actualización fallida (código: %s)\nVerifique los registros e intente de nuevo."
+
+#: MSGES121
+msgid "dbgutils Addon"
+msgstr "dbgutils Addon"
+
+#: MSGES122
+msgid "Change Satadom Option (%s)"
+msgstr "Cambiar opción Satadom (%s)"
+
+#: MSGES123
+msgid "%s i915 module"
+msgstr "%s i915 module"
+
+#: MSGES124
+msgid "Check / Expand System Partition (md0) Capacity"
+msgstr "Verificar/expandir capacidad de partición del sistema(md0)"
+
+#: MSGES125
+msgid "At least 6GB of memory is required to rebuild the previous version."
+msgstr "Se requieren al menos 6GB de memoria para reconstruir la versión anterior."
+
+#: MSGES126
+msgid "Current system memory: %sMB"
+msgstr "Memoria del sistema actual: %sMB"
+
+#: MSGES127
+msgid "[ Auto Update ]"
+msgstr "[ Actualización automática ]"
+
+#: MSGES128
+msgid "Select"
+msgstr "Seleccionar"
+
+#: MSGES129
+msgid "Save & Exit"
+msgstr "Guardar y salir"
+
+#: MSGES130
+msgid "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit"
+msgstr "ENTER: Alternar elemento seleccionado ON/OFF\nSave & Exit: Guardar y salir"
+
