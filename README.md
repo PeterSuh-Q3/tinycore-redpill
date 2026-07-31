@@ -61,47 +61,96 @@ chmod 0440 /etc/sudoers.d/Changepanelsize
 ### Please note that minimum recommended memory size for configuring the loader is 4GB
 
 
-# Instructions 
+# Instructions
 
 A typical build process starts with:
 
 1. Burn images
 
     A. To burn physical gunzip and img files to a USB stick
-    
+
     B. For virtual gunzip use the provided vmdk file
-    
-2. Boot alpine
 
-3. Loader Building
+2. Boot alpine — `menu.sh` starts automatically and shows the main menu below.
 
+## Main Menu
 
-<img width="1019" height="758" alt="스크린샷 2025-11-06 오전 8 50 59" src="https://github.com/user-attachments/assets/58657e2e-55e0-486d-8421-6ffcdf834f9d" />
+The main menu is grouped into three sections. Selecting a section header (`1`, `2`, `3`) just jumps the cursor to that section's first item — it isn't a separate screen. The title bar always shows the current loader version, dev-mod handling (DDSML/EUDEV), language, loader mode, module pack, model, DSM build, serial, IP, MAC address(es), and storage panel size, e.g.:
 
+```
+TCRP-mshell v1.4.2.3 EUDEV en_US FRIEND all-modules IML SA6400 7.4.1-90080-0 1234567890AB 192.168.1.50 001132AABBCC (RACK_12_Bay)
+```
 
-        A. Choose one of the Synology models.
+Below is what the menu looks like once a model has been chosen (before that, section 1 only shows item `c`, since every other build-workflow item needs a model selected first):
 
+```
++----------------------------------------------------------------------------+
+| TCRP-mshell v1.4.2.3 EUDEV en_US FRIEND all-modules IML SA6400 ...         |
++----------------------------------------------------------------------------+
+|                                                                            |
+|   1   =============== Main ===============                               |
+|   m   Choose a Synology Model, (SA6400)                                   |
+|   j   Choose a DSM VERSION, Current (7.4.1-90080)                         |
+|   s   Choose a Synology Serial Number                                     |
+|   a   Choose a mac address (up to 8 supported)                            |
+|   z   Select build pre-option (required or not required)                  |
+|   g   NVIDIA H/W Trans. [OFF] - select to add                             |
+|   p   Build the loader (7.4.1-90080, i915+amdgpu, all-modules:IML)        |
+|                                                                            |
+|   2   =============== Environment ===============                        |
+|   u   Edit user config file manually                                     |
+|   v   Verbose Mode (OFF)                                                  |
+|   l   Choose a language                                                  |
+|                                                                            |
+|   3   =============== Misc ===============                               |
+|   n   Additional Functions                                               |
+|   x   Syno disk and partition handling                                   |
+|   b   Backup TCRP                                                        |
+|   w   Rebuild Previous Version                                           |
+|   q   TCB, FKC Automatic Update Management                               |
+|   r   Reboot                                                             |
+|   e   Power Off                                                          |
+|   o   Exit Menu                                                          |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                    <  OK  >              <Cancel>                        |
++----------------------------------------------------------------------------+
+```
 
-<img width="507" alt="스크린샷 2023-02-24 오후 6 32 42" src="https://user-images.githubusercontent.com/85427533/221143853-02cd5136-98be-422a-94f2-44a8d39cd8d7.png">
+### Section 1 — Main (the build workflow, follow top to bottom)
 
+| Key | Item | What it does |
+|---|---|---|
+| `c` | Choose a Dev Mod handling method, DDSML/EUDEV | Only shown before a model is picked. Switches between DDSML (static, per-model module loading) and EUDEV (enhanced userspace device detection) — this choice affects which model list appears next, so it's the very first decision. |
+| `m` | Choose a Synology Model | Opens the model picker (filtered by platform group / DT vs non-DT / after-Haswell support). Selecting a model resets the module pack to `all-modules` unless the platform requires otherwise, and — for BMI2-less CPUs on a kernel-5.10.55 platform — automatically caps a stale stored DSM version down to the newest one that still has a BMI2-free `custom-modules` build (≤ 7.3.2). |
+| `j` | Choose a DSM VERSION | Lists up to 12 revisions for the selected model, newest first, pulled live from `pats.json`. On a BMI2-less CPU (kernel-5.10.55 platforms only), DSM 7.4.0+ entries are filtered out since neither `all-modules` (needs BMI2) nor `custom-modules` (only built through 7.3.2) can boot there. |
+| `s` | Choose a Synology Serial Number | Generate a random serial or enter a real one. Required before building. |
+| `a` | Choose a mac address (up to 8 supported) | Opens a submenu listing every present NIC (`a`–`h`); picking one lets you use the real MAC, generate a random one, or type one in. With only one NIC it skips straight to the address picker. |
+| `z` | Select build pre-option | Submenu covering, in order: loader mode (FRIEND vs Direct-Boot), DDSML/EUDEV, DTS mapping, SATA-port remap, and storage panel size — the platform/hardware-shape choices that need to be locked in before a build. |
+| `g` | NVIDIA H/W Trans. | Only shown on kernel 5.10.55/4.4 platforms (kernel 3.10 shows `(Not Supported)` and can't be entered, kernel 3.x hides the item entirely). Pick a no-auth NVIDIA driver version, optionally bundle an NVENC-capable ffmpeg for the Jellyfin package, and enable the addon. The submenu only offers driver versions that actually exist for the current platform *and* kernel. |
+| `p` | Build the loader | Runs the actual build with everything selected above. The label always shows the current DSM build, DRM mode, and module pack so you can sanity-check before committing. |
+| `y` | Boot the loader | Only shown once a FRIEND-mode loader has already been built (`FRKRNL=YES`) — boots straight into it without rebuilding. |
 
-        B. Create a virtual serial number or enter a prepared serial number.
+### Section 2 — Environment
 
+| Key | Item | What it does |
+|---|---|---|
+| `u` | Edit user config file manually | Opens `user_config.json` directly in an editor for advanced/manual tweaks that don't have a dedicated menu yet. |
+| `v` | Verbose Mode | Toggles extra build/runtime logging on or off; current state is shown in the label. |
+| `l` | Choose a language | Switches the menu's display language (18 languages supported). |
 
-<img width="480" alt="스크린샷 2023-02-24 오후 6 58 31" src="https://user-images.githubusercontent.com/85427533/221150226-bb4af0cd-068e-4fca-b726-475016a0183e.png">
+### Section 3 — Misc
 
-
-        C. Select the real mac address of the nic or create a virtual mac address or 
-           input the prepared mac address. 
-           (If there are 2 nics, you can enter up to the 2nd mac address)
-    
-    
-<img width="492" alt="스크린샷 2023-02-24 오후 7 02 21" src="https://user-images.githubusercontent.com/85427533/221150320-2421f744-d5b5-4fe8-8e99-247919afa8e7.png">
-    
-    
-        D. Build the loader.
-
-6. Reboot
+| Key | Item | What it does |
+|---|---|---|
+| `n` | Additional Functions | Submenu for DSM-side maintenance once a loader has booted DSM: change the DSM password, add a new DSM user, clean/format the system partition, fix a broken boot entry, format data disks, mount a Syno volume, and expand a legacy `md0`. |
+| `x` | Syno disk and partition handling | Submenu for burning/cloning the loader itself, injecting or removing a bootloader partition on a Synology data disk, packing the loader for remote update, and viewing the running loader's error log. |
+| `b` | Backup TCRP | Backs up the current loader state so it survives a reboot without needing a full rebuild. |
+| `w` | Rebuild Previous Version | Re-downloads and rebuilds whichever loader version was in use before the current one, without walking through the whole model/version picker again. |
+| `q` | TCB, FKC Automatic Update Management | Manages automatic-update settings for TCRP itself and for FKC (FriendConfig) style extensions. |
+| `r` | Reboot | Reboots the loader environment (not DSM). |
+| `e` | Power Off | Shuts the loader environment down. |
+| `o` | Exit Menu | Leaves `menu.sh` and drops to a shell, without rebooting or powering off. |
 
 < Version History >
 
