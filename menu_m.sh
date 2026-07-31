@@ -2514,13 +2514,12 @@ select_and_run_menu() {
     if [ "$MEM_MB" -lt "$MIN_MB" ]; then
         eval "MSG125=\"\${MSG${tz}125}\""
         eval "MSG126=\"\${MSG${tz}126}\""
-        eval "MSG35=\"\${MSG${tz}35}\""
-        echo "${MSG125}"
-        echo "$(printf "${MSG126}" "${MEM_MB}")"
-        echo -n "${MSG35}"
-        # 아무 키 입력 대기
-        read -r -n1 _
-        echo
+        # 다른 하위메뉴들과 동일하게 dialog 팝업으로 안내한다(기존에는
+        # echo + read 로 콘솔에 찍혀, dialog 화면 위에 겹쳐 보이거나
+        # 메뉴로 돌아오면서 지워져 못 보고 지나치기 쉬웠다).
+        dialog --clear --backtitle "`backtitle`" --colors \
+            --msgbox "\Z1${MSG125}\Zn\n\n$(printf "${MSG126}" "${MEM_MB}")" 9 70
+        clear
         return
     fi
     
