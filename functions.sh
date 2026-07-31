@@ -85,7 +85,7 @@ BIOS_CNT="$(sudo fdisk -l | grep "BIOS" | wc -l )"
 
  
 function history() {
-    cat <<EOF
+    cat <<'EOF'
     --------------------------------------------------------------------------------------
     0.7.0.0 Added build for version greater than 42218
     0.7.0.1 Added required extension parsing adding and downloading
@@ -946,7 +946,7 @@ EOF
 # popup. Fixed a dialog sizing bug that closed the Verbose submenu instantly on 24-row consoles.
 
 function showlastupdate() {
-    cat <<EOF
+    cat <<'EOF'
 
 # 2025.04.18 v1.2.2.9 
 # Fixed the issue where the font of the menu focus would be broken 
