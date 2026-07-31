@@ -1612,7 +1612,18 @@ function backup() {
 
 function burnloader() {
 
-  tcrpdev=/dev/$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
+  # 로더 디스크는 getloaderdisk() 가 blkid 의 파티션 UUID(6234-C863) 로 찾아
+  # 전역 loaderdisk 에 넣어둔 값을 쓴다. 예전의
+  #   mount | grep -i optional | grep cde
+  # 는 TinyCore 의 마운트 구조(/mnt/sdX1/tce/optional)에만 맞는 패턴이라
+  # Alpine(/media/sdb4, /mnt/alpine)에서는 아무것도 매칭되지 않는다. 그러면
+  # tcrpdev 가 '/dev/' 가 되고, 아래 grep -v 가 후보를 전부 지워버려 "기록할
+  # 디스크가 없다"로 조용히 끝난다(실기 80번 Alpine 에서 확인).
+  # getBus() 가 nvme/mmc/block 에서 뒤에 'p' 를 붙여두므로 떼고 쓴다.
+  tcrpdev="/dev/${loaderdisk%p}"
+  # 탐지에 실패했을 때 빈 값이 "전부 제외"로 동작하지 않도록, 어떤 경로와도
+  # 매칭되지 않는 문자열로 바꿔 필터를 사실상 무력화한다.
+  [ -z "${loaderdisk}" ] && tcrpdev="__no_loader_disk__"
   listusb=()
   # 2024.07.06 Add NVMe
   listusb+=( $(lsblk -o PATH,ROTA,TRAN | grep -E '/dev/(sd|nvme)' | grep -v ${tcrpdev} | grep -E '(1 usb|0 sata|0 nvme)' | awk '{print $1}' ) )
@@ -1729,7 +1740,28 @@ function showsata () {
 
 function cloneloader() {
 
-  tcrpdev=/dev/$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
+  # 로더 디스크는 getloaderdisk() 가 blkid 의 파티션 UUID(6234-C863) 로 찾아
+  # 전역 loaderdisk 에 넣어둔 값을 쓴다. 예전의
+  #   mount | grep -i optional | grep cde
+  # 는 TinyCore 의 마운트 구조(/mnt/sdX1/tce/optional)에만 맞는 패턴이라
+  # Alpine(/media/sdb4, /mnt/alpine)에서는 아무것도 매칭되지 않는다. 그러면
+  # tcrpdev 가 '/dev/' 가 되고, 아래 grep -v 가 후보를 전부 지워버려 "기록할
+  # 디스크가 없다"로 조용히 끝난다(실기 80번 Alpine 에서 확인).
+  #
+  # 굽기와 달리 복제는 로더를 원본으로 읽어야 한다(아래 dd if=). 원본을
+  # 특정하지 못하면 할 수 있는 일이 없으므로 여기서 중단한다.
+  if [ -z "${loaderdisk}" ]; then
+    echo "Cannot identify the running loader disk - clone aborted."
+    echo "press any key to continue..."
+    read answer
+    return 1
+  fi
+  # 목록에서 제외할 디스크 경로. getBus() 가 nvme/mmc/block 에 붙여둔 'p' 는
+  # 디스크 이름이 아니라 파티션 접두사라 여기서는 뗀다.
+  tcrpdev="/dev/${loaderdisk%p}"
+  # dd 원본으로 쓸 파티션 접두사는 반대로 'p' 를 살려야 한다
+  # (/dev/nvme0n1p1 이지 /dev/nvme0n11 이 아니다).
+  tcrpsrc="/dev/${loaderdisk}"
   listusb=()
   listusb+=( $(lsblk -o PATH,ROTA,TRAN | grep '/dev/sd' | grep -v ${tcrpdev} | grep -E '(1 usb|0 sata)' | awk '{print $1}' ) )
 
@@ -1749,9 +1781,9 @@ function cloneloader() {
   loaderdev="`<${TMP_PATH}/resp`"
 
   echo "Backup Current TCRP-mshell loader to img file..."  
-  sudo dd if=${tcrpdev}1 of=${TMP_PATH}/tinycore-redpill.backup_p1.img status=progress bs=4M
-  sudo dd if=${tcrpdev}2 of=${TMP_PATH}/tinycore-redpill.backup_p2.img status=progress bs=4M
-  sudo dd if=${tcrpdev}3 of=${TMP_PATH}/tinycore-redpill.backup_p3.img status=progress bs=4M
+  sudo dd if=${tcrpsrc}1 of=${TMP_PATH}/tinycore-redpill.backup_p1.img status=progress bs=4M
+  sudo dd if=${tcrpsrc}2 of=${TMP_PATH}/tinycore-redpill.backup_p2.img status=progress bs=4M
+  sudo dd if=${tcrpsrc}3 of=${TMP_PATH}/tinycore-redpill.backup_p3.img status=progress bs=4M
   
   echo "Please wait a moment. Cloning is in progress..."  
   sudo dd if=${TMP_PATH}/tinycore-redpill.backup_p1.img of=${loaderdev}1 status=progress bs=4M
