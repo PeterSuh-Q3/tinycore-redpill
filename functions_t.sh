@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.3"
+rploaderver="1.4.2.4"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -376,6 +376,12 @@ function history() {
              --no-tags hiding submenu index letters; missing Mesa DRI packages leaving X's
              framebuffer frozen while openbox/tint2/lxterminal ran (mesa-dri-gallium/gl/egl/gbm
              added). 18 languages updated with 2 new translated strings.
+    1.4.2.4 Completed menu localization: every remaining hardcoded English string across the main
+             menu and its submenus is now translated into all 18 supported languages. The Verbose
+             Mode submenu was rebuilt as a dialog window (previously a plain text prompt), and the
+             low-memory notice that blocks 'Rebuild Previous Version' under 6GB is now a dialog
+             popup instead of console output that was easy to miss. Also fixed a dialog sizing bug
+             that made the Verbose submenu close immediately on 24-row consoles.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -933,6 +939,12 @@ EOF
 # after eth6; `menu.sh test` crashing on new message IDs; --no-tags hiding submenu index letters;
 # missing Mesa DRI packages leaving X's framebuffer frozen. 18 languages updated with 2 new strings.
 
+# 2026.07.31 v1.4.2.4
+# Completed menu localization - all remaining hardcoded English strings in the main menu and its
+# submenus are now translated into all 18 supported languages. Verbose Mode submenu rebuilt as a
+# dialog window, and the under-6GB block notice for 'Rebuild Previous Version' is now a dialog
+# popup. Fixed a dialog sizing bug that closed the Verbose submenu instantly on 24-row consoles.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1209,6 +1221,12 @@ function showlastupdate() {
 # up-to-8-interface submenu, panel size in the title bar). Also fixed: 8-port MAC flow dropping out
 # after eth6; `menu.sh test` crashing on new message IDs; --no-tags hiding submenu index letters;
 # missing Mesa DRI packages leaving X's framebuffer frozen. 18 languages updated with 2 new strings.
+
+# 2026.07.31 v1.4.2.4
+# Completed menu localization - all remaining hardcoded English strings in the main menu and its
+# submenus are now translated into all 18 supported languages. Verbose Mode submenu rebuilt as a
+# dialog window, and the under-6GB block notice for 'Rebuild Previous Version' is now a dialog
+# popup. Fixed a dialog sizing bug that closed the Verbose submenu instantly on 24-row consoles.
 
 EOF
 }
