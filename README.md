@@ -10,6 +10,8 @@ https://paypal.me/PeterSuhQ3
 
 # Instructions
 
+_[한국어 안내는 여기](README_instruction_ko.md)_
+
 A typical build process starts with:
 
 1. Burn images
