@@ -160,7 +160,7 @@ msgstr "netif_num과 mac 주소 갯수가 일치하지 않습니다. user_config
 
 #: MSGKR39 
 msgid "Choose a language"
-msgstr "언어를 선택하세요(Choose a lageuage)"
+msgstr "언어를 선택하세요"
 
 #: MSGKR40 
 msgid "DDSML+EUDEV"

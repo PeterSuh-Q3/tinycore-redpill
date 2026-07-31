@@ -160,7 +160,7 @@ msgstr "O netif_num e o número de endereços MAC não correspondem. Verifique o
 
 #: MSGBR39 
 msgid "Choose a language"
-msgstr "Olá! Posso ajudá-lo em Português"
+msgstr "Escolha um idioma"
 
 #: MSGBR40 
 msgid "DDSML+EUDEV"
