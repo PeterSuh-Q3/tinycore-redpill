@@ -35,18 +35,19 @@ fi
 #     쓰기 시작하는지 (7.3.0). 이 버전부터는 BMI2 없는 CPU에서 all-modules
 #     부팅이 안 됨.
 #   - CUSTOM_MODULES_MAX_DSM: BMI2 없는 CPU용 대안인 custom-modules가 실제로
-#     빌드되어 있는 최신 DSM 버전 (7.3.2). 이걸 넘는 버전(7.4.0+)은 BMI2 없는
-#     CPU에서 쓸 수 있는 모듈팩이 전혀 없음(Synology가 DSM 7.4 GPL 소스를
-#     아직 미공개).
+#     빌드되어 있는 최신 DSM 버전. tcrp-modules 에 커널5 플랫폼(epyc7002/
+#     epyc7003/geminilakenk/r1000nk/v1000nk/icelaked)용 DSM 7.4 빌드가
+#     추가되어(2026-08-01) 7.3.2 상한이 해제, 현재 pats.json 지원 최신
+#     리비전인 7.4.1 까지 사용 가능.
 # 즉 BMI2 없는 CPU에서 실제 사용 가능한 범위는 "< 7.3.0"(all-modules) +
-# "7.3.0~7.3.2"(custom-modules) 이고, "7.4.0 이상"만 완전히 막힌다. 이전에는
+# "7.3.0 이상"(custom-modules, CUSTOM_MODULES_MAX_DSM_ZPAD 까지)이다. 이전에는
 # selectversion()만 이 경계를 하드코딩된 매직넘버(7004)로 반영했고,
 # checkAndResetModuleName()/selectldrmode()는 "DSM>=7.3.0이면 custom-modules
 # 가능"으로만 판단해 7.4.0+에서도 custom-modules를 있는 것처럼 다뤄 일관성이
 # 없었다. 세 곳 모두 아래 공용 상수/헬퍼로 통일하고, 모델 선택 시점에도
 # enforceBmi2VersionCap()으로 즉시 반영한다.
 BMI2_REQUIRED_FROM_DSM_ZPAD="007003000"   # 7.3.0
-CUSTOM_MODULES_MAX_DSM_ZPAD="007003002"   # 7.3.2
+CUSTOM_MODULES_MAX_DSM_ZPAD="007004001"   # 7.4.1 (custom-modules 최신 빌드 상한)
 
 # "7.3.2-86009" / "7.3-69057" 같은 문자열을 major/minor/patch 9자리
 # zero-pad 정수로 변환 (patch 필드가 없으면 0으로 처리)
@@ -59,9 +60,9 @@ function zpadDsmVersion() {
 }
 
 # 모델 선택 시점에 즉시 적용: 현재 플랫폼이 kver5platforms 이고 BMI2 미지원인데
-# 저장된 general.version(DSM)이 CUSTOM_MODULES_MAX_DSM_ZPAD(7.3.2)를 초과하면
+# 저장된 general.version(DSM)이 CUSTOM_MODULES_MAX_DSM_ZPAD(7.4.1)를 초과하면
 # (즉 7.4.0+ 이면, custom-modules 조차 없어 부팅 가능한 모듈팩이 전혀 없음)
-# 해당 모델의 pats.json 지원 리비전 중 7.3.2 이하의 최신 리비전으로 즉시 되돌린다.
+# 해당 모델의 pats.json 지원 리비전 중 7.4.1 이하의 최신 리비전으로 즉시 되돌린다.
 function enforceBmi2VersionCap() {
   local plat
   plat="$(resolveLiveKver)"; plat="${plat##*|}"
@@ -73,7 +74,7 @@ function enforceBmi2VersionCap() {
   curZpadDsm=$(zpadDsmVersion "${curBuild}")
   [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ] || return 0
 
-  # pats.json 에서 이 모델의 리비전 중 7.3.2 이하 최신 버전을 조회
+  # pats.json 에서 이 모델의 리비전 중 7.4.1 이하 최신 버전을 조회
   local safeVersion
   safeVersion=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[]" "${configfile}" 2>/dev/null | while read -r v; do
     if [ "$(zpadDsmVersion "${v}")" -le "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
@@ -84,7 +85,7 @@ function enforceBmi2VersionCap() {
   [ -n "${safeVersion}" ] || return 0
 
   echo "⚠ Stored DSM ${curBuild} needs BMI2 (not present on this CPU) and exceeds"
-  echo "  custom-modules cap (7.3.2). Resetting version to ${safeVersion}..."
+  echo "  custom-modules cap (7.4.1). Resetting version to ${safeVersion}..."
   writeConfigKey "general" "version" "${safeVersion}"
 }
 # ───────────────────────────────────────────────────────────────────────────────
@@ -594,14 +595,14 @@ function checkAndResetModuleName() {
         # ① 커널 >= 5.10.55
         if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
             if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-                # DSM > 7.3.2 + BMI2 미지원: custom-modules 도 존재하지 않음.
+                # DSM > 7.4.1 + BMI2 미지원: custom-modules 도 존재하지 않음.
                 # 사용 가능한 모듈팩이 전혀 없는 상태이므로, 최소한 빌드가
                 # 되도록 all-modules(IML) 로 되돌린다. (실제로는 이 DSM 버전 자체가
                 # selectversion()/enforceBmi2VersionCap() 단계에서 이미 걸러져야 함)
                 fallbackMdl="all-modules"; fallbackMethod="IML"
                 supported=false
             else
-                # DSM 7.3.0 ~ 7.3.2 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
+                # DSM 7.3.0 ~ 7.4.1 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
                 # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
                 # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
                 fallbackMdl="custom-modules"; fallbackMethod="PML"
@@ -668,10 +669,10 @@ function selectldrmode() {
     # ① 커널 >= 5.10.55
     if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
       if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-        # DSM > 7.3.2 + BMI2 미지원: custom-modules 도 존재하지 않음 → nodrm 만 노출
+        # DSM > 7.4.1 + BMI2 미지원: custom-modules 도 존재하지 않음 → nodrm 만 노출
         menu_options=("n" "${MSGND}, anodrm-modules(In-Memory:IML)")
       else
-        # DSM 7.3.0 ~ 7.3.2 + BMI2 미지원: custom-modules + nodrm 만 노출
+        # DSM 7.3.0 ~ 7.4.1 + BMI2 미지원: custom-modules + nodrm 만 노출
         menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)" \
                       "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
       fi
@@ -780,7 +781,7 @@ if [ "${HAS_BMI2}" = "n" ] && echo "${kver5platforms}" | grep -qw "${_bmi2_plat}
   for v in "${versions[@]}"; do
     vZpadDsm=$(zpadDsmVersion "${v}")
     if [ "${vZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${vZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-      echo "Excluding ${v} (DSM > 7.3.2 requires BMI2 CPU; custom-modules not built past 7.3.2)"
+      echo "Excluding ${v} (DSM > 7.4.1 requires BMI2 CPU; custom-modules not built past 7.4.1)"
       continue
     fi
     filtered+=("${v}")
