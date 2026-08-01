@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.4"
+rploaderver="1.4.2.5"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -382,6 +382,11 @@ function history() {
              low-memory notice that blocks 'Rebuild Previous Version' under 6GB is now a dialog
              popup instead of console output that was easy to miss. Also fixed a dialog sizing bug
              that made the Verbose submenu close immediately on 24-row consoles.
+    1.4.2.5 Retired the legacy TinyCore-only multi-NIC eth* reorder and DHCP/default-route reset
+             from automatic menu startup. Alpine and xTCRP already enumerate NICs in PCI order;
+             avoiding the reset preserves active SSH management sessions. Expanded the BMI2-free
+             custom-modules path on kernel-5 platforms through DSM 7.4.1, including the relevant
+             version cap, model-selection correction, picker filtering, and module-mode validation.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -945,6 +950,12 @@ EOF
 # dialog window, and the under-6GB block notice for 'Rebuild Previous Version' is now a dialog
 # popup. Fixed a dialog sizing bug that closed the Verbose submenu instantly on 24-row consoles.
 
+# 2026.08.01 v1.4.2.5
+# Disabled the legacy TinyCore-only multi-NIC eth* reorder and DHCP/default-route reset at menu
+# startup. Alpine and xTCRP already enumerate NICs in PCI order, so this preserves active SSH
+# management sessions. Expanded BMI2-free custom-modules support on kernel-5 platforms through
+# DSM 7.4.1 and aligned the cap, model-selection correction, picker filtering, and mode validation.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1227,6 +1238,12 @@ function showlastupdate() {
 # submenus are now translated into all 18 supported languages. Verbose Mode submenu rebuilt as a
 # dialog window, and the under-6GB block notice for 'Rebuild Previous Version' is now a dialog
 # popup. Fixed a dialog sizing bug that closed the Verbose submenu instantly on 24-row consoles.
+
+# 2026.08.01 v1.4.2.5
+# Disabled the legacy TinyCore-only multi-NIC eth* reorder and DHCP/default-route reset at menu
+# startup. Alpine and xTCRP already enumerate NICs in PCI order, so this preserves active SSH
+# management sessions. Expanded BMI2-free custom-modules support on kernel-5 platforms through
+# DSM 7.4.1 and aligned the cap, model-selection correction, picker filtering, and mode validation.
 
 EOF
 }

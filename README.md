@@ -37,8 +37,8 @@ Section 1 (`Main`) only shows item `c` before a model is picked — every other 
 | Key | Item | What it does |
 |---|---|---|
 | `c` | Choose a Dev Mod handling method, DDSML/EUDEV | Only shown before a model is picked. Switches between DDSML (static, per-model module loading) and EUDEV (enhanced userspace device detection) — this choice affects which model list appears next, so it's the very first decision. |
-| `m` | Choose a Synology Model | Opens the model picker (filtered by platform group / DT vs non-DT / after-Haswell support). Selecting a model resets the module pack to `all-modules` unless the platform requires otherwise, and — for BMI2-less CPUs on a kernel-5.10.55 platform — automatically caps a stale stored DSM version down to the newest one that still has a BMI2-free `custom-modules` build (≤ 7.3.2). |
-| `j` | Choose a DSM VERSION | Lists up to 12 revisions for the selected model, newest first, pulled live from `pats.json`. On a BMI2-less CPU (kernel-5.10.55 platforms only), DSM 7.4.0+ entries are filtered out since neither `all-modules` (needs BMI2) nor `custom-modules` (only built through 7.3.2) can boot there. |
+| `m` | Choose a Synology Model | Opens the model picker (filtered by platform group / DT vs non-DT / after-Haswell support). Selecting a model resets the module pack to `all-modules` unless the platform requires otherwise, and — for BMI2-less CPUs on a kernel-5.10.55 platform — automatically caps a stale stored DSM version down to the newest one that still has a BMI2-free `custom-modules` build (≤ 7.4.1). |
+| `j` | Choose a DSM VERSION | Lists up to 12 revisions for the selected model, newest first, pulled live from `pats.json`. On a BMI2-less CPU (kernel-5.10.55 platforms only), entries newer than DSM 7.4.1 are filtered out since `all-modules` needs BMI2 and `custom-modules` is currently built through DSM 7.4.1. |
 | `s` | Choose a Synology Serial Number | Generate a random serial or enter a real one. Required before building. |
 | `a` | Choose a mac address (up to 8 supported) | Opens a submenu listing every present NIC (`a`–`h`); picking one lets you use the real MAC, generate a random one, or type one in. With only one NIC it skips straight to the address picker. |
 | `z` | Select build pre-option | Submenu covering the loader mode, DDSML/EUDEV, DTS mapping, SATA-port remap, storage panel size, and two addon toggles — see [below](#z--select-build-pre-option). |
@@ -284,4 +284,3 @@ Since the Grub boot menu is created in the same way as when you manually build,
 you can also build the loader created in this way by entering the manual build menu again.
 
 --------------------------------------------------------------------
-

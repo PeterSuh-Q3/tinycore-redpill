@@ -3049,7 +3049,10 @@ if [ "$FRKRNL" = "NO" ] && [ "$(which ethtool)_" == "_" ]; then
    fi
 fi
 
-sortnetif
+# v1.4.2.5: This branch no longer ships TinyCore.  Alpine and xTCRP already
+# enumerate NICs in PCI order, so the legacy TinyCore eth* rename/DHCP-reset
+# workaround must not disrupt an active management (especially SSH) session.
+# sortnetif
 
 # Alpine엔 onboot.lst 자체가 없어 grep이 항상 0을 반환해 자연히 비활성화되지만
 # backuploader+restart(재부팅)를 포함하므로 명시적으로도 가드.
