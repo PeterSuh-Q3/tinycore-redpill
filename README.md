@@ -86,6 +86,11 @@ Section 1 (`Main`) only shows item `c` before a model is picked — every other 
 
 <img width="700" alt="NVIDIA H/W transcoding submenu" src="guide_img/menu_g_nvidia.png">
 
+This feature is split across two companion repositories — the menu below is just the switch that ties them together:
+
+- **[syno_nvidia_driver](https://github.com/PeterSuh-Q3/syno_nvidia_driver)** — where the drivers actually come from. It builds the no-auth NVIDIA driver for Synology's DSM kernels and publishes each version as ready-made layers (kernel module, userspace tools, NVENC ffmpeg, GSP firmware, container runtime). It also ships a standalone installer you can run directly on an already-running DSM, if you'd rather not rebuild the loader.
+- **[tcrp-addons/nvidiadriver](https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/nvidiadriver)** — the delivery side. This loader addon takes those published layers and bakes them into your loader, so the driver is in place from the moment DSM boots. It also handles the surrounding wiring: exposing `nvidia-smi`, repointing Jellyfin's ffmpeg, and enabling the GPU for Container Manager.
+
 The no-auth NVIDIA driver (physical/passthrough GPUs only — no vGPU, no license server) submenu. It resolves what to offer from the live driver catalog, so it only ever lists versions that actually exist for the current platform **and** kernel (kernel 5.10.55: 470/535/550/580; kernel 4.4: 550 only — NVIDIA's own floor; kernel 3.10: not enterable at all).
 
 | Key | Item | What it does |
