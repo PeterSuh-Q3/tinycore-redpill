@@ -98,7 +98,8 @@ The no-auth NVIDIA driver (physical/passthrough GPUs only — no vGPU, no licens
 | `a` | Auto | Let the loader auto-detect and pick a suitable driver at build time (falls back to a safe default, e.g. 535, if no GPU is detected yet). |
 | `b`–`e` | Specific driver versions (e.g. `580.173.02`, `550.163.01`, `535.230.02`, `470.256.02`) | Pin an exact driver version. The currently-active one is marked with `*`. On Ada/Blackwell cards, 580 is quietly not recommended (GSP firmware for those isn't in NVIDIA's `.run`) — pick 550 there instead. |
 | `f` | NVENC ffmpeg (Jellyfin pkg) | Toggle bundling an NVENC-capable ffmpeg build alongside the driver. When enabled, a boot hook automatically repoints the SynoCommunity Jellyfin package's `--ffmpeg` argument at this build instead of the stock (non-NVENC) `ffmpeg7` binary — no manual path change needed in the Jellyfin UI. |
-| `g` | Disable addon | Turns the whole NVIDIA addon off; the main-menu label reverts to `NVIDIA H/W Trans. [OFF] - select to add`. |
+| `g` | NVIDIA container runtime (Docker) | Toggle the `nvidia` container runtime integration for Container Manager (Docker). When enabled, containers started with `--runtime=nvidia` can see the GPU — this is for using GPU acceleration inside Docker containers, separate from a DSM package like Jellyfin. |
+| `h` | Disable addon | Turns the whole NVIDIA addon off; the main-menu label reverts to `NVIDIA H/W Trans. [OFF] - select to add`. |
 | `z` | Exit | Returns to the main menu. |
 
 ## `n` — Additional Functions
