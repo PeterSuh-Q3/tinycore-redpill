@@ -79,14 +79,15 @@
 - **[syno_nvidia_driver](https://github.com/PeterSuh-Q3/syno_nvidia_driver)** — 드라이버가 실제로 만들어지는 곳입니다. 시놀로지 DSM 커널에 맞춰 무인증 NVIDIA 드라이버를 빌드하고, 버전별로 바로 쓸 수 있는 레이어(커널 모듈, 유저스페이스 도구, NVENC ffmpeg, GSP 펌웨어, 컨테이너 런타임)를 배포합니다. 로더를 다시 빌드하지 않고 이미 돌아가는 DSM에 바로 설치하고 싶다면 여기서 제공하는 단독 설치 스크립트를 쓸 수도 있습니다.
 - **[tcrp-addons/nvidiadriver](https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/nvidiadriver)** — 그 드라이버를 실어 나르는 쪽입니다. 위에서 배포된 레이어를 받아 로더에 구워 넣어, DSM이 부팅되는 시점부터 드라이버가 자리 잡고 있도록 해줍니다. `nvidia-smi` 노출, Jellyfin의 ffmpeg 경로 재지정, Container Manager에서 GPU 사용 활성화 같은 주변 연결 작업도 이 애드온이 처리합니다.
 
-무인증 NVIDIA 드라이버(물리/passthrough GPU 전용 — vGPU·라이선스 서버 없음) 하위메뉴입니다. 실시간 드라이버 카탈로그를 기준으로 항목을 구성하므로, 현재 플랫폼**과** 커널에 실제로 존재하는 버전만 표시됩니다(커널 5.10.55: 470/535/550/580, 커널 4.4: 550만 — NVIDIA 자체 하한선, 커널 3.10: 진입 자체 불가). (※ 이 캡처는 번역 반영 이전에 찍힌 것이라 영어로 보이는데, 최신 빌드에서는 한국어를 포함한 18개 언어로 번역되어 표시됩니다. 드라이버 버전 번호, `ffmpeg`/`addon`/`Status`/`Auto`/`ON`·`OFF`/`ENABLED`·`DISABLED` 같은 기술 용어는 다른 메뉴와 동일하게 모든 언어에서 영어 그대로 유지됩니다.)
+무인증 NVIDIA 드라이버(물리/passthrough GPU 전용 — vGPU·라이선스 서버 없음) 하위메뉴입니다. 실시간 드라이버 카탈로그를 기준으로 항목을 구성하므로, 현재 플랫폼**과** 커널에 실제로 존재하는 버전만 표시됩니다(커널 5.10.55: 470/535/550/580, 커널 4.4: 550만 — NVIDIA 자체 하한선, 커널 3.10: 진입 자체 불가). 드라이버 버전 번호, `ffmpeg`/`addon`/`Status`/`Auto`/`ON`·`OFF`/`ENABLED`·`DISABLED` 같은 기술 용어는 다른 메뉴와 동일하게 모든 언어에서 영어 그대로 유지됩니다.
 
 | 키 | 항목 | 설명 |
 |---|---|---|
 | `a` | Auto | 빌드 시점에 로더가 자동으로 적합한 드라이버를 감지/선택하게 합니다(아직 GPU가 감지되지 않은 경우 535 등 안전한 기본값으로 대체). |
 | `b`~`e` | 개별 드라이버 버전(`580.173.02`, `550.163.01`, `535.230.02`, `470.256.02` 등) | 특정 드라이버 버전을 고정합니다. 현재 적용 중인 버전에는 `*` 표시가 붙습니다. Ada/Blackwell 카드에서는 580이 조용히 추천 목록에서 빠집니다(해당 카드용 GSP 펌웨어가 NVIDIA `.run`에 없음) — 이 경우 550을 선택하세요. |
 | `f` | NVENC ffmpeg (Jellyfin pkg) | NVENC 지원 ffmpeg 빌드를 드라이버와 함께 번들할지 켭니다/끕니다. 켜두면 부팅훅이 SynoCommunity Jellyfin 패키지의 `--ffmpeg` 인자를 기본(비NVENC) `ffmpeg7` 바이너리 대신 이 빌드로 자동 재지정합니다 — Jellyfin UI에서 경로를 수동으로 바꿀 필요가 없습니다. |
-| `g` | Disable addon | NVIDIA 애드온 전체를 끕니다. 메인 메뉴 라벨이 `NVIDIA H/W Trans. [OFF] - select to add`로 돌아갑니다. |
+| `g` | NVIDIA container runtime (Docker) | Container Manager(Docker)용 `nvidia` 컨테이너 런타임 연동을 켭니다/끕니다. 켜두면 로더가 `--runtime=nvidia`로 띄운 컨테이너에서 GPU를 볼 수 있도록 런타임을 등록합니다 — Jellyfin 등 DSM 패키지가 아니라 Docker 컨테이너 안에서 GPU 가속을 쓰고 싶을 때 필요합니다. |
+| `h` | Disable addon | NVIDIA 애드온 전체를 끕니다. 메인 메뉴 라벨이 `NVIDIA H/W Trans. [OFF] - select to add`로 돌아갑니다. |
 | `z` | Exit | 메인 메뉴로 돌아갑니다. |
 
 ## `n` — 추가 기능
