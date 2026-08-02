@@ -47,7 +47,7 @@ burnloader_restore_user_config() {
 }
 
 burnloader() {
-  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz
+  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz transport
   local target_part3 mount_dir backup_file=""
 
   # Only an Alpine loader is excluded. A legacy TinyCore loader has the same
@@ -57,8 +57,17 @@ burnloader() {
     if burnloader_has_alpine_partition "${disk}"; then
       continue
     fi
-    listusb+=("${disk}")
-  done < <(lsblk -dnpo PATH,ROTA,TRAN | awk '$1 ~ /^\/dev\/(sd|nvme|mmcblk)/ && (($2 == 1 && $3 == "usb") || ($2 == 0 && ($3 == "sata" || $3 == "nvme"))) { print $1 }')
+    if burnloader_is_tinycore_loader "${disk}"; then
+      # Legacy TinyCore media can report a rotational SATA transport even
+      # though it is explicitly selected for conversion.
+      listusb+=("${disk}")
+      continue
+    fi
+    transport=$(lsblk -dnpo ROTA,TRAN "${disk}" 2>/dev/null)
+    case "${transport}" in
+      "1 usb"|"0 sata"|"0 nvme") listusb+=("${disk}") ;;
+    esac
+  done < <(lsblk -dnpo PATH | awk '$1 ~ /^\/dev\/(sd|nvme|mmcblk)/ { print $1 }')
 
   if [ "${#listusb[@]}" -eq 0 ]; then
     dialog --backtitle "$(backtitle)" --msgbox "No available USB, SSD, or NVMe target disk was found." 0 0
