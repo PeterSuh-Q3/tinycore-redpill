@@ -629,7 +629,11 @@ IFS=' ' read -ra versions <<< "$pat_versions"
 #      현재 시놀로지가 DSM 7.4 용 GPL 커널 소스를 아직 공개하지 않아
 #      BMI2 명령을 제거한 custom-modules(PML) 커널을 빌드할 수 없으므로,
 #      GPL 이 공개되기 전까지 BMI2 미지원 CPU 에서는 7.4 이상을 원천 차단한다.
-if [ "${HAS_BMI2}" = "n" ]; then
+#      단, 이 제한은 all-modules 에 BMI2 명령이 포함된 kver5platforms(커널 5.10.55)
+#      플랫폼에만 적용한다. apollolake 등 커널 4.4.302/3.x 플랫폼의 all-modules 에는
+#      BMI2 명령이 없어 BMI2 미지원 CPU 에서도 정상 부팅하므로 7.4 를 막지 않는다.
+_bmi2_plat="$(resolveLiveKver)"; _bmi2_plat="${_bmi2_plat##*|}"
+if [ "${HAS_BMI2}" = "n" ] && echo "${kver5platforms}" | grep -qw "${_bmi2_plat}"; then
   filtered=()
   for v in "${versions[@]}"; do
     vMaj=$(echo "${v}" | cut -d'.' -f1)
@@ -2631,7 +2635,7 @@ set -o allexport
 
 
 #gettext
-[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/lang.tgz > /dev/null 2>&1
+[ ! -f /home/tc/lang.tgz ] && curl -kLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/lang.tgz > /dev/null 2>&1
 [ ! -d "/usr/local/share/locale" ] && sudo mkdir -p "/usr/local/share/locale"
 gunzip -c lang.tgz | sudo tar -xvf - -C /usr/local/share/locale > /dev/null 2>&1
 locale > /dev/null 2>&1
@@ -2780,9 +2784,9 @@ fi
 
 # Download dialog
 if [ "$FRKRNL" = "NO" ] && [ "$(which dialog)_" == "_" ]; then
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz -o /mnt/${tcrppart}/cde/optional/dialog.tcz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.dep -o /mnt/${tcrppart}/cde/optional/dialog.tcz.dep
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/dialog.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/dialog.tcz.md5.txt
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz -o /mnt/${tcrppart}/cde/optional/dialog.tcz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz.dep -o /mnt/${tcrppart}/cde/optional/dialog.tcz.dep
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/dialog.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/dialog.tcz.md5.txt
     tce-load -i dialog
     if [ $? -eq 0 ]; then
         echo "Install dialog OK !!!"
@@ -2816,7 +2820,7 @@ fi
 # Download pigz
 if [ "$FRKRNL" = "NO" ] && [ "$(which pigz)_" == "_" ]; then
     echo "pigz does not exist, bringing over from repo"
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/pigz
+    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/pigz
     chmod 700 pigz
     sudo mv -vf pigz /usr/local/bin/
     backuploader
@@ -2825,18 +2829,18 @@ fi
 #if [ "$FRKRNL" = "YES" ]; then
     #overwrite GNU tar and patch for friend
 #    sudo rm /usr/bin/tar
-#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/tar -o /usr/bin/tar
+#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/tar -o /usr/bin/tar
 #    sudo chmod +x /usr/bin/tar
     
 #    sudo rm /usr/bin/patch
-#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/patch -o /usr/bin/patch
+#    sudo curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/patch -o /usr/bin/patch
 #    sudo chmod +x /usr/bin/patch
 #fi    
 
 # Download dtc, Don't used anymore 24.9.13
 #if [ "$(which dtc)_" == "_" ]; then
 #    echo "dtc dos not exist, Downloading dtc binary"
-#    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tools/dtc
+#    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tools/dtc
 #    chmod 700 dtc
 #    sudo mv -vf dtc /usr/local/bin/
 #fi   
@@ -2846,8 +2850,8 @@ getbspatch
 
 # Download kmaps
 if [ "$FRKRNL" = "NO" ] && [ $(cat /mnt/${tcrppart}/cde/onboot.lst|grep kmaps | wc -w) -eq 0 ]; then
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz -o /mnt/${tcrppart}/cde/optional/kmaps.tcz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tce/optional/kmaps.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/kmaps.tcz.md5.txt
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/kmaps.tcz -o /mnt/${tcrppart}/cde/optional/kmaps.tcz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tce/optional/kmaps.tcz.md5.txt -o /mnt/${tcrppart}/cde/optional/kmaps.tcz.md5.txt
     tce-load -i kmaps
     if [ $? -eq 0 ]; then
         echo "Install kmaps OK !!!"
@@ -2956,6 +2960,7 @@ while true; do
 
   # ===== Misc ===== (유지보수/시스템)
   echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
+  eval "echo \"A \\\"알파인 리눅스로 업그레이드\\\"\""          >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -2981,7 +2986,7 @@ while true; do
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
     1) NEXT="c" ;;   # ===== Main =====        → c
     2) NEXT="u" ;;   # ===== Environment ===== → u
-    3) NEXT="n" ;;   # ===== Misc =====        → n
+    3) NEXT="A" ;;   # ===== Misc =====        → A
     c) seleudev;        NEXT="m" ;;
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
@@ -3023,6 +3028,7 @@ while true; do
         NEXT="p"
         ;;           
     y) sudo /root/boot.sh normal ;;
+    A) alpine_upgrade; NEXT="n" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;

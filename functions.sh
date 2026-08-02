@@ -3,7 +3,7 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.3.1.1"
-build="master"
+build="main"
 redpillmake="prod"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -20,7 +20,7 @@ configfile_loader="/home/tc/redpill-load/config/pats.json"
 
 gitdomain="raw.githubusercontent.com"
 mshellgz="my.sh.gz"
-mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/my.sh.gz"
+mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/my.sh.gz"
 
 #Defaults
 smallfixnumber="0"
@@ -1173,14 +1173,14 @@ function dhcp_freeze() {
 
     pids=$(pidof udhcpc 2>/dev/null)
     if [ -z "${pids}" ]; then
-        echo "DHCP freeze: 상주 udhcpc 데몬 없음 — 억제 불필요 (static/quiet)"
+        echo "${MSGZZ69:-DHCP freeze: no resident udhcpc daemon - suppression not needed}"
         return 0
     fi
 
     gw=$(route -n 2>/dev/null | awk '$1=="0.0.0.0" && $2!="0.0.0.0"{print $2; exit}')
     for dev in $(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en)'); do
         ip4=$(/sbin/ifconfig "${dev}" 2>/dev/null | awk '/inet /{print $2}' | cut -d: -f2)
-        [ -n "${ip4}" ] && echo "DHCP freeze: ${dev} IP ${ip4} 고정 (renew 중단)"
+        [ -n "${ip4}" ] && printf "${MSGZZ70:-DHCP freeze: %s IP %s pinned (renew stopped)}\n" "${dev}" "${ip4}"
     done
 
     # SIGTERM (-R 미지정) → RELEASE/deconfig 없이 데몬만 종료
@@ -1193,7 +1193,7 @@ function dhcp_freeze() {
     if [ -n "${gw}" ] && ! route -n 2>/dev/null | awk '$1=="0.0.0.0"{f=1} END{exit !f}'; then
         ip route add default via "${gw}" 2>/dev/null
     fi
-    echo "DHCP freeze: udhcpc 종료 — 임대갱신 억제됨"
+    echo "${MSGZZ71:-DHCP freeze: udhcpc stopped - lease renewal suppressed}"
 }
 
 #################################################################################
@@ -1414,6 +1414,179 @@ function getloaderdisk() {
 
     # Output the loader disk
     echo "LOADER DISK: $loaderdisk"
+}
+
+function alpine_partition_path() {
+    local disk="$1"
+    local number="$2"
+
+    case "${disk}" in
+        *[0-9]) printf '%sp%s\n' "${disk}" "${number}" ;;
+        *)      printf '%s%s\n' "${disk}" "${number}" ;;
+    esac
+}
+
+function alpine_upgrade() {
+    local disk part1 part2 part3 part4 sector_size part3_start part3_bytes part3_size
+    local alpine_sectors new_part3_size new_part3_end partition_count
+    local payload_url overlay_url grub_url workdir alpine_mount p1_mount disklabel fdisk_input
+    local mount_target confirmation grub_backup
+
+    for command in fdisk lsblk blockdev mkfs.vfat curl tar; do
+        if ! command -v "${command}" >/dev/null 2>&1; then
+            dialog --msgbox "Alpine upgrade cannot start: '${command}' is not installed." 8 70
+            return 1
+        fi
+    done
+
+    getloaderdisk >/dev/null
+    disk="/dev/${loaderdisk}"
+    part1="$(alpine_partition_path "${disk}" 1)"
+    part2="$(alpine_partition_path "${disk}" 2)"
+    part3="$(alpine_partition_path "${disk}" 3)"
+    part4="$(alpine_partition_path "${disk}" 4)"
+
+    if [ ! -b "${disk}" ] || [ ! -b "${part1}" ] || [ ! -b "${part2}" ] || [ ! -b "${part3}" ]; then
+        dialog --msgbox "Alpine upgrade cannot identify loader partitions on ${disk}." 8 70
+        return 1
+    fi
+
+    partition_count="$(lsblk -nrpo TYPE "${disk}" | awk '$1 == "part" { count++ } END { print count + 0 }')"
+    if [ "${partition_count}" -ne 3 ] || [ -b "${part4}" ]; then
+        dialog --msgbox "Alpine upgrade requires exactly partitions 1, 2 and 3 on ${disk}.\nNo existing partition 4 is allowed." 9 76
+        return 1
+    fi
+
+    read -r part3_start part3_bytes < <(lsblk -bnro START,SIZE "${part3}")
+    sector_size="$(blockdev --getss "${disk}")"
+    part3_size=$((part3_bytes / sector_size))
+    alpine_sectors=$((1073741824 / sector_size))
+    if [ "${part3_size}" -le $((alpine_sectors + (128 * 1024 * 1024 / sector_size))) ]; then
+        dialog --msgbox "Partition 3 is too small to reserve 1 GiB for Alpine." 7 70
+        return 1
+    fi
+    new_part3_size=$((part3_size - alpine_sectors))
+    new_part3_end=$((part3_start + new_part3_size - 1))
+    disklabel="$(sudo fdisk -l "${disk}" 2>/dev/null | awk '/Disklabel type:/ { print $3; exit }')"
+    case "${disklabel}" in
+        dos)
+            fdisk_input=$(printf 'd\n3\nn\np\n3\n%s\n%s\nn\np\n4\n\n+1G\nw\n' \
+                "${part3_start}" "${new_part3_end}")
+            ;;
+        gpt)
+            fdisk_input=$(printf 'd\n3\nn\n3\n%s\n%s\nn\n4\n\n+1G\nw\n' \
+                "${part3_start}" "${new_part3_end}")
+            ;;
+        *)
+            dialog --msgbox "Unsupported partition table '${disklabel:-unknown}' on ${disk}." 7 70
+            return 1
+            ;;
+    esac
+
+    dialog --title "Alpine Linux Upgrade" --yesno \
+        "This is irreversible.\n\nTinyCore and every file on ${part3} will be deleted.\n\nThe new layout will keep partitions 1 and 2 unchanged, recreate partition 3 smaller by 1 GiB, and create ${part4} as Alpine.\n\nContinue?" 15 76
+    [ $? -eq 0 ] || return 1
+
+    dialog --clear --stdout --inputbox \
+        "Type ALPINE to confirm deletion of TinyCore on ${part3}:" 8 76 >"${TMP_PATH}/alpine-confirm"
+    confirmation="$(cat "${TMP_PATH}/alpine-confirm" 2>/dev/null)"
+    rm -f "${TMP_PATH}/alpine-confirm"
+    if [ "${confirmation}" != "ALPINE" ]; then
+        dialog --msgbox "Alpine upgrade cancelled. Confirmation did not match." 6 60
+        return 1
+    fi
+
+    workdir="$(mktemp -d /tmp/alpine-upgrade.XXXXXX)" || return 1
+    alpine_mount="/mnt/alpine"
+    p1_mount="/mnt/${loaderdisk}1"
+    payload_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz"
+    overlay_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/localhost.apkovl.tar.gz"
+    grub_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/grub/grubtiny.cfg"
+
+    if ! curl -fL --retry 3 "${payload_url}" -o "${workdir}/alpine-partition.tar.gz" \
+        || ! curl -fL --retry 3 "${overlay_url}" -o "${workdir}/localhost.apkovl.tar.gz" \
+        || ! curl -fL --retry 3 "${grub_url}" -o "${workdir}/grub.cfg" \
+        || ! tar tzf "${workdir}/alpine-partition.tar.gz" >/dev/null \
+        || ! tar tzf "${workdir}/localhost.apkovl.tar.gz" >/dev/null \
+        || ! grep -q "Alpine Redpill Image Build" "${workdir}/grub.cfg"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine files could not be downloaded or validated. No disk changes were made." 8 76
+        return 1
+    fi
+
+    sync
+    while read -r mount_target; do
+        [ -z "${mount_target}" ] || sudo umount "${mount_target}" || {
+            rm -rf "${workdir}"
+            dialog --msgbox "Could not unmount ${mount_target}. No disk changes were made." 7 76
+            return 1
+        }
+    done < <(mount | awk -v device="${part3}" '$1 == device { print $3 }')
+
+    if ! printf '%s\n' "${fdisk_input}" | sudo fdisk "${disk}"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Partition table update failed. Do not reboot; inspect ${disk} before retrying." 8 76
+        return 1
+    fi
+
+    sudo partprobe "${disk}" 2>/dev/null || sudo blockdev --rereadpt "${disk}" || {
+        rm -rf "${workdir}"
+        dialog --msgbox "The kernel did not reload ${disk}'s partition table. Do not reboot until it is inspected." 8 76
+        return 1
+    }
+    sleep 2
+
+    if [ ! -b "${part3}" ] || [ ! -b "${part4}" ]; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Expected Alpine partitions were not created. Do not reboot until ${disk} is inspected." 8 76
+        return 1
+    fi
+
+    sudo mkfs.vfat "${part3}" >/dev/null \
+        && sudo mkfs.vfat -F 32 -n alpine "${part4}" >/dev/null \
+        && sudo mkdir -p "${alpine_mount}" \
+        && sudo mount "${part4}" "${alpine_mount}" \
+        && sudo tar xzf "${workdir}/alpine-partition.tar.gz" -C "${alpine_mount}" \
+        && sudo cp "${workdir}/localhost.apkovl.tar.gz" "${alpine_mount}/localhost.apkovl.tar.gz" \
+        && [ -s "${alpine_mount}/vmlinuz-lts" ] \
+        && [ -s "${alpine_mount}/initramfs-lts" ] || {
+        mountpoint -q "${alpine_mount}" && sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine partition setup failed. TinyCore has been removed; repair ${part4} before rebooting." 8 76
+        return 1
+    }
+
+    sudo mkdir -p "${p1_mount}"
+    mountpoint -q "${p1_mount}" || sudo mount "${part1}" "${p1_mount}" || {
+        sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine payload is ready, but GRUB partition 1 could not be mounted. Do not reboot." 8 76
+        return 1
+    }
+    grub_backup="${p1_mount}/boot/grub/grub.cfg.pre-alpine"
+    sudo cp "${p1_mount}/boot/grub/grub.cfg" "${grub_backup}" \
+        && sudo cp "${workdir}/grub.cfg" "${p1_mount}/boot/grub/grub.cfg.new" \
+        && sudo mv "${p1_mount}/boot/grub/grub.cfg.new" "${p1_mount}/boot/grub/grub.cfg" || {
+        sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "GRUB update failed. The prior configuration is saved as ${grub_backup}." 8 76
+        return 1
+    }
+    if [ -f "${p1_mount}/EFI/BOOT/grub.cfg" ]; then
+        sudo cp "${workdir}/grub.cfg" "${p1_mount}/EFI/BOOT/grub.cfg.new" \
+            && sudo mv "${p1_mount}/EFI/BOOT/grub.cfg.new" "${p1_mount}/EFI/BOOT/grub.cfg" || {
+            sudo umount "${alpine_mount}"
+            rm -rf "${workdir}"
+            dialog --msgbox "EFI GRUB update failed. Do not reboot until ${p1_mount}/EFI/BOOT/grub.cfg is repaired." 8 76
+            return 1
+        }
+    fi
+
+    sync
+    sudo umount "${alpine_mount}"
+    rm -rf "${workdir}"
+    dialog --msgbox "Alpine Linux upgrade is complete.\n\nTinyCore has been removed. The system will now reboot into Alpine." 8 70
+    sudo reboot
 }
 
 # ==============================================================================          
@@ -2339,15 +2512,15 @@ function getlatestmshell() {
 function get_tinycore9() {
     echo "Downloading tinycore 9.0..."
     sudo mkdir -p /mnt/${tcrppart}/v9/cde
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
     md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
     md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
     if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
       echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
+      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
       sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
-      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/mountvol.sh -o /home/tc/mountvol.sh
+      curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
 
       #GRUB 부트엔트리 Default 값 조정
@@ -2366,8 +2539,8 @@ function get_tinycore9() {
 function get_tinycore() {
     cd /mnt/${tcrppart}
     echo "Downloading tinycore 14.0..."
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/corepure64.gz -o corepure64.gz_copy
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/vmlinuz64 -o vmlinuz64_copy
     md5_corepure64=$(sudo md5sum corepure64.gz_copy | awk '{print $1}')
     md5_vmlinuz64=$(sudo md5sum vmlinuz64_copy | awk '{print $1}')
     if [ ${md5_corepure64} = "f33c4560e3909a7784c0e83ce424ff5c" ] && [ ${md5_vmlinuz64} = "04cb17bbf7fbca9aaaa2e1356a936d7c" ]; then
@@ -2390,7 +2563,7 @@ function update_tinycore() {
       echo "current tinycore version is not 14.0, update tinycore linux to 14.0..."
       get_tinycore
       if [ $? -eq 0 ]; then
-        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/shadow -o /etc/shadow
+        sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/shadow -o /etc/shadow
         echo "etc/shadow" >> /opt/.filetool.lst
         backuploader
         restart
@@ -2402,7 +2575,7 @@ function update_motd() {
   echo "check update for /etc/motd"
   md5_motd=$(sudo md5sum /etc/motd | awk '{print $1}')
   if [ ${md5_motd} != "1ab94698bce5e6146fad3f71e743ca33"  ]; then
-    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/tinycore_14.0/etc/motd -o /etc/motd
+    sudo curl -kL#  https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_14.0/etc/motd -o /etc/motd
   fi
 }
 
@@ -2964,7 +3137,7 @@ function copyextractor() {
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" -o /home/tc/extractor.gz
+    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" -o /home/tc/extractor.gz
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     if [ "${BUS}" = "block"  ]; then
@@ -6395,7 +6568,7 @@ function my() {
   #else
   #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
   #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/master/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
+  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/main/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
   #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
   #fi
   
@@ -6522,7 +6695,7 @@ function my() {
   [ "$dbgutils" = true ] && add-addons "dbgutils" 
   [ "$sortnetif" = true ] && add-addons "sortnetif" 
 
-  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/master/models.json
+  [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/models.json
 
   if [ "${MDLNAME}" = "all-modules" ]; then
       sed -i "s/rr-modules/all-modules/g" models.json

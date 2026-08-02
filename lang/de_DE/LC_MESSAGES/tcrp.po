@@ -257,3 +257,15 @@ msgstr "Tinycore v9 Menüeintrag zum Einbinden von Syno Disk BTRFS Vol hinzufüg
 #: MSGDE67
 msgid "Select build pre-option (required or not required)"
 msgstr "Wählen Sie die Build-Voroption (erforderlich oder nicht erforderlich)"
+
+#: MSGDE69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "DHCP-Freeze: kein residenter udhcpc-Daemon - Unterdrückung nicht nötig"
+
+#: MSGDE70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "DHCP-Freeze: %s IP %s festgesetzt (Erneuerung gestoppt)"
+
+#: MSGDE71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "DHCP-Freeze: udhcpc gestoppt - Lease-Erneuerung unterdrückt"

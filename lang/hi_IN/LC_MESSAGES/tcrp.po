@@ -257,3 +257,15 @@ msgstr "Syno डिस्क BTRFS वॉल्यूम माउंट के 
 #: MSGHI67
 msgid "Select build pre-option (required or not required)"
 msgstr "बिल्ड प्री-ऑप्शन चुनें (आवश्यक या आवश्यक नहीं)"
+
+#: MSGIN69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "DHCP फ्रीज: कोई रेजिडेंट udhcpc डेमन नहीं - दमन आवश्यक नहीं"
+
+#: MSGIN70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "DHCP फ्रीज: %s IP %s स्थिर किया गया (नवीनीकरण रोका गया)"
+
+#: MSGIN71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "DHCP फ्रीज: udhcpc रोका गया - लीज नवीनीकरण दबाया गया"

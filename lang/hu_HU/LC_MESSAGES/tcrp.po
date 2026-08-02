@@ -257,3 +257,15 @@ msgstr "Tinycore v9 menübejegyzés hozzáadása Syno lemez BTRFS kötet csatol�
 #: MSGHU67
 msgid "Select build pre-option (required or not required)"
 msgstr "Válassza ki az előzetes build opciót (kötelező vagy nem kötelező)"
+
+#: MSGHU69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "DHCP-befagyasztás: nincs rezidens udhcpc démon - elnyomás nem szükséges"
+
+#: MSGHU70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "DHCP-befagyasztás: %s IP %s rögzítve (megújítás leállítva)"
+
+#: MSGHU71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "DHCP-befagyasztás: udhcpc leállítva - bérlet megújítása elnyomva"

@@ -257,3 +257,15 @@ msgstr "Ajouter l'entrée de menu Tinycore v9 pour monter le volume Syno Disk BT
 #: MSGFR67
 msgid "Select build pre-option (required or not required)"
 msgstr "Sélectionnez l'option de préconstruction (requise ou non requise)"
+
+#: MSGFR69
+msgid "DHCP freeze: no resident udhcpc daemon - suppression not needed"
+msgstr "Gel DHCP : aucun démon udhcpc résident - suppression inutile"
+
+#: MSGFR70
+msgid "DHCP freeze: %s IP %s pinned (renew stopped)"
+msgstr "Gel DHCP : %s IP %s figée (renouvellement arrêté)"
+
+#: MSGFR71
+msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
+msgstr "Gel DHCP : udhcpc arrêté - renouvellement du bail supprimé"
