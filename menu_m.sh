@@ -2012,12 +2012,12 @@ function satadom_edit() {
 function i915_edit() {
 
   if [ "${I915MODE}" == "1" ]; then
-      jsonfile=$(jq '.general.usb_line += " i915.modeset=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json
-      jsonfile=$(jq '.general.sata_line += " i915.modeset=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json    
+      jsonfile=$(jq '.general.usb_line += " i915.enable_psr=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json
+      jsonfile=$(jq '.general.sata_line += " i915.enable_psr=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json    
       I915MODE="0"
       DISPLAYI915="Enable" 
   else
-      sed -i "s/i915.modeset=0//g" /home/tc/user_config.json  
+      sed -i "s/i915.enable_psr=0//g" /home/tc/user_config.json  
       I915MODE="1"
       DISPLAYI915="Disable" 
   fi
