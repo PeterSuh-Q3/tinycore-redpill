@@ -274,8 +274,8 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-    1.3.1.2 Added an irreversible Alpine Linux upgrade menu that replaces TinyCore with a 1 GiB Alpine partition
-             and a single Alpine GRUB boot entry.
+    1.3.1.2 Added an irreversible Alpine Linux upgrade menu that replaces TinyCore with a 1 GiB Alpine partition,
+             one Alpine GRUB boot entry, and the Alpine-branch my.sh.gz update, extraction, and backup flow.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -788,7 +788,8 @@ EOF
 
 # 2026.08.02 v1.3.1.2
 # Added the irreversible Alpine Linux upgrade menu. It removes TinyCore by recreating partition 3 1 GiB smaller,
-# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and replaces GRUB with one Alpine entry.
+# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and installs Alpine-branch my.sh.gz
+# into the runtime overlay through the normal update, extraction, and backup flow before replacing GRUB.
 
 function showlastupdate() {
     cat <<EOF
@@ -1022,7 +1023,8 @@ function showlastupdate() {
 
 # 2026.08.02 v1.3.1.2
 # Added the irreversible Alpine Linux upgrade menu. It removes TinyCore by recreating partition 3 1 GiB smaller,
-# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and replaces GRUB with one Alpine entry.
+# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and installs Alpine-branch my.sh.gz
+# into the runtime overlay through the normal update, extraction, and backup flow before replacing GRUB.
 
 EOF
 }
@@ -1439,8 +1441,8 @@ function alpine_partition_path() {
 function alpine_upgrade() {
     local disk part1 part2 part3 part4 sector_size part3_start part3_bytes part3_size
     local alpine_sectors new_part3_size new_part3_end partition_count
-    local payload_url overlay_url grub_url workdir alpine_mount p1_mount disklabel fdisk_input
-    local mount_target confirmation grub_backup
+    local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount disklabel fdisk_input
+    local mount_target confirmation grub_backup mshell_update_result overlay_root
 
     for command in fdisk lsblk blockdev mkfs.vfat curl tar; do
         if ! command -v "${command}" >/dev/null 2>&1; then
@@ -1512,6 +1514,7 @@ function alpine_upgrade() {
     payload_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz"
     overlay_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/localhost.apkovl.tar.gz"
     grub_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/grub/grubtiny.cfg"
+    alpine_mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/my.sh.gz"
 
     if ! curl -fL --retry 3 "${payload_url}" -o "${workdir}/alpine-partition.tar.gz" \
         || ! curl -fL --retry 3 "${overlay_url}" -o "${workdir}/localhost.apkovl.tar.gz" \
@@ -1521,6 +1524,41 @@ function alpine_upgrade() {
         || ! grep -q "Alpine Redpill Image Build" "${workdir}/grub.cfg"; then
         rm -rf "${workdir}"
         dialog --msgbox "Alpine files could not be downloaded or validated. No disk changes were made." 8 76
+        return 1
+    fi
+
+    # Reuse the normal update path: it downloads, extracts, reloads, and backs up my.sh.gz.
+    cd /home/tc || {
+        rm -rf "${workdir}"
+        dialog --msgbox "Cannot access /home/tc to prepare the Alpine management scripts." 7 76
+        return 1
+    }
+    mshtarfile="${alpine_mshtarfile}"
+    getlatestmshell noask
+    mshell_update_result=$?
+    if [ "${mshell_update_result}" -gt 1 ] || [ ! -s "/home/tc/${mshellgz}" ]; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine my.sh.gz could not be installed. No disk changes were made." 7 76
+        return 1
+    fi
+    # getlatestmshell() backs up an updated archive. Back up once when it was already current.
+    if [ "${mshell_update_result}" -eq 0 ] && ! echo "y" | rploader backup; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine management-script backup failed. No disk changes were made." 7 76
+        return 1
+    fi
+
+    # Alpine restores /home/tc from this overlay, so update the overlay rather than only its boot media.
+    overlay_root="${workdir}/overlay"
+    if ! sudo mkdir -p "${overlay_root}/home/tc" \
+        || ! sudo tar xzf "${workdir}/localhost.apkovl.tar.gz" -C "${overlay_root}" \
+        || ! sudo cp "/home/tc/${mshellgz}" "${overlay_root}/home/tc/${mshellgz}" \
+        || ! sudo tar xzf "/home/tc/${mshellgz}" -C "${overlay_root}/home/tc" \
+        || ! [ -s "${overlay_root}/home/tc/functions.sh" ] \
+        || ! sudo tar czf "${workdir}/localhost.apkovl.tar.gz.new" -C "${overlay_root}" . \
+        || ! sudo mv "${workdir}/localhost.apkovl.tar.gz.new" "${workdir}/localhost.apkovl.tar.gz"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine overlay preparation failed. No disk changes were made." 7 76
         return 1
     fi
 
@@ -2503,7 +2541,11 @@ function getlatestmshell() {
       echo "Updating m shell with latest updates"
       . /home/tc/functions.sh
       showlastupdate
-      echo "y" | rploader backup
+      if ! echo "y" | rploader backup; then
+        retval=3
+        msgalert "Failed to back up updated m shell"
+        return $retval
+      fi
       
       retval=1  # 업데이트 성공
     else
