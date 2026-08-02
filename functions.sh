@@ -1441,7 +1441,7 @@ function alpine_partition_path() {
 function alpine_upgrade() {
     local disk part1 part2 part3 part4 sector_size part3_name part3_start_512 part3_size_512 part3_start part3_size
     local alpine_sectors new_part3_size new_part3_end partition_count
-    local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount disklabel fdisk_input
+    local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount source_mount disklabel fdisk_input
     local mount_target confirmation grub_backup mshell_update_result overlay_root mkfs_fat
 
     if which mkfs.vfat >/dev/null 2>&1; then
@@ -1533,9 +1533,24 @@ function alpine_upgrade() {
         return 1
     fi
 
-    workdir="$(mktemp -d /tmp/alpine-upgrade.XXXXXX)" || return 1
+    # The Alpine payload is too large for TinyCore's RAM-backed /tmp. Clear the
+    # disposable PAT cache first, then stage it on the current persistent p3.
+    if ! sudo find "/mnt/${loaderdisk}3/auxfiles" -maxdepth 1 -type f -name '*.pat' -delete; then
+        dialog --msgbox "Could not clear /mnt/${loaderdisk}3/auxfiles PAT cache. No disk changes were made." 7 76
+        return 1
+    fi
+    workdir="$(sudo mktemp -d "/mnt/${loaderdisk}3/auxfiles/alpine-upgrade.XXXXXX")" || {
+        dialog --msgbox "Could not create an Alpine download directory on ${part3}." 7 76
+        return 1
+    }
+    if ! sudo chown "$(id -u):$(id -g)" "${workdir}"; then
+        sudo rm -rf "${workdir}"
+        dialog --msgbox "Could not grant the current user access to ${workdir}." 7 76
+        return 1
+    fi
     alpine_mount="/mnt/alpine"
     p1_mount="/mnt/${loaderdisk}1"
+    source_mount="/mnt/alpine-source"
     payload_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz"
     overlay_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/localhost.apkovl.tar.gz"
     grub_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/grub/grubtiny.cfg"
@@ -1615,17 +1630,28 @@ function alpine_upgrade() {
         return 1
     fi
 
-    sudo "${mkfs_fat}" -i 6234C863 "${part3}" >/dev/null \
-        && sudo "${mkfs_fat}" -F 32 -n alpine "${part4}" >/dev/null \
+    # p3 still contains the staged input files. Mount it only long enough to
+    # copy them to p4; do not format p3 until the Alpine payload is verified.
+    sudo mkdir -p "${source_mount}" \
+        && sudo mount "${part3}" "${source_mount}" || {
+        rm -rf "${workdir}"
+        dialog --msgbox "Could not remount staged Alpine files from ${part3}. TinyCore has not been formatted." 8 76
+        return 1
+    }
+
+    sudo "${mkfs_fat}" -F 32 -n alpine "${part4}" >/dev/null \
         && sudo mkdir -p "${alpine_mount}" \
         && sudo mount "${part4}" "${alpine_mount}" \
-        && sudo tar xzf "${workdir}/alpine-partition.tar.gz" -C "${alpine_mount}" \
-        && sudo cp "${workdir}/localhost.apkovl.tar.gz" "${alpine_mount}/localhost.apkovl.tar.gz" \
+        && sudo tar xzf "${source_mount}/auxfiles/$(basename "${workdir}")/alpine-partition.tar.gz" -C "${alpine_mount}" \
+        && sudo cp "${source_mount}/auxfiles/$(basename "${workdir}")/localhost.apkovl.tar.gz" "${alpine_mount}/localhost.apkovl.tar.gz" \
         && [ -s "${alpine_mount}/vmlinuz-lts" ] \
-        && [ -s "${alpine_mount}/initramfs-lts" ] || {
+        && [ -s "${alpine_mount}/initramfs-lts" ] \
+        && sudo umount "${source_mount}" \
+        && sudo "${mkfs_fat}" -i 6234C863 "${part3}" >/dev/null || {
         mountpoint -q "${alpine_mount}" && sudo umount "${alpine_mount}"
+        mountpoint -q "${source_mount}" && sudo umount "${source_mount}"
         rm -rf "${workdir}"
-        dialog --msgbox "Alpine partition setup failed. TinyCore has been removed; repair ${part4} before rebooting." 8 76
+        dialog --msgbox "Alpine partition setup failed. TinyCore was not formatted unless the final p3 format succeeded." 8 76
         return 1
     }
 
