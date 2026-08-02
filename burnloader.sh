@@ -60,7 +60,7 @@ burnloader_restore_user_config() {
 }
 
 burnloader() {
-  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz transport
+  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz transport memory_kb
   local target_part3 mount_dir backup_file=""
 
   # Only an Alpine loader is excluded. A legacy TinyCore loader has the same
@@ -123,7 +123,19 @@ burnloader() {
     }
   imgsize=$(<"${TMP_PATH}/imgsize_selection.txt")
   rm -f "${TMP_PATH}/imgsize_selection.txt"
-  [ "${imgsize}" = "5GB" ] && imgsuffix="m-shell-5GB" || imgsuffix="m-shell"
+  if [ "${imgsize}" = "5GB" ]; then
+    memory_kb=$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)
+    memory_kb="${memory_kb:-0}"
+    if [ "${memory_kb}" -lt 8000000 ]; then
+      dialog --backtitle "$(backtitle)" --msgbox "The 5GB image requires at least 8GB of RAM for download and decompression.\n\nDetected memory: $((memory_kb / 1024 / 1024))GB\n\nReturning to the menu." 0 0
+      rm -f "${backup_file}"
+      [ -n "${mount_dir}" ] && rmdir "${mount_dir}"
+      return 0
+    fi
+    imgsuffix="m-shell-5GB"
+  else
+    imgsuffix="m-shell"
+  fi
 
   image_file="${TMP_PATH}/${imgprefix}.${imgversion}.${imgsuffix}.img"
   image_gz="${image_file}.gz"
