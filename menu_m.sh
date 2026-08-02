@@ -2960,7 +2960,7 @@ while true; do
 
   # ===== Misc ===== (유지보수/시스템)
   echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
-  eval "echo \"A \\\"알파인 리눅스로 업그레이드\\\"\""          >> "${TMP_PATH}/menu"
+  eval "echo \"A \\\"\${MSGZZ72}\\\"\""                       >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
