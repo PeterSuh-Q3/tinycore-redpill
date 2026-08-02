@@ -45,7 +45,7 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
 
           # localhost.apkovl.tar.gz는 root:root, root:shadow 등 특권 소유권의
           # 시스템 파일(/etc/shadow, /etc/sudoers.d 등)을 담고 있음. 비-root
@@ -58,7 +58,7 @@ jobs:
           # tc 계정의 실제 uid:gid를 원본 apkovl에서 동적으로 확인 (하드코딩 금지)
           TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
 
-          sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
+          sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           # 위 cp는 기존 파일을 같은 이름으로 덮어써 원본 inode(및 소유권)를
           # 유지하지만, 혹시 새로 추가된 파일이 있을 경우를 대비해 명시적으로
           # tc 소유권을 재적용.
