@@ -404,6 +404,7 @@ if [ "${offline}" = "NO" ]; then
       cecho g "###############################  This is Test Mode  ############################"
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+      safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/burnloader.sh" "/home/tc/burnloader.sh" "burnloader()"
       # i18n.h 도 함께 갱신 - menu_m.sh 가 참조하는 MSGID 는 늘어나는데
       # i18n.h 를 안 당겨오면 새 MSGID(예: MSGZZ72)가 로컬 파일에 없어
       # load_zz() 에서 정의되지 않고, set -u 환경에서 "unbound variable"
@@ -425,6 +426,7 @@ if [ "${offline}" = "NO" ]; then
         echo "[!] extract_old_shell failed. Falling back to ${UPDATE_BRANCH} functions.sh ..."
         safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
         safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/burnloader.sh" "/home/tc/burnloader.sh" "burnloader()"
         safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/i18n.h" "/home/tc/i18n.h" "function load_zz"
       fi
 
@@ -479,6 +481,10 @@ fi
 if [ ! -f /home/tc/menu_m.sh ]; then
   echo "[!] menu_m.sh not found, cannot execute."
   exit 1
+fi
+
+if [ ! -f /home/tc/burnloader.sh ]; then
+  safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/burnloader.sh" "/home/tc/burnloader.sh" "burnloader()"
 fi
 
 chmod +x /home/tc/menu_m.sh

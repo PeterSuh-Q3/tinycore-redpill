@@ -1611,75 +1611,7 @@ function backup() {
   return 0
 }
 
-function burnloader() {
-
-  # 로더 디스크는 getloaderdisk() 가 blkid 의 파티션 UUID(6234-C863) 로 찾아
-  # 전역 loaderdisk 에 넣어둔 값을 쓴다. 예전의
-  #   mount | grep -i optional | grep cde
-  # 는 TinyCore 의 마운트 구조(/mnt/sdX1/tce/optional)에만 맞는 패턴이라
-  # Alpine(/media/sdb4, /mnt/alpine)에서는 아무것도 매칭되지 않는다. 그러면
-  # tcrpdev 가 '/dev/' 가 되고, 아래 grep -v 가 후보를 전부 지워버려 "기록할
-  # 디스크가 없다"로 조용히 끝난다(실기 80번 Alpine 에서 확인).
-  # getBus() 가 nvme/mmc/block 에서 뒤에 'p' 를 붙여두므로 떼고 쓴다.
-  tcrpdev="/dev/${loaderdisk%p}"
-  # 탐지에 실패했을 때 빈 값이 "전부 제외"로 동작하지 않도록, 어떤 경로와도
-  # 매칭되지 않는 문자열로 바꿔 필터를 사실상 무력화한다.
-  [ -z "${loaderdisk}" ] && tcrpdev="__no_loader_disk__"
-  listusb=()
-  # 2024.07.06 Add NVMe
-  listusb+=( $(lsblk -o PATH,ROTA,TRAN | grep -E '/dev/(sd|nvme)' | grep -v ${tcrpdev} | grep -E '(1 usb|0 sata|0 nvme)' | awk '{print $1}' ) )
-
-  if [ ${#listusb[@]} -eq 0 ]; then 
-    echo "No Available USB,SSD or NVMe, press any key continue..."
-    read answer                       
-    return 0   
-  fi
-
-  dialog --backtitle "`backtitle`" --no-items --colors \
-    --menu "Choose a USB Stick, SSD or NVMe for New Loader\n\Z1(Caution!) In the case of SSD(include NVMe), be sure to check whether it is a cache or data disk.\Zn" 0 0 $(dlgmenuheight ${#listusb[@]}) "${listusb[@]}" \
-    2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return 
-
-  loaderdev="`<${TMP_PATH}/resp`"
-
-  #leftshm=$(df --block-size=1 | grep /dev/shm | awk '{print $4}')
-  #if [ 0${leftshm} -gt 02147483648 ]; then
-    imgversion="${VERSION}"
-  #else
-  #  imgversion="v1.0.1.0"
-  #fi
-
-  # alpine-redpill 브랜치는 alpine-redpill 릴리즈 자산만 사용한다.
-  imgprefix="alpine-redpill"
-
-  dialog --title "IMG Size Selection" --menu "Select img file size to download:" 10 50 2 \
-    "DEFAULT" "Standard 3GB image" \
-    "5GB" "Large 5GB image" 2>/tmp/imgsize_selection.txt
-  imgsize=$(cat /tmp/imgsize_selection.txt)
-  rm -f /tmp/imgsize_selection.txt
-
-  if [ "${imgsize}" = "5GB" ]; then
-    imgsuffix="m-shell-5GB"
-  else
-    imgsuffix="m-shell"
-  fi
-
-  echo "Downloading TCRP-mshell ${imgversion} img file..."
-  if [ -f /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img ]; then
-    echo "TCRP-mshell ${imgversion} img file already exists. Skip download..."
-  else
-    curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${imgversion}/${imgprefix}.${imgversion}.${imgsuffix}.img.gz -o /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img.gz
-    gunzip /tmp/${imgprefix}.${imgversion}.${imgsuffix}.img.gz
-  fi
-
-  echo "Please wait a moment. Burning ${imgversion} image is in progress..."
-  sudo dd if=/tmp/${imgprefix}.${imgversion}.${imgsuffix}.img of=${loaderdev} status=progress bs=4M
-  echo "Burning Image ${imgversion} completed, press any key to continue..."
-  read answer
-  return 0
-}
+. /home/tc/burnloader.sh
 
 function showsata () {
       MSG=""
