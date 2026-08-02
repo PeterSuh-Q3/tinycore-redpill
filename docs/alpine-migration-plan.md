@@ -144,3 +144,90 @@ lbu commit -d
 ---
 
 *사전조사 완료 — 실측 3회 (192.168.45.95). tinycore-redpill v1.4.0.0 이식 착수 기준 문서.*
+
+---
+
+## 8. main 메뉴 기반 일회성 전환 설계
+
+### 목표와 범위
+
+`main`의 `menu_m.sh` Misc 섹션에서 기존 `n`(추가 기능) 바로 위에
+`o "알파인 리눅스로 업그레이드"` 항목을 둔다. 이 항목은 **TinyCore에서
+Alpine으로 되돌릴 수 없이 전환하는 일회성 작업**이다. TinyCore의 파일과
+설정은 보존하지 않으며, 성공 후에는 Alpine만 로더 빌드 환경으로 사용한다.
+
+Alpine 런타임은 `/dev/alpine`이라는 고정 장치 파일이 아니라, 로더 디스크의
+새 **4번 파티션**(`/dev/sdX4`, `/dev/nvmeXn1p4`, `/dev/mmcblkXp4`)에
+`LABEL=alpine`을 설정해 식별한다. Alpine 쪽은 `blkid -L alpine`으로 장치를
+찾아 `/mnt/alpine`에 마운트한다. 따라서 장치명이 달라도 동작한다.
+
+### 대상 디스크 레이아웃
+
+| 파티션 | 전환 전 | 전환 후 |
+|---|---|---|
+| 1 | GRUB/EFI | 변경하지 않음 |
+| 2 | DSM/loader boot files | 변경하지 않음 |
+| 3 | TinyCore와 영속 데이터, `/mnt/${loaderdisk}3` | 기존 끝에서 정확히 1 GiB 축소 후 빈 예약 FAT 파티션으로 재생성 |
+| 4 | 없음 | 1 GiB FAT32, `LABEL=alpine`, Alpine diskless payload |
+
+`p3`는 TinyCore의 FAT 기반 저장소이므로 `resize2fs` 같은 ext 파일시스템
+축소를 사용하지 않는다. 전환의 의도는 TinyCore 폐기이므로, 안전한 절차는
+마운트 해제 후 파티션 3을 보존 축소하는 것이 아니라 **동일한 시작 섹터에서
+더 작은 빈 p3를 다시 만들고, 그 뒤에 p4를 만든다**는 것이다. 이는
+지원되지 않는 FAT in-place 축소와 TinyCore 데이터의 잔존을 모두 피한다.
+
+### 실행 순서
+
+1. **사전 검증:** `getloaderdisk` 결과를 `lsblk --json`/`findmnt`로 교차
+   확인하고, 파티션 1·2·3이 모두 같은 물리 디스크에 있으며 p3가 마지막
+   파티션임을 확인한다. p3 크기는 1 GiB보다 커야 하고, 디스크에 p4가
+   이미 있거나 GPT/MBR 파티션 번호가 예상과 다르면 중단한다.
+2. **명시적 승인:** 한국어/영어 경고에서 대상 디스크, 기존 p3 크기,
+   삭제될 TinyCore 데이터 및 최종 레이아웃을 보여 준다. 사용자가 디스크
+   경로 또는 전환 문구를 정확히 입력해야 계속한다. 이 단계에서는
+   `/mnt/${loaderdisk}3`의 사용자 설정과 현재 GRUB 설정을 외부 저장소로
+   백업할 기회를 제공한다.
+3. **전환 입력물 확보:** 파티션을 변경하기 전에 검증된
+   `alpine-partition.tar.gz`, `localhost.apkovl.tar.gz`, Alpine 전용
+   `grub.cfg`를 RAM 또는 p1/p2의 임시 안전 위치에 내려받고 SHA-256을
+   확인한다. 네트워크/서명/공간 확인 실패 시 디스크에 쓰지 않는다.
+4. **마운트 해제와 테이블 변경:** `sync` 후 p3의 모든 하위 마운트를
+   확인하고 해제한다. p3 시작 섹터는 유지하고 끝을 `old_end - 1 GiB`로
+   계산해 재생성하며, p4는 그 다음 섹터부터 정확히 1 GiB로 생성한다.
+   `partprobe`/`blockdev --rereadpt`와 udev 정착을 기다린 뒤 실제 시작·끝
+   섹터를 재검증한다. p3은 새 FAT로 포맷해 TinyCore 데이터를 제거한다.
+5. **Alpine 배치:** p4를 FAT32 `LABEL=alpine`으로 포맷하고 임시
+   마운트한다. 검증된 Alpine payload와 apkovl을 풀고, `vmlinuz-lts`,
+   `initramfs-lts`, apk repository 및 overlay의 존재를 검사한다.
+6. **부트 전환(마지막 쓰기):** p1의 기존 GRUB 설정을 백업한 후 Alpine
+   전용 설정을 원자적 임시 파일 교체로 설치한다. BIOS와 EFI 경로가 모두
+   있는 경우 두 설정을 함께 바꾸며, 새 항목은 `search --label alpine`으로
+   p4를 찾고 Alpine 커널/initramfs만 로드한다. TinyCore menuentry와
+   TinyCore build 경로는 이 시점에 제거한다.
+7. **완료:** 모든 마운트를 해제하고 `sync`한 뒤, 최종 `lsblk -f`,
+   `blkid -L alpine`, GRUB 파일 검증 결과를 표시한다. 성공 메시지는
+   재부팅만 안내하며 TinyCore 메뉴로 돌아가지 않는다.
+
+### 실패 처리와 중단 지점
+
+- 파티션 테이블을 쓰기 전 실패는 즉시 중단하며 현재 TinyCore를 그대로
+  유지한다.
+- p3 재생성 이후에는 TinyCore 복구를 약속하지 않는다. 대신 p1의 기존
+  GRUB 백업과 Alpine 입력물은 유지하여 p4 포맷/배치/GRUB 설치를 재시도할
+  수 있게 한다.
+- GRUB 교체는 Alpine payload 검증 이후의 마지막 단계여야 한다. p4에
+  부팅 가능 payload가 없으면 기존 GRUB을 바꾸지 않는다.
+- 실행 중에는 `set -euo pipefail`과 단계별 상태 파일을 사용하고, `trap`
+  에서 임시 마운트만 해제한다. 실패를 성공으로 보이게 하는 무시된 오류나
+  광범위한 `|| true`는 사용하지 않는다.
+
+### 구현 단위와 수용 기준
+
+1. `functions.sh`에 디스크 레이아웃 검사, 섹터 산술, 파티션 생성,
+   Alpine payload 검증/배치, GRUB 원자 교체를 담당하는 전용 함수를 둔다.
+2. `menu_m.sh`는 `o` 항목과 전환 함수 호출만 추가하고, 완료 시 재부팅을
+   강제한다. 기존 `n` 추가 기능의 키와 동작은 유지한다.
+3. 테스트는 loopback 디스크의 MBR과 GPT, `sdX`/`nvmeXn1` 이름을 각각
+   사용해 p1·p2 불변, p3 1 GiB 축소, p4 크기·FAT32·`alpine` 레이블,
+   payload 파일, BIOS/EFI GRUB 항목을 확인한다. 실제 매체 테스트는
+   백업 가능한 USB에서 수행한다.

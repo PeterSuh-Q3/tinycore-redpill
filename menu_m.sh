@@ -2960,6 +2960,7 @@ while true; do
 
   # ===== Misc ===== (유지보수/시스템)
   echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
+  eval "echo \"A \\\"알파인 리눅스로 업그레이드\\\"\""          >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -2985,7 +2986,7 @@ while true; do
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
     1) NEXT="c" ;;   # ===== Main =====        → c
     2) NEXT="u" ;;   # ===== Environment ===== → u
-    3) NEXT="n" ;;   # ===== Misc =====        → n
+    3) NEXT="A" ;;   # ===== Misc =====        → A
     c) seleudev;        NEXT="m" ;;
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
@@ -3027,6 +3028,7 @@ while true; do
         NEXT="p"
         ;;           
     y) sudo /root/boot.sh normal ;;
+    A) alpine_upgrade; NEXT="n" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;
