@@ -1439,20 +1439,31 @@ function alpine_partition_path() {
 }
 
 function alpine_upgrade() {
-    local disk part1 part2 part3 part4 sector_size part3_start part3_bytes part3_size
+    local disk part1 part2 part3 part4 sector_size part3_name part3_start_512 part3_size_512 part3_start part3_size
     local alpine_sectors new_part3_size new_part3_end partition_count
     local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount disklabel fdisk_input
-    local mount_target confirmation grub_backup mshell_update_result overlay_root
+    local mount_target confirmation grub_backup mshell_update_result overlay_root mkfs_fat
 
-    if ! which mkfs.vfat >/dev/null 2>&1; then
-        if ! which tce-load >/dev/null 2>&1 || ! tce-load -iw dosfstools \
-            || ! which mkfs.vfat >/dev/null 2>&1; then
+    if which mkfs.vfat >/dev/null 2>&1; then
+        mkfs_fat="$(which mkfs.vfat)"
+    elif which mkfs.fat >/dev/null 2>&1; then
+        mkfs_fat="$(which mkfs.fat)"
+    else
+        if ! which tce-load >/dev/null 2>&1 || ! tce-load -iw dosfstools; then
             dialog --msgbox "Alpine upgrade cannot start: failed to install TinyCore dosfstools (mkfs.vfat)." 8 76
+            return 1
+        fi
+        if which mkfs.vfat >/dev/null 2>&1; then
+            mkfs_fat="$(which mkfs.vfat)"
+        elif which mkfs.fat >/dev/null 2>&1; then
+            mkfs_fat="$(which mkfs.fat)"
+        else
+            dialog --msgbox "Alpine upgrade cannot start: dosfstools did not provide mkfs.vfat or mkfs.fat." 8 76
             return 1
         fi
     fi
 
-    for utility in fdisk lsblk blockdev mkfs.vfat curl tar; do
+    for utility in fdisk lsblk blockdev curl tar; do
         if ! which "${utility}" >/dev/null 2>&1; then
             dialog --msgbox "Alpine upgrade cannot start: '${utility}' is not installed." 8 70
             return 1
@@ -1472,14 +1483,20 @@ function alpine_upgrade() {
     fi
 
     partition_count="$(lsblk -nrpo TYPE "${disk}" | awk '$1 == "part" { count++ } END { print count + 0 }')"
-    if [ "${partition_count}" -ne 3 ] || [ -b "${part4}" ]; then
+    if [ "${partition_count}" -ne 3 ] || [ -e "/sys/class/block/${part4##*/}" ]; then
         dialog --msgbox "Alpine upgrade requires exactly partitions 1, 2 and 3 on ${disk}.\nNo existing partition 4 is allowed." 9 76
         return 1
     fi
 
-    read -r part3_start part3_bytes < <(lsblk -bnro START,SIZE "${part3}")
+    part3_name="${part3##*/}"
+    if ! read -r part3_start_512 < "/sys/class/block/${part3_name}/start" \
+        || ! read -r part3_size_512 < "/sys/class/block/${part3_name}/size"; then
+        dialog --msgbox "Alpine upgrade cannot read the start or size of ${part3}." 7 76
+        return 1
+    fi
     sector_size="$(blockdev --getss "${disk}")"
-    part3_size=$((part3_bytes / sector_size))
+    part3_start=$((part3_start_512 * 512 / sector_size))
+    part3_size=$((part3_size_512 * 512 / sector_size))
     alpine_sectors=$((1073741824 / sector_size))
     if [ "${part3_size}" -le $((alpine_sectors + (128 * 1024 * 1024 / sector_size))) ]; then
         dialog --msgbox "Partition 3 is too small to reserve 1 GiB for Alpine." 7 70
@@ -1592,14 +1609,14 @@ function alpine_upgrade() {
     }
     sleep 2
 
-    if [ ! -b "${part3}" ] || [ ! -b "${part4}" ]; then
+    if [ ! -e "/sys/class/block/${part3##*/}" ] || [ ! -e "/sys/class/block/${part4##*/}" ]; then
         rm -rf "${workdir}"
         dialog --msgbox "Expected Alpine partitions were not created. Do not reboot until ${disk} is inspected." 8 76
         return 1
     fi
 
-    sudo mkfs.vfat "${part3}" >/dev/null \
-        && sudo mkfs.vfat -F 32 -n alpine "${part4}" >/dev/null \
+    sudo "${mkfs_fat}" -i 6234C863 "${part3}" >/dev/null \
+        && sudo "${mkfs_fat}" -F 32 -n alpine "${part4}" >/dev/null \
         && sudo mkdir -p "${alpine_mount}" \
         && sudo mount "${part4}" "${alpine_mount}" \
         && sudo tar xzf "${workdir}/alpine-partition.tar.gz" -C "${alpine_mount}" \
