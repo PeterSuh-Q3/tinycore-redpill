@@ -1428,6 +1428,240 @@ function getloaderdisk() {
     echo "LOADER DISK: $loaderdisk"
 }
 
+function alpine_partition_path() {
+    local disk="$1"
+    local number="$2"
+
+    case "${disk}" in
+        *[0-9]) printf '%sp%s\n' "${disk}" "${number}" ;;
+        *)      printf '%s%s\n' "${disk}" "${number}" ;;
+    esac
+}
+
+function alpine_upgrade() {
+    local disk part1 part2 part3 part4 sector_size part3_name part3_start_512 part3_size_512 part3_start part3_size
+    local alpine_sectors new_part3_size new_part3_end partition_count
+    local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount disklabel fdisk_input
+    local mount_target confirmation grub_backup mshell_update_result overlay_root mkfs_fat
+
+    if which mkfs.vfat >/dev/null 2>&1; then
+        mkfs_fat="$(which mkfs.vfat)"
+    elif which mkfs.fat >/dev/null 2>&1; then
+        mkfs_fat="$(which mkfs.fat)"
+    else
+        if ! which tce-load >/dev/null 2>&1 || ! tce-load -iw dosfstools; then
+            dialog --msgbox "Alpine upgrade cannot start: failed to install TinyCore dosfstools (mkfs.vfat)." 8 76
+            return 1
+        fi
+        if which mkfs.vfat >/dev/null 2>&1; then
+            mkfs_fat="$(which mkfs.vfat)"
+        elif which mkfs.fat >/dev/null 2>&1; then
+            mkfs_fat="$(which mkfs.fat)"
+        else
+            dialog --msgbox "Alpine upgrade cannot start: dosfstools did not provide mkfs.vfat or mkfs.fat." 8 76
+            return 1
+        fi
+    fi
+
+    for utility in fdisk lsblk blockdev curl tar; do
+        if ! which "${utility}" >/dev/null 2>&1; then
+            dialog --msgbox "Alpine upgrade cannot start: '${utility}' is not installed." 8 70
+            return 1
+        fi
+    done
+
+    getloaderdisk >/dev/null
+    disk="/dev/${loaderdisk}"
+    part1="$(alpine_partition_path "${disk}" 1)"
+    part2="$(alpine_partition_path "${disk}" 2)"
+    part3="$(alpine_partition_path "${disk}" 3)"
+    part4="$(alpine_partition_path "${disk}" 4)"
+
+    if [ ! -b "${disk}" ] || [ ! -b "${part1}" ] || [ ! -b "${part2}" ] || [ ! -b "${part3}" ]; then
+        dialog --msgbox "Alpine upgrade cannot identify loader partitions on ${disk}." 8 70
+        return 1
+    fi
+
+    partition_count="$(lsblk -nrpo TYPE "${disk}" | awk '$1 == "part" { count++ } END { print count + 0 }')"
+    if [ "${partition_count}" -ne 3 ] || [ -e "/sys/class/block/${part4##*/}" ]; then
+        dialog --msgbox "Alpine upgrade requires exactly partitions 1, 2 and 3 on ${disk}.\nNo existing partition 4 is allowed." 9 76
+        return 1
+    fi
+
+    part3_name="${part3##*/}"
+    if ! read -r part3_start_512 < "/sys/class/block/${part3_name}/start" \
+        || ! read -r part3_size_512 < "/sys/class/block/${part3_name}/size"; then
+        dialog --msgbox "Alpine upgrade cannot read the start or size of ${part3}." 7 76
+        return 1
+    fi
+    sector_size="$(blockdev --getss "${disk}")"
+    part3_start=$((part3_start_512 * 512 / sector_size))
+    part3_size=$((part3_size_512 * 512 / sector_size))
+    alpine_sectors=$((1073741824 / sector_size))
+    if [ "${part3_size}" -le $((alpine_sectors + (128 * 1024 * 1024 / sector_size))) ]; then
+        dialog --msgbox "Partition 3 is too small to reserve 1 GiB for Alpine." 7 70
+        return 1
+    fi
+    new_part3_size=$((part3_size - alpine_sectors))
+    new_part3_end=$((part3_start + new_part3_size - 1))
+    disklabel="$(sudo fdisk -l "${disk}" 2>/dev/null | awk '/Disklabel type:/ { print $3; exit }')"
+    case "${disklabel}" in
+        dos)
+            fdisk_input=$(printf 'd\n3\nn\np\n3\n%s\n%s\nn\np\n4\n\n+1G\nw\n' \
+                "${part3_start}" "${new_part3_end}")
+            ;;
+        gpt)
+            fdisk_input=$(printf 'd\n3\nn\n3\n%s\n%s\nn\n4\n\n+1G\nw\n' \
+                "${part3_start}" "${new_part3_end}")
+            ;;
+        *)
+            dialog --msgbox "Unsupported partition table '${disklabel:-unknown}' on ${disk}." 7 70
+            return 1
+            ;;
+    esac
+
+    dialog --title "Alpine Linux Upgrade" --yesno \
+        "This is irreversible.\n\nTinyCore and every file on ${part3} will be deleted.\n\nThe new layout will keep partitions 1 and 2 unchanged, recreate partition 3 smaller by 1 GiB, and create ${part4} as Alpine.\n\nContinue?" 15 76
+    [ $? -eq 0 ] || return 1
+
+    dialog --clear --stdout --inputbox \
+        "Type ALPINE to confirm deletion of TinyCore on ${part3}:" 8 76 >"${TMP_PATH}/alpine-confirm"
+    confirmation="$(cat "${TMP_PATH}/alpine-confirm" 2>/dev/null)"
+    rm -f "${TMP_PATH}/alpine-confirm"
+    if [ "${confirmation}" != "ALPINE" ]; then
+        dialog --msgbox "Alpine upgrade cancelled. Confirmation did not match." 6 60
+        return 1
+    fi
+
+    workdir="$(mktemp -d /tmp/alpine-upgrade.XXXXXX)" || return 1
+    alpine_mount="/mnt/alpine"
+    p1_mount="/mnt/${loaderdisk}1"
+    payload_url="https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz"
+    overlay_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/localhost.apkovl.tar.gz"
+    grub_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/grub/grubtiny.cfg"
+    alpine_mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/my.sh.gz"
+
+    if ! curl -fL --retry 3 "${payload_url}" -o "${workdir}/alpine-partition.tar.gz" \
+        || ! curl -fL --retry 3 "${overlay_url}" -o "${workdir}/localhost.apkovl.tar.gz" \
+        || ! curl -fL --retry 3 "${grub_url}" -o "${workdir}/grub.cfg" \
+        || ! tar tzf "${workdir}/alpine-partition.tar.gz" >/dev/null \
+        || ! tar tzf "${workdir}/localhost.apkovl.tar.gz" >/dev/null \
+        || ! grep -q "Alpine Redpill Image Build" "${workdir}/grub.cfg"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine files could not be downloaded or validated. No disk changes were made." 8 76
+        return 1
+    fi
+
+    # Reuse the normal update path: it downloads, extracts, reloads, and backs up my.sh.gz.
+    cd /home/tc || {
+        rm -rf "${workdir}"
+        dialog --msgbox "Cannot access /home/tc to prepare the Alpine management scripts." 7 76
+        return 1
+    }
+    mshtarfile="${alpine_mshtarfile}"
+    getlatestmshell noask
+    mshell_update_result=$?
+    if [ "${mshell_update_result}" -gt 1 ] || [ ! -s "/home/tc/${mshellgz}" ]; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine my.sh.gz could not be installed. No disk changes were made." 7 76
+        return 1
+    fi
+    # getlatestmshell() backs up an updated archive. Back up once when it was already current.
+    if [ "${mshell_update_result}" -eq 0 ] && ! echo "y" | rploader backup; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine management-script backup failed. No disk changes were made." 7 76
+        return 1
+    fi
+
+    # Alpine restores /home/tc from this overlay, so update the overlay rather than only its boot media.
+    overlay_root="${workdir}/overlay"
+    if ! sudo mkdir -p "${overlay_root}/home/tc" \
+        || ! sudo tar xzf "${workdir}/localhost.apkovl.tar.gz" -C "${overlay_root}" \
+        || ! sudo cp "/home/tc/${mshellgz}" "${overlay_root}/home/tc/${mshellgz}" \
+        || ! sudo tar xzf "/home/tc/${mshellgz}" -C "${overlay_root}/home/tc" \
+        || ! [ -s "${overlay_root}/home/tc/functions.sh" ] \
+        || ! sudo tar czf "${workdir}/localhost.apkovl.tar.gz.new" -C "${overlay_root}" . \
+        || ! sudo mv "${workdir}/localhost.apkovl.tar.gz.new" "${workdir}/localhost.apkovl.tar.gz"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine overlay preparation failed. No disk changes were made." 7 76
+        return 1
+    fi
+
+    sync
+    while read -r mount_target; do
+        [ -z "${mount_target}" ] || sudo umount "${mount_target}" || {
+            rm -rf "${workdir}"
+            dialog --msgbox "Could not unmount ${mount_target}. No disk changes were made." 7 76
+            return 1
+        }
+    done < <(mount | awk -v device="${part3}" '$1 == device { print $3 }')
+
+    if ! printf '%s\n' "${fdisk_input}" | sudo fdisk "${disk}"; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Partition table update failed. Do not reboot; inspect ${disk} before retrying." 8 76
+        return 1
+    fi
+
+    sudo partprobe "${disk}" 2>/dev/null || sudo blockdev --rereadpt "${disk}" || {
+        rm -rf "${workdir}"
+        dialog --msgbox "The kernel did not reload ${disk}'s partition table. Do not reboot until it is inspected." 8 76
+        return 1
+    }
+    sleep 2
+
+    if [ ! -e "/sys/class/block/${part3##*/}" ] || [ ! -e "/sys/class/block/${part4##*/}" ]; then
+        rm -rf "${workdir}"
+        dialog --msgbox "Expected Alpine partitions were not created. Do not reboot until ${disk} is inspected." 8 76
+        return 1
+    fi
+
+    sudo "${mkfs_fat}" -i 6234C863 "${part3}" >/dev/null \
+        && sudo "${mkfs_fat}" -F 32 -n alpine "${part4}" >/dev/null \
+        && sudo mkdir -p "${alpine_mount}" \
+        && sudo mount "${part4}" "${alpine_mount}" \
+        && sudo tar xzf "${workdir}/alpine-partition.tar.gz" -C "${alpine_mount}" \
+        && sudo cp "${workdir}/localhost.apkovl.tar.gz" "${alpine_mount}/localhost.apkovl.tar.gz" \
+        && [ -s "${alpine_mount}/vmlinuz-lts" ] \
+        && [ -s "${alpine_mount}/initramfs-lts" ] || {
+        mountpoint -q "${alpine_mount}" && sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine partition setup failed. TinyCore has been removed; repair ${part4} before rebooting." 8 76
+        return 1
+    }
+
+    sudo mkdir -p "${p1_mount}"
+    mountpoint -q "${p1_mount}" || sudo mount "${part1}" "${p1_mount}" || {
+        sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "Alpine payload is ready, but GRUB partition 1 could not be mounted. Do not reboot." 8 76
+        return 1
+    }
+    grub_backup="${p1_mount}/boot/grub/grub.cfg.pre-alpine"
+    sudo cp "${p1_mount}/boot/grub/grub.cfg" "${grub_backup}" \
+        && sudo cp "${workdir}/grub.cfg" "${p1_mount}/boot/grub/grub.cfg.new" \
+        && sudo mv "${p1_mount}/boot/grub/grub.cfg.new" "${p1_mount}/boot/grub/grub.cfg" || {
+        sudo umount "${alpine_mount}"
+        rm -rf "${workdir}"
+        dialog --msgbox "GRUB update failed. The prior configuration is saved as ${grub_backup}." 8 76
+        return 1
+    }
+    if [ -f "${p1_mount}/EFI/BOOT/grub.cfg" ]; then
+        sudo cp "${workdir}/grub.cfg" "${p1_mount}/EFI/BOOT/grub.cfg.new" \
+            && sudo mv "${p1_mount}/EFI/BOOT/grub.cfg.new" "${p1_mount}/EFI/BOOT/grub.cfg" || {
+            sudo umount "${alpine_mount}"
+            rm -rf "${workdir}"
+            dialog --msgbox "EFI GRUB update failed. Do not reboot until ${p1_mount}/EFI/BOOT/grub.cfg is repaired." 8 76
+            return 1
+        }
+    fi
+
+    sync
+    sudo umount "${alpine_mount}"
+    rm -rf "${workdir}"
+    dialog --msgbox "Alpine Linux upgrade is complete.\n\nTinyCore has been removed. The system will now reboot into Alpine." 8 70
+    sudo reboot
+}
+
 # ==============================================================================          
 # Color Function                                                                          
 # ==============================================================================          
