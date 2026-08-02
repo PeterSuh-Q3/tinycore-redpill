@@ -45,7 +45,7 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz preoff.sh tools/alpine-migrate.sh inject-tool/dosfstools.tcz
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh models.json custom_config.json modules.alias.4.json extractor.gz ttyd lrz lsz preoff.sh 
           
           mkdir -p ./mydata/home/tc/
           tar -zxvf mydata.tgz -C ./mydata/

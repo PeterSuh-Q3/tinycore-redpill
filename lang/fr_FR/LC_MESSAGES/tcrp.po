@@ -269,7 +269,3 @@ msgstr "Gel DHCP : %s IP %s figée (renouvellement arrêté)"
 #: MSGFR71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Gel DHCP : udhcpc arrêté - renouvellement du bail supprimé"
-
-#: MSGFR72
-msgid "Upgrade to Alpine Linux"
-msgstr "Mettre à niveau vers Alpine Linux"

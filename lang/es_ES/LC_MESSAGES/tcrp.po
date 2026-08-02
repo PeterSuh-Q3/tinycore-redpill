@@ -269,7 +269,3 @@ msgstr "Congelación DHCP: %s IP %s fijada (renovación detenida)"
 #: MSGES71
 msgid "DHCP freeze: udhcpc stopped - lease renewal suppressed"
 msgstr "Congelación DHCP: udhcpc detenido - renovación de concesión suprimida"
-
-#: MSGES72
-msgid "Upgrade to Alpine Linux"
-msgstr "Actualizar a Alpine Linux"

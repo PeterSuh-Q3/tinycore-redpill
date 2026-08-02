@@ -596,7 +596,7 @@ function syncBundledExtsModule() {
   local mdlname="${1}"
   local bex="/home/tc/redpill-load/bundled-exts.json"
   [ -f "${bex}" ] || return 0
-  which jq >/dev/null 2>&1 || return 0
+  command -v jq >/dev/null 2>&1 || return 0
   local mdlurl
   case "${mdlname}" in
     all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
@@ -2960,7 +2960,6 @@ while true; do
 
   # ===== Misc ===== (유지보수/시스템)
   echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
-  eval "echo \"A \\\"\${MSGZZ72}\\\"\""                       >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -2986,7 +2985,7 @@ while true; do
     # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
     1) NEXT="c" ;;   # ===== Main =====        → c
     2) NEXT="u" ;;   # ===== Environment ===== → u
-    3) NEXT="A" ;;   # ===== Misc =====        → A
+    3) NEXT="n" ;;   # ===== Misc =====        → n
     c) seleudev;        NEXT="m" ;;
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
@@ -3028,7 +3027,6 @@ while true; do
         NEXT="p"
         ;;           
     y) sudo /root/boot.sh normal ;;
-    A) alpine_upgrade; NEXT="n" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
     u) editUserConfig;  NEXT="p" ;;

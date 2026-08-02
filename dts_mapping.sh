@@ -753,7 +753,7 @@ Generate .dts first (menu g).' 8 52
     [ $? -ne 0 ] && { rm -f "${TMP_EDIT}"; return; }
 
     # dtc가 있으면 문법 검사
-    if which dtc &>/dev/null; then
+    if command -v dtc &>/dev/null; then
       local ERR
       ERR=$(dtc -I dts -O dtb -W no-unique_unit_address             "${TMP_EDIT}" -o /dev/null 2>&1)
       if [ $? -ne 0 ]; then
@@ -853,8 +853,8 @@ main_menu() {
 #   dts_run                        -- init + main_menu
 # =============================================================================
 dts_init() {
-  which dialog  &>/dev/null || { echo "Error: 'dialog' not installed.";  return 1; }
-  which udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
+  command -v dialog  &>/dev/null || { echo "Error: 'dialog' not installed.";  return 1; }
+  command -v udevadm &>/dev/null || { echo "Error: 'udevadm' not installed."; return 1; }
   DTS_NODES=()
   DTS_REG_COUNTER=1
   DTS_IDX_INTERNAL=1

@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.2"
+rploaderver="1.3.1.1"
 build="main"
 redpillmake="prod"
 
@@ -274,8 +274,6 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-    1.3.1.2 Redesigned the Alpine migration menu as a two-stage p2-staged base+norestore boot so p3 is never
-             modified while TinyCore extensions or mydata can still hold it.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -786,10 +784,6 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
-# 2026.08.02 v1.3.1.2
-# Redesigned the Alpine migration menu to stage a one-time base+norestore boot
-# on p2 before it releases and modifies p3.
-
 function showlastupdate() {
     cat <<EOF
 
@@ -1019,10 +1013,6 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
-
-# 2026.08.02 v1.3.1.2
-# Redesigned the Alpine migration menu to stage a one-time base+norestore boot
-# on p2 before it releases and modifies p3.
 
 EOF
 }
@@ -1424,214 +1414,6 @@ function getloaderdisk() {
 
     # Output the loader disk
     echo "LOADER DISK: $loaderdisk"
-}
-
-function alpine_partition_path() {
-    local disk="$1"
-    local number="$2"
-
-    case "${disk}" in
-        *[0-9]) printf '%sp%s\n' "${disk}" "${number}" ;;
-        *)      printf '%s%s\n' "${disk}" "${number}" ;;
-    esac
-}
-
-function alpine_upgrade() {
-    local disk part1 part2 part3 part4 part3_name part3_start_512 part3_size_512 sector_size
-    local part3_start part3_size alpine_sectors new_part3_size new_part3_end partition_count disklabel
-    local p2_mount p1_mount p2_was_mounted stage core_source kernel_source migration_script dosfstools_source
-    local hook_dir append_initrd confirmation free_kib entry_file grub_file efi_grub_file
-
-    for utility in fdisk lsblk blockdev curl tar gzip cpio; do
-        if ! which "${utility}" >/dev/null 2>&1; then
-            dialog --msgbox "Alpine migration preparation requires '${utility}'. No disk changes were made." 8 76
-            return 1
-        fi
-    done
-
-    getloaderdisk >/dev/null
-    disk="/dev/${loaderdisk}"
-    part1="$(alpine_partition_path "${disk}" 1)"
-    part2="$(alpine_partition_path "${disk}" 2)"
-    part3="$(alpine_partition_path "${disk}" 3)"
-    part4="$(alpine_partition_path "${disk}" 4)"
-    if [[ ! "${disk}" =~ ^/dev/[[:alnum:]]+$ ]] || [ ! -b "${part1}" ] || [ ! -b "${part2}" ] || [ ! -b "${part3}" ]; then
-        dialog --msgbox "Alpine migration cannot identify loader partitions on ${disk}." 8 70
-        return 1
-    fi
-
-    partition_count="$(lsblk -nrpo TYPE "${disk}" 2>/dev/null | awk '$1 == "part" { count++ } END { print count + 0 }')"
-    if [ "${partition_count}" -ne 3 ] || [ -e "/sys/class/block/${part4##*/}" ]; then
-        dialog --msgbox "Alpine migration requires exactly partitions 1, 2 and 3 on ${disk}.\nNo existing partition 4 is allowed." 9 76
-        return 1
-    fi
-
-    part3_name="${part3##*/}"
-    if ! read -r part3_start_512 < "/sys/class/block/${part3_name}/start" \
-        || ! read -r part3_size_512 < "/sys/class/block/${part3_name}/size"; then
-        dialog --msgbox "Alpine migration cannot read the start or size of ${part3}." 7 76
-        return 1
-    fi
-    sector_size="$(blockdev --getss "${disk}")" || return 1
-    part3_start=$((part3_start_512 * 512 / sector_size))
-    part3_size=$((part3_size_512 * 512 / sector_size))
-    alpine_sectors=$((1073741824 / sector_size))
-    if [ "${part3_size}" -le $((alpine_sectors + (128 * 1024 * 1024 / sector_size))) ]; then
-        dialog --msgbox "Partition 3 is too small to reserve 1 GiB for Alpine." 7 70
-        return 1
-    fi
-    new_part3_size=$((part3_size - alpine_sectors))
-    new_part3_end=$((part3_start + new_part3_size - 1))
-    disklabel="$(sudo fdisk -l "${disk}" 2>/dev/null | awk '/Disklabel type:/ { print $3; exit }')"
-    case "${disklabel}" in
-        dos|gpt) ;;
-        *)
-            dialog --msgbox "Unsupported partition table '${disklabel:-unknown}' on ${disk}." 7 70
-            return 1
-            ;;
-    esac
-
-    p2_mount="$(mount | awk -v device="${part2}" '$1 == device { print $3; exit }')"
-    p2_was_mounted=1
-    if [ -z "${p2_mount}" ]; then
-        p2_was_mounted=0
-        p2_mount="/mnt/alpine-migrate-p2"
-        sudo mkdir -p "${p2_mount}" && sudo mount "${part2}" "${p2_mount}" || {
-            dialog --msgbox "Cannot mount staging partition ${part2}. No disk changes were made." 7 76
-            return 1
-        }
-    fi
-    free_kib="$(df -Pk "${p2_mount}" | awk 'NR == 2 { print $4 }')"
-    if [ -z "${free_kib}" ] || [ "${free_kib}" -lt 32768 ]; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Partition 2 needs at least 32 MiB free for the one-time migration boot assets." 7 76
-        return 1
-    fi
-
-    stage="${p2_mount}/alpine-migrate"
-    if [ -e "${stage}/STATUS" ]; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "An Alpine migration is already prepared on ${part2}.\n\nReboot and manually select 'Alpine migration (one-time)' in GRUB, or inspect ${part2}/alpine-migrate/STATUS." 10 76
-        return 0
-    fi
-
-    core_source="/mnt/${loaderdisk}3/corepure64.gz"
-    kernel_source="/mnt/${loaderdisk}3/vmlinuz64"
-    migration_script="$(find /home/tc -type f -path '*/tools/alpine-migrate.sh' -print -quit 2>/dev/null)"
-    dosfstools_source="$(find /home/tc -type f -path '*/inject-tool/dosfstools.tcz' -print -quit 2>/dev/null)"
-    if [ ! -s "${core_source}" ] || [ ! -s "${kernel_source}" ] || [ ! -s "${migration_script}" ] || [ ! -s "${dosfstools_source}" ]; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Migration assets are missing. Required: corepure64.gz, vmlinuz64, tools/alpine-migrate.sh and inject-tool/dosfstools.tcz." 9 76
-        return 1
-    fi
-
-    confirmation="$(dialog --clear --stdout --inputbox "This does NOT touch partition 3 now.\n\nIt copies a minimal TinyCore boot and migration tools to ${part2}, then adds a separate GRUB entry. The next boot must be selected manually.\n\nType PREPARE-ALPINE to continue:" 13 76)"
-    if [ "${confirmation}" != "PREPARE-ALPINE" ]; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Alpine migration preparation cancelled. No disk changes were made." 6 70
-        return 1
-    fi
-
-    if ! sudo mkdir -p "${stage}" || ! sudo chown "$(id -u):$(id -g)" "${stage}"; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Cannot create the migration staging directory on ${part2}." 7 76
-        return 1
-    fi
-    printf 'preparing\n' >"${stage}/STATUS"
-    hook_dir="${stage}/hook"
-    append_initrd="${stage}/corepure64-migrate.append.gz"
-    mkdir -p "${hook_dir}/opt" || return 1
-    cat >"${hook_dir}/opt/bootlocal.sh" <<EOF
-#!/bin/sh
-mkdir -p /mnt/alpine-migrate
-mount "${part2}" /mnt/alpine-migrate || exit 1
-exec /bin/sh /mnt/alpine-migrate/alpine-migrate.sh
-EOF
-    chmod 755 "${hook_dir}/opt/bootlocal.sh"
-    if ! (cd "${hook_dir}" && find . -print | cpio -o -H newc 2>/dev/null | gzip -9 >"${append_initrd}") \
-        || ! (gzip -dc "${append_initrd}" | cpio -it 2>/dev/null | grep -q 'bootlocal\.sh') \
-        || ! cat "${core_source}" "${append_initrd}" >"${stage}/corepure64-migrate.gz" \
-        || ! gzip -t "${stage}/corepure64-migrate.gz" \
-        || ! cp "${kernel_source}" "${stage}/vmlinuz64" \
-        || ! cp "${migration_script}" "${stage}/alpine-migrate.sh" \
-        || ! cp "${dosfstools_source}" "${stage}/dosfstools.tcz"; then
-        sudo rm -rf "${stage}"
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Could not stage the minimal TinyCore migration boot. No partition table was changed." 8 76
-        return 1
-    fi
-    chmod 755 "${stage}/alpine-migrate.sh"
-    rm -rf "${hook_dir}" "${append_initrd}"
-
-    if ! curl -fL --retry 3 https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/grub/grubtiny.cfg -o "${stage}/alpine-grub.cfg" \
-        || ! grep -q "Alpine Redpill Image Build" "${stage}/alpine-grub.cfg"; then
-        sudo rm -rf "${stage}"
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Could not stage the Alpine GRUB configuration. No partition table was changed." 8 76
-        return 1
-    fi
-    cat >"${stage}/migration.env" <<EOF
-DISK=${disk}
-P1=${part1}
-P2=${part2}
-P3=${part3}
-P4=${part4}
-P3_START_512=${part3_start_512}
-P3_SIZE_512=${part3_size_512}
-P3_NEW_SIZE_512=$((part3_size_512 - 2097152))
-P3_START=${part3_start}
-P3_END=${new_part3_end}
-PARTITION_TABLE=${disklabel}
-PAYLOAD_URL=https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/alpine/alpine-partition.tar.gz
-OVERLAY_URL=https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/localhost.apkovl.tar.gz
-EOF
-    entry_file="${stage}/grub-migration-entry.cfg"
-    cat >"${entry_file}" <<EOF
-
-# alpine-migrate-stage: retain this entry until the migration completes.
-menuentry 'Alpine migration (one-time)' {
-        search --set=root --file /alpine-migrate/vmlinuz64
-        echo Loading minimal TinyCore migration environment...
-        linux /alpine-migrate/vmlinuz64 loglevel=3 base norestore noswap noicons alpine_migrate
-        initrd /alpine-migrate/corepure64-migrate.gz
-}
-EOF
-    p1_mount="$(mount | awk -v device="${part1}" '$1 == device { print $3; exit }')"
-    if [ -z "${p1_mount}" ]; then
-        p1_mount="/mnt/alpine-migrate-p1"
-        sudo mkdir -p "${p1_mount}" && sudo mount "${part1}" "${p1_mount}" || {
-            [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-            dialog --msgbox "Migration files are staged, but ${part1} could not be mounted. Do not reboot; repair GRUB preparation first." 8 76
-            return 1
-        }
-    fi
-    grub_file="${p1_mount}/boot/grub/grub.cfg"
-    efi_grub_file="${p1_mount}/EFI/BOOT/grub.cfg"
-    if [ ! -f "${grub_file}" ] || grep -q '^# alpine-migrate-stage' "${grub_file}"; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "GRUB is missing or already prepared. The staged files were left on ${part2}; inspect them before rebooting." 8 76
-        return 1
-    fi
-    if ! sudo cp "${grub_file}" "${stage}/grub.cfg.pre-alpine-migration" \
-        || ! { sudo cat "${grub_file}"; cat "${entry_file}"; } | sudo tee "${grub_file}.new" >/dev/null \
-        || ! sudo mv "${grub_file}.new" "${grub_file}"; then
-        [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-        dialog --msgbox "Could not add the BIOS GRUB migration entry. Do not reboot." 7 76
-        return 1
-    fi
-    if [ -f "${efi_grub_file}" ]; then
-        if ! sudo cp "${efi_grub_file}" "${stage}/efi-grub.cfg.pre-alpine-migration" \
-            || ! { sudo cat "${efi_grub_file}"; cat "${entry_file}"; } | sudo tee "${efi_grub_file}.new" >/dev/null \
-            || ! sudo mv "${efi_grub_file}.new" "${efi_grub_file}"; then
-            [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-            dialog --msgbox "BIOS GRUB was prepared but EFI GRUB was not. Do not reboot until ${efi_grub_file} is repaired." 8 76
-            return 1
-        fi
-    fi
-    sync
-    printf 'ready\n' >"${stage}/STATUS"
-    [ "${p2_was_mounted}" -eq 1 ] || sudo umount "${p2_mount}"
-    dialog --msgbox "Alpine migration is prepared on ${part2}.\n\nReboot, then manually select 'Alpine migration (one-time)' in GRUB. It boots TinyCore with base+norestore and without cde, verifies that ${part3} has no mounts or loop backings, then performs the irreversible partition work.\n\nThe normal TinyCore entries remain available until the Alpine payload is verified." 14 76
 }
 
 # ==============================================================================          
@@ -2538,11 +2320,7 @@ function getlatestmshell() {
       echo "Updating m shell with latest updates"
       . /home/tc/functions.sh
       showlastupdate
-      if ! echo "y" | rploader backup; then
-        retval=3
-        msgalert "Failed to back up updated m shell"
-        return $retval
-      fi
+      echo "y" | rploader backup
       
       retval=1  # 업데이트 성공
     else
