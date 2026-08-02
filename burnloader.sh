@@ -3,11 +3,24 @@
 # This file can be sourced by menu_m.sh or run directly to burn a loader image.
 
 burnloader_part3() {
-  lsblk -nrpo PATH,PARTN "$1" 2>/dev/null | awk '$2 == 3 { print $1; exit }'
+  if [ -b "${1}3" ]; then
+    printf '%s\n' "${1}3"
+  elif [ -b "${1}p3" ]; then
+    printf '%s\n' "${1}p3"
+  fi
 }
 
 burnloader_has_alpine_partition() {
-  lsblk -nrpo LABEL "$1" 2>/dev/null | awk '$1 == "alpine" { found=1 } END { exit !found }'
+  local partition number separator
+
+  for number in $(seq 1 16); do
+    for separator in "" "p"; do
+      partition="${1}${separator}${number}"
+      [ -b "${partition}" ] || continue
+      [ "$(/sbin/blkid -s LABEL -o value "${partition}" 2>/dev/null)" = "alpine" ] && return 0
+    done
+  done
+  return 1
 }
 
 burnloader_is_tinycore_loader() {
