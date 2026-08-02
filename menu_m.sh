@@ -596,7 +596,7 @@ function syncBundledExtsModule() {
   local mdlname="${1}"
   local bex="/home/tc/redpill-load/bundled-exts.json"
   [ -f "${bex}" ] || return 0
-  command -v jq >/dev/null 2>&1 || return 0
+  which jq >/dev/null 2>&1 || return 0
   local mdlurl
   case "${mdlname}" in
     all-modules)    mdlurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/rpext-index.json" ;;
