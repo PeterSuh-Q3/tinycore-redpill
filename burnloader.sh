@@ -38,7 +38,7 @@ burnloader_backup_user_config() {
   sudo mount "${part3}" "${mount_dir}" || return 1
   if [ ! -f "${mount_dir}/user_config.json" ]; then
     sudo umount "${mount_dir}"
-    return 1
+    return 2
   fi
   sudo cp "${mount_dir}/user_config.json" "${backup_file}" &&
     sudo chown "$(id -u):$(id -g)" "${backup_file}"
@@ -60,7 +60,7 @@ burnloader_restore_user_config() {
 }
 
 burnloader() {
-  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz transport memory_kb
+  local listusb=() loaderdev imgversion imgprefix imgsuffix imgsize image_file image_gz transport memory_kb backup_status
   local target_part3 mount_dir backup_file=""
 
   # Only an Alpine loader is excluded. A legacy TinyCore loader has the same
@@ -104,7 +104,15 @@ burnloader() {
       rmdir "${mount_dir}"
       return 1
     }
-    if ! burnloader_backup_user_config "${target_part3}" "${mount_dir}" "${backup_file}"; then
+    burnloader_backup_user_config "${target_part3}" "${mount_dir}" "${backup_file}"
+    backup_status=$?
+    if [ "${backup_status}" -eq 2 ]; then
+      rm -f "${backup_file}"
+      rmdir "${mount_dir}"
+      backup_file=""
+      mount_dir=""
+      dialog --backtitle "$(backtitle)" --msgbox "No user_config.json was found on ${target_part3}. Continuing without a configuration backup." 0 0
+    elif [ "${backup_status}" -ne 0 ]; then
       rm -f "${backup_file}"
       rmdir "${mount_dir}"
       dialog --backtitle "$(backtitle)" --msgbox "Could not back up ${target_part3}/user_config.json. The disk was not overwritten." 0 0
