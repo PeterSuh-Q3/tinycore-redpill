@@ -274,8 +274,8 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
-    1.3.1.2 Added an irreversible Alpine Linux upgrade menu that replaces TinyCore with a 1 GiB Alpine partition
-             and a single Alpine GRUB boot entry.
+    1.3.1.2 Added an irreversible Alpine Linux upgrade menu that replaces TinyCore with a 1 GiB Alpine partition,
+             one Alpine GRUB boot entry, and the Alpine-branch my.sh.gz update, extraction, and backup flow.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -788,7 +788,8 @@ EOF
 
 # 2026.08.02 v1.3.1.2
 # Added the irreversible Alpine Linux upgrade menu. It removes TinyCore by recreating partition 3 1 GiB smaller,
-# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and replaces GRUB with one Alpine entry.
+# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and installs Alpine-branch my.sh.gz
+# into the runtime overlay through the normal update, extraction, and backup flow before replacing GRUB.
 
 function showlastupdate() {
     cat <<EOF
@@ -1022,7 +1023,8 @@ function showlastupdate() {
 
 # 2026.08.02 v1.3.1.2
 # Added the irreversible Alpine Linux upgrade menu. It removes TinyCore by recreating partition 3 1 GiB smaller,
-# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and replaces GRUB with one Alpine entry.
+# creates a FAT32 Alpine partition 4, deploys the Alpine diskless payload, and installs Alpine-branch my.sh.gz
+# into the runtime overlay through the normal update, extraction, and backup flow before replacing GRUB.
 
 EOF
 }
@@ -2330,7 +2332,11 @@ function getlatestmshell() {
       echo "Updating m shell with latest updates"
       . /home/tc/functions.sh
       showlastupdate
-      echo "y" | rploader backup
+      if ! echo "y" | rploader backup; then
+        retval=3
+        msgalert "Failed to back up updated m shell"
+        return $retval
+      fi
       
       retval=1  # 업데이트 성공
     else
