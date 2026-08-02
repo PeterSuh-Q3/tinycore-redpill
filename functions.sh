@@ -1444,17 +1444,17 @@ function alpine_upgrade() {
     local payload_url overlay_url grub_url alpine_mshtarfile workdir alpine_mount p1_mount disklabel fdisk_input
     local mount_target confirmation grub_backup mshell_update_result overlay_root
 
-    if ! command -v mkfs.vfat >/dev/null 2>&1; then
-        if ! command -v tce-load >/dev/null 2>&1 || ! tce-load -iw dosfstools \
-            || ! command -v mkfs.vfat >/dev/null 2>&1; then
+    if ! which mkfs.vfat >/dev/null 2>&1; then
+        if ! which tce-load >/dev/null 2>&1 || ! tce-load -iw dosfstools \
+            || ! which mkfs.vfat >/dev/null 2>&1; then
             dialog --msgbox "Alpine upgrade cannot start: failed to install TinyCore dosfstools (mkfs.vfat)." 8 76
             return 1
         fi
     fi
 
-    for command in fdisk lsblk blockdev mkfs.vfat curl tar; do
-        if ! command -v "${command}" >/dev/null 2>&1; then
-            dialog --msgbox "Alpine upgrade cannot start: '${command}' is not installed." 8 70
+    for utility in fdisk lsblk blockdev mkfs.vfat curl tar; do
+        if ! which "${utility}" >/dev/null 2>&1; then
+            dialog --msgbox "Alpine upgrade cannot start: '${utility}' is not installed." 8 70
             return 1
         fi
     done
