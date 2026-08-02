@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.5"
+rploaderver="1.4.2.6"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -387,6 +387,10 @@ function history() {
              avoiding the reset preserves active SSH management sessions. Expanded the BMI2-free
              custom-modules path on kernel-5 platforms through DSM 7.4.1, including the relevant
              version cap, model-selection correction, picker filtering, and module-mode validation.
+    1.4.2.6 Added a standalone dialog-based loader burner. It can convert a legacy TinyCore
+             loader to Alpine while preserving user_config.json when present, explicitly accepts
+             TinyCore media without an alpine partition, and rejects the 5GB image when RAM is
+             below 8GB. Missing user_config.json now permits recording without restoration.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -956,6 +960,11 @@ EOF
 # management sessions. Expanded BMI2-free custom-modules support on kernel-5 platforms through
 # DSM 7.4.1 and aligned the cap, model-selection correction, picker filtering, and mode validation.
 
+# 2026.08.02 v1.4.2.6
+# Added a standalone dialog-based loader burner. Legacy TinyCore media without an alpine partition
+# can be converted while user_config.json is backed up and restored when present. The 5GB image
+# requires at least 8GB RAM; a missing user_config.json no longer blocks recording.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1244,6 +1253,11 @@ function showlastupdate() {
 # startup. Alpine and xTCRP already enumerate NICs in PCI order, so this preserves active SSH
 # management sessions. Expanded BMI2-free custom-modules support on kernel-5 platforms through
 # DSM 7.4.1 and aligned the cap, model-selection correction, picker filtering, and mode validation.
+
+# 2026.08.02 v1.4.2.6
+# Added a standalone dialog-based loader burner. Legacy TinyCore media without an alpine partition
+# can be converted while user_config.json is backed up and restored when present. The 5GB image
+# requires at least 8GB RAM; a missing user_config.json no longer blocks recording.
 
 EOF
 }
