@@ -1,9 +1,67 @@
 #!/bin/sh
-# OpenRC local.d 훅. /etc/local.d/restore-packages.start 로 설치.
-# apkovl은 설정만 복원, 패키지/디스크 마운트포인트는 저장 안함 -> 부팅마다 재생성.
-# rebuildfstab: TinyCore Core-scripts 이식 (하드코딩 없이 매 부팅 실제 연결된
-# 디스크를 blkid로 스캔해 /etc/fstab을 동적 재생성). 원본:
-# https://github.com/tinycorelinux/Core-scripts/blob/master/usr/sbin/rebuildfstab
+# Alpine diskless startup hook, installed as /etc/local.d/restore-packages.start.
+mount -o remount,size=90% / 2>/dev/null || true
+
+/usr/local/sbin/rebuildnetifaces
 /usr/local/sbin/rebuildfstab
+/usr/local/sbin/setup-disk-swap
+
+ALP_DEV="$(blkid -L alpine 2>/dev/null)"
+if [ -n "${ALP_DEV}" ]; then
+  SRC_MNT="$(mount | awk -v d="${ALP_DEV}" '$1 == d { print $3; exit }')"
+  if [ -z "${SRC_MNT}" ]; then
+    mkdir -p /media/alpine
+    mount "${ALP_DEV}" /media/alpine 2>/dev/null || true
+    SRC_MNT="$(mount | awk -v d="${ALP_DEV}" '$1 == d { print $3; exit }')"
+  fi
+  if [ -n "${SRC_MNT}" ]; then
+    mount -o remount,rw "${SRC_MNT}" 2>/dev/null || true
+    mkdir -p /mnt/alpine
+    mountpoint -q /mnt/alpine || mount "${ALP_DEV}" /mnt/alpine
+  fi
+fi
+
 [ -f /etc/apk/world ] || exit 0
 apk add --update $(cat /etc/apk/world) > /tmp/pkg-restore.log 2>&1
+
+# A disk-specific NVRAM entry avoids firmware selecting a co-installed
+# TinyCore fallback loader. It is only created after the dedicated EFI file
+# in the release image has been verified.
+if [ -d /sys/firmware/efi/efivars ] && apk add --no-cache efibootmgr >> /tmp/pkg-restore.log 2>&1; then
+  loader_disk="/dev/$(lsblk -no PKNAME "${ALP_DEV}" 2>/dev/null | head -n 1)"
+  case "${loader_disk##*/}" in
+    *[0-9]) efi_part="${loader_disk}p1" ;;
+    *) efi_part="${loader_disk}1" ;;
+  esac
+
+  efi_mount="$(mount | awk -v d="${efi_part}" '$1 == d { print $3; exit }')"
+  mounted_efi="false"
+  if [ -z "${efi_mount}" ] && [ -b "${efi_part}" ]; then
+    efi_mount="/run/alpine-redpill-efi"
+    mkdir -p "${efi_mount}"
+    if mount -o ro "${efi_part}" "${efi_mount}"; then
+      mounted_efi="true"
+    else
+      efi_mount=""
+    fi
+  fi
+
+  if [ -n "${efi_mount}" ] && [ -f "${efi_mount}/EFI/AlpineRedpill/grubx64.efi" ]; then
+    if ! efibootmgr | grep -q 'Alpine Redpill$'; then
+      efibootmgr -c -d "${loader_disk}" -p 1 \
+        -L 'Alpine Redpill' \
+        -l '\EFI\AlpineRedpill\grubx64.efi' >> /tmp/efibootmgr.log 2>&1
+    fi
+
+    alpine_bootnum="$(efibootmgr | awk '/Alpine Redpill$/ { entry = $1; sub(/^Boot/, "", entry); sub(/\*$/, "", entry); print entry; exit }')"
+    current_order="$(efibootmgr | sed -n 's/^BootOrder:[[:space:]]*//p')"
+    if [ -n "${alpine_bootnum}" ] && [ -n "${current_order}" ]; then
+      remaining_order="$(echo "${current_order}" | tr ',' '\n' | grep -v "^${alpine_bootnum}$" | paste -sd, -)"
+      efibootmgr -o "${alpine_bootnum}${remaining_order:+,${remaining_order}}" >> /tmp/efibootmgr.log 2>&1
+    fi
+  fi
+
+  [ "${mounted_efi}" = "true" ] && umount "${efi_mount}"
+fi
+
+sudo /usr/bin/ttyd -W login -f tc 2>/dev/null &
