@@ -13,3 +13,11 @@ UUID `6234-C863`를 가지면서 `alpine` 파티션이 없는 기존 TinyCore �
 
 5GB 이미지는 물리 메모리 8GB 이상이 필요합니다. 메모리가 부족하면 다운로드 전에 요구
 사항을 안내하고 메뉴로 돌아갑니다.
+
+## Alpine 전용 UEFI 부팅 경로
+
+릴리스 이미지에 표준 이동식 매체 fallback 경로 `EFI/BOOT/BOOTX64.EFI`와 함께
+`EFI/AlpineRedpill/grubx64.efi`를 추가했습니다. 기존 TinyCore 로더를 함께 사용하는
+시스템에서는 이 전용 경로를 가리키는 `Alpine Redpill` UEFI NVRAM 부트 항목을 등록하고
+펌웨어 부팅 순서의 최우선으로 두면, 공유 UUID `6234-C863`을 바꾸지 않고도 Alpine SSD를
+명확하게 선택할 수 있습니다.

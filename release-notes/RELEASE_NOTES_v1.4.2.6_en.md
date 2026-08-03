@@ -14,3 +14,11 @@ without configuration restoration.
 
 Selecting the 5GB image now requires at least 8GB of physical RAM. The burner displays the
 requirement and returns to the menu before downloading when memory is insufficient.
+
+## Dedicated Alpine UEFI boot path
+
+Release images now include `EFI/AlpineRedpill/grubx64.efi` in addition to the standard removable
+media fallback at `EFI/BOOT/BOOTX64.EFI`. On systems that retain a legacy TinyCore loader, register
+an `Alpine Redpill` UEFI NVRAM boot entry pointing to the dedicated path and place it first in the
+firmware boot order. This selects the Alpine SSD deterministically without changing the shared
+`6234-C863` partition UUID.
