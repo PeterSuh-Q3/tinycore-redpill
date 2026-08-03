@@ -31,6 +31,23 @@ burnloader_is_tinycore_loader() {
   [ "${uuid}" = "6234-C863" ] && ! burnloader_has_alpine_partition "$1"
 }
 
+burnloader_unmount_target() {
+  local disk="$1" partition
+  local partitions=()
+
+  while read -r partition; do
+    [ -n "${partition}" ] && partitions+=("${partition}")
+  done < <(lsblk -lnpo PATH "${disk}" 2>/dev/null)
+
+  [ "${#partitions[@]}" -gt 0 ] || return 1
+
+  for partition in "${partitions[@]}"; do
+    while mount | awk -v device="${partition}" '$1 == device { found = 1 } END { exit !found }'; do
+      sudo umount "${partition}" || return 1
+    done
+  done
+}
+
 burnloader_backup_user_config() {
   local part3="$1" mount_dir="$2" backup_file="$3"
 
@@ -95,6 +112,11 @@ burnloader() {
 
   if ! dialog --backtitle "$(backtitle)" --yesno "All data on ${loaderdev} will be overwritten.\n\nFor a TinyCore loader (UUID 6234-C863 without an alpine partition), user_config.json on partition 3 will be backed up and restored." 0 0; then
     return 0
+  fi
+
+  if ! burnloader_unmount_target "${loaderdev}"; then
+    dialog --backtitle "$(backtitle)" --msgbox "Could not unmount all partitions on ${loaderdev}. The disk was not overwritten." 0 0
+    return 1
   fi
 
   if burnloader_is_tinycore_loader "${loaderdev}"; then
