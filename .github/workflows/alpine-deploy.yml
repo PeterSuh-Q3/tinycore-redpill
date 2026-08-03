@@ -99,9 +99,6 @@ jobs:
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+1626M\nn\np\n4\n\n+1024M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
 
           echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
-          # Partition 1 contains EFI/BOOT and EFI/AlpineRedpill. Mark it as an
-          # EFI System Partition while retaining its active flag for legacy BIOS.
-          echo -e "t\n1\nef\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
           echo -e "t\n4\nc\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
           #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell.img
 
@@ -172,9 +169,6 @@ jobs:
           echo -e "n\np\n1\n\n+72M\nn\np\n2\n\n+75M\nn\np\n3\n\n+3402M\nn\np\n4\n\n+1024M\nw\nq\n" | sudo fdisk alpine-redpill.${VERSION}.m-shell-5GB.img
 
           echo -e "a\n1\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-5GB.img
-          # Partition 1 contains EFI/BOOT and EFI/AlpineRedpill. Mark it as an
-          # EFI System Partition while retaining its active flag for legacy BIOS.
-          echo -e "t\n1\nef\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-5GB.img
           echo -e "t\n4\nc\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-5GB.img
           #echo -e "t\n1\nuefi\nw" | sudo fdisk alpine-redpill.${VERSION}.m-shell-5GB.img
 
