@@ -22,3 +22,9 @@ media fallback at `EFI/BOOT/BOOTX64.EFI`. On systems that retain a legacy TinyCo
 an `Alpine Redpill` UEFI NVRAM boot entry pointing to the dedicated path and place it first in the
 firmware boot order. This selects the Alpine SSD deterministically without changing the shared
 `6234-C863` partition UUID.
+
+## NVMe boot-media support
+
+The Alpine initramfs now includes the NVMe host driver stack (`nvme`, `nvme-core`, and `hwmon`).
+Alpine GRUB entries explicitly load these modules before mounting the boot media, resolving NVMe
+loader-disk boot failures while retaining the existing USB and SATA SSD boot paths.

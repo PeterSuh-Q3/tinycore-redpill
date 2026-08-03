@@ -21,3 +21,9 @@ UUID `6234-C863`를 가지면서 `alpine` 파티션이 없는 기존 TinyCore �
 시스템에서는 이 전용 경로를 가리키는 `Alpine Redpill` UEFI NVRAM 부트 항목을 등록하고
 펌웨어 부팅 순서의 최우선으로 두면, 공유 UUID `6234-C863`을 바꾸지 않고도 Alpine SSD를
 명확하게 선택할 수 있습니다.
+
+## NVMe 부팅 매체 지원
+
+Alpine initramfs에 NVMe 호스트 드라이버 스택(`nvme`, `nvme-core`, `hwmon`)을 포함했습니다.
+Alpine GRUB 엔트리는 부팅 매체 마운트 전에 이 모듈을 명시적으로 적재합니다. 이로써 NVMe
+로더 디스크의 부팅 실패를 해결하면서 기존 USB 및 SATA SSD 부팅 경로는 유지합니다.
