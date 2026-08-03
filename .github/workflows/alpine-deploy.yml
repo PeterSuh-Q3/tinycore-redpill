@@ -124,6 +124,9 @@ jobs:
           sudo grub-install --version
           sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB
+          # Keep the removable-media fallback while providing a unique EFI path
+          # for a physical machine's AlpineRedpill NVRAM boot entry.
+          sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
@@ -191,6 +194,9 @@ jobs:
           sudo grub-install --version
           sudo grub-install --target=i386-pc --boot-directory="/mnt/tarp1/boot" "${LOOPZ}"
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB
+          # Keep the removable-media fallback while providing a unique EFI path
+          # for a physical machine's AlpineRedpill NVRAM boot entry.
+          sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
