@@ -3290,7 +3290,7 @@ while true; do
     *)            nv_locked="hide" ;;
   esac
   # ===== Main ===== (로더 빌드 워크플로 — 순차 진행 항목)
-  echo '1 "=============== Main ==============="'                              > "${TMP_PATH}/menu"
+  echo '= "=============== Main ==============="'                              > "${TMP_PATH}/menu"
   eval "echo \"m \\\"\${MSG${tz}02}, (${MODEL})\\\"\""     >> "${TMP_PATH}/menu"
   if [ -n "${MODEL}" ]; then
     eval "echo \"j \\\"\${MSG${tz}05} (${BUILD})\\\"\""  >> "${TMP_PATH}/menu"
@@ -3311,14 +3311,14 @@ while true; do
   eval "echo \"y \\\"\${MSG${tz}58}\\\"\""               >> "${TMP_PATH}/menu"
 
   # ===== Environment ===== (설정/환경 옵션)
-  echo '2 "=============== Environment ==============="'                     >> "${TMP_PATH}/menu"
+  echo '= "=============== Environment ==============="'                     >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
   eval "MSG86=\"\${MSG${tz}86}\""
   eval "echo \"v \\\"$(printf "${MSG86}" "${VERBOSE_MODE}")\\\"\""   >> "${TMP_PATH}/menu"
   eval "echo \"l \\\"\${MSG${tz}39}\\\"\""               >> "${TMP_PATH}/menu"
 
   # ===== Misc ===== (유지보수/시스템)
-  echo '3 "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
+  echo '= "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -3347,10 +3347,9 @@ while true; do
   # 하도록 하고, ESC/Cancel은 메뉴를 다시 그리기만 함(프로그램 종료 안 함).
   [ ${dlgret} -ne 0 ] && continue
   case `<"${TMP_PATH}/resp"` in
-    # 카테고리 구분선 — 선택 시 해당 그룹 첫 실제 항목으로 포커스 이동
-    1) NEXT="m" ;;   # ===== Main =====        → m (첫 항목: c 가 p 앞으로 이동)
-    2) NEXT="u" ;;   # ===== Environment ===== → u
-    3) NEXT="n" ;;   # ===== Misc =====        → n
+    # 카테고리 구분선 — 세 섹션 모두 동일한 "=" 태그를 공유하는 장식용 행이라
+    # (선택돼도 어느 섹션인지 구분 불가) 아무 동작 없이 메뉴를 그대로 다시 그린다.
+    =) ;;
     c) seleudev;        NEXT="p" ;;   # c 는 이제 p 바로 위 → 다음은 빌드
     m) modelMenu;       NEXT="j" ;;
     j) selectversion ;    NEXT="s" ;;     
