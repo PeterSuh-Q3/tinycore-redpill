@@ -2796,10 +2796,10 @@ if [ -z "${ucode}" ]; then
   [ -n "${country}" ] && lcode="${country}"
 elif [ "${ucode}" = "en_US" ]; then
   # 기본값(en_US)일 때만 변경 여부를 묻는다. 유효한 다른 국가가 감지된 경우만.
-  # 무입력 시 N 으로 넘어가 en_US 가 그대로 유지된다.
+  # 무입력(타임아웃) 시 Y 로 넘어가 감지된 지역으로 자동 전환된다.
   if [ -n "${country}" ] && [ "${lcode}" != "${country}" ]; then
     answer=""
-    read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "N"
+    read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "Y"
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
       lcode="${country}"
     fi
