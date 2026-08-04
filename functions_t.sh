@@ -7280,7 +7280,15 @@ function alpineentry() {
 menuentry 'Alpine Redpill Image Build' {
         savedefault
         search --set=root --label alpine --hint hd0,msdos4
-        set gfxpayload=1280x960
+        # 2026-08-01: gfxpayload=1280x960 고정은 QEMU/virtio-gpu(가상 디스플레이는
+        # 어떤 모드든 받아줌) 기준으로 정해진 값이라, 이 4:3 해상도를 EDID에 갖고
+        # 있지 않은 실물 FHD/HD 모니터에서 "지원되지 않는 해상도"로 거부당하는
+        # 사례가 실사용자(N54L, 모니터 2대 다 재현)에게서 보고됨. keep 으로 바꿔
+        # 펌웨어가 이미 잡아둔 모드를 그대로 이어받게 한다 - sx 안의 터미널 4개는
+        # 픽셀좌표가 아니라 글자단위 크기 + openbox Smart 배치라 해상도가 달라져도
+        # 안전(각주: xorg.conf.d/20-monitor.conf 의 Virtual-1 프리퍼드모드도 동일한
+        # 가상환경 전제라 실기에서는 원래도 매칭 안 되고 무시됨 - 별도 처리 불필요).
+        set gfxpayload=keep
         echo Loading Linux...
         linux /vmlinuz-lts loglevel=3 console=ttyS0 console=tty1 video=Virtual-1:1280x960 modules=nvme,nvme-core,hwmon
         echo Loading initramfs...
