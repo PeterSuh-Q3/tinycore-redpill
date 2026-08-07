@@ -301,6 +301,13 @@ if [ -z "${CONFIG_BUILDDATE}" ]; then
     writeConfigKey "general" "builddate" "${CONFIG_BUILDDATE}"
 fi
 
+# SSD 캐시 패널 레이아웃은 선택하지 않은 기존 설정에도 기본값을 명시적으로
+# 저장해, 메뉴 라벨과 실제 user_config.json 값이 항상 일치하게 한다.
+if [ -z "${SSDBAY}" ]; then
+    SSDBAY="1X1"
+    writeConfigKey "general" "ssdbay" "${SSDBAY}"
+fi
+
 # 시스템 DMI 필드는 BIOS 기본 문자열인 경우가 많아, 실물 메인보드를 식별할 때는
 # board_vendor와 board_name을 사용한다. 하드웨어가 바뀌었을 수 있으므로 메뉴
 # 진입 때마다 현재 값을 읽어 general.board를 생성 또는 갱신한다.
@@ -1130,17 +1137,14 @@ function storagepanel() {
 function cachepanel() {
   local CACHESIZE="${SSDBAY:-1X1}"
   local CACHE_SIZES=(1X1 1X2 1X3 1X4 1X6 1X8 2X2 2X3 2X4 2X6 2X8 3X4 4X4)
-  local -a menu_options=()
-  local size
 
   eval "MSG132=\"\${MSG${tz}132}\""
-  for size in "${CACHE_SIZES[@]}"; do
-    menu_options+=("${size}" "${size}")
-  done
 
+  # --no-items에서는 각 tag만 한 번씩 전달해야 한다. tag/description 쌍을
+  # 넘기면 description도 tag로 취급돼 같은 레이아웃이 두 번 표시된다.
   dialog --backtitle "$(backtitle)" --default-item "${CACHESIZE}" --no-items \
     --menu "${MSG132}" 0 0 "$(dlgmenuheight "${#CACHE_SIZES[@]}")" \
-    "${menu_options[@]}" 2>"${TMP_PATH}/resp"
+    "${CACHE_SIZES[@]}" 2>"${TMP_PATH}/resp"
   [ $? -ne 0 ] && return
   CACHESIZE=$(<"${TMP_PATH}/resp")
   [ -z "${CACHESIZE}" ] && return
