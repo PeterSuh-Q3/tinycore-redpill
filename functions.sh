@@ -3683,6 +3683,21 @@ function addrequiredexts() {
         fi
     done
 
+    # MSHELL Manager is not model-specific.  It must be collected here, before
+    # build-loader packages custom.gz; relying only on bundled-exts.json can
+    # register it after this collection stage.
+    local mshell_addon_url="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/rpext-index.json"
+    jsonfile=$(jq --arg url "${mshell_addon_url}" '. + {"aeudev": $url}' /home/tc/redpill-load/bundled-exts.json) \
+      && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+    echo "Adding required MSHELL Manager addon"
+    cd /home/tc/redpill-load/ && ./ext-manager.sh add "${mshell_addon_url}" \
+      && ./ext-manager.sh _update_platform_exts "${ORIGIN_PLATFORM}" "${DSMVER_NOTDOT}" "${nkver}" aeudev
+    if [ $? -ne 0 ]; then
+        echo "FAILED : MSHELL Manager addon preparation failed"
+        rploader clean
+        exit 99
+    fi
+
 #m shell only
  #Use user define dts file instaed of dtbpatch ext now
     #if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "r1000" ]; then
@@ -5234,9 +5249,8 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
       echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
-    elif ! printf '%s  %s\\n' \
-        "c4646c62a14e58773cb204a757af2fe33ff14665cf71ae1a499da94dc830a0d9" \
-        "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" | sha256sum -c - >/dev/null 2>&1; then
+    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" 2>/dev/null | awk '{print $1}')" != \
+        "c4646c62a14e58773cb204a757af2fe33ff14665cf71ae1a499da94dc830a0d9" ]; then
       echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     else
