@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "اختر حجم لوحة التخزين"
 
-#: MSGEG118
+#: MSGEG132
 msgid "Choose a Cache Panel Size"
 msgstr "اختر حجم لوحة ذاكرة التخزين المؤقت"
 

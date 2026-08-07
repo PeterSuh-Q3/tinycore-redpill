@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "เลือกขนาดแผงจัดเก็บข้อมูล"
 
-#: MSGTH118
+#: MSGTH132
 msgid "Choose a Cache Panel Size"
 msgstr "เลือกขนาดแผงแคช"
 

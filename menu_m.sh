@@ -1133,13 +1133,13 @@ function cachepanel() {
   local -a menu_options=()
   local size
 
-  eval "MSG118=\"\${MSG${tz}118}\""
+  eval "MSG132=\"\${MSG${tz}132}\""
   for size in "${CACHE_SIZES[@]}"; do
     menu_options+=("${size}" "${size}")
   done
 
   dialog --backtitle "$(backtitle)" --default-item "${CACHESIZE}" --no-items \
-    --menu "${MSG118}" 0 0 "$(dlgmenuheight "${#CACHE_SIZES[@]}")" \
+    --menu "${MSG132}" 0 0 "$(dlgmenuheight "${#CACHE_SIZES[@]}")" \
     "${menu_options[@]}" 2>"${TMP_PATH}/resp"
   [ $? -ne 0 ] && return
   CACHESIZE=$(<"${TMP_PATH}/resp")
@@ -2241,7 +2241,7 @@ function build-pre-option() {
       eval "echo \"d \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
     fi
     eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
-    eval "echo \"f \\\"\${MSG${tz}118} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
     eval "echo \"g \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
     eval "echo \"h \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"

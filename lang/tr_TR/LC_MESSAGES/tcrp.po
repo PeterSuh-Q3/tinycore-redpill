@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Depolama Paneli Boyutu Seçin"
 
-#: MSGTR118
+#: MSGTR132
 msgid "Choose a Cache Panel Size"
 msgstr "Önbellek Paneli Boyutu Seçin"
 

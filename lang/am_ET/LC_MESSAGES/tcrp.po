@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "የማከማቻ ፓነል መጠን ምረጥ"
 
-#: MSGET118
+#: MSGET132
 msgid "Choose a Cache Panel Size"
 msgstr "የመሸጎጫ ፓነል መጠን ምረጥ"
 

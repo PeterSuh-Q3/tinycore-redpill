@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Wählen Sie eine Größe des Speicherpaneels"
 
-#: MSGDE118
+#: MSGDE132
 msgid "Choose a Cache Panel Size"
 msgstr "Wählen Sie eine Größe des Cache Panels"
 

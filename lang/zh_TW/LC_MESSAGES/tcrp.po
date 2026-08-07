@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "選擇儲存面板尺寸"
 
-#: MSGTW118
+#: MSGTW132
 msgid "Choose a Cache Panel Size"
 msgstr "選擇快取面板尺寸"
 

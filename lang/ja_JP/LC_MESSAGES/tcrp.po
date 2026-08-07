@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "ストレージパネルのサイズを選択してください"
 
-#: MSGJP118
+#: MSGJP132
 msgid "Choose a Cache Panel Size"
 msgstr "キャッシュパネルのサイズを選択してください"
 

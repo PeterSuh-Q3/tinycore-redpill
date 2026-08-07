@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "स्टोरेज पैनल का आकार चुनें"
 
-#: MSGIN118
+#: MSGIN132
 msgid "Choose a Cache Panel Size"
 msgstr "कैश पैनल का आकार चुनें"
 

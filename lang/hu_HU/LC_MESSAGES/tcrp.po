@@ -170,7 +170,7 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Válassz egy tárolópanel méretét"
 
-#: MSGHU118
+#: MSGHU132
 msgid "Choose a Cache Panel Size"
 msgstr "Válassz egy gyorsítótár panel méretét"
 
