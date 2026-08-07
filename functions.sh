@@ -5226,6 +5226,23 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
+    # MSHELL Manager addon: keep the pinned public SPK in the ramdisk so the
+    # addon can install it after DSM's package service is available.
+    MSHELL_MANAGER_SPK="MshellManager-x86_64-1.0.0.spk"
+    MSHELL_MANAGER_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/tools/${MSHELL_MANAGER_SPK}"
+    if ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
+        -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
+      echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
+      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
+    elif ! printf '%s  %s\\n' \
+        "c4646c62a14e58773cb204a757af2fe33ff14665cf71ae1a499da94dc830a0d9" \
+        "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" | sha256sum -c - >/dev/null 2>&1; then
+      echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
+      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
+    else
+      echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
+    fi
+
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu
     # choice (driver version / ffmpeg layer / container runtime) into
     # /addons/nvidia.conf for its install.sh (on_patches). Empty driver => Auto
