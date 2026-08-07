@@ -170,6 +170,10 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Выберите размер панели хранения"
 
+#: MSGRU118
+msgid "Choose a Cache Panel Size"
+msgstr "Выберите размер панели кэша"
+
 #: MSGRU50 
 msgid "Mac-spoof Addon"
 msgstr "Дополнение Mac-spoof"

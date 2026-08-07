@@ -29,7 +29,7 @@
 | `j` | DSM VERSION 선택 | 선택한 모델에 대해 `pats.json`에서 실시간으로 가져온 리비전을 최신순 최대 12개까지 표시합니다. BMI2 미지원 CPU(커널 5.10.55 플랫폼에 한함)에서는 DSM 7.4.1보다 새 항목이 제외됩니다 — `all-modules`는 BMI2가 필요하고 `custom-modules`는 현재 DSM 7.4.1까지만 빌드되어 있기 때문입니다. |
 | `s` | Synology S/N 선택 | 시리얼 번호를 무작위로 생성하거나 직접 입력합니다. 빌드 전 필수입니다. |
 | `a` | 선택 Mac 주소 (최대 8개지원) | 현재 존재하는 모든 NIC(`a`~`h`)을 나열하는 하위메뉴를 엽니다. 각 NIC마다 실제 MAC 주소 사용, 무작위 생성, 직접 입력 중 선택할 수 있습니다. NIC이 1개뿐이면 목록 없이 바로 주소 선택 화면으로 진입합니다. |
-| `z` | 빌드 사전 옵션 선택 | 로더 모드, DDSML/EUDEV, DTS 매핑, SATA 포트 리맵, 저장소 패널 크기, 애드온 토글 2종을 다루는 하위메뉴입니다 — [아래](#z--빌드-사전-옵션-선택) 참고. |
+| `z` | 빌드 사전 옵션 선택 | 로더 모드, DDSML/EUDEV, DTS 매핑, SATA 포트 리맵, 저장소·캐시 패널 크기, 애드온 토글 2종을 다루는 하위메뉴입니다 — [아래](#z--빌드-사전-옵션-선택) 참고. |
 | `g` | NVIDIA H/W Trans. | 커널 5.10.55/4.4 플랫폼에서만 표시됩니다(커널 3.10은 `(Not Supported)`로 표기되고 진입 자체가 막히며, 커널 3.x는 항목 자체가 숨겨집니다). 드라이버 버전, NVENC ffmpeg 선택, 애드온 활성화/비활성화 — [아래](#g--nvidia-hw-transcoding) 참고. |
 | `p` | 로더 빌드 | 위에서 선택한 내용으로 실제 빌드를 실행합니다. 라벨에 항상 현재 DSM 빌드, DRM 모드, 모듈팩이 표시되므로 실행 전에 확인할 수 있습니다. |
 | `y` | Boot the loader | FRIEND 모드 로더가 이미 빌드된 경우(`FRKRNL=YES`)에만 표시되며, 재빌드 없이 바로 그 로더로 부팅합니다. |
@@ -66,8 +66,9 @@
 | `c` | User model.dts file SATA port mapping | 이 모델의 SATA 포트 매핑용 커스텀 `.dts` 파일을 지정/편집합니다. |
 | `d` | sata_remap processing for SataPort reordering | DSM이 인식하는 SATA 포트 순서를 재배치합니다. **DT(Device-Tree) 플랫폼에서는 숨겨집니다** — `sata_remap`을 지원하지 않기 때문입니다. 위 캡처의 박스(`epyc7002(DT)`)가 DT 플랫폼이라 화면에 보이지 않습니다. |
 | `e` | 저장소 패널 크기를 선택하세요 | DSM Storage Manager에 표시되는 드라이브 베이 패널 크기를 설정합니다(예: `RACK_12_Bay`, 순전히 화면 표시용). |
-| `f` | Add nvmesystem 애드온 | 단일 NVMe 장치를 단독 볼륨으로 사용할 수 있게 합니다. 메뉴 내에서 실험적/위험 기능으로 표시되며, 활성화 전 확인창이 뜹니다. |
-| `g` | Add vmtools(with qemu-guest-agent) addon | 가상화 환경 배포를 위한 `qemu-guest-agent` 지원을 번들로 추가/제거합니다. |
+| `f` | 캐시 패널 크기를 선택하세요 | `general.ssdbay`에 저장할 SSD 캐시 패널 레이아웃을 설정합니다. `1X1`, `1X2`, `1X3`, `1X4`, `1X6`, `1X8`, `2X2`, `2X3`, `2X4`, `2X6`, `2X8`, `3X4`, `4X4`를 선택할 수 있습니다. |
+| `g` | Add nvmesystem 애드온 | 단일 NVMe 장치를 단독 볼륨으로 사용할 수 있게 합니다. 메뉴 내에서 실험적/위험 기능으로 표시되며, 활성화 전 확인창이 뜹니다. |
+| `h` | Add vmtools(with qemu-guest-agent) addon | 가상화 환경 배포를 위한 `qemu-guest-agent` 지원을 번들로 추가/제거합니다. |
 | `z` | exit | 메인 메뉴로 돌아갑니다. |
 
 ## `g` — NVIDIA H/W Transcoding

@@ -41,7 +41,7 @@ Section 1 (`Main`) only shows item `c` before a model is picked — every other 
 | `j` | Choose a DSM VERSION | Lists up to 12 revisions for the selected model, newest first, pulled live from `pats.json`. On a BMI2-less CPU (kernel-5.10.55 platforms only), entries newer than DSM 7.4.1 are filtered out since `all-modules` needs BMI2 and `custom-modules` is currently built through DSM 7.4.1. |
 | `s` | Choose a Synology Serial Number | Generate a random serial or enter a real one. Required before building. |
 | `a` | Choose a mac address (up to 8 supported) | Opens a submenu listing every present NIC (`a`–`h`); picking one lets you use the real MAC, generate a random one, or type one in. With only one NIC it skips straight to the address picker. |
-| `z` | Select build pre-option | Submenu covering the loader mode, DDSML/EUDEV, DTS mapping, SATA-port remap, storage panel size, and two addon toggles — see [below](#z--select-build-pre-option). |
+| `z` | Select build pre-option | Submenu covering the loader mode, DDSML/EUDEV, DTS mapping, SATA-port remap, storage and cache panel sizes, and two addon toggles — see [below](#z--select-build-pre-option). |
 | `g` | NVIDIA H/W Trans. | Only shown on kernel 5.10.55/4.4 platforms (kernel 3.10 shows `(Not Supported)` and can't be entered, kernel 3.x hides the item entirely). Driver version, optional NVENC ffmpeg, and addon enable/disable — see [below](#g--nvidia-hw-transcoding). |
 | `p` | Build the loader | Runs the actual build with everything selected above. The label always shows the current DSM build, DRM mode, and module pack so you can sanity-check before committing. |
 | `y` | Boot the loader | Only shown once a FRIEND-mode loader has already been built (`FRKRNL=YES`) — boots straight into it without rebuilding. |
@@ -78,8 +78,9 @@ Section 1 (`Main`) only shows item `c` before a model is picked — every other 
 | `c` | User model.dts file SATA port mapping | Lets you supply/edit a custom `.dts` file for SATA port mapping on this model. |
 | `d` | sata_remap processing for SataPort reordering | Reorders SATA ports as seen by DSM. **Hidden on DT (Device-Tree) platforms**, which don't support `sata_remap` — not shown in the screenshot above because this box (`epyc7002(DT)`) is a DT platform. |
 | `e` | Choose a Storage Panel Size | Sets the drive-bay panel size DSM's Storage Manager displays (cosmetic only, e.g. `RACK_12_Bay`). |
-| `f` | Add/Remove nvmesystem Addon | Enables using a single NVMe device as a standalone volume. Marked experimental/risky in-menu; a confirmation warning is shown before enabling. |
-| `g` | Add/Remove vmtools addon | Bundles `qemu-guest-agent` support for virtualized deployments. |
+| `f` | Choose a Cache Panel Size | Sets the SSD cache-panel layout stored in `general.ssdbay`; available layouts are `1X1`, `1X2`, `1X3`, `1X4`, `1X6`, `1X8`, `2X2`, `2X3`, `2X4`, `2X6`, `2X8`, `3X4`, and `4X4`. |
+| `g` | Add/Remove nvmesystem Addon | Enables using a single NVMe device as a standalone volume. Marked experimental/risky in-menu; a confirmation warning is shown before enabling. |
+| `h` | Add/Remove vmtools addon | Bundles `qemu-guest-agent` support for virtualized deployments. |
 | `z` | exit | Returns to the main menu. |
 
 ## `g` — NVIDIA H/W Transcoding

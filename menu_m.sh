@@ -280,6 +280,7 @@ KEYMAP=$(readConfigKey "general" "keymap")
 
 I915MODE=$(readConfigKey "general" "i915mode")
 BFBAY=$(readConfigKey "general" "bay")
+SSDBAY=$(readConfigKey "general" "ssdbay")
 DMPM=$(readConfigKey "general" "devmod")
 NVMES=$(readConfigKey "general" "nvmesystem")
 VMTOOLS=$(readConfigKey "general" "vmtools")
@@ -289,6 +290,30 @@ MLMETHOD=$(readConfigKey "general" "mlmethod")
 ucode=$(readConfigKey "general" "ucode")
 TCB=$(readConfigKey "general" "tcbautoupd")
 FKC=$(readConfigKey "general" "friendautoupd")
+CONFIG_BUILDDATE=$(readConfigKey "general" "builddate")
+CONFIG_BOARD=$(readConfigKey "general" "board")
+
+# 릴리즈 준비 스크립트가 functions.sh에 기록한 빌드 날짜를 최초 메뉴 진입 시
+# user_config.json의 general 섹션에도 보존한다. 이미 저장된 날짜는 사용자가
+# 사용 중인 로더의 빌드 이력이므로 새 메뉴 버전으로 덮어쓰지 않는다.
+if [ -z "${CONFIG_BUILDDATE}" ]; then
+    CONFIG_BUILDDATE="${builddate}"
+    writeConfigKey "general" "builddate" "${CONFIG_BUILDDATE}"
+fi
+
+# 시스템 DMI 필드는 BIOS 기본 문자열인 경우가 많아, 실물 메인보드를 식별할 때는
+# board_vendor와 board_name을 사용한다. 하드웨어가 바뀌었을 수 있으므로 메뉴
+# 진입 때마다 현재 값을 읽어 general.board를 생성 또는 갱신한다.
+BOARD_VENDOR=$(cat /sys/class/dmi/id/board_vendor 2>/dev/null)
+BOARD_NAME=$(cat /sys/class/dmi/id/board_name 2>/dev/null)
+if [ -n "${BOARD_VENDOR}" ] && [ -n "${BOARD_NAME}" ]; then
+    CONFIG_BOARD="${BOARD_VENDOR}, ${BOARD_NAME}"
+elif [ -n "${BOARD_VENDOR}" ]; then
+    CONFIG_BOARD="${BOARD_VENDOR}"
+else
+    CONFIG_BOARD="${BOARD_NAME:-Unknown board}"
+fi
+writeConfigKey "general" "board" "${CONFIG_BOARD}"
 
 if [ -z "${KEYMAP}" ]; then
     LAYOUT="qwerty"
@@ -1099,6 +1124,29 @@ function storagepanel() {
   writeConfigKey "general" "bay" "${BAYSIZE}"
   bay="${BAYSIZE}"
   
+}
+
+# Set Cache Panel Size. Values mirror ChangePanelSize's #X#.png template names.
+function cachepanel() {
+  local CACHESIZE="${SSDBAY:-1X1}"
+  local CACHE_SIZES=(1X1 1X2 1X3 1X4 1X6 1X8 2X2 2X3 2X4 2X6 2X8 3X4 4X4)
+  local -a menu_options=()
+  local size
+
+  eval "MSG118=\"\${MSG${tz}118}\""
+  for size in "${CACHE_SIZES[@]}"; do
+    menu_options+=("${size}" "${size}")
+  done
+
+  dialog --backtitle "$(backtitle)" --default-item "${CACHESIZE}" --no-items \
+    --menu "${MSG118}" 0 0 "$(dlgmenuheight "${#CACHE_SIZES[@]}")" \
+    "${menu_options[@]}" 2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  CACHESIZE=$(<"${TMP_PATH}/resp")
+  [ -z "${CACHESIZE}" ] && return
+
+  SSDBAY="${CACHESIZE}"
+  writeConfigKey "general" "ssdbay" "${SSDBAY}"
 }
 
 ###############################################################################
@@ -2177,7 +2225,7 @@ function build-pre-option() {
   # a(selectldrmode), b(seleudev) 는 최상위 메뉴의 k/c 가 여기로 종속된
   # 것이다 - 문구(MSG06/MSG01)는 원래 최상위에서 쓰던 것을 그대로 재사용
   # (MSGID 변경 없음). 최초 진입 시 a(구 k)가 디폴트 인덱스로 선택된다.
-  # 나머지 항목(구 b/c/d/e)은 앞으로 두 칸씩 밀려 c/d/e/f 로 재배치.
+  # e 아래에 캐시 패널 크기(f)를 배치하고, 기존 NVMe/vmtools 항목은 g/h로 이동.
   default_resp="a"
 
   MSG64="vmtools(with qemu-guest-agent) addon"
@@ -2193,8 +2241,9 @@ function build-pre-option() {
       eval "echo \"d \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
     fi
     eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
-    eval "echo \"f \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
-    eval "echo \"g \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"\${MSG${tz}118} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
+    eval "echo \"g \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
+    eval "echo \"h \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -2208,7 +2257,8 @@ function build-pre-option() {
     c) dtsmapping    ;    NEXT="z" ;;
     d) remapsata     ;    NEXT="z" ;;
     e) storagepanel;      NEXT="z" ;;
-    f)
+    f) cachepanel;        NEXT="z" ;;
+    g)
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
           "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
@@ -2232,7 +2282,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
       NEXT="z" ;;
-    g)
+    h)
       if [ "${VMTOOLS}" = "false" ]; then
         add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
       else

@@ -3,6 +3,7 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.4.2.6"
+builddate="2026.08.02"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -3291,10 +3292,10 @@ function monitor() {
         echo -e "-------------------------------System Information----------------------------"
         echo -e "Hostname:\t\t"$(hostname) 
         echo -e "uptime:\t\t\t"$(uptime | awk '{print $3}' | sed 's/,//')" min"
-        echo -e "Manufacturer:\t\t"$(cat /sys/class/dmi/id/chassis_vendor) 
-        echo -e "Product Name:\t\t"$(cat /sys/class/dmi/id/product_name)
-        echo -e "Version:\t\t"$(cat /sys/class/dmi/id/product_version)
-        echo -e "Serial Number:\t\t"$(sudo cat /sys/class/dmi/id/product_serial)
+        echo -e "Board Manufacturer:\t"$(cat /sys/class/dmi/id/board_vendor)
+        echo -e "Board Name:\t\t"$(cat /sys/class/dmi/id/board_name)
+        echo -e "Board Version:\t"$(cat /sys/class/dmi/id/board_version)
+        echo -e "Board Serial Number:\t"$(sudo cat /sys/class/dmi/id/board_serial)
         echo -e "Operating System:\t"$(grep PRETTY_NAME /etc/os-release | awk -F \= '{print $2}')
         echo -e "Kernel:\t\t\t"$(uname -r)
         echo -e "Processor Name:\t\t"$(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')

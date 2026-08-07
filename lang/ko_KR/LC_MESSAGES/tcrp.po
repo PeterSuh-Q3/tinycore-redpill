@@ -170,6 +170,10 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "저장소 패널 크기를 선택하세요"
 
+#: MSGKR118
+msgid "Choose a Cache Panel Size"
+msgstr "캐시 패널 크기를 선택하세요"
+
 #: MSGKR50 
 msgid "Mac-spoof Addon"
 msgstr "Mac 스푸핑 애드온"
