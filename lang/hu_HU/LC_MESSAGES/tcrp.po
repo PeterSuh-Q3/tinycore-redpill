@@ -170,6 +170,10 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Válassz egy tárolópanel méretét"
 
+#: MSGHU132
+msgid "Choose a Cache Panel Size"
+msgstr "Válassz egy gyorsítótár panel méretét"
+
 #: MSGHU50 
 msgid "Mac-spoof Addon"
 msgstr "Mac-hamis kiegészítés"

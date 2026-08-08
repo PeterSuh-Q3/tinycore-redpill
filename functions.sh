@@ -2,7 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.1"
+rploaderver="1.3.1.2"
+builddate="2026.08.08"
 build="main"
 redpillmake="prod"
 
@@ -274,6 +275,8 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
+    1.3.1.2 Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package
+             release metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -784,6 +787,10 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
+# 2026.08.08 v1.3.1.2
+# Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package release
+# metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1013,6 +1020,10 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
+
+# 2026.08.08 v1.3.1.2
+# Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package release
+# metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
 
 EOF
 }
@@ -3276,6 +3287,21 @@ function addrequiredexts() {
         fi
     done
 
+    # MSHELL Manager is not model-specific.  It must be collected here, before
+    # build-loader packages custom.gz; relying only on bundled-exts.json can
+    # register it after this collection stage.
+    local mshell_addon_url="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/rpext-index.json"
+    jsonfile=$(jq --arg url "${mshell_addon_url}" '. + {"aeudev": $url}' /home/tc/redpill-load/bundled-exts.json) \
+      && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+    echo "Adding required MSHELL Manager addon"
+    cd /home/tc/redpill-load/ && ./ext-manager.sh add "${mshell_addon_url}" \
+      && ./ext-manager.sh _update_platform_exts "${ORIGIN_PLATFORM}" "${DSMVER_NOTDOT}" "${nkver}" aeudev
+    if [ $? -ne 0 ]; then
+        echo "FAILED : MSHELL Manager addon preparation failed"
+        rploader clean
+        exit 99
+    fi
+
 #m shell only
  #Use user define dts file instaed of dtbpatch ext now
     #if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "r1000" ]; then
@@ -4799,6 +4825,31 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
+
+    # The shared aeudev recipe owns MSHELL Manager release metadata. Keep it
+    # outside this build script so a new SPK only changes that recipe.
+    MSHELL_MANAGER_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/recipes/universal.json"
+    MSHELL_MANAGER_MANIFEST="$(curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_MANIFEST_URL}" 2>/dev/null)"
+    MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.name // empty' 2>/dev/null)"
+    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.url // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.sha256 // empty' 2>/dev/null)"
+    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^MshellManager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
+        [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
+        ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
+      echo "[!] MSHELL Manager metadata in aeudev recipe is missing or invalid; skipped."
+    elif ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
+        -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
+      echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
+      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
+    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" 2>/dev/null | awk '{print $1}')" != \
+        "${MSHELL_MANAGER_SHA256}" ]; then
+      echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
+      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
+    else
+      printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -c '.mshell_manager' \
+        > "${RAMDISK_PATH}/addons/mshell-manager.json"
+      echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
+    fi
 
     # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 — 피어/이중 컨트롤러
     # 조율을 쓰지 않으므로 ntb_eth0.json(컨트롤러 역할 파일) 베이킹은 제거했다.
