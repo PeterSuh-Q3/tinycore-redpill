@@ -327,7 +327,10 @@ else
       attempt=$(( attempt + 1 ))
     done
     if [ "${net_ok}" = "true" ]; then
-      [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
+      # Always synchronize the shell payload when entering the menu.  The
+      # tcbautoupd setting controls the legacy TinyCore update flow, but must
+      # not prevent a stale my.sh.gz from being refreshed.
+      [[ -z "${1-}" ]] && getlatestmshell "noask"
     else
       echo "Internet connection failed after ${max_attempt} attempts."
     fi
