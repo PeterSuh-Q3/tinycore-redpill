@@ -217,6 +217,7 @@ KEYMAP=$(readConfigKey "general" "keymap")
 
 I915MODE=$(readConfigKey "general" "i915mode")
 BFBAY=$(readConfigKey "general" "bay")
+SSDBAY=$(readConfigKey "general" "ssdbay")
 DMPM=$(readConfigKey "general" "devmod")
 NVMES=$(readConfigKey "general" "nvmesystem")
 VMTOOLS=$(readConfigKey "general" "vmtools")
@@ -226,6 +227,29 @@ MLMETHOD=$(readConfigKey "general" "mlmethod")
 ucode=$(readConfigKey "general" "ucode")
 TCB=$(readConfigKey "general" "tcbautoupd")
 FKC=$(readConfigKey "general" "friendautoupd")
+CONFIG_BUILDDATE=$(readConfigKey "general" "builddate")
+CONFIG_BOARD=$(readConfigKey "general" "board")
+
+if [ -z "${CONFIG_BUILDDATE}" ]; then
+    CONFIG_BUILDDATE="${builddate}"
+    writeConfigKey "general" "builddate" "${CONFIG_BUILDDATE}"
+fi
+
+if [ -z "${SSDBAY}" ]; then
+    SSDBAY="1X1"
+    writeConfigKey "general" "ssdbay" "${SSDBAY}"
+fi
+
+BOARD_VENDOR=$(cat /sys/class/dmi/id/board_vendor 2>/dev/null)
+BOARD_NAME=$(cat /sys/class/dmi/id/board_name 2>/dev/null)
+if [ -n "${BOARD_VENDOR}" ] && [ -n "${BOARD_NAME}" ]; then
+    CONFIG_BOARD="${BOARD_VENDOR}, ${BOARD_NAME}"
+elif [ -n "${BOARD_VENDOR}" ]; then
+    CONFIG_BOARD="${BOARD_VENDOR}"
+else
+    CONFIG_BOARD="${BOARD_NAME:-Unknown board}"
+fi
+writeConfigKey "general" "board" "${CONFIG_BOARD}"
 
 if [ -z "${KEYMAP}" ]; then
     LAYOUT="qwerty"
@@ -956,6 +980,22 @@ function storagepanel() {
   writeConfigKey "general" "bay" "${BAYSIZE}"
   bay="${BAYSIZE}"
   
+}
+
+# Set Cache Panel Size. Values mirror ChangePanelSize's #X#.png template names.
+function cachepanel() {
+  local CACHESIZE="${SSDBAY:-1X1}"
+  local CACHE_SIZES=(1X1 1X2 1X3 1X4 1X6 1X8 2X2 2X3 2X4 2X6 2X8 3X4 4X4)
+
+  eval "MSG132=\"\${MSG${tz}132}\""
+  dialog --backtitle "`backtitle`" --default-item "${CACHESIZE}" --no-items \
+    --menu "${MSG132}" 0 0 0 "${CACHE_SIZES[@]}" 2>"${TMP_PATH}/resp"
+  [ $? -ne 0 ] && return
+  CACHESIZE=$(<"${TMP_PATH}/resp")
+  [ -z "${CACHESIZE}" ] && return
+
+  SSDBAY="${CACHESIZE}"
+  writeConfigKey "general" "ssdbay" "${SSDBAY}"
 }
 
 ###############################################################################
@@ -1918,8 +1958,9 @@ function build-pre-option() {
       eval "echo \"b \\\"\${MSG${tz}56}\\\"\""                          > "${TMP_PATH}/menud"
     fi
     eval "echo \"c \\\"\${MSG${tz}41} (${bay})\\\"\""                   >> "${TMP_PATH}/menud"
-    eval "echo \"d \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
-    eval "echo \"e \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
+    eval "echo \"d \\\"\${MSG${tz}132} (${SSDBAY})\\\"\""                >> "${TMP_PATH}/menud"
+    eval "echo \"e \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
     echo "z exit"                                                       >> "${TMP_PATH}/menud"
     
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -1930,7 +1971,8 @@ function build-pre-option() {
     case `<"${TMP_PATH}/respd"` in
     b) remapsata     ;    NEXT="z" ;;
     c) storagepanel;      NEXT="z" ;;    
-    d) 
+    d) cachepanel;        NEXT="z" ;;
+    e)
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
           "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
@@ -1954,7 +1996,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
       NEXT="z" ;;
-    e)       
+    f)
       if [ "${VMTOOLS}" = "false" ]; then 
         add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
       else  

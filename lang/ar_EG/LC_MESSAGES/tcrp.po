@@ -170,6 +170,10 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "اختر حجم لوحة التخزين"
 
+#: MSGEG132
+msgid "Choose a Cache Panel Size"
+msgstr "اختر حجم لوحة ذاكرة التخزين المؤقت"
+
 #: MSGEG50 
 msgid "Mac-spoof Addon"
 msgstr "ملحق Mac-spoof"

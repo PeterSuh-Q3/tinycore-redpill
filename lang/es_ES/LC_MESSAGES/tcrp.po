@@ -170,6 +170,10 @@ msgstr "DDSML+EUDEV"
 msgid "Choose a Storage Panel Size"
 msgstr "Elija un tamaño de panel de almacenamiento"
 
+#: MSGES132
+msgid "Choose a Cache Panel Size"
+msgstr "Elija un tamaño de panel de caché"
+
 #: MSGES50 
 msgid "Mac-spoof Addon"
 msgstr "Complemento falso para Mac"
