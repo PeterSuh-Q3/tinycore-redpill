@@ -3,6 +3,7 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.3.1.2"
+builddate="2026.08.08"
 build="main"
 redpillmake="prod"
 
