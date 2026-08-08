@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.3.1.1"
+rploaderver="1.3.1.2"
 build="main"
 redpillmake="prod"
 
@@ -274,6 +274,8 @@ function history() {
              Started support for DSM 7.4 official toolchain-based modules.
     1.3.1.1 Added DHCP lease-renewal suppression for the TinyCore loader session. Freezes the DHCP-assigned IP right
              before the build, stopping periodic renew/rebind traffic and preventing mid-build IP changes.
+    1.3.1.2 Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package
+             release metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -784,6 +786,10 @@ EOF
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
 
+# 2026.08.08 v1.3.1.2
+# Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package release
+# metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
+
 function showlastupdate() {
     cat <<EOF
 
@@ -1013,6 +1019,10 @@ function showlastupdate() {
 # 2026.07.10 v1.3.1.1
 # Added DHCP lease-renewal suppression for the TinyCore loader session (freezes the DHCP-assigned IP during build,
 # stopping periodic renew/rebind traffic and preventing mid-build IP changes).
+
+# 2026.08.08 v1.3.1.2
+# Added MSHELL Manager support. Bundles the aeudev addon before loader creation, verifies the package release
+# metadata and SPK in the ramdisk, then installs and starts the DSM package after boot.
 
 EOF
 }
