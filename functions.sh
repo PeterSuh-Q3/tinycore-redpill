@@ -5241,16 +5241,25 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # MSHELL Manager addon: keep the pinned public SPK in the ramdisk so the
-    # addon can install it after DSM's package service is available.
-    MSHELL_MANAGER_SPK="MshellManager-x86_64-1.0.0.spk"
-    MSHELL_MANAGER_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/tools/${MSHELL_MANAGER_SPK}"
-    if ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
+    # MSHELL Manager release metadata belongs to the addon, rather than to
+    # the loader build scripts. Updating the addon manifest is therefore
+    # sufficient for a future SPK release.
+    MSHELL_MANAGER_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshellmanager/release.json"
+    MSHELL_MANAGER_MANIFEST="$(curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_MANIFEST_URL}" 2>/dev/null)"
+    MSHELL_MANAGER_VERSION="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.version // empty' 2>/dev/null)"
+    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.spk_url // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.sha256 // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SPK="MshellManager-x86_64-${MSHELL_MANAGER_VERSION}.spk"
+    if ! echo "${MSHELL_MANAGER_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || \
+        [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
+        ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
+      echo "[!] MSHELL Manager addon manifest is missing or invalid; skipped."
+    elif ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
         -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
       echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" 2>/dev/null | awk '{print $1}')" != \
-        "c4646c62a14e58773cb204a757af2fe33ff14665cf71ae1a499da94dc830a0d9" ]; then
+        "${MSHELL_MANAGER_SHA256}" ]; then
       echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     else
