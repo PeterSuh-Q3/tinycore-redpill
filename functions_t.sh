@@ -5261,6 +5261,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     else
+      # aeudev's DSM-side installer reads this verified metadata after boot.
+      # Keeping it beside the SPK lets that installer compare versions and
+      # perform upgrades without duplicating release data in its shell code.
+      printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -c '.mshell_manager' \
+        > "${RAMDISK_PATH}/addons/mshell-manager.json"
       echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
     fi
 
