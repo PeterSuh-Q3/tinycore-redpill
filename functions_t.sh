@@ -5241,19 +5241,17 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # MSHELL Manager release metadata belongs to the addon, rather than to
-    # the loader build scripts. Updating the addon manifest is therefore
-    # sufficient for a future SPK release.
-    MSHELL_MANAGER_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshellmanager/release.json"
+    # The shared aeudev recipe owns MSHELL Manager release metadata.  Keep it
+    # outside this build script so a new SPK only changes that recipe.
+    MSHELL_MANAGER_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/recipes/universal.json"
     MSHELL_MANAGER_MANIFEST="$(curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_MANIFEST_URL}" 2>/dev/null)"
-    MSHELL_MANAGER_VERSION="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.version // empty' 2>/dev/null)"
-    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.spk_url // empty' 2>/dev/null)"
-    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.sha256 // empty' 2>/dev/null)"
-    MSHELL_MANAGER_SPK="MshellManager-x86_64-${MSHELL_MANAGER_VERSION}.spk"
-    if ! echo "${MSHELL_MANAGER_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || \
+    MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.name // empty' 2>/dev/null)"
+    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.url // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.sha256 // empty' 2>/dev/null)"
+    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^MshellManager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
         ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
-      echo "[!] MSHELL Manager addon manifest is missing or invalid; skipped."
+      echo "[!] MSHELL Manager metadata in aeudev recipe is missing or invalid; skipped."
     elif ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
         -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
       echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
