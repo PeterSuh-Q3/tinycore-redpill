@@ -51,26 +51,6 @@ modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build
 timezone="UTC"
 ntpserver="pool.ntp.org"
 userconfigfile="/home/tc/user_config.json"
-
-# user_config.json is edited by the tc session. A privileged build or restore
-# must not leave this persistent file owned by root, otherwise later menu
-# writes fail silently for tc. Repair only the known-invalid root:root state.
-function repair_userconfig_owner() {
-    local owner
-
-    [ -f "${userconfigfile}" ] || return 0
-    owner=$(stat -c '%U:%G' "${userconfigfile}" 2>/dev/null || true)
-    [ "${owner}" = "root:root" ] || return 0
-
-    echo "Repairing ${userconfigfile} ownership: root:root -> tc:staff"
-    if [ "$(id -u)" -eq 0 ]; then
-        chown tc:staff "${userconfigfile}"
-    else
-        sudo chown tc:staff "${userconfigfile}"
-    fi
-}
-repair_userconfig_owner
-
 # pats.json is kept at a persistent location (/home/tc) so that a redpill-load
 # directory clean/re-clone (e.g. after a failed build) does not remove the DSM
 # version source. It is mirrored into redpill-load/config for the loader build.
@@ -2876,8 +2856,6 @@ function readanswerwithskip() {
 
 
 function sync_usb_line() {
-    repair_userconfig_owner
-
     # 현재 usb_line 추출
     updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
     
@@ -2944,8 +2922,6 @@ function readConfigKey() {
 ###############################################################################
 # Write to json config file
 function writeConfigKey() {
-
-    repair_userconfig_owner
 
     block="$1"
     field="$2"
@@ -3779,8 +3755,6 @@ function updateuserconfig() {
 
 }
 function updateuserconfigfield() {
-
-    repair_userconfig_owner
 
     block="$1"
     field="$2"
