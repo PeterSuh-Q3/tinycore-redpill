@@ -2876,6 +2876,8 @@ function readanswerwithskip() {
 
 
 function sync_usb_line() {
+    repair_userconfig_owner
+
     # 현재 usb_line 추출
     updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
     
@@ -2942,6 +2944,8 @@ function readConfigKey() {
 ###############################################################################
 # Write to json config file
 function writeConfigKey() {
+
+    repair_userconfig_owner
 
     block="$1"
     field="$2"
@@ -3775,6 +3779,8 @@ function updateuserconfig() {
 
 }
 function updateuserconfigfield() {
+
+    repair_userconfig_owner
 
     block="$1"
     field="$2"
