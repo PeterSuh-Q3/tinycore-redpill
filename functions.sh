@@ -2879,6 +2879,38 @@ function sync_usb_line() {
     jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
 }
 
+# Keep user-supplied kernel parameters when a loader build regenerates the
+# platform's default USB command line. Generated values win for a matching
+# key, while options known only to the existing user_config.json are retained.
+function preserve_usb_line_options() {
+    local generated_line="$1"
+    local existing_line token key generated_token found
+
+    existing_line=$(jq -r '.general.usb_line // empty' "$userconfigfile" 2>/dev/null)
+    [ -z "${existing_line}" ] && {
+        printf '%s\n' "${generated_line}"
+        return
+    }
+
+    for token in ${existing_line}; do
+        [ -z "${token}" ] && continue
+        key="${token%%=*}"
+        found="false"
+
+        for generated_token in ${generated_line}; do
+            if [ "${token}" = "${generated_token}" ] || \
+               { [[ "${token}" == *=* ]] && [ "${key}" = "${generated_token%%=*}" ]; }; then
+                found="true"
+                break
+            fi
+        done
+
+        [ "${found}" = "true" ] || generated_line="${generated_line} ${token}"
+    done
+
+    printf '%s\n' "${generated_line}"
+}
+
 ###############################################################################
 # Read json config file
 function readConfigKey() {
@@ -5023,6 +5055,9 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
 
+    # /tmp/tempentry.txt only has generated defaults. Merge back options that
+    # exist solely in general.usb_line before using and persisting CMD_LINE.
+    USB_LINE="$(preserve_usb_line_options "${USB_LINE}")"
     USB_LINE="${USB_LINE} "
 
     if [ "${BUS}" = "usb" ]; then
