@@ -5304,6 +5304,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
     fi
 
+    # all-modules only: if a supported AMD display controller is present,
+    # stage the platform/DSM-matched runtime SPK from the latest release.
+    if [ "${MDLNAME}" = "all-modules" ] && [ -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
+      /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" \
+        "${RAMDISK_PATH}/addons" || echo "[amdgpu] optional staging failed; continuing loader build"
+    fi
+
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu
     # choice (driver version / ffmpeg layer / container runtime) into
     # /addons/nvidia.conf for its install.sh (on_patches). Empty driver => Auto

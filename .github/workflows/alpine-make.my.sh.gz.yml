@@ -45,7 +45,7 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
+          tar -zcvf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh tools/install-amdgpu-addon.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
 
           # localhost.apkovl.tar.gz는 root:root, root:shadow 등 특권 소유권의
           # 시스템 파일(/etc/shadow, /etc/sudoers.d 등)을 담고 있음. 비-root
