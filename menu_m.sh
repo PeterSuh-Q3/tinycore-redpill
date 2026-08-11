@@ -1284,10 +1284,11 @@ function macMenu() {
 # 목록에서 골라 설정한다. 문자키(a f g h i o t d)와 안내문(MSG${tz}04)은
 # 기존 메인메뉴에서 쓰던 것을 그대로 재사용 - MSGID 변경 없음. 실제
 # 네트워크 인터페이스가 있는 것만 나열하고(핫플러그 없는 환경이라 진입
-# 시점 스냅샷이면 충분), 하나 처리한 뒤에는 다시 이 목록으로 돌아와
-# 여러 개를 연달아 설정할 수 있다. ESC/Cancel 로 메인메뉴로 복귀.
+# 시점 스냅샷이면 충분), 하나 처리한 뒤에는 다음 NIC가 기본 선택되며
+# 마지막 NIC를 처리하면 x(종료)가 기본 선택된다. ESC/Cancel 로 메인메뉴로 복귀.
 function macAddressMenu() {
   local LETTERS="abcdefgh"
+  local default_item="a"
   while true; do
     eval "MSG04=\"\${MSG${tz}04}\""
     eval "MSG73=\"\${MSG${tz}73}\""
@@ -1310,6 +1311,7 @@ function macAddressMenu() {
     done
     set -- "$@" x "${MSG73}"
     dialog --clear --backtitle "`backtitle`" \
+      --default-item "${default_item}" \
       --menu "${MSG04}" 0 0 $(dlgmenuheight $(($#/2))) \
       "$@" \
       2>${TMP_PATH}/resp
@@ -1321,6 +1323,11 @@ function macAddressMenu() {
     while [ $i -lt ${#keys[@]} ]; do
       if [ "${resp}" = "${keys[$i]}" ]; then
         macMenu "${targets[$i]}"
+        if [ $((i + 1)) -lt ${#keys[@]} ]; then
+          default_item="${keys[$((i + 1))]}"
+        else
+          default_item="x"
+        fi
         break
       fi
       i=$((i+1))
