@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.7"
-builddate="2026.08.07"
+rploaderver="1.4.2.8"
+builddate="2026.08.12"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -394,6 +394,8 @@ function history() {
              below 8GB. Missing user_config.json now permits recording without restoration.
     1.4.2.7 Added cache panel size selection and improved loader burner display locale and menu
              behavior
+    1.4.2.8 Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation
+             and initial image GRUB display fix
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -971,6 +973,10 @@ EOF
 # 2026.08.07 v1.4.2.7
 # Added cache panel size selection and improved loader burner display locale and menu behavior
 
+# 2026.08.12 v1.4.2.8
+# Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation and
+# initial image GRUB display fix
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1267,6 +1273,9 @@ function showlastupdate() {
 
 # 2026.08.07 v1.4.2.7
 # Added cache panel size selection and improved loader burner display locale and menu behavior
+# 2026.08.12 v1.4.2.8
+# Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation and
+# initial image GRUB display fix
 EOF
 }
 
