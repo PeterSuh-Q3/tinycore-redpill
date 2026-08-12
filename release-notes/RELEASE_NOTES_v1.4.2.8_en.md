@@ -1,7 +1,5 @@
 # alpine-redpill v1.4.2.8
 
-# alpine-redpill v1.4.2.8
-
 ## AMD runtime and Jellyfin preparation
 
 All modules builds now detect supported AMD display controllers and stage a matching platform and DSM specific AMDGPU runtime package from the latest release when one is available. The build remains optional and continues safely when no matching package exists.

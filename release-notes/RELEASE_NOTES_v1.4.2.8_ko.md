@@ -1,7 +1,5 @@
 # alpine-redpill v1.4.2.8
 
-# alpine-redpill v1.4.2.8
-
 ## AMD 런타임 및 Jellyfin 준비
 
 all modules 빌드에서 지원되는 AMD 디스플레이 컨트롤러를 감지하고 최신 릴리즈에 플랫폼 및 DSM 버전에 맞는 AMDGPU 런타임 패키지가 있을 때만 자동으로 내장합니다. 일치하는 패키지가 없어도 빌드는 안전하게 계속됩니다.
