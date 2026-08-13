@@ -2,7 +2,7 @@
 
 ## AMD 런타임 및 Jellyfin 준비
 
-all modules 빌드에서 지원되는 AMD 디스플레이 컨트롤러를 감지하고 최신 릴리즈에 커널 계열에 맞는 AMDGPU 런타임 패키지가 있을 때만 자동으로 내장합니다. 런타임 자동 내장은 SynoCommunity Jellyfin x64 공식 지원 플랫폼으로 제한합니다. 목록 밖 플랫폼은 AMD 커널 모듈 흐름만 유지하며 Jellyfin 런타임을 자동 설치하지 않습니다. 일치하는 패키지가 없어도 빌드는 안전하게 계속됩니다.
+all modules 빌드에서 지원되는 AMD 디스플레이 컨트롤러를 감지하고 최신 릴리즈에 AMDGPU 런타임 패키지가 있을 때만 자동으로 내장합니다. 런타임 자동 내장은 SynoCommunity Jellyfin x64 공식 지원 플랫폼과 현재 kernel 5.10.55로 제한합니다. kernel 4.4 플랫폼은 안정성 검증이 끝날 때까지 AMD 커널 모듈 흐름만 유지하며 Jellyfin 런타임을 자동 설치하지 않습니다. 일치하는 패키지가 없어도 빌드는 선택 사항으로 안전하게 계속됩니다.
 
 ## MSHELL Manager 및 설정 안정성
 

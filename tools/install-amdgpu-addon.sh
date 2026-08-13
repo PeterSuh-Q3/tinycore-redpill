@@ -24,11 +24,17 @@ case " ${JELLYFIN_X64_PLATFORMS} " in
     ;;
 esac
 
-# Runtime userspace is portable DSM 7.4 x86_64; the kernel split is the
-# compatibility boundary. DSM version is retained for diagnostics only.
+# Kernel 4.4 AMDGPU is currently being validated at the kernel-module level.
+# Do not automatically stage Mesa/VA-API/Jellyfin userspace there: an AMDGPU
+# DRM fault must be investigated without a userspace runtime auto-install.
+# Runtime userspace is portable DSM 7.4 x86_64 for the supported kernel 5
+# family; DSM version is retained for diagnostics only.
 case "${KERNEL_VERSION}" in
   5.10.55) KERNEL_ASSET="kernel5.10.55" ;;
-  4.4.*)   KERNEL_ASSET="kernel4.4.x" ;;
+  4.4.*)
+    echo "[amdgpu] kernel ${KERNEL_VERSION}: runtime staging disabled while kernel 4 AMDGPU stability is under validation"
+    exit 0
+    ;;
   *) echo "[amdgpu] unsupported kernel family: ${KERNEL_VERSION}" >&2; exit 0 ;;
 esac
 
