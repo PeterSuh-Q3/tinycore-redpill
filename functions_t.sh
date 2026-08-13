@@ -5316,7 +5316,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # If a supported AMD display controller is present, stage the matching
     # runtime SPK from the latest release for every MSHELL module mode.
     if [ -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
-      /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" \
+      /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" "${KVER}" \
         "${RAMDISK_PATH}/addons" || echo "[amdgpu] optional staging failed; continuing loader build"
     fi
 
