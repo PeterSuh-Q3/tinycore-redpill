@@ -10,15 +10,13 @@ DSM_VERSION="${2:?DSM version is required}"
 ADDONS_DIR="${3:?addons directory is required}"
 RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/syno-amdgpu-driver/releases/latest"
 
-case "${PLATFORM}" in
-  epyc7002|epyc7003|geminilakenk|icelaked|r1000nk|v1000nk) ;;
-  *) echo "[amdgpu] unsupported platform: ${PLATFORM}" >&2; exit 0 ;;
-esac
-
-case "${DSM_VERSION}" in
-  7.[0-9]) ;;
-  *) echo "[amdgpu] unsupported DSM version: ${DSM_VERSION}" >&2; exit 0 ;;
-esac
+# Platform and DSM support is determined by the published asset name and its
+# package metadata.  Do not keep a local platform whitelist or a DSM 7.4-only
+# gate here: new platforms and DSM releases are added upstream independently.
+# Retain the caller's full DSM string for exact asset matching, while accepting
+# both 7.4 and 7.4.1 style inputs when the release publishes a 7.4 runtime.
+DSM_SERIES="$(printf '%s' "${DSM_VERSION}" | sed -nE 's/^([0-9]+\.[0-9]+)(\..*)?$/\1/p')"
+[ -n "${DSM_SERIES}" ] || { echo "[amdgpu] invalid DSM version: ${DSM_VERSION}" >&2; exit 0; }
 
 if ! command -v lspci >/dev/null 2>&1; then
   echo "[amdgpu] lspci is unavailable; skipping GPU detection" >&2
@@ -40,14 +38,20 @@ RELEASE_JSON="$(curl -fsSL --retry 2 --connect-timeout 15 "${RELEASE_API}")" || 
   exit 0
 }
 
-ASSET_JSON="$(printf '%s' "${RELEASE_JSON}" | jq -c --arg suffix "-${DSM_VERSION}-${PLATFORM}.spk" '
-  .assets[] | select(.name | endswith($suffix)) |
-  {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))} ' | head -n 1)"
+# Prefer a platform-specific asset when one exists.  Otherwise accept the
+# portable x86_64 runtime introduced by v0.3.7.  The DSM series is matched from
+# the asset itself; if the upstream release has no compatible asset, skip it.
+ASSET_JSON="$(printf '%s' "${RELEASE_JSON}" | jq -c --arg dsm "${DSM_SERIES}" --arg platform "${PLATFORM}" '
+  [ .assets[] | select(.name | test("^syno-amdgpu-runtime-[0-9]+\\.[0-9]+\\.[0-9]+-" + $dsm + "(-[A-Za-z0-9._-]+)?\\.spk$"))
+    | {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; "")),
+       platform_match: (if (.name | endswith("-" + $platform + ".spk")) then 1 else 0 end),
+       universal_match: (if (.name | endswith("-x86_64.spk")) then 1 else 0 end)} ]
+  | sort_by(.platform_match, .universal_match) | reverse | .[0] // empty')"
 
 ASSET_NAME="$(printf '%s' "${ASSET_JSON}" | jq -r '.name // empty')"
 ASSET_URL="$(printf '%s' "${ASSET_JSON}" | jq -r '.url // empty')"
 ASSET_SHA256="$(printf '%s' "${ASSET_JSON}" | jq -r '.sha256 // empty')"
-if ! echo "${ASSET_NAME}" | grep -Eq '^syno-amdgpu-runtime-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+\.[0-9]+-[a-z0-9]+\.spk$' || \
+if ! echo "${ASSET_NAME}" | grep -Eq '^syno-amdgpu-runtime-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+\.[0-9]+(-[A-Za-z0-9._-]+)?\.spk$' || \
    [ "${ASSET_URL##*/}" != "${ASSET_NAME}" ] || \
    ! echo "${ASSET_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
   echo "[amdgpu] no matching verified SPK in the latest release" >&2
