@@ -2,7 +2,7 @@
 
 ## AMD runtime and Jellyfin preparation
 
-All modules builds now detect supported AMD display controllers and stage a matching platform and DSM specific AMDGPU runtime package from the latest release when one is available. The build remains optional and continues safely when no matching package exists.
+All modules builds now detect supported AMD display controllers and stage the matching kernel-series AMDGPU runtime package from the latest release when one is available. Runtime staging is restricted to the official SynoCommunity Jellyfin x64 platform list; platforms outside that list keep their AMD kernel-module flow without an automatic Jellyfin runtime installation. The build remains optional and continues safely when no matching package exists.
 
 ## MSHELL Manager and configuration reliability
 

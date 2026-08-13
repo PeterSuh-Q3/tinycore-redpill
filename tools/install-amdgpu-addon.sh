@@ -11,9 +11,19 @@ KERNEL_VERSION="${3:?kernel version is required}"
 ADDONS_DIR="${4:?addons directory is required}"
 RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/syno-amdgpu-driver/releases/latest"
 
-# Platform and DSM support is determined by the published asset name and its
-# package metadata.  Do not keep a local platform whitelist or a DSM 7.4-only
-# gate here: new platforms and DSM releases are added upstream independently.
+# AMD userspace runtime integrates the SynoCommunity Jellyfin SPK. Only stage
+# it for the x64 platforms declared by that package's current DSM 7.2+ build.
+# This is intentionally narrower than the amdgpu.ko platform set: a kernel
+# module may be valid without a supported native Jellyfin package.
+JELLYFIN_X64_PLATFORMS='apollolake avoton braswell broadwell broadwellnk broadwellnkv2 broadwellntbap bromolow denverton epyc7002 geminilake geminilakenk grantley icelaked kvmx64 purley r1000 r1000nk v1000 v1000nk'
+case " ${JELLYFIN_X64_PLATFORMS} " in
+  *" ${PLATFORM} "*) ;;
+  *)
+    echo "[amdgpu] ${PLATFORM} is outside SynoCommunity Jellyfin x64 support; runtime staging skipped"
+    exit 0
+    ;;
+esac
+
 # Runtime userspace is portable DSM 7.4 x86_64; the kernel split is the
 # compatibility boundary. DSM version is retained for diagnostics only.
 case "${KERNEL_VERSION}" in
