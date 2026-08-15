@@ -2746,6 +2746,45 @@ function get_tinycore9() {
     fi
     sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o "/mnt/${tcrppart}/v9/cde.tgz"
     sudo tar -zxf "/mnt/${tcrppart}/v9/cde.tgz" --no-same-owner -C "/mnt/${tcrppart}/v9/cde"
+
+    # TinyCore 9.0 restores persistent data from mydata.tgz.  Alpine's
+    # generic backup path intentionally skips that archive, so create it
+    # explicitly for this TinyCore recovery entry.
+    if [ ! -s "/mnt/${tcrppart}/mydata.tgz" ]; then
+        echo "Creating TinyCore 9.0 mydata.tgz..."
+        if ! sudo tar -C / -czf "/mnt/${tcrppart}/mydata.tgz" home/tc opt; then
+            echo "Failed to create TinyCore 9.0 mydata.tgz" >&2
+            return 1
+        fi
+    fi
+
+    # The recovery menu must be available after TinyCore boots, not only in
+    # the Alpine environment that prepared the image.
+    local tc9_work="/tmp/tinycore9-rootfs"
+    sudo rm -rf "${tc9_work}"
+    sudo mkdir -p "${tc9_work}"
+    if ! sudo sh -c "cd '${tc9_work}' && gzip -dc '/mnt/${tcrppart}/v9/corepure64.gz' | cpio -idm --quiet"; then
+        echo "Failed to unpack TinyCore 9.0 rootfs" >&2
+        sudo rm -rf "${tc9_work}"
+        return 1
+    fi
+    sudo mkdir -p "${tc9_work}/home/tc" "${tc9_work}/opt"
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/mountvol.sh -o "${tc9_work}/home/tc/mountvol.sh"
+    sudo chmod 0755 "${tc9_work}/home/tc/mountvol.sh"
+    sudo tee "${tc9_work}/opt/bootlocal.sh" >/dev/null <<'EOF'
+#!/bin/sh
+[ -x /home/tc/mountvol.sh ] || exit 0
+exec /home/tc/mountvol.sh </dev/tty1 >/dev/tty1 2>&1
+EOF
+    sudo chmod 0755 "${tc9_work}/opt/bootlocal.sh"
+    if ! sudo sh -c "cd '${tc9_work}' && find . -print | cpio -o -H newc --quiet | gzip -9 > '/mnt/${tcrppart}/v9/corepure64.gz.new'"; then
+        echo "Failed to rebuild TinyCore 9.0 rootfs" >&2
+        sudo rm -rf "${tc9_work}"
+        return 1
+    fi
+    sudo mv "/mnt/${tcrppart}/v9/corepure64.gz.new" "/mnt/${tcrppart}/v9/corepure64.gz"
+    sudo rm -rf "${tc9_work}"
+
     local grub_cfg="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
     local entry_count new_default
     entry_count=$(grep -c '^menuentry' "${grub_cfg}")
