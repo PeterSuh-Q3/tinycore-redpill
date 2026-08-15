@@ -2714,51 +2714,13 @@ menuentry 'Mount Syno BTRFS Vol Rescue (with Alpine 3.8)' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading Linux 4.14 recovery kernel...
-        linux /alpine_3.8/vmlinuz-4.14 loglevel=3 modules=md_mod,dm_mod,btrfs,raid6_pq,scsi_mod,sd_mod,sg,sr_mod,libata,ahci,nvme_core,nvme,usb_storage,uas,hid,usbhid,hid_generic,evdev,i8042,atkbd,psmouse,virtio,virtio_pci,virtio_ring,virtio_input,xhci_hcd,ehci_hcd,uhci_hcd,igc,e1000e,e1000,igb,ixgbe,r8169,r8152,tg3,bnx2,atlantic,alx,sky2,skge
+        linux /alpine_3.8/vmlinuz-4.14 loglevel=3 console=ttyS0,115200n8 console=tty1 modules=md_mod,dm_mod,btrfs,raid6_pq,scsi_mod,sd_mod,sg,sr_mod,libata,ahci,nvme_core,nvme,usb_storage,uas,hid,usbhid,hid_generic,evdev,i8042,atkbd,psmouse,virtio,virtio_pci,virtio_ring,virtio_input,xhci_hcd,ehci_hcd,uhci_hcd,igc,e1000e,e1000,igb,ixgbe,r8169,r8152,tg3,bnx2,atlantic,alx,sky2,skge
         echo Loading Alpine recovery initramfs...
         initrd /alpine_3.8/btr-recovery-x86_64.initramfs
         echo Booting Alpine 3.8 BTRFS recovery environment
         set gfxpayload=keep
 }
 EOF
-
-function tinyentry9() {
-    cat <<EOF
-menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)' {
-        savedefault
-        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
-        echo Loading TinyCore 9.0 kernel...
-        linux /v9/vmlinuz64 loglevel=3 modules=btrfs,raid6_pq,ahci,nvme,usb-storage
-        echo Loading TinyCore 9.0 rootfs...
-        initrd /v9/corepure64.gz
-        echo Booting TinyCore 9.0 BTRFS recovery environment
-        set gfxpayload=keep
-}
-EOF
-}
-
-function get_tinycore9() {
-    echo "Downloading TinyCore 9.0 recovery image..."
-    sudo mkdir -p "/mnt/${tcrppart}/v9/cde"
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/corepure64.gz -o "/mnt/${tcrppart}/v9/corepure64.gz"
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/vmlinuz64 -o "/mnt/${tcrppart}/v9/vmlinuz64"
-    local md5_core md5_kernel
-    md5_core=$(sudo md5sum "/mnt/${tcrppart}/v9/corepure64.gz" | awk '{print $1}')
-    md5_kernel=$(sudo md5sum "/mnt/${tcrppart}/v9/vmlinuz64" | awk '{print $1}')
-    if [ "${md5_core}" != "3ec614287ca178d6c6f36887504716e4" ] || [ "${md5_kernel}" != "9ad7991ef3bc49c4546741b91fc36443" ]; then
-        echo "TinyCore 9.0 recovery image checksum verification failed" >&2
-        return 1
-    fi
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o "/mnt/${tcrppart}/v9/cde.tgz"
-    sudo tar -zxf "/mnt/${tcrppart}/v9/cde.tgz" --no-same-owner -C "/mnt/${tcrppart}/v9/cde"
-    local grub_cfg="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
-    local entry_count new_default
-    entry_count=$(grep -c '^menuentry' "${grub_cfg}")
-    new_default=$((entry_count - 1))
-    sudo sed -i "/^set default=/cset default=\"${new_default}\"" "${grub_cfg}"
-    backuploader
-    restart
-}
 }
 
 function get_alpine38() {
