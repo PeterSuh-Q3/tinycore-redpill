@@ -2702,17 +2702,24 @@ function getlatestmshell() {
   return $retval
 }
 
-function get_tinycore9() {
-    echo "Downloading tinycore 9.0..."
-    sudo mkdir -p /mnt/${tcrppart}/v9/cde
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/corepure64.gz -o /mnt/${tcrppart}/v9/corepure64.gz
-    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/vmlinuz64 -o /mnt/${tcrppart}/v9/vmlinuz64
-    md5_corepure64=$(sudo md5sum /mnt/${tcrppart}/v9/corepure64.gz | awk '{print $1}') 
-    md5_vmlinuz64=$(sudo md5sum /mnt/${tcrppart}/v9/vmlinuz64 | awk '{print $1}')
-    if [ ${md5_corepure64} = "3ec614287ca178d6c6f36887504716e4" ] && [ ${md5_vmlinuz64} = "9ad7991ef3bc49c4546741b91fc36443" ]; then
-      echo "tinycore 9.0 md5 check is OK! ( corepure64.gz / vmlinuz64 ) "
-      sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/main/tinycore_9.0/cde.tgz -o /mnt/${tcrppart}/v9/cde.tgz
-      sudo tar -zxvf /mnt/${tcrppart}/v9/cde.tgz --no-same-owner -C /mnt/${tcrppart}/v9/cde
+function alpine38entry() {
+    cat <<EOF
+menuentry 'Mount Syno BTRFS Vol Rescue (with Alpine 3.8)' {
+        savedefault
+        search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
+        linux /alpine_3.8/vmlinuz-4.14 loglevel=3 modules=md_mod,dm_mod,btrfs,raid6_pq,ahci,nvme,usb_storage,uas
+        initrd /alpine_3.8/btr-recovery-x86_64.initramfs
+        set gfxpayload=keep
+}
+EOF
+}
+
+function get_alpine38() {
+    echo "Downloading Alpine 3.8 BTRFS recovery image..."
+    sudo mkdir -p /mnt/${tcrppart}/alpine_3.8
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/alpine_3.8/vmlinuz-4.14 -o /mnt/${tcrppart}/alpine_3.8/vmlinuz-4.14
+    sudo curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/alpine_3.8/btr-recovery-x86_64.initramfs -o /mnt/${tcrppart}/alpine_3.8/btr-recovery-x86_64.initramfs
+    if [ -s /mnt/${tcrppart}/alpine_3.8/vmlinuz-4.14 ] && [ -s /mnt/${tcrppart}/alpine_3.8/btr-recovery-x86_64.initramfs ]; then
       curl -kL# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/mountvol.sh -o /home/tc/mountvol.sh
       chmod +x /home/tc/mountvol.sh
 
@@ -2725,6 +2732,7 @@ function get_tinycore9() {
       backuploader
       restart
     else
+      echo "Alpine 3.8 recovery image download failed" >&2
       return 1
     fi
 }

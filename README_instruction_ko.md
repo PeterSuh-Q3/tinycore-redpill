@@ -127,6 +127,6 @@ DSM 측 디스크/파티션 작업입니다 — 대부분 로더가 실제로 DS
 | `d` | 부트 엔트리 업데이트 버전 수정 | 어긋나거나 깨진 GRUB 부트 엔트리 버전 참조를 고칩니다. |
 | `e` | 디스크(들) 포맷 | 로더 디스크를 제외한 데이터 디스크(들)을 포맷합니다. |
 | `f` | Syno 디스크 볼륨 마운트(Ext4 전용) | 기존 Synology Ext4 볼륨을 점검/복구용으로 마운트합니다. |
-| `g` | Syno 디스크 BTRFS 볼륨 마운트를 위한 Tinycore v9 메뉴 항목 추가 | BTRFS 볼륨 마운트를 위해 TinyCore v9 환경으로 부팅하는 구조용 GRUB 항목을 추가합니다. |
+| `g` | Syno 디스크 BTRFS 볼륨 마운트를 위한 Alpine 3.8 메뉴 항목 추가 | BTRFS 볼륨 마운트를 위해 Alpine 3.8 복구 환경으로 부팅하는 구조용 GRUB 항목을 추가합니다. |
 | `h` | Format System Partition(md0) for New Install | 새 DSM 설치를 위해 `md0`를 포맷합니다. |
 | `i` | Check / Expand System Partition (md0) Capacity | 용량이 작은 레거시 `md0`(예: DSM 7.4 업그레이드를 막는 2.4GB 파티션)를 감지해 파티션 전체 크기로 확장합니다. |

@@ -2182,7 +2182,7 @@ function synopart() {
 
   default_resp="a"
   cfg_file="/mnt/${loaderdisk}1/boot/grub/grub.cfg"
-  entry_title="menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)'"
+  entry_title="menuentry 'Mount Syno BTRFS Vol Rescue (with Alpine 3.8)'"
 
   eval "MSG08=\"\${MSG${tz}08}\""
   eval "MSG09=\"\${MSG${tz}09}\""
@@ -2218,9 +2218,9 @@ function synopart() {
     f) mountvol; default_resp="f";;
     g) 
        if ! grep -qF "$entry_title" "$cfg_file"; then
-         tinyentry9 | sudo tee --append "$cfg_file"
+         alpine38entry | sudo tee --append "$cfg_file"
        fi
-       get_tinycore9
+       get_alpine38
        default_resp="g"
        ;;
     h) CleanSystemPart format; default_resp="h" ;;

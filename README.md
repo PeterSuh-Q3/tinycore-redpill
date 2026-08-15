@@ -139,7 +139,7 @@ DSM-side disk and partition operations — most of these are only meaningful onc
 | `d` | Bootentry Update version correction | Fixes a mismatched/broken GRUB boot-entry version reference. |
 | `e` | Format Disk(s) | Formats data disk(s), excluding the loader disk itself. |
 | `f` | Mount Syno Disk Volume(Ext4 only) | Mounts an existing Synology Ext4 volume for inspection/recovery. |
-| `g` | Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol | Adds a rescue GRUB entry that boots a TinyCore v9 environment for mounting a BTRFS volume. |
+| `g` | Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol | Adds a rescue GRUB entry that boots the Alpine 3.8 recovery environment for mounting a BTRFS volume. |
 | `h` | Format System Partition(md0) for New Install | Formats `md0` in preparation for a fresh DSM install. |
 | `i` | Check / Expand System Partition (md0) Capacity | Detects an undersized legacy `md0` (e.g. a 2.4GB partition that blocks a DSM 7.4 upgrade) and grows it to fill the partition. |
 
