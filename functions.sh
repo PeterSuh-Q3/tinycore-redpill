@@ -4230,6 +4230,7 @@ function backuploader() {
     
     local xtcrp_shm="${shm_path}/xtcrp.tgz"
     local xtcrp_dest="${backup_path}/xtcrp.tgz"
+    local alpine_no_mydata=0
     
     # 기존 /dev/shm 파일 정리
     if [ -f "${xtcrp_shm}" ]; then
@@ -4320,20 +4321,21 @@ function backuploader() {
         
     else
         if is_alpine; then
-            # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 원본
-            # tar -T 명령이 그대로 실패/빈 아카이브를 만듦(실측 확인, 2026-07-12).
-            # Alpine의 실제 영속화는 lbu(apkovl)이므로 여기서 lbu commit을 호출해
-            # 대신하고, mydata.tgz는 빈 플레이스홀더만 남겨 이후 STEP들이 깨지지
-            # 않게 한다(부팅 시 읽는 쪽은 apkovl이지 mydata.tgz가 아님).
-            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            # Alpine의 영속화는 lbu(apkovl)가 담당하므로 TinyCore 전용
+            # mydata.tgz를 만들지 않는다.
+            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화..."
             sudo lbu commit -d
-            sudo sh -c "echo '' | tar -cf - -T /dev/null | pigz -p ${thread}" > "${mydata_shm}" 2>/dev/null
+            alpine_no_mydata=1
         else
             sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
         fi
     fi
     
-    echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
+    if [ ${alpine_no_mydata} -eq 0 ]; then
+        echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
+    else
+        echo "${log_prefix} Alpine: mydata.tgz 단계 생략 (apkovl 사용)"
+    fi
     
     # ========================================================================
     # STEP 4: /dev/shm 파일 크기 확인 및 공간 부족 시 처리
@@ -4349,7 +4351,7 @@ function backuploader() {
         xtcrp_size=$((xtcrp_size / 1024 / 1024))  # Convert to MB
     fi
     
-    if [ -f "${mydata_shm}" ]; then
+    if [ ${alpine_no_mydata} -eq 0 ] && [ -f "${mydata_shm}" ]; then
         mydata_size=$(stat -f%z "${mydata_shm}" 2>/dev/null || stat -c%s "${mydata_shm}" 2>/dev/null)
         mydata_size=$((mydata_size / 1024 / 1024))  # Convert to MB
     fi
@@ -4419,8 +4421,8 @@ function backuploader() {
         fi
     fi
     
-    # mydata.tgz 이동
-    if [ -f "${mydata_shm}" ]; then
+    # mydata.tgz 이동 (Alpine은 lbu/apkovl을 사용하므로 생략)
+    if [ ${alpine_no_mydata} -eq 0 ] && [ -f "${mydata_shm}" ]; then
         if sudo dd if="${mydata_shm}" of="${mydata_dest}" conv=fsync status=progress 2>/dev/null; then
             echo "${log_prefix} mydata.tgz moved successfully"
         else
