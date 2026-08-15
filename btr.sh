@@ -118,6 +118,21 @@ nvme_core
 nvme
 usb_storage
 uas
+# VM/USB console input stack
+hid
+usbhid
+hid_generic
+evdev
+i8042
+atkbd
+psmouse
+virtio
+virtio_pci
+virtio_ring
+virtio_input
+xhci_hcd
+ehci_hcd
+uhci_hcd
 # Common wired NIC drivers for recovery SSH/DHCP
 igc
 e1000e
