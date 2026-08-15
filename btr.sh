@@ -158,7 +158,19 @@ chroot "${ROOTFS_DIR}" /sbin/depmod -a "${KERNEL_RELEASE}" || true
 # mkinitfs runs inside the chroot, so make the configured output directory
 # visible there as well as on the host.
 mkdir -p "${ROOTFS_DIR}${OUTPUT_DIR}"
-chroot "${ROOTFS_DIR}" /sbin/mkinitfs -o "${OUTPUT_DIR}/${INITRAMFS_NAME}" "${KERNEL_RELEASE}"
+# This is a self-contained recovery image.  mkinitfs alone creates Alpine's
+# early boot ramdisk and expects a separate rootfs/modloop; it does not pack
+# the installed ROOTFS_DIR.  Pack the complete Alpine rootfs so /sbin/init,
+# userspace tools, mountvol.sh and the matching modules are available at boot.
+umount -l "${ROOTFS_DIR}/sys" 2>/dev/null || true
+umount -l "${ROOTFS_DIR}/proc" 2>/dev/null || true
+umount -l "${ROOTFS_DIR}/dev/shm" 2>/dev/null || true
+umount -l "${ROOTFS_DIR}/dev" 2>/dev/null || true
+(
+  cd "${ROOTFS_DIR}"
+  find . -print | cpio -o -H newc 2>/dev/null | gzip -9 \
+    > "${OUTPUT_DIR}/${INITRAMFS_NAME}"
+)
 install -m 0644 "${KERNEL_IMAGE}" "${OUTPUT_DIR}/vmlinuz-4.14"
 printf '%s\n' "${ROOTFS_URL}" > "${OUTPUT_DIR}/rootfs-source.txt"
 printf '%s\n' "${KERNEL_IMAGE}" > "${OUTPUT_DIR}/kernel-source.txt"
