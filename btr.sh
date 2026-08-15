@@ -68,6 +68,12 @@ sed -i -E '/^[^#]*tty[2-6][[:space:]]*::/d' "${ROOTFS_DIR}/etc/inittab"
 printf '%s\n' 'ttyS0::askfirst:-/sbin/agetty -L 115200 ttyS0 vt100' >> "${ROOTFS_DIR}/etc/inittab"
 # BusyBox init must create device nodes before agetty starts.
 sed -i '/^::sysinit:/i::sysinit:/bin/mount -t devtmpfs devtmpfs /dev' "${ROOTFS_DIR}/etc/inittab"
+rm -rf "${ROOTFS_DIR}/dev/fd" "${ROOTFS_DIR}/dev/stdin" \
+  "${ROOTFS_DIR}/dev/stdout" "${ROOTFS_DIR}/dev/stderr"
+ln -s /proc/self/fd "${ROOTFS_DIR}/dev/fd"
+ln -s /proc/self/fd/0 "${ROOTFS_DIR}/dev/stdin"
+ln -s /proc/self/fd/1 "${ROOTFS_DIR}/dev/stdout"
+ln -s /proc/self/fd/2 "${ROOTFS_DIR}/dev/stderr"
 
 # The recovery menu is intentionally kept as a separate script so it can be
 # updated without rebuilding the menu logic.  Start it on the local console

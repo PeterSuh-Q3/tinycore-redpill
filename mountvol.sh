@@ -2,6 +2,12 @@
 
 TMP_PATH=/tmp
 
+# The recovery menu is started by OpenRC as root.  Alpine 3.8 may not have a
+# usable sudo policy yet, so avoid recursive sudo failures in that case.
+if [ "$(id -u)" -eq 0 ]; then
+  sudo() { "$@"; }
+fi
+
 # 신호 처리 함수 정의
 function cleanup() {
     echo -e "\n\e[33mScript interrupted. Cleaning up...\e[0m"
@@ -14,6 +20,10 @@ trap cleanup SIGINT SIGTERM
 loaderdisk=""
 # Get the loader disk using the UUID "6234-C863"
 loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+[ -n "${loaderdisk}" ] || {
+  echo "Loader disk with UUID 6234-C863 was not found."
+  exit 0
+}
 mount /dev/${loaderdisk}1
 
 function defaultchange() {
