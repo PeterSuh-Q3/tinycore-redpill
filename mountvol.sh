@@ -8,6 +8,10 @@ if [ "$(id -u)" -eq 0 ]; then
   sudo() { "$@"; }
 fi
 
+get_filesystem_type() {
+  sudo blkid "$1" 2>/dev/null | sed -n 's/.*TYPE="\([^"]*\)".*/\1/p' | head -n 1
+}
+
 # 신호 처리 함수 정의
 function cleanup() {
     echo -e "\n\e[33mScript interrupted. Cleaning up...\e[0m"
@@ -100,7 +104,7 @@ function mountvol () {
     vol_name="${path##*/}"
     
     # 파티션 타입 조회
-    partition_type=$(sudo blkid -o value -s TYPE "${path}" 2>/dev/null)
+    partition_type=$(get_filesystem_type "${path}")
     # 파티션 타입이 없는 경우 "unknown"으로 표시
     [ -z "$partition_type" ] && partition_type="unknown"
     
@@ -144,7 +148,7 @@ function mountvol () {
     vol_name="${resp##*-}"  # LV 이름만 추출
     mount_point="/mnt/${vol_name}"  # 마운트 경로 생성
     
-    T=$(sudo blkid -o value -s TYPE "${resp}" 2>/dev/null)
+    T=$(get_filesystem_type "${resp}")
     
     sudo mkdir -p "${mount_point}"
     if [ "$T" = "btrfs" ]; then
