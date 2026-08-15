@@ -4319,7 +4319,7 @@ function backuploader() {
         if is_alpine; then
             # Alpine의 영속화는 lbu(apkovl)가 담당하므로 TinyCore 전용
             # mydata.tgz를 만들지 않는다.
-            echo "${log_prefix} Alpine: lbu commit 으로 설정 영속화..."
+            echo "${log_prefix} Alpine: persisting settings with lbu commit..."
             sudo lbu commit -d
             alpine_no_mydata=1
         else
@@ -4330,7 +4330,7 @@ function backuploader() {
     if [ ${alpine_no_mydata} -eq 0 ]; then
         echo "${log_prefix} mydata.tgz created successfully in ${shm_path}"
     else
-        echo "${log_prefix} Alpine: mydata.tgz 단계 생략 (apkovl 사용)"
+        echo "${log_prefix} Alpine: skipping mydata.tgz (using apkovl)"
     fi
     
     # ========================================================================
@@ -4528,7 +4528,7 @@ function backuploader_old() {
         if is_alpine; then
             # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
             # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
-            cecho y "Alpine: lbu commit 으로 설정 영속화 (mydata.tgz 대신)..."
+            cecho y "Alpine: persisting settings with lbu commit (instead of mydata.tgz)..."
             sudo lbu commit -d
             backup_loader
         else
