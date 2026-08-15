@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.8"
-builddate="2026.08.12"
+rploaderver="1.4.2.9"
+builddate="2026.08.15"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -396,6 +396,7 @@ function history() {
              behavior
     1.4.2.8 Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation
              and initial image GRUB display fix
+    1.4.2.9 Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -977,6 +978,9 @@ EOF
 # Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation and
 # initial image GRUB display fix
 
+# 2026.08.15 v1.4.2.9
+# Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1276,6 +1280,8 @@ function showlastupdate() {
 # 2026.08.12 v1.4.2.8
 # Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation and
 # initial image GRUB display fix
+# 2026.08.15 v1.4.2.9
+# Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
 EOF
 }
 
