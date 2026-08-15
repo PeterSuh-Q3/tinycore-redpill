@@ -61,6 +61,11 @@ printf 'root:%s\ntc:%s\n' "${BTR_ROOT_PASSWORD}" "${BTR_TC_PASSWORD}" | \
 chroot "${ROOTFS_DIR}" /usr/sbin/addgroup tc wheel
 printf '%%wheel ALL=(ALL) NOPASSWD: ALL\n' > "${ROOTFS_DIR}/etc/sudoers.d/tc"
 chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/tc"
+# This recovery image exposes only the serial and primary virtual console.
+# Alpine's default inittab also starts agetty on tty2-tty6, which do not exist
+# on serial-only/VM boots and otherwise produces an endless error loop.
+sed -i -E '/^[^#]*tty[2-6][[:space:]]*::/d' "${ROOTFS_DIR}/etc/inittab"
+printf '%s\n' 'ttyS0::askfirst:-/sbin/agetty -L 115200 ttyS0 vt100' >> "${ROOTFS_DIR}/etc/inittab"
 
 # The recovery menu is intentionally kept as a separate script so it can be
 # updated without rebuilding the menu logic.  Start it on the local console

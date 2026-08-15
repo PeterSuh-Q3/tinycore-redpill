@@ -2708,7 +2708,7 @@ menuentry 'Mount Syno BTRFS Vol Rescue (with Alpine 3.8)' {
         savedefault
         search --set=root --fs-uuid 6234-C863 --hint hd0,msdos3
         echo Loading Linux 4.14 recovery kernel...
-        linux /alpine_3.8/vmlinuz-4.14 loglevel=3 modules=md_mod,dm_mod,btrfs,raid6_pq,scsi_mod,sd_mod,sg,sr_mod,libata,ahci,nvme_core,nvme,usb_storage,uas,hid,usbhid,hid_generic,evdev,i8042,atkbd,psmouse,virtio,virtio_pci,virtio_ring,virtio_input,xhci_hcd,ehci_hcd,uhci_hcd,igc,e1000e,e1000,igb,ixgbe,r8169,r8152,tg3,bnx2,atlantic,alx,sky2,skge
+        linux /alpine_3.8/vmlinuz-4.14 loglevel=3 console=ttyS0,115200n8 console=tty1 modules=md_mod,dm_mod,btrfs,raid6_pq,scsi_mod,sd_mod,sg,sr_mod,libata,ahci,nvme_core,nvme,usb_storage,uas,hid,usbhid,hid_generic,evdev,i8042,atkbd,psmouse,virtio,virtio_pci,virtio_ring,virtio_input,xhci_hcd,ehci_hcd,uhci_hcd,igc,e1000e,e1000,igb,ixgbe,r8169,r8152,tg3,bnx2,atlantic,alx,sky2,skge
         echo Loading Alpine recovery initramfs...
         initrd /alpine_3.8/btr-recovery-x86_64.initramfs
         echo Booting Alpine 3.8 BTRFS recovery environment
