@@ -66,6 +66,8 @@ chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/tc"
 # on serial-only/VM boots and otherwise produces an endless error loop.
 sed -i -E '/^[^#]*tty[2-6][[:space:]]*::/d' "${ROOTFS_DIR}/etc/inittab"
 printf '%s\n' 'ttyS0::askfirst:-/sbin/agetty -L 115200 ttyS0 vt100' >> "${ROOTFS_DIR}/etc/inittab"
+# BusyBox init must create device nodes before agetty starts.
+sed -i '/^::sysinit:/i::sysinit:/bin/mount -t devtmpfs devtmpfs /dev' "${ROOTFS_DIR}/etc/inittab"
 
 # The recovery menu is intentionally kept as a separate script so it can be
 # updated without rebuilding the menu logic.  Start it on the local console
@@ -98,7 +100,6 @@ ListenAddress 0.0.0.0
 PermitRootLogin yes
 PasswordAuthentication yes
 KbdInteractiveAuthentication no
-UsePAM no
 PrintMotd yes
 Subsystem sftp /usr/lib/ssh/sftp-server
 EOF
