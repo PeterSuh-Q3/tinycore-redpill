@@ -2193,6 +2193,8 @@ function synopart() {
   eval "MSG66=\"\${MSG${tz}66}\""
   eval "MSG68=\"\${MSG${tz}68}\""
   eval "MSG69=\"\${MSG${tz}124}\""
+  eval "MSG133=\"\${MSG${tz}133}\""
+  [ -n "${MSG133}" ] || MSG133="Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
@@ -2202,8 +2204,9 @@ function synopart() {
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"f \\\"${MSG65}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
-    eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
-    eval "echo \"i \\\"${MSG69}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"h \\\"${MSG133}\\\"\"" >> "${TMP_PATH}/menuc"
+    eval "echo \"i \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"j \\\"${MSG69}\\\"\""                  >> "${TMP_PATH}/menuc"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuc")) --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/respc
@@ -2223,8 +2226,15 @@ function synopart() {
        get_alpine38
        default_resp="g"
        ;;
-    h) CleanSystemPart format; default_resp="h" ;;
-    i) checkExpandMd0; default_resp="i" ;;
+    h)
+       if ! grep -qF "menuentry 'Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)'" "$cfg_file"; then
+         tinyentry9 | sudo tee --append "$cfg_file" >/dev/null
+       fi
+       get_tinycore9
+       default_resp="h"
+       ;;
+    i) CleanSystemPart format; default_resp="i" ;;
+    j) checkExpandMd0; default_resp="j" ;;
     *) return;;
     esac
     

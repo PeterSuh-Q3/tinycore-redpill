@@ -519,3 +519,7 @@ msgstr "ENTER: Toggle selected item ON/OFF\\nSave & Exit: Save and exit"
 #: MSGUS131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA container runtime (Docker): %s"
+
+#: MSGUS133
+msgid "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
+msgstr "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"

@@ -519,3 +519,7 @@ msgstr "ENTER: 선택 항목 ON/OFF 전환\\nSave & Exit: 저장 후 종료"
 #: MSGKR131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA 컨테이너 런타임 (Docker): %s"
+
+#: MSGKR133
+msgid "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
+msgstr "Tinycore 버전 9.0으로 Syno BTRFS 볼륨 복구 마운트"
