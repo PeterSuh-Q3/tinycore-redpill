@@ -118,22 +118,62 @@ mkdir -p "${ROOTFS_DIR}/etc/modules-load.d"
 cat > "${ROOTFS_DIR}/etc/modules-load.d/btr-recovery.conf" <<'EOF'
 md_mod
 dm_mod
+dm_crypt
+dm_snapshot
+dm_mirror
+dm_thin_pool
+dm_raid
 btrfs
 raid6_pq
+xor
 zstd
 zlib_deflate
 lzo
+# Linux MD RAID personalities
+raid0
+raid1
+raid10
+raid456
 # SATA/SCSI/NVMe storage stack
 scsi_mod
 sd_mod
 sg
 sr_mod
+scsi_transport_sas
 libata
 ahci
+ata_piix
 nvme_core
 nvme
 usb_storage
 uas
+# Common SAS and hardware RAID controllers
+mpt3sas
+megaraid_sas
+aacraid
+arcmsr
+hpsa
+smartpqi
+# VM storage controllers
+virtio_blk
+virtio_scsi
+vmw_pvscsi
+# SD card readers and SDHCI controllers
+rtsx_pci
+rtsx_pci_sdmmc
+mmc_core
+mmc_block
+sdhci
+sdhci_pci
+sdhci_acpi
+# Filesystems used by loader and recovery volumes
+ext4
+jbd2
+mbcache
+vfat
+fat
+nls_cp437
+nls_utf8
 # VM/USB console input stack
 hid
 usbhid
@@ -164,6 +204,7 @@ alx
 sky2
 skge
 EOF
+chroot "${ROOTFS_DIR}" /sbin/rc-update add modules default >/dev/null 2>&1 || true
 
 mkdir -p "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}"
 cp -a "${KERNEL_MODULES}"/. "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}/"
