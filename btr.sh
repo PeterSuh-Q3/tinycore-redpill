@@ -181,6 +181,9 @@ umount -l "${ROOTFS_DIR}/sys" 2>/dev/null || true
 umount -l "${ROOTFS_DIR}/proc" 2>/dev/null || true
 umount -l "${ROOTFS_DIR}/dev/shm" 2>/dev/null || true
 umount -l "${ROOTFS_DIR}/dev" 2>/dev/null || true
+# The build VM may run with umask 077.  The cpio entry for '.' becomes the
+# runtime root directory, so it must remain traversable by the recovery user.
+chmod 0755 "${ROOTFS_DIR}"
 (
   cd "${ROOTFS_DIR}"
   find . -print | cpio -o -H newc 2>/dev/null | gzip -9 \
