@@ -162,6 +162,7 @@ mkdir -p "${ROOTFS_DIR}${OUTPUT_DIR}"
 # early boot ramdisk and expects a separate rootfs/modloop; it does not pack
 # the installed ROOTFS_DIR.  Pack the complete Alpine rootfs so /sbin/init,
 # userspace tools, mountvol.sh and the matching modules are available at boot.
+ln -sf /sbin/init "${ROOTFS_DIR}/init"
 umount -l "${ROOTFS_DIR}/sys" 2>/dev/null || true
 umount -l "${ROOTFS_DIR}/proc" 2>/dev/null || true
 umount -l "${ROOTFS_DIR}/dev/shm" 2>/dev/null || true
