@@ -36,6 +36,7 @@ echo "[btr] downloading Alpine rootfs: ${ROOTFS_URL}"
 curl -fL --retry 3 "${ROOTFS_URL}" | tar -xz -C "${ROOTFS_DIR}"
 
 cp -L /etc/resolv.conf "${ROOTFS_DIR}/etc/resolv.conf"
+mkdir -p "${ROOTFS_DIR}/dev/shm"
 mount --bind /dev "${ROOTFS_DIR}/dev"
 mount --bind /dev/shm "${ROOTFS_DIR}/dev/shm"
 mount --bind /proc "${ROOTFS_DIR}/proc"
@@ -198,6 +199,7 @@ virtio_pci
 virtio_ring
 virtio_input
 xhci_hcd
+xhci_pci
 ehci_hcd
 uhci_hcd
 # Common wired NIC drivers for recovery SSH/DHCP
