@@ -2,9 +2,9 @@
 # Build an Alpine based BTRFS recovery rootfs/initramfs.
 set -Eeuo pipefail
 
-ALPINE_VERSION="${ALPINE_VERSION:-v3.22}"
+ALPINE_VERSION="${ALPINE_VERSION:-v3.8}"
 ARCH="${ARCH:-x86_64}"
-ROOTFS_URL="${ROOTFS_URL:-https://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/releases/${ARCH}/alpine-minirootfs-${ALPINE_VERSION#v}.0-${ARCH}.tar.gz}"
+ROOTFS_URL="${ROOTFS_URL:-https://dl-3.alpinelinux.org/alpine/${ALPINE_VERSION}/releases/${ARCH}/alpine-minirootfs-${ALPINE_VERSION#v}.0-${ARCH}.tar.gz}"
 WORK_DIR="${WORK_DIR:-$PWD/btr-work}"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ROOTFS_DIR="${WORK_DIR}/rootfs"
@@ -48,12 +48,12 @@ cleanup() {
 trap cleanup EXIT
 
 cat > "${ROOTFS_DIR}/etc/apk/repositories" <<EOF
-https://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/main
-https://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/community
+https://dl-3.alpinelinux.org/alpine/${ALPINE_VERSION}/main
+https://dl-3.alpinelinux.org/alpine/${ALPINE_VERSION}/community
 EOF
 
 chroot "${ROOTFS_DIR}" /sbin/apk update
-chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base alpine-conf mkinitfs busybox-openrc btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow sudo dialog bash
+chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base alpine-conf mkinitfs btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow sudo dialog bash
 
 chroot "${ROOTFS_DIR}" /usr/sbin/adduser -D -s /bin/sh tc
 printf 'root:%s\ntc:%s\n' "${BTR_ROOT_PASSWORD}" "${BTR_TC_PASSWORD}" | \
@@ -71,6 +71,8 @@ cat > "${ROOTFS_DIR}/etc/local.d/mountvol.start" <<'EOF'
 #!/bin/sh
 # Run the interactive BTRFS/LVM recovery menu on the first local console.
 [ -c /dev/tty1 ] || exit 0
+sleep 5
+udevadm settle 2>/dev/null || true
 exec setsid /home/tc/mountvol.sh </dev/tty1 >/dev/tty1 2>&1
 EOF
 chmod 0755 "${ROOTFS_DIR}/etc/local.d/mountvol.start"
