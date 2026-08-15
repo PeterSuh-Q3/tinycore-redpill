@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Monter le volume disque Syno(Ext4 seulement)"
 
 #: MSGFR66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "Ajouter l'entrée de menu Tinycore v9 pour monter le volume Syno Disk BTRFS"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Ajouter l'entrée de menu Alpine 3.8 pour monter le volume Syno Disk BTRFS"
 
 #: MSGFR67
 msgid "Select build pre-option (required or not required)"

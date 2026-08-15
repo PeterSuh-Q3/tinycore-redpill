@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Syno ዲስክ ወልሙ ተራራ(Ext4 ብቻ)"
 
 #: MSGET66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "Syno ዲስክ BTRFS Vol ለመተራረቅ Tinycore v9 የሜኑ ግቤት ጨምር"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno ዲስክ BTRFS Vol ለመተራረቅ Alpine 3.8 የሜኑ ግቤት ጨምር"
 
 #: MSGET67
 msgid "Select build pre-option (required or not required)"

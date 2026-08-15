@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Syno lemez kötet csatolása(csak Ext4)"
 
 #: MSGHU66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "Tinycore v9 menübejegyzés hozzáadása Syno lemez BTRFS kötet csatolásához"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Alpine 3.8 menübejegyzés hozzáadása Syno lemez BTRFS kötet csatolásához"
 
 #: MSGHU67
 msgid "Select build pre-option (required or not required)"

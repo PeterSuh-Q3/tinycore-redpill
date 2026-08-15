@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Syno डिस्क वॉल्यूम माउंट करें(केवल Ext4)"
 
 #: MSGIN66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "Syno डिस्क BTRFS वॉल्यूम माउंट के लिए Tinycore v9 मेनू एंट्री जोड़ें"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno डिस्क BTRFS वॉल्यूम माउंट के लिए Alpine 3.8 मेनू एंट्री जोड़ें"
 
 #: MSGHI67
 msgid "Select build pre-option (required or not required)"

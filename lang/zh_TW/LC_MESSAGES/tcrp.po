@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "掛載Syno磁碟卷(僅限Ext4)"
 
 #: MSGTW66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "為掛載Syno磁碟BTRFS卷新增Tinycore v9選單項"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "為掛載Syno磁碟BTRFS卷新增Alpine 3.8選單項"
 
 #: MSGTW67
 msgid "Select build pre-option (required or not required)"

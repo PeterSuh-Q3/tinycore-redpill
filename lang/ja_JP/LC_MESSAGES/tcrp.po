@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Synoディスクボリュームのマウント(Ext4のみ)"
 
 #: MSGJP66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "SynoディスクBTRFSボリュームマウント用Tinycore v9メニューエントリーの追加"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "SynoディスクBTRFSボリュームマウント用Alpine 3.8メニューエントリーの追加"
 
 #: MSGJP67
 msgid "Select build pre-option (required or not required)"

@@ -255,8 +255,8 @@ msgid "Mount Syno Disk Volume(Ext4 only)"
 msgstr "Syno Disk Hacmini Bağla(Sadece Ext4)"
 
 #: MSGTR66
-msgid "Add Tinycore v9 menuentry for mount Syno Disk BTRFS Vol"
-msgstr "Syno Disk BTRFS Hacmini bağlamak için Tinycore v9 menü girişi ekle"
+msgid "Add Alpine 3.8 menuentry for mount Syno Disk BTRFS Vol"
+msgstr "Syno Disk BTRFS Hacmini bağlamak için Alpine 3.8 menü girişi ekle"
 
 #: MSGTR67
 msgid "Select build pre-option (required or not required)"
