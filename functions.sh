@@ -2715,6 +2715,7 @@ menuentry 'Mount Syno BTRFS Vol Rescue (with Alpine 3.8)' {
         set gfxpayload=keep
 }
 EOF
+}
 
 function tinyentry9() {
     cat <<EOF
@@ -2752,7 +2753,6 @@ function get_tinycore9() {
     sudo sed -i "/^set default=/cset default=\"${new_default}\"" "${grub_cfg}"
     backuploader
     restart
-}
 }
 
 function get_alpine38() {
