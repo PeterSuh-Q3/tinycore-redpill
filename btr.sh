@@ -11,6 +11,7 @@ ROOTFS_DIR="${WORK_DIR}/rootfs"
 OUTPUT_DIR="${OUTPUT_DIR:-$PWD/alpine_3.8}"
 KERNEL_IMAGE="${KERNEL_IMAGE:-}"
 KERNEL_MODULES="${KERNEL_MODULES:-}"
+KERNEL_PACKAGE="${KERNEL_PACKAGE:-}"
 INITRAMFS_NAME="${INITRAMFS_NAME:-btr-recovery-${ARCH}.initramfs}"
 KERNEL_RELEASE="${KERNEL_RELEASE:-$(basename "${KERNEL_MODULES}")}"
 BTR_ROOT_PASSWORD="${BTR_ROOT_PASSWORD:-}"
@@ -68,8 +69,8 @@ chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/tc"
 # on serial-only/VM boots and otherwise produces an endless error loop.
 sed -i -E '/^[^#]*tty[2-6][[:space:]]*::/d' "${ROOTFS_DIR}/etc/inittab"
 printf '%s\n' 'ttyS0::askfirst:-/sbin/agetty -L 115200 ttyS0 vt100' >> "${ROOTFS_DIR}/etc/inittab"
-# BusyBox init must create device nodes before agetty starts.
-sed -i '/^::sysinit:/i::sysinit:/bin/mount -t devtmpfs devtmpfs /dev' "${ROOTFS_DIR}/etc/inittab"
+# BusyBox init must mount devtmpfs and sysfs before module loading starts.
+sed -i '/^::sysinit:/i::sysinit:/bin/mount -t devtmpfs devtmpfs /dev\n::sysinit:/bin/mount -t sysfs sysfs /sys' "${ROOTFS_DIR}/etc/inittab"
 rm -rf "${ROOTFS_DIR}/dev/fd" "${ROOTFS_DIR}/dev/stdin" \
   "${ROOTFS_DIR}/dev/stdout" "${ROOTFS_DIR}/dev/stderr"
 ln -s /proc/self/fd "${ROOTFS_DIR}/dev/fd"
@@ -113,6 +114,16 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 EOF
 chroot "${ROOTFS_DIR}" /usr/bin/ssh-keygen -A
 chroot "${ROOTFS_DIR}" /sbin/rc-update add sshd default >/dev/null 2>&1 || true
+
+mkdir -p "${ROOTFS_DIR}/etc/network"
+cat > "${ROOTFS_DIR}/etc/network/interfaces" <<'EOF'
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+EOF
+chroot "${ROOTFS_DIR}" /sbin/rc-update add networking default >/dev/null 2>&1 || true
 
 mkdir -p "${ROOTFS_DIR}/etc/modules-load.d"
 cat > "${ROOTFS_DIR}/etc/modules-load.d/btr-recovery.conf" <<'EOF'
@@ -190,6 +201,7 @@ xhci_hcd
 ehci_hcd
 uhci_hcd
 # Common wired NIC drivers for recovery SSH/DHCP
+af_packet
 igc
 e1000e
 e1000
@@ -208,6 +220,16 @@ chroot "${ROOTFS_DIR}" /sbin/rc-update add modules default >/dev/null 2>&1 || tr
 
 mkdir -p "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}"
 cp -a "${KERNEL_MODULES}"/. "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}/"
+# The prepared module copy may omit net/packet although the matching Alpine
+# package contains it. BusyBox udhcpc requires af_packet for DHCP.
+if [ ! -f "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}/kernel/net/packet/af_packet.ko" ]; then
+  if [ -z "${KERNEL_PACKAGE}" ]; then
+    KERNEL_PACKAGE="$(dirname "$(dirname "$(dirname "${KERNEL_MODULES}")")")/../linux-vanilla.apk"
+  fi
+  [ -f "${KERNEL_PACKAGE}" ] || die "af_packet.ko is missing and KERNEL_PACKAGE was not found"
+  tar -xzf "${KERNEL_PACKAGE}" -C "${ROOTFS_DIR}" \
+    "lib/modules/${KERNEL_RELEASE}/kernel/net/packet/af_packet.ko"
+fi
 chroot "${ROOTFS_DIR}" /sbin/depmod -a "${KERNEL_RELEASE}" || true
 
 # mkinitfs runs inside the chroot, so make the configured output directory

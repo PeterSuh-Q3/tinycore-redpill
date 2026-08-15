@@ -24,11 +24,14 @@ loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3/
   echo "Loader disk with UUID 6234-C863 was not found."
   exit 0
 }
-mount /dev/${loaderdisk}1
+loaderpart="/dev/${loaderdisk}1"
+loadermount="/mnt/${loaderdisk}1"
+mkdir -p "${loadermount}"
+mountpoint -q "${loadermount}" || mount "${loaderpart}" "${loadermount}"
 
 function defaultchange() {
 
-  [ "$(mount | grep /dev/${loaderdisk}1 | wc -l)" -eq 0 ] && mount /dev/${loaderdisk}1
+  mountpoint -q "${loadermount}" || mount "${loaderpart}" "${loadermount}"
 
   # Get the list of boot entries and write to /tmp/menub
   grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}' | sed 's/.*/"&"/' > /tmp/menub
@@ -88,6 +91,8 @@ function mountvol () {
   fi
 
   lvm_volumes=()
+  lvs_file="${TMP_PATH}/lvs.$$"
+  sudo lvs --noheadings -o lv_dm_path,lv_size 2>/dev/null | awk '$1 ~ /^\/dev\// && $1 ~ /volume/' > "${lvs_file}"
   while IFS= read -r line; do
     path=$(echo "$line" | awk '{print $1}')
     size=$(echo "$line" | awk '{print $2}')
@@ -101,7 +106,8 @@ function mountvol () {
     
     # 메뉴에 볼륨명, 사이즈, 파티션 타입을 모두 표시
     lvm_volumes+=("$path" "$vol_name ($size - $partition_type)")
-  done < <(sudo lvs -o lv_dm_path,lv_size 2>/dev/null | grep volume)
+  done < "${lvs_file}"
+  rm -f "${lvs_file}"
   
   if [ ${#lvm_volumes[@]} -eq 0 ]; then 
     echo "No Available Syno lvm Volume, press any key continue..."
