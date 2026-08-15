@@ -11,6 +11,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-$PWD/alpine_3.8}"
 KERNEL_IMAGE="${KERNEL_IMAGE:-}"
 KERNEL_MODULES="${KERNEL_MODULES:-}"
 INITRAMFS_NAME="${INITRAMFS_NAME:-btr-recovery-${ARCH}.initramfs}"
+KERNEL_RELEASE="${KERNEL_RELEASE:-$(basename "${KERNEL_MODULES}")}"
 BTR_ROOT_PASSWORD="${BTR_ROOT_PASSWORD:-}"
 BTR_TC_PASSWORD="${BTR_TC_PASSWORD:-}"
 
@@ -34,11 +35,13 @@ curl -fL --retry 3 "${ROOTFS_URL}" | tar -xz -C "${ROOTFS_DIR}"
 
 cp -L /etc/resolv.conf "${ROOTFS_DIR}/etc/resolv.conf"
 mount --bind /dev "${ROOTFS_DIR}/dev"
+mount --bind /dev/shm "${ROOTFS_DIR}/dev/shm"
 mount --bind /proc "${ROOTFS_DIR}/proc"
 mount --bind /sys "${ROOTFS_DIR}/sys"
 cleanup() {
   umount -l "${ROOTFS_DIR}/sys" 2>/dev/null || true
   umount -l "${ROOTFS_DIR}/proc" 2>/dev/null || true
+  umount -l "${ROOTFS_DIR}/dev/shm" 2>/dev/null || true
   umount -l "${ROOTFS_DIR}/dev" 2>/dev/null || true
 }
 trap cleanup EXIT
@@ -49,7 +52,7 @@ https://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/community
 EOF
 
 chroot "${ROOTFS_DIR}" /sbin/apk update
-chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base busybox-openrc btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow
+chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base alpine-conf mkinitfs busybox-openrc btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow
 
 chroot "${ROOTFS_DIR}" /usr/sbin/adduser -D -s /bin/sh tc
 printf 'root:%s\ntc:%s\n' "${BTR_ROOT_PASSWORD}" "${BTR_TC_PASSWORD}" | \
@@ -93,12 +96,11 @@ usb_storage
 uas
 EOF
 
-mkdir -p "${ROOTFS_DIR}/lib/modules"
-cp -a "${KERNEL_MODULES}"/. "${ROOTFS_DIR}/lib/modules/"
-chroot "${ROOTFS_DIR}" /sbin/depmod -a || true
+mkdir -p "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}"
+cp -a "${KERNEL_MODULES}"/. "${ROOTFS_DIR}/lib/modules/${KERNEL_RELEASE}/"
+chroot "${ROOTFS_DIR}" /sbin/depmod -a "${KERNEL_RELEASE}" || true
 
-need mkinitfs
-mkinitfs -b "${ROOTFS_DIR}" "${OUTPUT_DIR}/${INITRAMFS_NAME}"
+chroot "${ROOTFS_DIR}" /sbin/mkinitfs -o "${OUTPUT_DIR}/${INITRAMFS_NAME}" "${KERNEL_RELEASE}"
 install -m 0644 "${KERNEL_IMAGE}" "${OUTPUT_DIR}/vmlinuz-4.14"
 printf '%s\n' "${ROOTFS_URL}" > "${OUTPUT_DIR}/rootfs-source.txt"
 printf '%s\n' "${KERNEL_IMAGE}" > "${OUTPUT_DIR}/kernel-source.txt"
