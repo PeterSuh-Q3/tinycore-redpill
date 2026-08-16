@@ -79,6 +79,12 @@ mshellSymlinkUserConfig() {
 
   [ -z "${loaderdisk}" ] && getloaderdisk
   [ -z "${loaderdisk}" ] && return 0
+  # nvme/mmc/block disks need a trailing "p" before the partition
+  # number (nvme0n1p3, not nvme0n13) - that correction only happens as
+  # a side effect of getBus() (functions.sh:3137-3139), not inside
+  # getloaderdisk() itself. Skipping this left ${loaderdisk}3 pointing
+  # at a path that was never actually mounted on those bus types.
+  getBus "${loaderdisk}" >/dev/null
 
   local part_cfg="/mnt/${loaderdisk}3/user_config.json"
   local part_dir
