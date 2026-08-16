@@ -70,10 +70,13 @@ autoScaleConsoleFont
 # 참조 지점이 실제로 심볼릭 링크를 문제없이 다루는지 충분히 검증되기
 # 전까지는 안정 트랙 사용자에게 영향이 가면 안 된다.
 #
-# boot.sh 쪽 마운트 옵션 변경(mountall()/mountxtcrp()이 파티션 3을
-# uid=tc,gid=tc로 마운트)이 선행되어야 tc가 파티션 파일에 직접 쓸 수
-# 있다 - 그 마운트가 아직 안 됐거나 옵션이 없는 이전 이미지에서는
-# 이 함수가 조용히 아무 것도 하지 않고 기존 복사 방식 그대로 둔다.
+# 실기 확인(Alpine 부팅 환경 - tcrpfriend 자체의 TinyCore boot.sh 와는
+# 완전히 별개): 이 파티션은 rebuildfstab 이 만들어 둔
+# noauto,users,umask=000 fstab 항목만 있고 자동 마운트되지 않는다.
+# 그래서 존재 여부만 확인하고 넘어가면 안 되고, 이 파일의 다른
+# 호출부(예: my() 안의 "Mounting partition N" 단계)와 동일하게
+# ensure_loader_partition_mounted() 로 직접 마운트를 보장해야 한다
+# (umask=000 라 uid= 를 따로 안 줘도 tc 가 바로 쓸 수 있다).
 mshellSymlinkUserConfig() {
   [ -L /home/tc/user_config.json ] && return 0
 
@@ -94,11 +97,16 @@ mshellSymlinkUserConfig() {
   local part_dir
   part_dir="$(dirname "${part_cfg}")"
 
-  [ -d "${part_dir}" ] || return 0
-  # Confirms the tc-writable mount options actually took (not just that
-  # the mountpoint exists) - a plain root-only vfat mount would fail
-  # this the same way an unmounted partition would.
-  [ -w "${part_dir}" ] || return 0
+  # This environment (Alpine, confirmed on real hardware - not
+  # tcrpfriend's own TinyCore boot.sh, a completely separate boot
+  # environment) never auto-mounts partition 3: rebuildfstab only
+  # writes a noauto,users,umask=000 fstab line for it, the actual
+  # `mount` still has to happen explicitly. A plain existence/-w check
+  # here silently no-ops before that mount ever occurs (confirmed the
+  # hard way - functions.sh sourcing happens well before it), so this
+  # has to actively ensure the mount the same way every other caller
+  # in this file already does, not just check for it.
+  ensure_loader_partition_mounted "3" || return 0
 
   if [ ! -f "${part_cfg}" ]; then
     # First run against this partition (or an image predating this
@@ -111,8 +119,6 @@ mshellSymlinkUserConfig() {
   rm -f /home/tc/user_config.json
   ln -s "${part_cfg}" /home/tc/user_config.json
 }
-
-mshellSymlinkUserConfig
 
 # dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
 # 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
@@ -7558,3 +7564,13 @@ menuentry 'Alpine Redpill Image Build' {
 }
 EOF
 }
+
+# mshellSymlinkUserConfig()(위쪽, autoScaleConsoleFont 근처에 정의)는
+# 반드시 파일 맨 끝에서 호출해야 한다 - getloaderdisk/getBus/
+# ensure_loader_partition_mounted 를 내부에서 쓰는데 이 함수들은 전부
+# 이 지점보다 한참 뒤가 아니라 이미 위에서 정의가 끝난 상태라야 호출
+# 가능하다. bash는 파일을 위에서 아래로 순차 실행하므로, 정의보다 먼저
+# 호출하면(과거 autoScaleConsoleFont 바로 다음 줄에서 그렇게 했었다)
+# "command not found"로 즉시 죽는다 - 실기에서 정확히 이 증상으로
+# 재현/확인됨.
+mshellSymlinkUserConfig
