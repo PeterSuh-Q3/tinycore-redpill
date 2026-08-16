@@ -3156,10 +3156,30 @@ function DeleteConfigKey() {
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq "del(.$block.$field)" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
+
+        # sync_usb_line() 은 extra_cmdline 의 각 키를 general.usb_line 에
+        # 추가/갱신만 하고 절대 제거하지 않는다 - 그래서 여기서
+        # extra_cmdline 항목을 지워도(예: NIC 개수 감소 시 mac2 이상 삭제,
+        # menu_m.sh 자동 감지 루틴) usb_line 에는 옛 key=value 조각이 고아
+        # 상태로 영구히 남아있는 문제가 실기에서 확인됨. extra_cmdline
+        # 항목 삭제 시에는 usb_line 에서도 같은 키를 함께 제거한다.
+        [ "${block}" = "extra_cmdline" ] && strip_usb_line_key "${field}"
     else
         echo "No values to remove"
     fi
 
+}
+
+# DeleteConfigKey() 가 extra_cmdline 에서 키를 지울 때, sync_usb_line() 이
+# 과거에 general.usb_line 에 심어둔 같은 key=value 조각을 함께 제거한다.
+function strip_usb_line_key() {
+    local key="$1" line
+
+    line="$(jq -r '.general.usb_line // ""' "$userconfigfile")"
+    line="$(echo "${line}" | sed -E "s/(^| )${key}=[^ ]*/\1/g" | sed -E 's/ +/ /g; s/^ +//; s/ +$//')"
+
+    jq --arg new_line "${line}" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
+        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
 }
     
 function checkmachine() {
