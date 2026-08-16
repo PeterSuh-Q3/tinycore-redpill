@@ -56,6 +56,54 @@ autoScaleConsoleFont() {
 
 autoScaleConsoleFont
 
+# 2026-08-16 (테스트 트랙 전용): /home/tc/user_config.json 과
+# /mnt/${loaderdisk}3/user_config.json 이 별개 파일로 관리되어 온
+# 문제에 대한 개선. 지금까지는 xtcrp.tgz 에 번들된(빌드 시점 기준,
+# 최신이 아닐 수 있는) 사본이 매 세션 /home/tc 로 풀리고, 이후
+# lastsessiondir 복원이나 mshell_auto_rebuild()의 cp+backuploader()
+# 처럼 곳곳에서 수동으로 두 파일을 맞춰줘야 했다 - 그중 한 지점이라도
+# 빠지면 두 사본이 어긋난다(오늘 MSHELL Manager auto-rebuild 개발
+# 중에도 usb_line 재동기화 누락으로 실제로 겪은 문제).
+#
+# functions.sh(안정 트랙)에는 넣지 않는다 - 이 심볼릭 링크 전환은
+# functions.sh/menu_m.sh 전역의 $userconfigfile(/home/tc/user_config.json)
+# 참조 지점이 실제로 심볼릭 링크를 문제없이 다루는지 충분히 검증되기
+# 전까지는 안정 트랙 사용자에게 영향이 가면 안 된다.
+#
+# boot.sh 쪽 마운트 옵션 변경(mountall()/mountxtcrp()이 파티션 3을
+# uid=tc,gid=tc로 마운트)이 선행되어야 tc가 파티션 파일에 직접 쓸 수
+# 있다 - 그 마운트가 아직 안 됐거나 옵션이 없는 이전 이미지에서는
+# 이 함수가 조용히 아무 것도 하지 않고 기존 복사 방식 그대로 둔다.
+mshellSymlinkUserConfig() {
+  [ -L /home/tc/user_config.json ] && return 0
+
+  [ -z "${loaderdisk}" ] && getloaderdisk
+  [ -z "${loaderdisk}" ] && return 0
+
+  local part_cfg="/mnt/${loaderdisk}3/user_config.json"
+  local part_dir
+  part_dir="$(dirname "${part_cfg}")"
+
+  [ -d "${part_dir}" ] || return 0
+  # Confirms the tc-writable mount options actually took (not just that
+  # the mountpoint exists) - a plain root-only vfat mount would fail
+  # this the same way an unmounted partition would.
+  [ -w "${part_dir}" ] || return 0
+
+  if [ ! -f "${part_cfg}" ]; then
+    # First run against this partition (or an image predating this
+    # change) - the RAM copy is still the only record, so it becomes
+    # the seed for the partition copy rather than being discarded.
+    [ -f /home/tc/user_config.json ] || return 0
+    cp -f /home/tc/user_config.json "${part_cfg}" 2>/dev/null || return 0
+  fi
+
+  rm -f /home/tc/user_config.json
+  ln -s "${part_cfg}" /home/tc/user_config.json
+}
+
+mshellSymlinkUserConfig
+
 # dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
 # 신버전(Alpine, 1.3-20260107 계열)에서 항목이 여러 개여도 1줄만 보여주고
 # 나머지를 스크롤 뒤로 숨기는 회귀가 있음(TC의 구버전 1.3-20171209는 정상).
