@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.0"
-builddate="2026.08.16"
+rploaderver="1.4.3.1"
+builddate="2026.08.17"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -11,6 +11,119 @@ redpillmake="prod"
 # Alpine 환경에서 건너뛰기 위해 사용.
 is_alpine() {
   [ -f /etc/alpine-release ]
+}
+
+# 2026-08-15 (테스트 트랙 전용): 2.8K 등 고해상도 포터블 모니터에서 mshell 로더
+# 빌드화면(dialog 텍스트 콘솔)의 글자가 너무 작게 보인다는 실사용자 피드백에 대응.
+# X11이 아닌 순수 fbcon 콘솔이라 "배율"은 콘솔 폰트 크기 전환으로 구현한다.
+# functions.sh(안정 트랙)에는 넣지 않고 이 파일에만 둔다 - 안정 트랙 사용자에게는
+# 영향이 전혀 없어야 하며, menu_m.sh는 두 트랙이 공유하므로 이 파일을 소싱할 때
+# 자동 실행되도록 top-level에서 호출한다(아래 참조).
+autoScaleConsoleFont() {
+  local guard="/tmp/.mshell_consolefont_scaled"
+  [ -f "$guard" ] && return 0
+
+  is_alpine || return 0
+  command -v setfont >/dev/null 2>&1 || return 0
+
+  # 원격 SSH 세션에는 프레임버퍼가 없으므로 로컬 콘솔에서만 동작.
+  [ -n "${SSH_CONNECTION:-}${SSH_TTY:-}" ] && return 0
+  local cur_tty
+  cur_tty="$(tty 2>/dev/null)" || return 0
+  case "$cur_tty" in
+    /dev/tty[0-9]*|/dev/ttyS*) ;;
+    *) return 0 ;;
+  esac
+
+  local fbsize="/sys/class/graphics/fb0/virtual_size"
+  [ -r "$fbsize" ] || return 0
+  local fbwidth
+  fbwidth="$(cut -d, -f1 "$fbsize" 2>/dev/null)"
+  case "$fbwidth" in ''|*[!0-9]*) return 0 ;; esac
+
+  local font=""
+  if [ "$fbwidth" -ge 2560 ]; then
+    font="ter-232n"   # 약 200%
+  elif [ "$fbwidth" -ge 1920 ]; then
+    font="ter-132n"   # 약 150%
+  fi
+
+  if [ -n "$font" ]; then
+    setfont "$font" >/dev/null 2>&1
+  fi
+  touch "$guard" 2>/dev/null
+}
+
+autoScaleConsoleFont
+
+# 2026-08-16 (테스트 트랙 전용): /home/tc/user_config.json 과
+# /mnt/${loaderdisk}3/user_config.json 이 별개 파일로 관리되어 온
+# 문제에 대한 개선. 지금까지는 xtcrp.tgz 에 번들된(빌드 시점 기준,
+# 최신이 아닐 수 있는) 사본이 매 세션 /home/tc 로 풀리고, 이후
+# lastsessiondir 복원이나 mshell_auto_rebuild()의 cp+backuploader()
+# 처럼 곳곳에서 수동으로 두 파일을 맞춰줘야 했다 - 그중 한 지점이라도
+# 빠지면 두 사본이 어긋난다(오늘 MSHELL Manager auto-rebuild 개발
+# 중에도 usb_line 재동기화 누락으로 실제로 겪은 문제).
+#
+# functions.sh(안정 트랙)에는 넣지 않는다 - 이 심볼릭 링크 전환은
+# functions.sh/menu_m.sh 전역의 $userconfigfile(/home/tc/user_config.json)
+# 참조 지점이 실제로 심볼릭 링크를 문제없이 다루는지 충분히 검증되기
+# 전까지는 안정 트랙 사용자에게 영향이 가면 안 된다.
+#
+# 실기 확인(Alpine 부팅 환경 - tcrpfriend 자체의 TinyCore boot.sh 와는
+# 완전히 별개): 이 파티션은 rebuildfstab 이 만들어 둔
+# noauto,users,umask=000 fstab 항목만 있고 자동 마운트되지 않는다.
+# 그래서 존재 여부만 확인하고 넘어가면 안 되고, 이 파일의 다른
+# 호출부(예: my() 안의 "Mounting partition N" 단계)와 동일하게
+# ensure_loader_partition_mounted() 로 직접 마운트를 보장해야 한다
+# (umask=000 라 uid= 를 따로 안 줘도 tc 가 바로 쓸 수 있다).
+mshellSymlinkUserConfig() {
+  # set -u trips on ${loaderdisk} itself (not just a downstream use of
+  # an empty value) if the variable has never been assigned at all in
+  # this shell - the :- form is required here, plain [ -z "${var}" ]
+  # is not safe for a truly-undeclared variable under set -u.
+  [ -z "${loaderdisk:-}" ] && getloaderdisk
+  [ -z "${loaderdisk:-}" ] && return 0
+  # nvme/mmc/block disks need a trailing "p" before the partition
+  # number (nvme0n1p3, not nvme0n13) - that correction only happens as
+  # a side effect of getBus() (functions.sh:3137-3139), not inside
+  # getloaderdisk() itself. Skipping this left ${loaderdisk}3 pointing
+  # at a path that was never actually mounted on those bus types.
+  getBus "${loaderdisk}" >/dev/null
+
+  # This environment (Alpine, confirmed on real hardware - not
+  # tcrpfriend's own TinyCore boot.sh, a completely separate boot
+  # environment) never auto-mounts partition 3: rebuildfstab only
+  # writes a noauto,users,umask=000 fstab line for it, the actual
+  # `mount` still has to happen explicitly. A plain existence/-w check
+  # here silently no-ops before that mount ever occurs (confirmed the
+  # hard way - functions.sh sourcing happens well before it), so this
+  # has to actively ensure the mount the same way every other caller
+  # in this file already does, not just check for it. As a side effect
+  # this also (re)points /mnt/tcrp at the current /mnt/${loaderdisk}3
+  # (see _sync_tcrp_alias()) - this call must run on EVERY invocation,
+  # even when /home/tc/user_config.json is already a symlink below,
+  # because maintaining /mnt/tcrp is this call's job, not something the
+  # early-return-if-already-linked check further down should skip.
+  # (Confirmed the hard way: with the early return placed before this
+  # call, a device that was symlinked before /mnt/tcrp existed would
+  # never create it - functions.sh sourcing kept short-circuiting here.)
+  ensure_loader_partition_mounted "3" || return 0
+
+  [ -L /home/tc/user_config.json ] && return 0
+
+  local part_cfg="/mnt/tcrp/user_config.json"
+
+  if [ ! -f "${part_cfg}" ]; then
+    # First run against this partition (or an image predating this
+    # change) - the RAM copy is still the only record, so it becomes
+    # the seed for the partition copy rather than being discarded.
+    [ -f /home/tc/user_config.json ] || return 0
+    cp -f /home/tc/user_config.json "${part_cfg}" 2>/dev/null || return 0
+  fi
+
+  rm -f /home/tc/user_config.json
+  ln -s "${part_cfg}" /home/tc/user_config.json
 }
 
 # dialog(cdialog)의 "--menu/--checklist ... height width 0"(menu-height 자동) 계산이
@@ -402,6 +515,14 @@ function history() {
              recipe files written via sudo on a friend kernel are no longer left unreadable to
              the tc user, and the build progress bar no longer errors when no controlling
              terminal is attached.
+    1.4.3.1 Promoted from the test track: /home/tc/user_config.json is now a symlink onto
+             /mnt/tcrp/user_config.json (a stable alias for the loader partition maintained
+             across disk-enumeration changes) instead of a second, separately-synced copy.
+             writeConfigKey()/sync_usb_line() now preserve that symlink across writes instead
+             of replacing it with a plain file. DeleteConfigKey() and preserve_usb_line_options()
+             now drop general.usb_line entries for extra_cmdline keys (sn/mac1-8/vid/pid/
+             netif_num) that no longer exist, instead of leaving them orphaned indefinitely.
+             Also includes automatic console font scaling on high-resolution portable monitors.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -992,6 +1113,13 @@ EOF
 # sudo on a friend kernel are no longer left unreadable to the tc user, and the build progress bar
 # no longer errors when no controlling terminal is attached.
 
+# 2026.08.17 v1.4.3.1
+# Promoted from the test track: /home/tc/user_config.json is now a symlink onto
+# /mnt/tcrp/user_config.json instead of a second, separately-synced copy, with writes preserving
+# the symlink and general.usb_line no longer accumulating orphaned sn/mac/vid/pid/netif_num
+# entries after they are removed from extra_cmdline. Also adds automatic console font scaling on
+# high-resolution portable monitors.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1298,6 +1426,9 @@ function showlastupdate() {
 # TLS verification without a CA bundle, PAT cache and extension index/recipe files written via
 # sudo on a friend kernel are no longer left unreadable to the tc user, and the build progress bar
 # no longer errors when no controlling terminal is attached.
+# 2026.08.17 v1.4.3.1
+# Promoted /home/tc/user_config.json symlink (avoids two separately-synced copies) and its
+# dependent usb_line/backup fixes from the test track. Added console font auto-scaling.
 EOF
 }
 
@@ -1779,16 +1910,46 @@ function ensure_loader_partition_mounted() {
     sudo mkdir -p "${mount_point}"
 
     if mountpoint -q "${mount_point}"; then
+        _sync_tcrp_alias "${part}" "${mount_point}"
         return 0
     fi
 
     sudo mount "${dev}"
 
     if mountpoint -q "${mount_point}"; then
+        _sync_tcrp_alias "${part}" "${mount_point}"
         return 0
     fi
 
     return 1
+}
+
+# FRIEND(tcrpfriend) 는 자체 buildroot 커널이 부팅 과정을 전부 제어해서
+# 파티션3을 처음부터 고정 경로 /mnt/tcrp 로 마운트한다. Alpine 은
+# rebuildfstab(TinyCore 원본을 그대로 이식한 범용 스크립트, 로더 파티션
+# 개념을 모름)이 시스템의 모든 블록 디바이스를 실제 장치명 기준으로
+# /mnt/<장치명> 에 매핑하므로, 디스크 열거 순서가 바뀌면(sda -> sdb 등)
+# 로더 파티션의 실제 마운트 경로도 함께 바뀐다. rebuildfstab 자체는
+# 업스트림 이식 코드라 손대지 않고, 대신 이 함수가 파티션3에 한해
+# /mnt/tcrp 를 실제 마운트포인트를 가리키는 심볼릭 링크로 유지해서
+# 상위 코드(예: mshellSymlinkUserConfig())가 디스크명과 무관한 안정된
+# 경로 하나만 참조하면 되게 한다. target 이 최신 마운트포인트와 다르면
+# (디스크명이 바뀐 경우) 재연결한다.
+function _sync_tcrp_alias() {
+    local part="$1"
+    local mount_point="$2"
+
+    [ "${part}" = "3" ] || return 0
+
+    if [ -L /mnt/tcrp ]; then
+        [ "$(readlink /mnt/tcrp)" = "${mount_point}" ] && return 0
+        sudo rm -f /mnt/tcrp
+    elif [ -e /mnt/tcrp ]; then
+        # 심볼릭 링크가 아닌 다른 무언가가 이미 있으면 건드리지 않는다.
+        return 0
+    fi
+
+    sudo ln -s "${mount_point}" /mnt/tcrp
 }
 
 function get_alpine_os_device() {
@@ -2934,15 +3095,38 @@ function sync_usb_line() {
     done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
     
     # JSON 파일 업데이트
-    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+    # mv 대신 cp+rm: $userconfigfile 가 mshellSymlinkUserConfig() 이후로는
+    # /mnt/tcrp/user_config.json 을 가리키는 심볼릭 링크다.
+    # mv 는 목적지가 심볼릭 링크여도 링크 자체를 새 일반 파일로 교체해
+    # 버리므로(대상 파일에 덮어쓰지 않음), writeConfigKey() 가 호출될
+    # 때마다(=거의 모든 설정 저장마다) 심볼릭 링크가 끊기고 실기에서
+    # 실제로 재현됨. cp 는 기본적으로 심볼릭 링크를 따라가 타깃 파일
+    # 내용만 덮어쓰므로 링크 자체가 유지된다.
+    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
+        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
 }
 
 # Keep user-supplied kernel parameters when a loader build regenerates the
 # platform's default USB command line. Generated values win for a matching
 # key, while options known only to the existing user_config.json are retained.
+#
+# extra_cmdline-managed keys (sn/mac1-8/vid/pid/netif_num) are the one
+# exception: sync_usb_line() only ever adds/updates these into general.
+# usb_line, never removes them, so a key deleted from .extra_cmdline (e.g.
+# NIC count auto-detect dropping mac2) can leave an orphaned "mac2=..."
+# sitting in the stored usb_line indefinitely. DeleteConfigKey() now cleans
+# this up going forward, but that only handles keys deleted *after* the fix
+# existed - devices with pre-existing orphaned entries (or any other path
+# that edits .extra_cmdline without going through DeleteConfigKey) would
+# still have them silently reinstated here on every rebuild, since this is
+# the only place that merges the stored usb_line back in. So this function
+# also self-heals: for these specific keys, only keep the token if the key
+# still exists in current .extra_cmdline - regardless of how it got stale.
 function preserve_usb_line_options() {
     local generated_line="$1"
     local existing_line token key generated_token found
+    local managed_keys=" sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num "
+    local current_extra_keys
 
     existing_line=$(jq -r '.general.usb_line // empty' "$userconfigfile" 2>/dev/null)
     [ -z "${existing_line}" ] && {
@@ -2950,9 +3134,16 @@ function preserve_usb_line_options() {
         return
     }
 
+    current_extra_keys=" $(jq -r '.extra_cmdline | keys[]?' "$userconfigfile" 2>/dev/null | tr '\n' ' ') "
+
     for token in ${existing_line}; do
         [ -z "${token}" ] && continue
         key="${token%%=*}"
+
+        if [[ "${managed_keys}" == *" ${key} "* ]] && [[ "${current_extra_keys}" != *" ${key} "* ]]; then
+            continue
+        fi
+
         found="false"
 
         for generated_token in ${generated_line}; do
@@ -3005,10 +3196,30 @@ function DeleteConfigKey() {
     if [ -n "$1 " ] && [ -n "$2" ]; then
         jsonfile=$(jq "del(.$block.$field)" $userconfigfile)
         echo $jsonfile | jq . >$userconfigfile
+
+        # sync_usb_line() 은 extra_cmdline 의 각 키를 general.usb_line 에
+        # 추가/갱신만 하고 절대 제거하지 않는다 - 그래서 여기서
+        # extra_cmdline 항목을 지워도(예: NIC 개수 감소 시 mac2 이상 삭제,
+        # menu_m.sh 자동 감지 루틴) usb_line 에는 옛 key=value 조각이 고아
+        # 상태로 영구히 남아있는 문제가 실기에서 확인됨. extra_cmdline
+        # 항목 삭제 시에는 usb_line 에서도 같은 키를 함께 제거한다.
+        [ "${block}" = "extra_cmdline" ] && strip_usb_line_key "${field}"
     else
         echo "No values to remove"
     fi
 
+}
+
+# DeleteConfigKey() 가 extra_cmdline 에서 키를 지울 때, sync_usb_line() 이
+# 과거에 general.usb_line 에 심어둔 같은 key=value 조각을 함께 제거한다.
+function strip_usb_line_key() {
+    local key="$1" line
+
+    line="$(jq -r '.general.usb_line // ""' "$userconfigfile")"
+    line="$(echo "${line}" | sed -E "s/(^| )${key}=[^ ]*/\1/g" | sed -E 's/ +/ /g; s/^ +//; s/ +$//')"
+
+    jq --arg new_line "${line}" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
+        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
 }
     
 function checkmachine() {
@@ -7457,3 +7668,13 @@ menuentry 'Alpine Redpill Image Build' {
 }
 EOF
 }
+
+# mshellSymlinkUserConfig()(위쪽, autoScaleConsoleFont 근처에 정의)는
+# 반드시 파일 맨 끝에서 호출해야 한다 - getloaderdisk/getBus/
+# ensure_loader_partition_mounted 를 내부에서 쓰는데 이 함수들은 전부
+# 이 지점보다 한참 뒤가 아니라 이미 위에서 정의가 끝난 상태라야 호출
+# 가능하다. bash는 파일을 위에서 아래로 순차 실행하므로, 정의보다 먼저
+# 호출하면(과거 autoScaleConsoleFont 바로 다음 줄에서 그렇게 했었다)
+# "command not found"로 즉시 죽는다 - 실기에서 정확히 이 증상으로
+# 재현/확인됨.
+mshellSymlinkUserConfig
