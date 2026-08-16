@@ -13,49 +13,6 @@ is_alpine() {
   [ -f /etc/alpine-release ]
 }
 
-# 2026-08-15 (테스트 트랙 전용): 2.8K 등 고해상도 포터블 모니터에서 mshell 로더
-# 빌드화면(dialog 텍스트 콘솔)의 글자가 너무 작게 보인다는 실사용자 피드백에 대응.
-# X11이 아닌 순수 fbcon 콘솔이라 "배율"은 콘솔 폰트 크기 전환으로 구현한다.
-# functions.sh(안정 트랙)에는 넣지 않고 이 파일에만 둔다 - 안정 트랙 사용자에게는
-# 영향이 전혀 없어야 하며, menu_m.sh는 두 트랙이 공유하므로 이 파일을 소싱할 때
-# 자동 실행되도록 top-level에서 호출한다(아래 참조).
-autoScaleConsoleFont() {
-  local guard="/tmp/.mshell_consolefont_scaled"
-  [ -f "$guard" ] && return 0
-
-  is_alpine || return 0
-  command -v setfont >/dev/null 2>&1 || return 0
-
-  # 원격 SSH 세션에는 프레임버퍼가 없으므로 로컬 콘솔에서만 동작.
-  [ -n "${SSH_CONNECTION:-}${SSH_TTY:-}" ] && return 0
-  local cur_tty
-  cur_tty="$(tty 2>/dev/null)" || return 0
-  case "$cur_tty" in
-    /dev/tty[0-9]*|/dev/ttyS*) ;;
-    *) return 0 ;;
-  esac
-
-  local fbsize="/sys/class/graphics/fb0/virtual_size"
-  [ -r "$fbsize" ] || return 0
-  local fbwidth
-  fbwidth="$(cut -d, -f1 "$fbsize" 2>/dev/null)"
-  case "$fbwidth" in ''|*[!0-9]*) return 0 ;; esac
-
-  local font=""
-  if [ "$fbwidth" -ge 2560 ]; then
-    font="ter-232n"   # 약 200%
-  elif [ "$fbwidth" -ge 1920 ]; then
-    font="ter-132n"   # 약 150%
-  fi
-
-  if [ -n "$font" ]; then
-    setfont "$font" >/dev/null 2>&1
-  fi
-  touch "$guard" 2>/dev/null
-}
-
-autoScaleConsoleFont
-
 # 2026-08-16 (테스트 트랙 전용): /home/tc/user_config.json 과
 # /mnt/${loaderdisk}3/user_config.json 이 별개 파일로 관리되어 온
 # 문제에 대한 개선. 지금까지는 xtcrp.tgz 에 번들된(빌드 시점 기준,
@@ -522,7 +479,6 @@ function history() {
              of replacing it with a plain file. DeleteConfigKey() and preserve_usb_line_options()
              now drop general.usb_line entries for extra_cmdline keys (sn/mac1-8/vid/pid/
              netif_num) that no longer exist, instead of leaving them orphaned indefinitely.
-             Also includes automatic console font scaling on high-resolution portable monitors.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1117,8 +1073,7 @@ EOF
 # Promoted from the test track: /home/tc/user_config.json is now a symlink onto
 # /mnt/tcrp/user_config.json instead of a second, separately-synced copy, with writes preserving
 # the symlink and general.usb_line no longer accumulating orphaned sn/mac/vid/pid/netif_num
-# entries after they are removed from extra_cmdline. Also adds automatic console font scaling on
-# high-resolution portable monitors.
+# entries after they are removed from extra_cmdline.
 
 function showlastupdate() {
     cat <<'EOF'
@@ -1428,7 +1383,7 @@ function showlastupdate() {
 # no longer errors when no controlling terminal is attached.
 # 2026.08.17 v1.4.3.1
 # Promoted /home/tc/user_config.json symlink (avoids two separately-synced copies) and its
-# dependent usb_line/backup fixes from the test track. Added console font auto-scaling.
+# dependent usb_line/backup fixes from the test track.
 EOF
 }
 
@@ -7669,12 +7624,12 @@ menuentry 'Alpine Redpill Image Build' {
 EOF
 }
 
-# mshellSymlinkUserConfig()(위쪽, autoScaleConsoleFont 근처에 정의)는
+# mshellSymlinkUserConfig()(위쪽, is_alpine() 바로 다음에 정의)는
 # 반드시 파일 맨 끝에서 호출해야 한다 - getloaderdisk/getBus/
 # ensure_loader_partition_mounted 를 내부에서 쓰는데 이 함수들은 전부
 # 이 지점보다 한참 뒤가 아니라 이미 위에서 정의가 끝난 상태라야 호출
 # 가능하다. bash는 파일을 위에서 아래로 순차 실행하므로, 정의보다 먼저
-# 호출하면(과거 autoScaleConsoleFont 바로 다음 줄에서 그렇게 했었다)
-# "command not found"로 즉시 죽는다 - 실기에서 정확히 이 증상으로
-# 재현/확인됨.
+# 호출하면(테스트 트랙에서 과거 자기 정의 바로 다음 줄에 호출을 뒀다가
+# 이 증상으로 깨진 적이 있다) "command not found"로 즉시 죽는다 -
+# 실기에서 정확히 이 증상으로 재현/확인됨.
 mshellSymlinkUserConfig
