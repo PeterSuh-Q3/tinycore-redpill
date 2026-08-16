@@ -78,8 +78,6 @@ autoScaleConsoleFont
 # ensure_loader_partition_mounted() 로 직접 마운트를 보장해야 한다
 # (umask=000 라 uid= 를 따로 안 줘도 tc 가 바로 쓸 수 있다).
 mshellSymlinkUserConfig() {
-  [ -L /home/tc/user_config.json ] && return 0
-
   # set -u trips on ${loaderdisk} itself (not just a downstream use of
   # an empty value) if the variable has never been assigned at all in
   # this shell - the :- form is required here, plain [ -z "${var}" ]
@@ -103,10 +101,16 @@ mshellSymlinkUserConfig() {
   # has to actively ensure the mount the same way every other caller
   # in this file already does, not just check for it. As a side effect
   # this also (re)points /mnt/tcrp at the current /mnt/${loaderdisk}3
-  # (see _sync_tcrp_alias()), so the symlink target below stays valid
-  # even across a disk-enumeration rename (sda -> sdb etc.) - the
-  # disk-name-independence lives there, not in this function anymore.
+  # (see _sync_tcrp_alias()) - this call must run on EVERY invocation,
+  # even when /home/tc/user_config.json is already a symlink below,
+  # because maintaining /mnt/tcrp is this call's job, not something the
+  # early-return-if-already-linked check further down should skip.
+  # (Confirmed the hard way: with the early return placed before this
+  # call, a device that was symlinked before /mnt/tcrp existed would
+  # never create it - functions.sh sourcing kept short-circuiting here.)
   ensure_loader_partition_mounted "3" || return 0
+
+  [ -L /home/tc/user_config.json ] && return 0
 
   local part_cfg="/mnt/tcrp/user_config.json"
 
