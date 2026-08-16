@@ -93,10 +93,6 @@ mshellSymlinkUserConfig() {
   # at a path that was never actually mounted on those bus types.
   getBus "${loaderdisk}" >/dev/null
 
-  local part_cfg="/mnt/${loaderdisk}3/user_config.json"
-  local part_dir
-  part_dir="$(dirname "${part_cfg}")"
-
   # This environment (Alpine, confirmed on real hardware - not
   # tcrpfriend's own TinyCore boot.sh, a completely separate boot
   # environment) never auto-mounts partition 3: rebuildfstab only
@@ -105,8 +101,14 @@ mshellSymlinkUserConfig() {
   # here silently no-ops before that mount ever occurs (confirmed the
   # hard way - functions.sh sourcing happens well before it), so this
   # has to actively ensure the mount the same way every other caller
-  # in this file already does, not just check for it.
+  # in this file already does, not just check for it. As a side effect
+  # this also (re)points /mnt/tcrp at the current /mnt/${loaderdisk}3
+  # (see _sync_tcrp_alias()), so the symlink target below stays valid
+  # even across a disk-enumeration rename (sda -> sdb etc.) - the
+  # disk-name-independence lives there, not in this function anymore.
   ensure_loader_partition_mounted "3" || return 0
+
+  local part_cfg="/mnt/tcrp/user_config.json"
 
   if [ ! -f "${part_cfg}" ]; then
     # First run against this partition (or an image predating this
@@ -1886,16 +1888,46 @@ function ensure_loader_partition_mounted() {
     sudo mkdir -p "${mount_point}"
 
     if mountpoint -q "${mount_point}"; then
+        _sync_tcrp_alias "${part}" "${mount_point}"
         return 0
     fi
 
     sudo mount "${dev}"
 
     if mountpoint -q "${mount_point}"; then
+        _sync_tcrp_alias "${part}" "${mount_point}"
         return 0
     fi
 
     return 1
+}
+
+# FRIEND(tcrpfriend) 는 자체 buildroot 커널이 부팅 과정을 전부 제어해서
+# 파티션3을 처음부터 고정 경로 /mnt/tcrp 로 마운트한다. Alpine 은
+# rebuildfstab(TinyCore 원본을 그대로 이식한 범용 스크립트, 로더 파티션
+# 개념을 모름)이 시스템의 모든 블록 디바이스를 실제 장치명 기준으로
+# /mnt/<장치명> 에 매핑하므로, 디스크 열거 순서가 바뀌면(sda -> sdb 등)
+# 로더 파티션의 실제 마운트 경로도 함께 바뀐다. rebuildfstab 자체는
+# 업스트림 이식 코드라 손대지 않고, 대신 이 함수가 파티션3에 한해
+# /mnt/tcrp 를 실제 마운트포인트를 가리키는 심볼릭 링크로 유지해서
+# 상위 코드(예: mshellSymlinkUserConfig())가 디스크명과 무관한 안정된
+# 경로 하나만 참조하면 되게 한다. target 이 최신 마운트포인트와 다르면
+# (디스크명이 바뀐 경우) 재연결한다.
+function _sync_tcrp_alias() {
+    local part="$1"
+    local mount_point="$2"
+
+    [ "${part}" = "3" ] || return 0
+
+    if [ -L /mnt/tcrp ]; then
+        [ "$(readlink /mnt/tcrp)" = "${mount_point}" ] && return 0
+        sudo rm -f /mnt/tcrp
+    elif [ -e /mnt/tcrp ]; then
+        # 심볼릭 링크가 아닌 다른 무언가가 이미 있으면 건드리지 않는다.
+        return 0
+    fi
+
+    sudo ln -s "${mount_point}" /mnt/tcrp
 }
 
 function get_alpine_os_device() {
@@ -3042,7 +3074,7 @@ function sync_usb_line() {
     
     # JSON 파일 업데이트
     # mv 대신 cp+rm: $userconfigfile 가 mshellSymlinkUserConfig() 이후로는
-    # /mnt/${loaderdisk}3/user_config.json 을 가리키는 심볼릭 링크다.
+    # /mnt/tcrp/user_config.json 을 가리키는 심볼릭 링크다.
     # mv 는 목적지가 심볼릭 링크여도 링크 자체를 새 일반 파일로 교체해
     # 버리므로(대상 파일에 덮어쓰지 않음), writeConfigKey() 가 호출될
     # 때마다(=거의 모든 설정 저장마다) 심볼릭 링크가 끊기고 실기에서
