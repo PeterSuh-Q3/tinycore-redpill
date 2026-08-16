@@ -5557,7 +5557,7 @@ function curlfriend() {
 
     if [ -f /tmp/test_mode ]; then
         cecho g "###############################  This is Test Mode  ############################"
-        PRERELEASE_TAG=$(curl -s "https://api.github.com/repos/$REPO/releases" | \
+        PRERELEASE_TAG=$(curl -sk "https://api.github.com/repos/$REPO/releases" | \
           jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
         if [ -n "$PRERELEASE_TAG" ]; then
             echo "Pre-release tag found: $PRERELEASE_TAG"
@@ -5755,7 +5755,7 @@ function getredpillko() {
         if [ -f /tmp/test_mode ]; then
             cecho g "###############################  This is Test Mode  ############################"
             [ "${DSMVER}" = "7.3" ] && redpillmake="dev"
-            LKM_PRERELEASE_TAG=$(curl --connect-timeout 10 -s "https://api.github.com/repos/$REPO/releases" | \
+            LKM_PRERELEASE_TAG=$(curl --connect-timeout 10 -sk "https://api.github.com/repos/$REPO/releases" | \
               jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
             if [ -n "$LKM_PRERELEASE_TAG" ]; then
                 echo "Pre-release tag found: $LKM_PRERELEASE_TAG"
