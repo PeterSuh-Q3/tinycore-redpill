@@ -3091,9 +3091,24 @@ function sync_usb_line() {
 # Keep user-supplied kernel parameters when a loader build regenerates the
 # platform's default USB command line. Generated values win for a matching
 # key, while options known only to the existing user_config.json are retained.
+#
+# extra_cmdline-managed keys (sn/mac1-8/vid/pid/netif_num) are the one
+# exception: sync_usb_line() only ever adds/updates these into general.
+# usb_line, never removes them, so a key deleted from .extra_cmdline (e.g.
+# NIC count auto-detect dropping mac2) can leave an orphaned "mac2=..."
+# sitting in the stored usb_line indefinitely. DeleteConfigKey() now cleans
+# this up going forward, but that only handles keys deleted *after* the fix
+# existed - devices with pre-existing orphaned entries (or any other path
+# that edits .extra_cmdline without going through DeleteConfigKey) would
+# still have them silently reinstated here on every rebuild, since this is
+# the only place that merges the stored usb_line back in. So this function
+# also self-heals: for these specific keys, only keep the token if the key
+# still exists in current .extra_cmdline - regardless of how it got stale.
 function preserve_usb_line_options() {
     local generated_line="$1"
     local existing_line token key generated_token found
+    local managed_keys=" sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num "
+    local current_extra_keys
 
     existing_line=$(jq -r '.general.usb_line // empty' "$userconfigfile" 2>/dev/null)
     [ -z "${existing_line}" ] && {
@@ -3101,9 +3116,16 @@ function preserve_usb_line_options() {
         return
     }
 
+    current_extra_keys=" $(jq -r '.extra_cmdline | keys[]?' "$userconfigfile" 2>/dev/null | tr '\n' ' ') "
+
     for token in ${existing_line}; do
         [ -z "${token}" ] && continue
         key="${token%%=*}"
+
+        if [[ "${managed_keys}" == *" ${key} "* ]] && [[ "${current_extra_keys}" != *" ${key} "* ]]; then
+            continue
+        fi
+
         found="false"
 
         for generated_token in ${generated_line}; do
