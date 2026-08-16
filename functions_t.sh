@@ -3041,7 +3041,15 @@ function sync_usb_line() {
     done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
     
     # JSON 파일 업데이트
-    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" && mv "${userconfigfile}.tmp" "$userconfigfile"
+    # mv 대신 cp+rm: $userconfigfile 가 mshellSymlinkUserConfig() 이후로는
+    # /mnt/${loaderdisk}3/user_config.json 을 가리키는 심볼릭 링크다.
+    # mv 는 목적지가 심볼릭 링크여도 링크 자체를 새 일반 파일로 교체해
+    # 버리므로(대상 파일에 덮어쓰지 않음), writeConfigKey() 가 호출될
+    # 때마다(=거의 모든 설정 저장마다) 심볼릭 링크가 끊기고 실기에서
+    # 실제로 재현됨. cp 는 기본적으로 심볼릭 링크를 따라가 타깃 파일
+    # 내용만 덮어쓰므로 링크 자체가 유지된다.
+    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
+        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
 }
 
 # Keep user-supplied kernel parameters when a loader build regenerates the
