@@ -77,8 +77,12 @@ autoScaleConsoleFont
 mshellSymlinkUserConfig() {
   [ -L /home/tc/user_config.json ] && return 0
 
-  [ -z "${loaderdisk}" ] && getloaderdisk
-  [ -z "${loaderdisk}" ] && return 0
+  # set -u trips on ${loaderdisk} itself (not just a downstream use of
+  # an empty value) if the variable has never been assigned at all in
+  # this shell - the :- form is required here, plain [ -z "${var}" ]
+  # is not safe for a truly-undeclared variable under set -u.
+  [ -z "${loaderdisk:-}" ] && getloaderdisk
+  [ -z "${loaderdisk:-}" ] && return 0
   # nvme/mmc/block disks need a trailing "p" before the partition
   # number (nvme0n1p3, not nvme0n13) - that correction only happens as
   # a side effect of getBus() (functions.sh:3137-3139), not inside
