@@ -1418,15 +1418,30 @@ show_progress_bar() {
     local current=$1
     local total=$2
     local step_name="$3"
-    
+
     local width=24
     local percentage=$((current * 100 / total))
     local filled=$((width * current / total))
-    
-    printf "[" > /dev/tty
-    printf "%${filled}s" | tr ' ' '=' > /dev/tty
-    printf "%$((width - filled))s" | tr ' ' '-' > /dev/tty
-    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > /dev/tty
+
+    # /dev/tty only exists when a controlling terminal is attached -
+    # unconditionally writing there breaks headless callers (a build
+    # driven over su -c with no tty, like MSHELL Manager's automated
+    # rebuild) with "No such device or address" on every single write.
+    # Falls back to stdout, which every caller already expects to be
+    # capturable (e.g. tee'd to a log file).
+    local out=/dev/tty
+    # [ -w /dev/tty ] only checks the permission bit, not whether an
+    # open() would actually succeed - confirmed it still reports true
+    # with no controlling terminal attached, while the open itself
+    # fails. Doing the real probe instead; 2>/dev/null has to come
+    # before the failing redirect or bash reports the open failure via
+    # the original stderr before the suppression is even applied.
+    : 2>/dev/null > /dev/tty || out=/dev/stdout
+
+    printf "[" > "$out"
+    printf "%${filled}s" | tr ' ' '=' > "$out"
+    printf "%$((width - filled))s" | tr ' ' '-' > "$out"
+    printf "] %d%% (%d/%d) [%s]\n" "$percentage" "$current" "$total" "$step_name" > "$out"
 }
 
 #################################################################################
