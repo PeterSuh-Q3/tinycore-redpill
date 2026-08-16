@@ -3683,7 +3683,11 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
                   fi    
                 fi
             fi
-            patfile="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"            
+            patfile="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+            # every branch above that reaches here wrote this via sudo
+            # (mv/cp), leaving it root-owned and unreadable to tc -
+            # ext-manager.sh/build-loader.sh unpack it without sudo later.
+            sudo chmod a+r "${patfile}" 2>/dev/null
 
         else
             echo "Something went wrong, please check cache files"
@@ -3693,7 +3697,7 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
         cd /home/tc/redpill-load/cache
 st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
 [ "${BUS}" != "block" ] && log_build_step "Pat file extracted" 5 12
-        sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
+        sudo tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && sudo chmod a+r ./VERSION && . ./VERSION && cat ./VERSION && rm ./VERSION
         os_md5=$(md5sum /home/tc/redpill-load/cache/${SYNOMODEL}.pat | awk '{print $1}')
         msgnormal "Pat file md5sum is : $os_md5"
 
