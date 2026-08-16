@@ -136,6 +136,18 @@ function read_with_timeout() {
     fi
 }
 
+###############################################################################
+# $userconfigfile 를 /mnt/${tcrppart}/user_config.json 으로 동기화한다.
+# mshellSymlinkUserConfig()(functions_t.sh) 가 켜져 있으면 $userconfigfile
+# 자체가 그 경로를 가리키는 심볼릭 링크라 두 경로가 이미 같은 파일이다 -
+# 이 상태에서 그대로 cp 를 수행하면 "same file" 오류가 난다(SN/MAC 생성
+# 메뉴 등에서 실기로 확인됨). 심볼릭 링크가 아닌 경우(안정 트랙)만 실제로
+# 복사한다.
+function sync_part_config() {
+  [ -L "$userconfigfile" ] && return 0
+  sudo cp "$userconfigfile" "/mnt/${tcrppart}/user_config.json"
+}
+
 function chk_filetime_n_backup() {
   # 2026-08-16 (테스트 트랙에서만 실질적으로 갈라짐, 파일 자체는 공용):
   # mshellSymlinkUserConfig()(functions_t.sh)가 켜져 있으면 $userconfigfile
@@ -1201,7 +1213,7 @@ function serialMenu() {
   done
   SN="${SERIAL}"
   writeConfigKey "extra_cmdline" "sn" "${SN}"
-  sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
+  sync_part_config
 }
 
 ###############################################################################
@@ -1290,7 +1302,7 @@ function macMenu() {
       writeConfigKey "extra_cmdline" "netif_num" "8"
   fi
 
-  sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
+  sync_part_config
 }
 
 # MAC 주소 선택 하위메뉴 - 최대 8개(eth0~eth7) 인터페이스를 순차가 아니라
@@ -1372,14 +1384,17 @@ function editUserConfig() {
 
     # JSON format validation
     if jq . "${TMP_PATH}/userconfig" > /dev/null 2>&1; then
-        mv "${TMP_PATH}/userconfig" "${userconfigfile}"
-        [ $? -eq 0 ] && break
+        # mv 는 목적지가 심볼릭 링크(mshellSymlinkUserConfig() 적용시)여도
+        # 링크 자체를 새 일반 파일로 교체해버린다 - cp 는 심볼릭 링크를
+        # 따라가 타깃 내용만 덮어써서 링크가 유지된다.
+        cp "${TMP_PATH}/userconfig" "${userconfigfile}"
+        [ $? -eq 0 ] && rm -f "${TMP_PATH}/userconfig" && break
     else
         dialog --backtitle "`backtitle`" --title "Invalid JSON format" --msgbox "The JSON format is invalid." 0 0
     fi
   done
 
-  sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json
+  sync_part_config
 
   MODEL=$(readConfigKey "general" "model")
   SN=$(readConfigKey "extra_cmdline" "sn")
@@ -2008,8 +2023,13 @@ function packing_loader() {
 }
 
 function satadom_edit() {
-    sed -i "s/synoboot_satadom=[^ ]*/synoboot_satadom=${1}/g" /home/tc/user_config.json
-    sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json
+    # sed -i 는 구현에 따라 임시파일 생성 후 rename 방식을 쓸 수 있어
+    # 심볼릭 링크를 깨뜨릴 위험이 있다 - 출력을 임시파일로 받아 cp 로
+    # 타깃에 써서(심볼릭 링크를 따라가며) 링크를 유지한다.
+    sed "s/synoboot_satadom=[^ ]*/synoboot_satadom=${1}/g" /home/tc/user_config.json > "${TMP_PATH}/user_config.json.tmp" \
+        && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
+        && rm -f "${TMP_PATH}/user_config.json.tmp"
+    sync_part_config
     backuploader
 }
 
@@ -2021,13 +2041,17 @@ function i915_edit() {
       I915MODE="0"
       DISPLAYI915="Enable" 
   else
-      sed -i "s/i915.enable_psr=0//g" /home/tc/user_config.json  
+      # sed -i 대신 임시파일 경유 cp: 위 satadom_edit() 과 동일한 이유로
+      # 심볼릭 링크(mshellSymlinkUserConfig() 적용시) 를 유지하기 위함.
+      sed "s/i915.enable_psr=0//g" /home/tc/user_config.json > "${TMP_PATH}/user_config.json.tmp" \
+          && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
+          && rm -f "${TMP_PATH}/user_config.json.tmp"
       I915MODE="1"
-      DISPLAYI915="Disable" 
+      DISPLAYI915="Disable"
   fi
-  
+
   writeConfigKey "general" "i915mode" "${I915MODE}"
-  sudo cp /home/tc/user_config.json /mnt/${tcrppart}/user_config.json  
+  sync_part_config
   backuploader
 }
 
