@@ -1,9 +1,11 @@
 cb0a9eaae9062f0a39d6a364c02912697a640da5
-205980ded48ff1f6fbb3986aaf4826798a671aff
-e9d886e2c83d748795ec75a2c6b9b2ce49e53bd7
+0284f6408a52fcbfdf404a87b11f0af508e7878b
+a6a3bc948b72c451b1bb3f51ae27aed82118aa27
 
-    1.4.3.0 Fixed several non-interactive/friend-kernel build issues: prerelease tag lookup no
-    longer fails TLS verification without a CA bundle, PAT cache and extension index/
-    recipe files written via sudo on a friend kernel are no longer left unreadable to
-    the tc user, and the build progress bar no longer errors when no controlling
-    terminal is attached.
+    1.4.3.1 Promoted from the test track: /home/tc/user_config.json is now a symlink onto
+/mnt/tcrp/user_config.json (a stable alias for the loader partition maintained
+across disk-enumeration changes) instead of a second, separately-synced copy.
+writeConfigKey()/sync_usb_line() now preserve that symlink across writes instead
+of replacing it with a plain file. DeleteConfigKey() and preserve_usb_line_options()
+now drop general.usb_line entries for extra_cmdline keys (sn/mac1-8/vid/pid/
+netif_num) that no longer exist, instead of leaving them orphaned indefinitely.
