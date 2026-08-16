@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.2.9"
-builddate="2026.08.15"
+rploaderver="1.4.3.0"
+builddate="2026.08.16"
 redpillmake="prod"
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
@@ -440,6 +440,11 @@ function history() {
     1.4.2.8 Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation
              and initial image GRUB display fix
     1.4.2.9 Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
+    1.4.3.0 Fixed several non-interactive/friend-kernel build issues: prerelease tag lookup no
+             longer fails TLS verification without a CA bundle, PAT cache and extension index/
+             recipe files written via sudo on a friend kernel are no longer left unreadable to
+             the tc user, and the build progress bar no longer errors when no controlling
+             terminal is attached.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1024,6 +1029,12 @@ EOF
 # 2026.08.15 v1.4.2.9
 # Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
 
+# 2026.08.16 v1.4.3.0
+# Fixed several non-interactive/friend-kernel build issues: prerelease tag lookup no longer fails
+# TLS verification without a CA bundle, PAT cache and extension index/recipe files written via
+# sudo on a friend kernel are no longer left unreadable to the tc user, and the build progress bar
+# no longer errors when no controlling terminal is attached.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1325,6 +1336,11 @@ function showlastupdate() {
 # initial image GRUB display fix
 # 2026.08.15 v1.4.2.9
 # Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
+# 2026.08.16 v1.4.3.0
+# Fixed several non-interactive/friend-kernel build issues: prerelease tag lookup no longer fails
+# TLS verification without a CA bundle, PAT cache and extension index/recipe files written via
+# sudo on a friend kernel are no longer left unreadable to the tc user, and the build progress bar
+# no longer errors when no controlling terminal is attached.
 EOF
 }
 
