@@ -137,6 +137,19 @@ function read_with_timeout() {
 }
 
 function chk_filetime_n_backup() {
+  # 2026-08-16 (테스트 트랙에서만 실질적으로 갈라짐, 파일 자체는 공용):
+  # mshellSymlinkUserConfig()(functions_t.sh)가 켜져 있으면 $userconfigfile
+  # 은 file2 와 같은 파일을 가리키는 심볼릭 링크라, 아래 md5 비교는 영원히
+  # "같다"로만 나온다 - sync할 것도 없고(이미 한 파일), 그 결과로
+  # backuploader() 가 다시는 호출되지 않게 되어 재부팅 전 백업이라는
+  # 이 함수의 진짜 목적 자체가 조용히 사라진다(실기에서 실제 확인됨).
+  # 심볼릭 링크가 아닌 안정 트랙에서는 predicate 이 거짓이라 원래
+  # diff 기반 로직 그대로 실행되고, 동작은 한 글자도 안 바뀐다.
+  if [ -L "$userconfigfile" ]; then
+    backuploader
+    return
+  fi
+
   file1="$userconfigfile"
   file2="/mnt/${tcrppart}/user_config.json"
 
@@ -145,7 +158,7 @@ function chk_filetime_n_backup() {
   md5_2=$(md5sum "$file2" | awk '{print $1}')
 
   echo "File 1 ($file1): $md5_1"
-  echo "File 2 ($file2): $md5_2"  
+  echo "File 2 ($file2): $md5_2"
 
   # 비교
   if [ "$md5_1" != "$md5_2" ]; then
@@ -153,7 +166,7 @@ function chk_filetime_n_backup() {
     # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
     sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
     backuploader
-  fi  
+  fi
 }
  
 function restart() {
