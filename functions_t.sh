@@ -1876,8 +1876,16 @@ function getloaderdisk() {
         done < <(lsblk -ndo NAME | grep -v '^loop' | grep -v '^zram' | sed 's/^/\/dev\//')
     fi
 
-    # Output the loader disk
-    echo "LOADER DISK: $loaderdisk"
+    # Output the loader disk. Must go to stderr, not stdout: sngen.sh/
+    # macgen.sh source functions.sh at the top and are themselves invoked
+    # via backticks (e.g. SERIAL=`./sngen.sh ...`), so anything this
+    # function writes to stdout ends up prepended to the captured SN/MAC
+    # value. mshellSymlinkUserConfig()'s self-invoke at the end of the
+    # sourced file calls getloaderdisk() whenever ${loaderdisk} isn't
+    # already set in that fresh subshell, which is exactly the case in
+    # sngen.sh/macgen.sh - confirmed on real hardware as a corrupted
+    # sn value: "LOADER DISK: sda\n<the real generated serial>".
+    echo "LOADER DISK: $loaderdisk" >&2
 }
 
 function ensure_loader_partition_mounted() {
