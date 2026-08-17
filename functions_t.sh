@@ -5988,15 +5988,36 @@ function getredpillko() {
         echo "TAG is ${TAG}"
         updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
 
-        # tcrp-modules 는 항상 main 브랜치 HEAD 를 그대로 받아 쓰므로(태그 고정
-        # 없음) 이 빌드가 실제로 어떤 시점의 모듈팩을 썼는지 나중에 알 방법이
-        # 없었다. redpill.ko TAG 조회와 동일한 방식(latest release)으로 최선
-        # 노력 조회 - 실패해도 빌드 자체는 막지 않는다(모듈팩 다운로드는 이
-        # 값과 무관하게 이미 main 기준으로 진행되므로).
-        MODULES_TAG=$(curl --connect-timeout 10 -skL \
-          "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest" \
-          | jq -r '.tag_name // empty')
-        [ -z "${MODULES_TAG}" ] && MODULES_TAG="unknown"
+        # tcrp-modules 의 실제 다운로드(all-modules/custom-modules/aeudev
+        # rpext-index.json 등)는 전부 release asset 이 아니라 main 브랜치
+        # raw 콘텐츠에서 이뤄진다(예: tcrp-modules/main/all-modules/
+        # rpext-index.json) - "최신 릴리즈 태그"만 조회하면 main 에 그
+        # 릴리즈 이후 추가 커밋이 있는 경우 실제로 받아온 내용과 어긋난
+        # 라벨을 기록하게 된다. main HEAD 커밋과 최신 릴리즈가 가리키는
+        # 커밋을 비교해서, 둘이 같을 때만 태그명을 쓰고 다르면 실제로
+        # fetch 한 짧은 커밋 SHA 를 함께 남겨 정확성을 보장한다.
+        _modules_head_sha=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD 2>/dev/null | cut -f1)
+        _modules_latest_json=$(curl --connect-timeout 10 -skL \
+          "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest")
+        _modules_tag_name=$(echo "${_modules_latest_json}" | jq -r '.tag_name // empty')
+        _modules_tag_sha=$(echo "${_modules_latest_json}" | jq -r '.target_commitish // empty')
+        # target_commitish 는 태그가 브랜치명으로 찍힌 경우 커밋 SHA 가
+        # 아닐 수 있어, tags API 로 실제 커밋 SHA 를 재확인한다.
+        if [ -n "${_modules_tag_name}" ]; then
+            _modules_tag_sha=$(curl --connect-timeout 10 -skL \
+              "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/git/refs/tags/${_modules_tag_name}" \
+              | jq -r '.object.sha // empty')
+        fi
+        if [ -n "${_modules_tag_name}" ] && [ -n "${_modules_head_sha}" ] \
+           && [ "${_modules_tag_sha}" = "${_modules_head_sha}" ]; then
+            MODULES_TAG="${_modules_tag_name}"
+        elif [ -n "${_modules_head_sha}" ]; then
+            MODULES_TAG="main@${_modules_head_sha:0:7}"
+        elif [ -n "${_modules_tag_name}" ]; then
+            MODULES_TAG="${_modules_tag_name}"
+        else
+            MODULES_TAG="unknown"
+        fi
         echo "tcrp-modules TAG is ${MODULES_TAG}"
 
         # 다운로드: --retry 3, connect-timeout 15s, max-time 120s, HTTP 오류 검증
