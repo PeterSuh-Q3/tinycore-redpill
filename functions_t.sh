@@ -7091,7 +7091,38 @@ echo "$3"
 }
 
 function add-addons() {
-    jsonfile=$(jq ". |= .+ {\"${1}\": \"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${1}/rpext-index.json\"}" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json    
+    jsonfile=$(jq ". |= .+ {\"${1}\": \"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${1}/rpext-index.json\"}" /home/tc/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > /home/tc/redpill-load/bundled-exts.json
+}
+
+# NON-DT 모델에서 rploader satamap(실기 SATA 컨트롤러 스캔) 실행 전, user_config.json에
+# SataPortMap/DiskIdxMap이 아직 비어 있으면 synoinfo.maxdisks 기준의 넉넉한 기본값을
+# 선제로 채워 둔다. 단일 컨트롤러가 maxdisks만큼의 포트를 모두 커버한다고 가정하는
+# "안전망" 값이라 실제 컨트롤러 구성과는 다를 수 있지만, 값이 부족해 디스크를 아예
+# 인식 못 하는 것보다 과다 매핑(빈 베이 표시 정도)이 안전하다는 판단. satamap이
+# 정상 동작하면 이 값은 실측 결과로 덮어써진다. 이미 값이 있으면 건드리지 않는다.
+function prefillDefaultSataPortMap() {
+    local maxdisks curmap curidx portchar
+
+    maxdisks=$(jq -r '.synoinfo.maxdisks // empty' user_config.json)
+    case "$maxdisks" in ''|*[!0-9]*) return 0 ;; esac
+    [ "$maxdisks" -lt 1 ] && return 0
+
+    curmap=$(jq -r '.extra_cmdline.SataPortMap // empty' user_config.json)
+    curidx=$(jq -r '.extra_cmdline.DiskIdxMap // empty' user_config.json)
+    if [ -n "$curmap" ] && [ -n "$curidx" ]; then
+        cecho p "SataPortMap/DiskIdxMap already set (${curmap}/${curidx}), skip default prefill."
+        return 0
+    fi
+
+    # 9포트 초과는 rploader satamap과 동일한 방식(포트수+48을 ASCII 문자로)으로 인코딩.
+    if [ "$maxdisks" -gt 9 ]; then
+        portchar=$(printf \\$(printf "%o" $((maxdisks + 48))))
+    else
+        portchar="$maxdisks"
+    fi
+
+    cecho p "Pre-filling generous default SataPortMap/DiskIdxMap for maxdisks=${maxdisks} (single-controller blanket: ${portchar}/00)"
+    json="$(jq --arg m "$portchar" '.extra_cmdline.SataPortMap = $m | .extra_cmdline.DiskIdxMap = "00"' user_config.json)" && echo -E "${json}" | jq . >user_config.json
 }
 
 function my() {
@@ -7430,9 +7461,10 @@ function my() {
       if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
          [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
           cecho p "Device Tree based model does not need SataPortMap setting...."
-      else    
-          rploader satamap    
-      fi    
+      else
+          prefillDefaultSataPortMap
+          rploader satamap
+      fi
       cecho y "After changing user_config.json"     
   fi
   cat user_config.json  
