@@ -5969,13 +5969,24 @@ function getredpillko() {
         # 라벨을 기록하게 된다. main HEAD 커밋과 최신 릴리즈가 가리키는
         # 커밋을 비교해서, 둘이 같을 때만 태그명을 쓰고 다르면 실제로
         # fetch 한 짧은 커밋 SHA 를 함께 남겨 정확성을 보장한다.
+        #
+        # tcrp-modules 의 releases/latest 응답은 (에셋 목록이 많아)
+        # ~380KB 로, redpill-lkm 쪽과 달리 셸 변수에 담아 파이프로
+        # 넘기면 "jq/sudo: Argument list too long" 로 죽는 게 실기에서
+        # 재현됨(같은 세션의 뒤이은 무관한 sudo 호출까지 함께 실패하는
+        # 것으로 보아 인자 목록이 아니라 환경/스택 한도 문제로 추정).
+        # 변수+파이프 대신 임시 파일에 받아 jq 가 파일을 직접 읽게 해서
+        # 이 한도 자체를 우회한다.
         _modules_head_sha=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD 2>/dev/null | cut -f1)
-        _modules_latest_json=$(curl --connect-timeout 10 -skL \
-          "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest")
-        _modules_tag_name=$(echo "${_modules_latest_json}" | jq -r '.tag_name // empty')
-        _modules_tag_sha=$(echo "${_modules_latest_json}" | jq -r '.target_commitish // empty')
-        # target_commitish 는 태그가 브랜치명으로 찍힌 경우 커밋 SHA 가
-        # 아닐 수 있어, tags API 로 실제 커밋 SHA 를 재확인한다.
+        _modules_json_file="/tmp/.mshell_tcrp_modules_latest.json"
+        curl --connect-timeout 10 -skL \
+          "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest" \
+          -o "${_modules_json_file}" 2>/dev/null
+        _modules_tag_name=$(jq -r '.tag_name // empty' "${_modules_json_file}" 2>/dev/null)
+        rm -f "${_modules_json_file}"
+        _modules_tag_sha=""
+        # tags API 로 그 태그가 실제로 가리키는 커밋 SHA 를 확인한다
+        # (이 응답은 작아 변수+파이프로도 문제없음).
         if [ -n "${_modules_tag_name}" ]; then
             _modules_tag_sha=$(curl --connect-timeout 10 -skL \
               "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/git/refs/tags/${_modules_tag_name}" \
