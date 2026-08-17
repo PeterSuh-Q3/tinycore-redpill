@@ -7173,6 +7173,12 @@ function prefillDefaultSataPortMap() {
 
     cecho p "Pre-filling generous default SataPortMap/DiskIdxMap for maxdisks=${maxdisks} (single-controller blanket: ${portchar}/00)"
     json="$(jq --arg m "$portchar" '.extra_cmdline.SataPortMap = $m | .extra_cmdline.DiskIdxMap = "00"' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+
+    # writeConfigKey()를 거치지 않고 jq로 직접 썼기 때문에, 그 함수가 항상 같이
+    # 호출해 주는 sync_usb_line()이 자동으로 따라오지 않는다. 이걸 빼먹으면
+    # extra_cmdline에는 값이 들어가도 general.usb_line에는 반영이 안 되는 상태로
+    # 남는다 - 직접 호출로 맞춰준다.
+    sync_usb_line
 }
 
 function my() {
