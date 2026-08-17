@@ -1700,6 +1700,20 @@ function backup() {
 
 . /home/tc/burnloader.sh
 
+# 2026-08-17: 부정확했던 부분 4가지를 보완.
+#  1) DUMMY(팬텀) 판정을 ahci_port_cmd(AHCI 전용 sysfs 속성)에서 dmesg의
+#     "<ataX>: DUMMY" 커널 메시지로 교체 - rploader.sh의 satamap과 동일한 기준이고,
+#     드라이버 종류(AHCI 여부)와 무관하게 libata 코어가 남기는 메시지라 비-AHCI
+#     컨트롤러에서 파일이 없어 조용히 "연결됨"으로 오분류되던 문제가 없다.
+#  2) scsi_host 인덱스(P)로부터 libata ataN 번호를 "P+1"이라 추정하지 않고,
+#     /sys/class/scsi_host/hostN/ata_port/ataX 심볼릭 경로에서 실제 번호를 읽는다.
+#     컨트롤러가 섞여 있으면 P+1 가정이 실측과 어긋날 수 있었음.
+#  3) 링크다운 포트를 목록에서 통째로 숨기던 것을 그만두고, 실재하는 빈 베이는
+#     그대로(무색) 표시한다 - "숨김"이 오히려 실제 존재하는 빈 베이 수를 사용자가
+#     과소평가하게 만드는 원인이었다. DUMMY로 확인된 포트만 빨간색으로 표시.
+#  4) LSI/USB/NVME 구간에서 컨트롤러 하나가 scsi_host를 여러 개 노출하는 경우
+#     PORT 변수에 개행 포함 여러 줄이 들어가 grep 리터럴 멀티라인 패턴이 되어
+#     매칭이 깨지던 문제 - host 번호별로 개별 루프를 돌며 합산하도록 수정.
 function showsata () {
       MSG=""
       NUMPORTS=0
@@ -1707,20 +1721,17 @@ function showsata () {
       for PCI in $(lspci -d ::106 | awk '{print $1}'); do
         NAME=$(lspci -s "${PCI}" | sed "s/\ .*://")
         MSG+="\Zb${NAME}\Zn\nPorts: "
-        PORTS=$(ls -l /sys/class/scsi_host | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
+        PORTS=$(ls -l /sys/class/scsi_host 2>/dev/null | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
         for P in ${PORTS}; do
-        # Skip for Unused Port
-          if [ "$(dmesg | grep 'SATA link down' | grep ata$((${P} + 1)): | wc -l)" -eq 0 ]; then          
-            DUMMY="$([ "$(cat /sys/class/scsi_host/host${P}/ahci_port_cmd)" = "0" ] && echo 1 || echo 2)"
-            if [ "$(cat /sys/class/scsi_host/host${P}/ahci_port_cmd)" = "0" ]; then
-              MSG+="\Z1$(printf "%02d" ${P})\Zn "
-            else
-              if lsscsi -b | grep -v - | grep -q "\[${P}:"; then
-                MSG+="\Z2$(printf "%02d" ${P})\Zn "
-              else
-                MSG+="$(printf "%02d" ${P}) "
-              fi
-            fi  
+          ataid=$(basename "$(ls -d /sys/class/scsi_host/host${P}/ata_port/ata* 2>/dev/null | head -1)" 2>/dev/null)
+          [ -z "${ataid}" ] && ataid="ata$((P + 1))"
+
+          if dmesg 2>/dev/null | grep -q "${ataid}: DUMMY\$"; then
+            MSG+="\Z1$(printf "%02d" ${P})\Zn "
+          elif lsscsi -b 2>/dev/null | grep -v - | grep -q "\[${P}:"; then
+            MSG+="\Z2$(printf "%02d" ${P})\Zn "
+          else
+            MSG+="$(printf "%02d" ${P}) "
           fi
           NUMPORTS=$((${NUMPORTS} + 1))
         done
@@ -1729,16 +1740,22 @@ function showsata () {
       [ $(lspci -d ::107 | wc -l) -gt 0 ] && MSG+="\nLSI:\n"
       for PCI in $(lspci -d ::107 | awk '{print $1}'); do
         NAME=$(lspci -s "${PCI}" | sed "s/\ .*://")
-        PORT=$(ls -l /sys/class/scsi_host | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
-        PORTNUM=$(lsscsi -b | grep -v - | grep "\[${PORT}:" | wc -l)
+        PORTS=$(ls -l /sys/class/scsi_host 2>/dev/null | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
+        PORTNUM=0
+        for PORT in ${PORTS}; do
+          PORTNUM=$((PORTNUM + $(lsscsi -b 2>/dev/null | grep -v - | grep -c "\[${PORT}:")))
+        done
         MSG+="\Zb${NAME}\Zn\nNumber: ${PORTNUM}\n"
         NUMPORTS=$((${NUMPORTS} + ${PORTNUM}))
       done
-      [ $(ls -l /sys/class/scsi_host | grep usb | wc -l) -gt 0 ] && MSG+="\nUSB:\n"
+      [ $(ls -l /sys/class/scsi_host 2>/dev/null | grep usb | wc -l) -gt 0 ] && MSG+="\nUSB:\n"
       for PCI in $(lspci -d ::c03 | awk '{print $1}'); do
         NAME=$(lspci -s "${PCI}" | sed "s/\ .*://")
-        PORT=$(ls -l /sys/class/scsi_host | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
-        PORTNUM=$(lsscsi -b | grep -v - | grep "\[${PORT}:" | wc -l)
+        PORTS=$(ls -l /sys/class/scsi_host 2>/dev/null | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
+        PORTNUM=0
+        for PORT in ${PORTS}; do
+          PORTNUM=$((PORTNUM + $(lsscsi -b 2>/dev/null | grep -v - | grep -c "\[${PORT}:")))
+        done
         [ ${PORTNUM} -eq 0 ] && continue
         MSG+="\Zb${NAME}\Zn\nNumber: ${PORTNUM}\n"
         NUMPORTS=$((${NUMPORTS} + ${PORTNUM}))
@@ -1746,14 +1763,17 @@ function showsata () {
       [ $(lspci -d ::108 | wc -l) -gt 0 ] && MSG+="\nNVME:\n"
       for PCI in $(lspci -d ::108 | awk '{print $1}'); do
         NAME=$(lspci -s "${PCI}" | sed "s/\ .*://")
-        PORT=$(ls -l /sys/class/nvme | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/nvme//' | sort -n)
-        PORTNUM=$(lsscsi -b | grep -v - | grep "\[N:${PORT}:" | wc -l)
+        PORTS=$(ls -l /sys/class/nvme 2>/dev/null | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/nvme//' | sort -n)
+        PORTNUM=0
+        for PORT in ${PORTS}; do
+          PORTNUM=$((PORTNUM + $(lsscsi -b 2>/dev/null | grep -v - | grep -c "\[N:${PORT}:")))
+        done
         MSG+="\Zb${NAME}\Zn\nNumber: ${PORTNUM}\n"
         NUMPORTS=$((${NUMPORTS} + ${PORTNUM}))
       done
       MSG+="\n"
       MSG+="$(printf "\nTotal of ports: %s\n")" "${NUMPORTS}"
-      MSG+="\nPorts with color \Z1red\Zn as DUMMY, color \Z2\Zbgreen\Zn has drive connected."
+      MSG+="\nPorts with color \Z1red\Zn are confirmed DUMMY (phantom, kernel-flagged), color \Z2\Zbgreen\Zn has a drive connected, uncolored is a real empty bay."
       dialog --backtitle "$(backtitle)" --colors --title "Show SATA(s) # ports and drives" \
         --msgbox "${MSG}" 0 0
 }
