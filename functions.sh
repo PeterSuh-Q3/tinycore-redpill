@@ -7478,26 +7478,40 @@ function my() {
   
   echo
 
-  checkmachine  
-  if [ "$noconfig" = "Y" ]; then                            
+  checkmachine
+
+  # DT(Device-Tree) 모델 여부. noconfig/non-noconfig 두 분기 모두에서 SataPortMap
+  # 관련 처리 대상인지 판단하는 데 같은 기준을 쓴다.
+  DT_MODEL="N"
+  if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
+     [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
+      DT_MODEL="Y"
+  fi
+
+  if [ "$noconfig" = "Y" ]; then
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
       if [ "${prevent_param}" = "N" ]; then
           cecho p "Remove Sataportmap,DiskIdxMap"
-          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json          
+          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json
       fi
-  else 
-      cecho c "Before changing user_config.json" 
+      # menu_m.sh의 실제 빌드 메뉴는 항상 noconfig 인자를 붙여서 my()를 호출하므로
+      # (menu_m.sh:1561/1563), 이 분기가 실사용자의 정상 빌드 경로다. satamap 실측
+      # 탐지 자체가 이 분기에서는 절대 돌지 않으므로, 여기서도 넉넉한 기본값을
+      # 채워야 한다 - 예전에는 else 분기(non-noconfig, CLI에서만 접근 가능)에만
+      # 있어 메뉴 빌드에서는 죽은 코드였다(실기 45.34에서 재현/확인됨).
+      [ "${DT_MODEL}" = "N" ] && prefillDefaultSataPortMap
+  else
+      cecho c "Before changing user_config.json"
       cat user_config.json
       echo "y"|rploader identifyusb
-  
-      if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
-         [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
+
+      if [ "${DT_MODEL}" = "Y" ]; then
           cecho p "Device Tree based model does not need SataPortMap setting...."
       else
           prefillDefaultSataPortMap
           rploader satamap
       fi
-      cecho y "After changing user_config.json"     
+      cecho y "After changing user_config.json"
   fi
   cat user_config.json  
   
