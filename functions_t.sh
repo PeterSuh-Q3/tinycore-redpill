@@ -5517,8 +5517,15 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     RAMDISK_PATH="$rdtemp"
     # Patch synoinfo.conf
-    mkdir -p "${RAMDISK_PATH}/addons"    
+    mkdir -p "${RAMDISK_PATH}/addons"
     echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
+    # MSHELL Manager 의 System Info 탭에서 표시할 빌드 시점 스냅샷.
+    # user_config.json(라이브 설정)과는 별개로, 이 커스텀 램디스크가
+    # 실제로 어떤 LKM/모듈팩/모듈 로딩 방식으로 빌드됐는지를 기록한다 -
+    # 재빌드 전까지는 라이브 설정이 바뀌어도 이 값은 그대로여야 정확하다.
+    echo "${redpillmake}-${TAG}" >"${RAMDISK_PATH}/addons/LKM_VERSION"
+    echo "${MODULES_TAG}" >"${RAMDISK_PATH}/addons/MODULES_VERSION"
+    echo "${MDLNAME} (${MLMETHOD})" >"${RAMDISK_PATH}/addons/MODULE_TYPE"
     echo -n "."
     echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
     for KEY in "${!SYNOINFO[@]}"; do
@@ -5941,6 +5948,7 @@ function getredpillko() {
 
     REPO="PeterSuh-Q3/redpill-lkm"
     TAG=""
+    MODULES_TAG="unknown"
     if [ "${offline}" = "NO" ]; then
         echo "Downloading ${ORIGIN_PLATFORM} ${KVER}+ redpill.ko ..."
 
@@ -5979,6 +5987,17 @@ function getredpillko() {
 
         echo "TAG is ${TAG}"
         updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
+
+        # tcrp-modules 는 항상 main 브랜치 HEAD 를 그대로 받아 쓰므로(태그 고정
+        # 없음) 이 빌드가 실제로 어떤 시점의 모듈팩을 썼는지 나중에 알 방법이
+        # 없었다. redpill.ko TAG 조회와 동일한 방식(latest release)으로 최선
+        # 노력 조회 - 실패해도 빌드 자체는 막지 않는다(모듈팩 다운로드는 이
+        # 값과 무관하게 이미 main 기준으로 진행되므로).
+        MODULES_TAG=$(curl --connect-timeout 10 -skL \
+          "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest" \
+          | jq -r '.tag_name // empty')
+        [ -z "${MODULES_TAG}" ] && MODULES_TAG="unknown"
+        echo "tcrp-modules TAG is ${MODULES_TAG}"
 
         # 다운로드: --retry 3, connect-timeout 15s, max-time 120s, HTTP 오류 검증
         local ZIP_PATH="/mnt/${tcrppart}/rp-lkms${v}.zip"
