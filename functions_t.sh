@@ -3067,23 +3067,35 @@ function readanswerwithskip() {
 function sync_usb_line() {
     # 현재 usb_line 추출
     updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
-    
-    # extra_cmdline의 각 항목을 읽어서 처리
+
+    # 2026-08-17: 기존의 "있으면 sed 제자리치환, 없으면 끝에 append" 방식은
+    # 매칭 실패 시 조용히 append 로 빠지면서 (a) 이미 존재하는 값과 중복되고,
+    # (b) 문자열 끝에 공백 없이 그대로 이어붙는(예: 실기 45.34에서 확인된
+    # "split_lock_detect=offSataPortMap=@") 문제가 있었다. 정규식 매칭 여부에
+    # 의존하지 않고, 매 항목마다 "해당 key= 토큰을 전부 제거 후 끝에 하나만
+    # 다시 붙이기"로 바꿔 중복/공백누락이 구조적으로 생길 수 없게 한다.
     while IFS='=' read -r key value; do
         if [ -z "$value" ] || [ "$value" = "null" ]; then
             continue
         fi
-        
-        if echo "$updated_usb_line" | grep -q " ${key}="; then
-            updated_usb_line=$(echo "$updated_usb_line" | sed "s/ ${key}=[^ ]*/ ${key}=${value}/g")
-        elif echo "$updated_usb_line" | grep -q "^${key}="; then
-            updated_usb_line=$(echo "$updated_usb_line" | sed "s/^${key}=[^ ]*/${key}=${value}/")
-        else
-            updated_usb_line="${updated_usb_line}${key}=${value} "
-        fi
-        
+
+        # 과거 오염(값 뒤 공백 없이 다음 key= 가 그대로 붙어버린 경우)을 방어적으로
+        # 분리한다. 이미 공백으로 구분된 정상 케이스는 [^ ] 매칭 대상이 없어 그대로 둔다.
+        updated_usb_line=$(printf '%s' "${updated_usb_line}" | sed -E "s/([^ ])${key}=/\\1 ${key}=/g")
+
+        # 공백 기준 토큰으로 쪼개 이 key= 로 시작하는 토큰을 전부(중복 포함) 제거.
+        local -a tokens=()
+        local tok
+        for tok in ${updated_usb_line}; do
+            [[ "${tok}" == "${key}="* ]] && continue
+            tokens+=("${tok}")
+        done
+        tokens+=("${key}=${value}")
+        updated_usb_line="${tokens[*]}"
     done < <(jq -r '.extra_cmdline | to_entries[] | "\(.key)=\(.value)"' "$userconfigfile")
-    
+
+    updated_usb_line="${updated_usb_line} "
+
     # JSON 파일 업데이트
     # mv 대신 cp+rm: $userconfigfile 가 mshellSymlinkUserConfig() 이후로는
     # /mnt/tcrp/user_config.json 을 가리키는 심볼릭 링크다.
