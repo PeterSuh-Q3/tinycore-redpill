@@ -3090,6 +3090,7 @@ function preserve_usb_line_options() {
     local existing_line token key generated_token found
     local managed_keys=" sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num "
     local current_extra_keys
+    local skip_next="false"
 
     existing_line=$(jq -r '.general.usb_line // empty' "$userconfigfile" 2>/dev/null)
     [ -z "${existing_line}" ] && {
@@ -3101,6 +3102,23 @@ function preserve_usb_line_options() {
 
     for token in ${existing_line}; do
         [ -z "${token}" ] && continue
+
+        # 관리 키(=)가 아니면서 콜론으로 끝나는 날것 단어(예: "DISK:")와
+        # 그 바로 뒤에 오는 값(예: "sda")은 정상적인 커널 cmdline
+        # 파라미터 형태가 아니다 - getloaderdisk() 등 디버그 echo 가
+        # stdout 오염으로 "LABEL: value" 형태로 usb_line 에 새어 들어간
+        # 잔재(실기에서 "... split_lock_detect=off DISK: sda" 로 확인)일
+        # 가능성이 높다. key=value 형태는 여기 걸리지 않으므로 사용자가
+        # 수동으로 넣은 정상 커스텀 값은 영향받지 않는다.
+        if [ "${skip_next}" = "true" ]; then
+            skip_next="false"
+            continue
+        fi
+        if [[ "${token}" != *=* ]] && [[ "${token}" == *: ]]; then
+            skip_next="true"
+            continue
+        fi
+
         key="${token%%=*}"
 
         if [[ "${managed_keys}" == *" ${key} "* ]] && [[ "${current_extra_keys}" != *" ${key} "* ]]; then
