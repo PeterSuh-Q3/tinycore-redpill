@@ -5992,13 +5992,12 @@ function getredpillko() {
         updateuserconfigfield "general" "redpillmake" "${redpillmake}-${TAG}"
 
         # tcrp-modules 의 실제 다운로드(all-modules/custom-modules/aeudev
-        # rpext-index.json 등)는 전부 release asset 이 아니라 main 브랜치
-        # raw 콘텐츠에서 이뤄진다(예: tcrp-modules/main/all-modules/
-        # rpext-index.json) - "최신 릴리즈 태그"만 조회하면 main 에 그
-        # 릴리즈 이후 추가 커밋이 있는 경우 실제로 받아온 내용과 어긋난
-        # 라벨을 기록하게 된다. main HEAD 커밋과 최신 릴리즈가 가리키는
-        # 커밋을 비교해서, 둘이 같을 때만 태그명을 쓰고 다르면 실제로
-        # fetch 한 짧은 커밋 SHA 를 함께 남겨 정확성을 보장한다.
+        # rpext-index.json 등)는 release asset 이 아니라 main 브랜치 raw
+        # 콘텐츠에서 이뤄지므로, 엄밀히는 "최신 릴리즈 태그"가 이 빌드가
+        # 실제로 받은 내용과 다를 수 있다(main 이 태그 이후 앞서갈 때).
+        # 그래도 화면/System Info 표기는 "26.8.15" 같은 짧은 태그명으로
+        # 보여주는 게 목적이므로, 커밋 SHA 비교 없이 최신 릴리즈 태그명을
+        # 그대로 기록한다.
         #
         # tcrp-modules 의 releases/latest 응답은 (에셋 목록이 많아)
         # ~380KB 로, redpill-lkm 쪽과 달리 셸 변수에 담아 파이프로
@@ -6007,31 +6006,13 @@ function getredpillko() {
         # 것으로 보아 인자 목록이 아니라 환경/스택 한도 문제로 추정).
         # 변수+파이프 대신 임시 파일에 받아 jq 가 파일을 직접 읽게 해서
         # 이 한도 자체를 우회한다.
-        _modules_head_sha=$(git ls-remote https://github.com/PeterSuh-Q3/tcrp-modules.git HEAD 2>/dev/null | cut -f1)
         _modules_json_file="/tmp/.mshell_tcrp_modules_latest.json"
         curl --connect-timeout 10 -skL \
           "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/releases/latest" \
           -o "${_modules_json_file}" 2>/dev/null
-        _modules_tag_name=$(jq -r '.tag_name // empty' "${_modules_json_file}" 2>/dev/null)
+        MODULES_TAG=$(jq -r '.tag_name // empty' "${_modules_json_file}" 2>/dev/null)
         rm -f "${_modules_json_file}"
-        _modules_tag_sha=""
-        # tags API 로 그 태그가 실제로 가리키는 커밋 SHA 를 확인한다
-        # (이 응답은 작아 변수+파이프로도 문제없음).
-        if [ -n "${_modules_tag_name}" ]; then
-            _modules_tag_sha=$(curl --connect-timeout 10 -skL \
-              "https://api.github.com/repos/PeterSuh-Q3/tcrp-modules/git/refs/tags/${_modules_tag_name}" \
-              | jq -r '.object.sha // empty')
-        fi
-        if [ -n "${_modules_tag_name}" ] && [ -n "${_modules_head_sha}" ] \
-           && [ "${_modules_tag_sha}" = "${_modules_head_sha}" ]; then
-            MODULES_TAG="${_modules_tag_name}"
-        elif [ -n "${_modules_head_sha}" ]; then
-            MODULES_TAG="main@${_modules_head_sha:0:7}"
-        elif [ -n "${_modules_tag_name}" ]; then
-            MODULES_TAG="${_modules_tag_name}"
-        else
-            MODULES_TAG="unknown"
-        fi
+        [ -z "${MODULES_TAG}" ] && MODULES_TAG="unknown"
         echo "tcrp-modules TAG is ${MODULES_TAG}"
 
         # 다운로드: --retry 3, connect-timeout 15s, max-time 120s, HTTP 오류 검증
