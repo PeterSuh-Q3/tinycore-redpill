@@ -3863,9 +3863,14 @@ function processpat() {
     # 내장하고 있지 않다. 그런 캐시를 그대로 쓰면 buildloader() 가 이번 빌드에서도
     # netconsole.ko 를 못 찾으므로, 캐시된 pat 에 없으면 지워서 아래 로직이
     # "캐시 없음"으로 보고 원본을 새로 받아 다시 만들도록 강제한다.
+    # 주의: 이 함수는 재귀 호출된다(암호화 pat 다운로드 직후 재호출) - 그 시점의
+    # 캐시는 아직 암호화된 상태라 tar -tf 가 실패(빈 리스팅)하는데, 그걸 "netconsole.ko
+    # 없음"으로 오판해 방금 받은 파일을 지우면 무한 재다운로드 루프에 빠진다.
+    # tar 리스팅이 실제로 비어있지 않을 때(=유효한 tar, 이미 복호화됨)만 검사한다.
     for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
         [ -f "${_nc_cached}" ] || continue
-        if ! tar -tf "${_nc_cached}" 2>/dev/null | grep -q "usr/lib/modules/netconsole\.ko\$"; then
+        _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
+        if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
             echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
             rm -f "${_nc_cached}"
         fi
