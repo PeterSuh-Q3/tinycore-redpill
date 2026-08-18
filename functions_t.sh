@@ -5479,9 +5479,19 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 
     # [netconsole-early] usb_line 의 netconsole= 를 linuxrc.syno 최초 실행 시점에 바로
     # insmod 한다 - on_early 확장 훅보다도 이른 지점(DSM 파티션 마운트/확장 매니저
-    # 실행 전)이라 커널 패닉을 더 넓게 잡을 수 있다. rd.gz 안에 이미 있는 stock
-    # netconsole.ko 를 그대로 쓰므로 별도 모듈 번들링이 필요 없다.
-    # netconsole= 가 cmdline 에 없으면 조용히 스킵 - 일반 부팅에는 영향 없음.
+    # 실행 전)이라 커널 패닉을 더 넓게 잡을 수 있다. netconsole.ko 는 부트타임
+    # ramdisk 계열(rd.gz/all-modules/custom-modules)에는 없고 DSM 자체 .pat 의
+    # hda1.tgz 안에만 있어서, minipat 축소 단계에서 미리 뽑아둔 캐시본
+    # (/mnt/${tcrppart}/auxfiles/netconsole.ko)을 여기서 ramdisk 로 복사한다.
+    # netconsole= 가 cmdline 에 없거나 캐시본이 없으면 조용히 스킵 - 일반 부팅에는 영향 없음.
+    NETCONSOLE_KO_CACHE="/mnt/${tcrppart}/auxfiles/netconsole.ko"
+    if [ -f "${NETCONSOLE_KO_CACHE}" ]; then
+        sudo mkdir -p $rdtemp/usr/lib/modules
+        sudo cp -f "${NETCONSOLE_KO_CACHE}" $rdtemp/usr/lib/modules/netconsole.ko
+        echo "[netconsole] bundled netconsole.ko into ramdisk"
+    else
+        echo "[netconsole] no cached netconsole.ko at ${NETCONSOLE_KO_CACHE} - insmod will be skipped at boot"
+    fi
     cat >/tmp/netconsole-early.sh <<'NCEOF'
 #!/bin/sh
 NETCONSOLE_PARAM=$(cat /proc/cmdline | tr ' ' '\n' | grep '^netconsole=' | cut -d= -f2-)
@@ -5771,6 +5781,29 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 MINIPAT_OK=1
                 MINIPAT_RESOLVED=""
                 MINIPAT_LISTING="$(tar -tf "${patfile}" 2>/dev/null)"
+
+                # [netconsole] hda1.tgz 는 미니팻으로 줄이면서 버려지는데, 그 안의
+                # netconsole.ko(부트타임 ramdisk 계열엔 없고 DSM 자체 설치본에만 있는
+                # 모듈)를 원본 .pat 이 아직 손 안에 있는 지금 미리 뽑아 로더 파티션
+                # (auxfiles, 영구 보존)에 캐싱해 둔다. buildloader() 의 netconsole-early
+                # 주입 단계가 이 캐시 파일을 그대로 ramdisk 로 복사해 쓴다.
+                NETCONSOLE_KO_CACHE="${local_cache}/netconsole.ko"
+                if [ ! -f "${NETCONSOLE_KO_CACHE}" ]; then
+                    _nc_hda1="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)hda1\.tgz\$" | head -1)"
+                    if [ -n "${_nc_hda1}" ]; then
+                        _NC_TMPDIR="$(mktemp -d)"
+                        if tar -xf "${patfile}" -C "${_NC_TMPDIR}" "${_nc_hda1}" 2>/dev/null \
+                           && tar -xf "${_NC_TMPDIR}/${_nc_hda1}" -C "${_NC_TMPDIR}" usr/lib/modules/netconsole.ko 2>/dev/null \
+                           && [ -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" ]; then
+                            cp -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" "${NETCONSOLE_KO_CACHE}"
+                            echo "[netconsole] cached netconsole.ko from hda1.tgz -> ${NETCONSOLE_KO_CACHE}"
+                        else
+                            echo "[netconsole] netconsole.ko not found in hda1.tgz - skipping"
+                        fi
+                        rm -rf "${_NC_TMPDIR}"
+                    fi
+                fi
+
                 for _mp_f in ${MINIPAT_FILES}; do
                     _mp_resolved="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)${_mp_f}\$" | head -1)"
                     if [ -z "${_mp_resolved}" ]; then
