@@ -1179,6 +1179,91 @@ function cachepanel() {
 }
 
 ###############################################################################
+# 넷콘솔(netconsole) 조기 로그 설정 - 시리얼 포트 없이도 커널 부팅 로그를
+# 패닉 직전까지 UDP 로 다른 PC(리스너)에 실시간 전송한다. 사용자에게 물어보는
+# 건 리스너 IP 하나뿐이고, 나머지(자기 인터페이스/IP, 포트, 리스너 MAC 주소)는
+# 전부 자동으로 채운다. 리스너 MAC 은 ping 으로 ARP 테이블을 채운 뒤 ip neigh/
+# arp 로 조회 - 이건 부팅/패닉 시점의 ARP 가 아니라 지금 이 설정 시점에 딱
+# 한 번 하는 것이라 안정성 문제가 없다(부팅 시엔 이렇게 알아낸 MAC 을 고정값
+# 으로 커맨드라인에 박아 쓴다).
+function netconsoleMenu() {
+  local existing target_ip target_port src_port src_dev src_ip target_mac netconsole_val resp
+
+  existing=$(jq -r '.extra_cmdline.netconsole // empty' "${userconfigfile}" 2>/dev/null)
+
+  dialog --clear --backtitle "`backtitle`" \
+    --menu "넷콘솔 조기 로그 설정\n\n현재 상태: ${existing:-사용 안 함}" 0 0 $(dlgmenuheight 2) \
+    e "리스너 IP 입력하고 설정/갱신" \
+    d "사용 중지 (설정 제거)" \
+  2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp=$(<${TMP_PATH}/resp)
+  [ -z "${resp}" ] && return
+
+  if [ "${resp}" = "d" ]; then
+    DeleteConfigKey "extra_cmdline" "netconsole"
+    dialog --clear --backtitle "`backtitle`" --msgbox "넷콘솔 설정을 제거했습니다." 0 0
+    return
+  fi
+  [ "${resp}" = "e" ] || return
+
+  while true; do
+    dialog --backtitle "`backtitle`" \
+      --inputbox "로그를 받을 PC(리스너)의 IP 주소를 입력하세요\n\n(같은 랜선/스위치에 물려 있어야 합니다 - 인터넷/DHCP 는 필요 없습니다)\n예: 192.168.1.100" 0 0 "" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    target_ip=$(<${TMP_PATH}/resp)
+    [ -z "${target_ip}" ] && return
+    if echo "${target_ip}" | grep -qE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+      break
+    fi
+    dialog --backtitle "`backtitle`" --msgbox "올바른 IP 형식이 아닙니다. 다시 입력해 주세요." 0 0
+  done
+
+  src_dev=$(ip route show default 2>/dev/null | awk '{print $5; exit}')
+  [ -z "${src_dev}" ] && src_dev=$(ip -o link show up 2>/dev/null | awk -F': ' '$2 != "lo" {print $2; exit}')
+  if [ -z "${src_dev}" ]; then
+    dialog --clear --backtitle "`backtitle`" --msgbox "네트워크 인터페이스를 찾지 못했습니다." 0 0
+    return
+  fi
+  src_ip=$(ip -4 addr show dev "${src_dev}" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
+
+  # 리스너 MAC 자동 조회: 먼저 ping 으로 ARP 테이블을 채우고 조회한다.
+  ping -c1 -W1 "${target_ip}" >/dev/null 2>&1
+  target_mac=$(ip neigh show "${target_ip}" dev "${src_dev}" 2>/dev/null \
+    | awk '{for(i=1;i<=NF;i++){if($i ~ /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/){print $i; exit}}}')
+  if [ -z "${target_mac}" ]; then
+    target_mac=$(arp -n "${target_ip}" 2>/dev/null \
+      | awk '{for(i=1;i<=NF;i++){if($i ~ /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/){print $i; exit}}}')
+  fi
+
+  if [ -z "${target_mac}" ]; then
+    dialog --clear --backtitle "`backtitle`" \
+      --yesno "리스너(${target_ip})의 MAC 주소를 자동으로 찾지 못했습니다.\n\n같은 스위치/공유기에 연결돼 있는지, 리스너 PC 의 방화벽이 ping(ICMP)을 막고 있지 않은지 확인해 주세요.\n\nMAC 주소를 직접 입력해서 계속하시겠습니까?" 0 0
+    if [ $? -eq 0 ]; then
+      dialog --backtitle "`backtitle`" --inputbox "리스너의 MAC 주소를 입력하세요 (예: aa:bb:cc:dd:ee:ff)" 0 0 "" \
+        2>${TMP_PATH}/resp
+      [ $? -ne 0 ] && return
+      target_mac=$(<${TMP_PATH}/resp)
+      [ -z "${target_mac}" ] && return
+    else
+      return
+    fi
+  fi
+
+  src_port="6665"
+  target_port="6666"
+  netconsole_val="${src_port}@${src_ip}/${src_dev},${target_port}@${target_ip}/${target_mac}"
+
+  dialog --clear --backtitle "`backtitle`" \
+    --yesno "다음 설정으로 저장할까요?\n\n${netconsole_val}\n\n리스너 PC 에서는 미리 아래 명령으로 대기하고 계셔야 합니다:\n\nnc -lu -k ${target_port}" 0 0
+  [ $? -ne 0 ] && return
+
+  writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
+  dialog --clear --backtitle "`backtitle`" --msgbox "저장했습니다. 다음 빌드부터 적용됩니다." 0 0
+}
+
+###############################################################################
 # Shows menu to user type one or generate randomly
 function serialMenu() {
   eval "MSG30=\"\${MSG${tz}30}\""
@@ -3440,6 +3525,7 @@ while true; do
 
   # ===== Environment ===== (설정/환경 옵션)
   echo '= "=============== Environment ==============="'                     >> "${TMP_PATH}/menu"
+  eval "echo \"t \\\"\${MSG${tz}134}\\\"\""              >> "${TMP_PATH}/menu"
   eval "echo \"u \\\"\${MSG${tz}10}\\\"\""               >> "${TMP_PATH}/menu"
   eval "MSG86=\"\${MSG${tz}86}\""
   eval "echo \"v \\\"$(printf "${MSG86}" "${VERBOSE_MODE}")\\\"\""   >> "${TMP_PATH}/menu"
@@ -3515,6 +3601,7 @@ while true; do
     y) sudo /root/boot.sh normal ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
+    t) netconsoleMenu;  NEXT="t" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
     b) backuploader;   NEXT="r" ;;

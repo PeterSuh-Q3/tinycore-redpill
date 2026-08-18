@@ -130,5 +130,6 @@ MSGZZ129=$(gettext "tcrp" "Save & Exit")
 MSGZZ130=$(gettext "tcrp" "ENTER: Toggle selected item ON/OFF\nSave & Exit: Save and exit")
 MSGZZ131=$(gettext "tcrp" "NVIDIA container runtime (Docker): %s")
 MSGZZ133=$(gettext "tcrp" "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)")
+MSGZZ134=$(gettext "tcrp" "넷콘솔 조기 로그 (인터넷 불필요 - 랜선으로 부팅~패닉 로그 실시간 전송)")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
 }
