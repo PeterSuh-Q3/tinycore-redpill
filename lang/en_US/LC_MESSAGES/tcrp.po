@@ -523,3 +523,55 @@ msgstr "NVIDIA container runtime (Docker): %s"
 #: MSGUS133
 msgid "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
 msgstr "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
+
+#: MSGUS134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+
+#: MSGUS135
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+
+#: MSGUS136
+msgid "Not configured"
+msgstr "Not configured"
+
+#: MSGUS137
+msgid "Configure listener IP (create/update)"
+msgstr "Configure listener IP (create/update)"
+
+#: MSGUS138
+msgid "Disable (remove configuration)"
+msgstr "Disable (remove configuration)"
+
+#: MSGUS139
+msgid "NetConsole configuration removed."
+msgstr "NetConsole configuration removed."
+
+#: MSGUS140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+
+#: MSGUS141
+msgid "Not a valid IP address. Please try again."
+msgstr "Not a valid IP address. Please try again."
+
+#: MSGUS142
+msgid "Could not detect a network interface."
+msgstr "Could not detect a network interface."
+
+#: MSGUS143
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+
+#: MSGUS144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+
+#: MSGUS145
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+
+#: MSGUS146
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."

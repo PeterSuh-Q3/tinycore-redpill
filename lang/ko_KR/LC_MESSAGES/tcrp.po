@@ -523,3 +523,55 @@ msgstr "NVIDIA 컨테이너 런타임 (Docker): %s"
 #: MSGKR133
 msgid "Mount Syno BTRFS Vol Rescue (with Tinycore version 9.0)"
 msgstr "Tinycore 버전 9.0으로 Syno BTRFS 볼륨 복구 마운트"
+
+#: MSGKR134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "넷콘솔로그(인터넷불필요-랜선으로 부팅~패닉로그 실시간전송)"
+
+#: MSGKR135
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "넷콘솔 조기 로그 설정\\n\\n현재 상태: %s"
+
+#: MSGKR136
+msgid "Not configured"
+msgstr "사용 안 함"
+
+#: MSGKR137
+msgid "Configure listener IP (create/update)"
+msgstr "리스너 IP 입력하고 설정/갱신"
+
+#: MSGKR138
+msgid "Disable (remove configuration)"
+msgstr "사용 중지 (설정 제거)"
+
+#: MSGKR139
+msgid "NetConsole configuration removed."
+msgstr "넷콘솔 설정을 제거했습니다."
+
+#: MSGKR140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "로그를 받을 PC(리스너)의 IP 주소를 입력하세요\\n\\n(같은 랜선/스위치에 물려 있어야 합니다 - 인터넷/DHCP 는 필요 없습니다)\\n예: 192.168.1.100"
+
+#: MSGKR141
+msgid "Not a valid IP address. Please try again."
+msgstr "올바른 IP 형식이 아닙니다. 다시 입력해 주세요."
+
+#: MSGKR142
+msgid "Could not detect a network interface."
+msgstr "네트워크 인터페이스를 찾지 못했습니다."
+
+#: MSGKR143
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "리스너(%s)의 MAC 주소를 자동으로 찾지 못했습니다.\\n\\n같은 스위치/공유기에 연결돼 있는지, 리스너 PC 의 방화벽이 ping(ICMP)을 막고 있지 않은지 확인해 주세요.\\n\\nMAC 주소를 직접 입력해서 계속하시겠습니까?"
+
+#: MSGKR144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "리스너의 MAC 주소를 입력하세요 (예: aa:bb:cc:dd:ee:ff)"
+
+#: MSGKR145
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "다음 설정으로 저장할까요?\\n\\n%s\\n\\n리스너 PC 에서는 미리 아래 명령으로 대기하고 계셔야 합니다:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+
+#: MSGKR146
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "저장했습니다.\\n\\n[!] 지금 바로 로더를 다시 빌드해야 적용됩니다 (빌드 메뉴로 이동해 주세요)."

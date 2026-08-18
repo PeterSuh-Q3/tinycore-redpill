@@ -1187,14 +1187,28 @@ function cachepanel() {
 # 한 번 하는 것이라 안정성 문제가 없다(부팅 시엔 이렇게 알아낸 MAC 을 고정값
 # 으로 커맨드라인에 박아 쓴다).
 function netconsoleMenu() {
-  local existing target_ip target_port src_port src_dev src_ip target_mac netconsole_val resp
+  local existing status_str target_ip target_port src_port src_dev src_ip target_mac netconsole_val resp
+
+  eval "MSG135=\"\${MSG${tz}135}\""
+  eval "MSG136=\"\${MSG${tz}136}\""
+  eval "MSG137=\"\${MSG${tz}137}\""
+  eval "MSG138=\"\${MSG${tz}138}\""
+  eval "MSG139=\"\${MSG${tz}139}\""
+  eval "MSG140=\"\${MSG${tz}140}\""
+  eval "MSG141=\"\${MSG${tz}141}\""
+  eval "MSG142=\"\${MSG${tz}142}\""
+  eval "MSG143=\"\${MSG${tz}143}\""
+  eval "MSG144=\"\${MSG${tz}144}\""
+  eval "MSG145=\"\${MSG${tz}145}\""
+  eval "MSG146=\"\${MSG${tz}146}\""
 
   existing=$(jq -r '.extra_cmdline.netconsole // empty' "${userconfigfile}" 2>/dev/null)
+  status_str="${existing:-${MSG136}}"
 
   dialog --clear --backtitle "`backtitle`" \
-    --menu "넷콘솔 조기 로그 설정\n\n현재 상태: ${existing:-사용 안 함}" 0 0 $(dlgmenuheight 2) \
-    e "리스너 IP 입력하고 설정/갱신" \
-    d "사용 중지 (설정 제거)" \
+    --menu "$(printf "${MSG135}" "${status_str}")" 0 0 $(dlgmenuheight 2) \
+    e "${MSG137}" \
+    d "${MSG138}" \
   2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   resp=$(<${TMP_PATH}/resp)
@@ -1202,14 +1216,14 @@ function netconsoleMenu() {
 
   if [ "${resp}" = "d" ]; then
     DeleteConfigKey "extra_cmdline" "netconsole"
-    dialog --clear --backtitle "`backtitle`" --msgbox "넷콘솔 설정을 제거했습니다." 0 0
+    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG139}" 0 0
     return
   fi
   [ "${resp}" = "e" ] || return
 
   while true; do
     dialog --backtitle "`backtitle`" \
-      --inputbox "로그를 받을 PC(리스너)의 IP 주소를 입력하세요\n\n(같은 랜선/스위치에 물려 있어야 합니다 - 인터넷/DHCP 는 필요 없습니다)\n예: 192.168.1.100" 0 0 "" \
+      --inputbox "${MSG140}" 0 0 "" \
       2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
     target_ip=$(<${TMP_PATH}/resp)
@@ -1217,13 +1231,13 @@ function netconsoleMenu() {
     if echo "${target_ip}" | grep -qE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
       break
     fi
-    dialog --backtitle "`backtitle`" --msgbox "올바른 IP 형식이 아닙니다. 다시 입력해 주세요." 0 0
+    dialog --backtitle "`backtitle`" --msgbox "${MSG141}" 0 0
   done
 
   src_dev=$(ip route show default 2>/dev/null | awk '{print $5; exit}')
   [ -z "${src_dev}" ] && src_dev=$(ip -o link show up 2>/dev/null | awk -F': ' '$2 != "lo" {print $2; exit}')
   if [ -z "${src_dev}" ]; then
-    dialog --clear --backtitle "`backtitle`" --msgbox "네트워크 인터페이스를 찾지 못했습니다." 0 0
+    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG142}" 0 0
     return
   fi
   src_ip=$(ip -4 addr show dev "${src_dev}" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
@@ -1239,9 +1253,9 @@ function netconsoleMenu() {
 
   if [ -z "${target_mac}" ]; then
     dialog --clear --backtitle "`backtitle`" \
-      --yesno "리스너(${target_ip})의 MAC 주소를 자동으로 찾지 못했습니다.\n\n같은 스위치/공유기에 연결돼 있는지, 리스너 PC 의 방화벽이 ping(ICMP)을 막고 있지 않은지 확인해 주세요.\n\nMAC 주소를 직접 입력해서 계속하시겠습니까?" 0 0
+      --yesno "$(printf "${MSG143}" "${target_ip}")" 0 0
     if [ $? -eq 0 ]; then
-      dialog --backtitle "`backtitle`" --inputbox "리스너의 MAC 주소를 입력하세요 (예: aa:bb:cc:dd:ee:ff)" 0 0 "" \
+      dialog --backtitle "`backtitle`" --inputbox "${MSG144}" 0 0 "" \
         2>${TMP_PATH}/resp
       [ $? -ne 0 ] && return
       target_mac=$(<${TMP_PATH}/resp)
@@ -1256,11 +1270,11 @@ function netconsoleMenu() {
   netconsole_val="${src_port}@${src_ip}/${src_dev},${target_port}@${target_ip}/${target_mac}"
 
   dialog --clear --backtitle "`backtitle`" \
-    --yesno "다음 설정으로 저장할까요?\n\n${netconsole_val}\n\n리스너 PC 에서는 미리 아래 명령으로 대기하고 계셔야 합니다:\n\nmacOS/Linux: nc -lu -k ${target_port}\nWindows (ncat): ncat -lu ${target_port}" 0 0
+    --yesno "$(printf "${MSG145}" "${netconsole_val}" "${target_port}" "${target_port}")" 0 0
   [ $? -ne 0 ] && return
 
   writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
-  dialog --clear --backtitle "`backtitle`" --msgbox "저장했습니다.\n\n⚠️ 지금 바로 로더를 다시 빌드해야 적용됩니다 (빌드 메뉴로 이동해 주세요)." 0 0
+  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG146}" 0 0
 }
 
 ###############################################################################
