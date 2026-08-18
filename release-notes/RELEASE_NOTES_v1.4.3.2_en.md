@@ -1,36 +1,41 @@
 # alpine-redpill v1.4.3.2
 
-## 📡 NetConsole early log — boot-to-panic logs in real time, no serial port needed
+## 📡 New: NetConsole early log — see boot logs in real time, no serial cable needed
 
-On modern boards with no serial port, a kernel panic or boot failure left no way to find out why. This release integrates the Linux kernel's own **netconsole** feature into the loader, streaming kernel log output over UDP to another PC (the listener) in real time — right up to **the last line before a panic**.
+On modern boards without a serial port, if the loader hung or rebooted unexpectedly during boot, there was simply no way to find out what happened. The screen showed nothing, and diagnosing the problem was next to impossible.
 
-> No internet, no DHCP required. All you need is one PC on the same switch/router and a single `nc` command.
+Starting with this release, you can **stream the boot log to another PC in real time, from the very first moment the board powers on all the way to the last line before it fails** — over the network, no cable required.
 
-- 🖥️ **One menu, fully configured (Environment, first item)**: the only thing the user has to type is the listener's IP address. Everything else (the loader's own interface/IP, the listener's MAC address) is filled in automatically — the listener's MAC is looked up via `ping` to populate the ARP table followed by `ip neigh`/`arp` (falling back to manual entry only if that fails). This lookup happens once, at configuration time, so it never depends on the notoriously unreliable ARP behavior during an actual boot or panic.
-- 🧩 **Sourcing netconsole.ko from DSM's own `.pat`**: this module exists nowhere in the boot-time ramdisk family (rd.gz/all-modules) — only inside the DSM install image itself (`hda1.tgz`). It's extracted at the point the `.pat` gets reduced to a cache-saving "minipat," and embedded permanently into the minipat itself, so it survives even when that minipat cache is reused or re-repacked on later builds.
-- ⏱️ **The earliest reachable execution point**: right after entering `Main()` in `linuxrc.syno` — a point where `/proc` is already mounted, yet still earlier than the DSM partition mount / main logic (`.impl`) — the loader attempts `insmod` in the background. Since the real `eth0` driver loads immediately after this point in the same sequence, it polls and retries for up to 60 seconds to catch the exact moment the driver comes up.
-- 🔧 **Built for a near-empty environment**: at this point even `tr` doesn't exist yet (`tr: not found`), which was silently breaking the original parsing pipeline. Rewritten to parse the kernel command line using only shell builtins, no external utilities required.
-- 🌍 **All 18 languages**: every string in the submenu — the menu label, the IP input prompt, error messages, the save confirmation — is translated into all 18 languages `langMenu()` supports (Korean, English, Japanese, Simplified/Traditional Chinese, Russian, French, German, Spanish, Italian, Portuguese, Hungarian, Indonesian, Turkish, Hindi, Arabic, Amharic, Thai).
+> **"Isn't a network feature going to need internet and a working router?"** — No. This feature needs neither internet access nor a working DHCP server. All it needs is for the board and the PC receiving the logs to be **plugged into the same switch/router with an ethernet cable**. It works even if the internet is down or the router itself is misbehaving.
 
-All of the above was iterated and verified end-to-end on real physical hardware (SA6400) — auto-detection/ARP lookup, the save/delete cycle, module survival across minipat re-packing, `/proc` mount timing, the missing-`tr` workaround, and waiting for `eth0` to come up were each reproduced and fixed live on the box.
+### How to use it
+
+1. A new menu item now sits at the top of the **Environment** section in the main menu.
+2. All you have to enter is the **IP address of the PC that will receive the logs**. Everything else (the board's own network details, the receiving PC's hardware address) is filled in automatically.
+3. On the receiving PC, open a terminal and run the single command shown on screen (`nc` on macOS/Linux, `ncat` on Windows) to start listening.
+4. Save the setting and rebuild the loader. From then on, every line of the boot log — from power-on to the moment something goes wrong — appears live on the receiving PC's screen.
 
 ### Walkthrough
 
 1. The new menu item at the top of the Environment section ([screenshot](../docs/netconsole/01_main_menu.png))
-2. The entry dialog for configuring or disabling it — current status shown inline ([screenshot](../docs/netconsole/02_setup_dialog.png))
-3. If automatic MAC lookup for the listener fails, it prompts for manual entry ([screenshot](../docs/netconsole/03_mac_not_found.png))
-4. Before committing, it shows the final `netconsole=` value together with the listener-side command to wait with ([screenshot](../docs/netconsole/04_save_confirm.png))
-5. Saved — with a reminder that a rebuild is required right now for it to take effect ([screenshot](../docs/netconsole/05_saved.png))
+2. The screen for turning it on or off — it also shows whether it's currently enabled ([screenshot](../docs/netconsole/02_setup_dialog.png))
+3. If the other PC's address can't be found automatically, it walks you through entering it by hand ([screenshot](../docs/netconsole/03_mac_not_found.png))
+4. Before saving, it shows the final setting one more time, along with the command to run on the receiving PC ([screenshot](../docs/netconsole/04_save_confirm.png))
+5. Saved — with a reminder that you need to rebuild right now for it to take effect ([screenshot](../docs/netconsole/05_saved.png))
 
-## 🌐 Busting the GitHub raw CDN cache
+The whole menu is translated into **18 languages** (Korean, English, Japanese, Chinese, and more), so all of the screens above show up in whichever language you've selected.
 
-`raw.githubusercontent.com` caches by path for up to 5 minutes. Rebuilding right after a push was found, live, to serve the stale pre-push version instead of the fix just made — a confusing trap during iterative debugging. `curl` is now wrapped in a function that appends a fresh, per-request query string to every download targeting this domain (60+ call sites, including `.pat`/extractor/friend downloads), bypassing the cache unconditionally.
+This feature was installed and tested repeatedly on real physical hardware before release.
+
+## 🌐 Small but important: updates now always land correctly
+
+Improved how the loader fetches its own update files, so a fix pushed by the developers is now guaranteed to take effect on the very next rebuild. (Previously, in rare cases, a rebuild could briefly pick up a version from a few minutes earlier instead of the latest fix.)
 
 ## 🧹 Other small fixes
 
-- **SataPortMap/DiskIdxMap**: pre-fill generous defaults for non-DT models, and harden `showsata()`'s port-probing accuracy.
-- **`getloaderdisk()`**: fixed debug stdout output polluting the captured values in `sngen.sh`/`macgen.sh`.
-- **`MODULES_TAG`**: fixed an inaccurate tag display (since `tcrp-modules` downloads track `main` HEAD, not just the latest release tag) and an "Argument list too long" build failure. The build-time LKM/module tag and loading method are now recorded under `/addons/` so the MSHELL Manager System Info tab shows accurate values.
-- **`usb_line` orphan entries**: cleaned up stray "LABEL: value" fragments that had leaked into `preserve_usb_line_options()`, and made sure `sync_usb_line()` runs after `prefillDefaultSataPortMap()` writes.
-- **`redpill-load` clone validation**: audited every git-clone failure point to abort immediately on failure instead of continuing silently.
-- **`checkcpu()`**: reads `/proc/cpuinfo` directly instead of `lscpu`, so CPU-generation detection works correctly even on real hardware where `lscpu` isn't installed.
+- Pre-filled more sensible default SATA port settings, and improved auto-detection accuracy.
+- Fixed serial number/MAC address generation occasionally showing an incorrect value on screen.
+- Build version info shown in the System Info tab (MSHELL Manager) is now more accurate.
+- Cleaned up leftover old settings that used to linger in the config file (`usb_line`) instead of being removed.
+- Fixed a case where a failed source-code download could go unnoticed and silently continue; it now stops immediately and reports the failure.
+- Fixed CPU detection being inaccurate on some real hardware (it could misidentify a modern CPU as older, hiding some newer models from the model list).
