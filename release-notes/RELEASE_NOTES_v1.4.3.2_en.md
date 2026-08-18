@@ -14,6 +14,14 @@ On modern boards with no serial port, a kernel panic or boot failure left no way
 
 All of the above was iterated and verified end-to-end on real physical hardware (SA6400) — auto-detection/ARP lookup, the save/delete cycle, module survival across minipat re-packing, `/proc` mount timing, the missing-`tr` workaround, and waiting for `eth0` to come up were each reproduced and fixed live on the box.
 
+### Walkthrough
+
+1. The new menu item at the top of the Environment section ([screenshot](../docs/netconsole/01_main_menu.png))
+2. The entry dialog for configuring or disabling it — current status shown inline ([screenshot](../docs/netconsole/02_setup_dialog.png))
+3. If automatic MAC lookup for the listener fails, it prompts for manual entry ([screenshot](../docs/netconsole/03_mac_not_found.png))
+4. Before committing, it shows the final `netconsole=` value together with the listener-side command to wait with ([screenshot](../docs/netconsole/04_save_confirm.png))
+5. Saved — with a reminder that a rebuild is required right now for it to take effect ([screenshot](../docs/netconsole/05_saved.png))
+
 ## 🌐 Busting the GitHub raw CDN cache
 
 `raw.githubusercontent.com` caches by path for up to 5 minutes. Rebuilding right after a push was found, live, to serve the stale pre-push version instead of the fix just made — a confusing trap during iterative debugging. `curl` is now wrapped in a function that appends a fresh, per-request query string to every download targeting this domain (60+ call sites, including `.pat`/extractor/friend downloads), bypassing the cache unconditionally.

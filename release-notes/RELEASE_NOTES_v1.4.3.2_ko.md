@@ -14,6 +14,14 @@
 
 이 모든 과정을 실제 물리 보드(SA6400)에서 반복 검증했습니다 — 자동 감지/ARP 조회부터 저장/삭제 사이클, 미니팻 재압축 시 모듈 보존, `/proc` 마운트 타이밍, `tr` 부재 대응, `eth0` 준비 대기까지 전부 실기에서 재현하고 고쳤습니다.
 
+### 화면으로 보는 설정 과정
+
+1. Environment 섹션 첫 줄의 새 메뉴 항목 ([스크린샷](../docs/netconsole/01_main_menu.png))
+2. 설정/해제를 고르는 진입 다이얼로그 — 현재 상태가 함께 표시됩니다 ([스크린샷](../docs/netconsole/02_setup_dialog.png))
+3. 리스너 MAC 자동 조회에 실패하면 수동 입력으로 안내합니다 ([스크린샷](../docs/netconsole/03_mac_not_found.png))
+4. 최종 확정 전, 완성된 `netconsole=` 값과 리스너 쪽 대기 명령을 함께 보여줍니다 ([스크린샷](../docs/netconsole/04_save_confirm.png))
+5. 저장 완료 — 지금 바로 재빌드해야 적용된다는 안내까지 함께 뜹니다 ([스크린샷](../docs/netconsole/05_saved.png))
+
 ## 🌐 GitHub raw CDN 캐시 우회
 
 `raw.githubusercontent.com`은 경로 기준으로 최대 5분간 캐싱됩니다. push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을 헷갈리게 만드는 문제를 실기로 재현했습니다. `curl`을 감싸는 wrapper 함수를 두어, 이 도메인을 향하는 모든 다운로드(`.pat`/extractor/friend 등 60여 곳 포함)에 매 요청마다 바뀌는 쿼리스트링을 자동으로 붙여 캐시를 우회합니다.
