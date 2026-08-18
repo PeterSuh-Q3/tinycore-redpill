@@ -5582,7 +5582,7 @@ NCEOF
 #!/bin/sh
 cp /tmp/netconsole-early.sh "$rdtemp/netconsole-early.sh"
 chmod +x "$rdtemp/netconsole-early.sh"
-sed -i '/^echo "START/a \\n/netconsole-early.sh' "$rdtemp/linuxrc.syno"
+sed -i '/^echo "START/a \\\\n/netconsole-early.sh' "$rdtemp/linuxrc.syno"
 NCINSTALLEOF
     sudo sh /tmp/netconsole-early-install.sh
     rm -f /tmp/netconsole-early.sh /tmp/netconsole-early-install.sh
