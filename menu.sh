@@ -21,6 +21,12 @@ fi
 function safe_fetch() {
     local _url="$1" _dest="$2" _sentinel="$3"
     local _tmp="/dev/shm/.safe_fetch.$$"
+    # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
+    # push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을
+    # 헷갈리게 만드는 사고가 실측 확인되어, 매 요청마다 바뀌는 쿼리스트링을 붙여
+    # 캐시를 우회한다(쿼리스트링이 다르면 캐시 키가 달라져 항상 MISS 로 최신을
+    # 받아옴을 실측 확인).
+    _url="${_url}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
     if curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
        && [ -s "${_tmp}" ] \
        && grep -q "${_sentinel}" "${_tmp}" \
