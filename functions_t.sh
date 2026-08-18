@@ -5547,8 +5547,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
             fi
         fi
         if [ "${NETCONSOLE_KO_FOUND}" -eq 1 ]; then
-            sudo mkdir -p $rdtemp/usr/lib/modules
-            sudo cp -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" $rdtemp/usr/lib/modules/netconsole.ko
+            # 이 환경의 sudo 는 호출마다 마운트 네임스페이스를 새로 구성해 매 호출이
+            # 눈에 띄게 느리다(실측: 빌드 로그에 WithTypedMounted proc/sysfs/devtmpfs
+            # 가 매번 찍힘) - "병렬화"가 아니라 sudo 호출 횟수 자체를 줄이는 게 정답이라
+            # mkdir+cp 를 한 번의 sudo 로 묶는다.
+            sudo sh -c "mkdir -p '$rdtemp/usr/lib/modules' && cp -f '${_NC_TMPDIR}/usr/lib/modules/netconsole.ko' '$rdtemp/usr/lib/modules/netconsole.ko'"
             echo "[netconsole] bundled netconsole.ko into ramdisk"
         else
             echo "[netconsole] netconsole.ko not found in ${NETCONSOLE_KO_SRC} - insmod will be skipped at boot"
@@ -5569,10 +5572,17 @@ if [ -n "${NETCONSOLE_PARAM}" ]; then
   done
 fi
 NCEOF
-    sudo cp /tmp/netconsole-early.sh $rdtemp/netconsole-early.sh
-    sudo chmod +x $rdtemp/netconsole-early.sh
-    sudo sed -i '/^echo "START/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
-    rm -f /tmp/netconsole-early.sh
+    # 위와 같은 이유로 cp+chmod+sed 3건의 sudo 를 1건으로 묶는다. 중첩따옴표가
+    # sudo sh -c "..." 한 줄로는 깨지는 것을 로컬 시뮬레이션으로 확인해, 헬퍼
+    # 스크립트 파일로 안전하게 우회한다.
+    cat >/tmp/netconsole-early-install.sh <<NCINSTALLEOF
+#!/bin/sh
+cp /tmp/netconsole-early.sh "$rdtemp/netconsole-early.sh"
+chmod +x "$rdtemp/netconsole-early.sh"
+sed -i '/^echo "START/a \\n/netconsole-early.sh' "$rdtemp/linuxrc.syno"
+NCINSTALLEOF
+    sudo sh /tmp/netconsole-early-install.sh
+    rm -f /tmp/netconsole-early.sh /tmp/netconsole-early-install.sh
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
