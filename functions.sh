@@ -1102,6 +1102,19 @@ EOF
 # the symlink and general.usb_line no longer accumulating orphaned sn/mac/vid/pid/netif_num
 # entries after they are removed from extra_cmdline.
 
+# 2026.08.19 v1.4.3.2
+# HEADLINE: NetConsole early log - stream the boot log over UDP to another PC in real time, no
+# serial port/internet/DHCP required, right up to the last line before a panic. New menu item at
+# the top of Environment: enter only the listener's IP, everything else (own interface/IP,
+# listener MAC via ping+ARP lookup) is auto-detected; translated into all 18 langMenu() locales.
+# netconsole.ko is sourced from the DSM .pat's hda1.tgz and embedded permanently into the cached
+# minipat so it survives re-packing; insmod runs backgrounded with a retry loop from inside
+# linuxrc.syno's Main() (earliest point where /proc is mounted but eth0 isn't up yet), parsing
+# the cmdline with shell builtins only since tr isn't available that early. Also: raw.githubusercontent.com
+# CDN cache busting for every curl call (not just self-update), SataPortMap/DiskIdxMap defaults,
+# MODULES_TAG accuracy, usb_line orphan cleanup, git-clone failure validation, and checkcpu()
+# no longer depending on lscpu.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1411,6 +1424,12 @@ function showlastupdate() {
 # 2026.08.17 v1.4.3.1
 # Promoted /home/tc/user_config.json symlink (avoids two separately-synced copies) and its
 # dependent usb_line/backup fixes from the test track.
+# 2026.08.19 v1.4.3.2
+# NetConsole early log: stream the boot log to another PC over UDP in real time, no serial
+# port/internet/DHCP required. New Environment menu item auto-detects everything but the
+# listener IP, translated into all 18 languages. Plus raw.githubusercontent.com cache busting
+# and several small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup,
+# git-clone validation, checkcpu without lscpu).
 EOF
 }
 
