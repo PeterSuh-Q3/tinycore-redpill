@@ -3272,7 +3272,15 @@ function checkforsas() {
 # check Intel or AMD
 function checkcpu() {
 
-    if [ $(lscpu |grep Intel |wc -l) -gt 0 ]; then
+    # lscpu 대신 /proc/cpuinfo 를 직접 읽는다 - lscpu 는 util-linux 패키지가
+    # 있어야 하는데, DSM 실기(SA6400/DSM 7.4.1 확인됨)에는 존재하지 않아
+    # "lscpu: command not found" 로 두 grep 파이프가 항상 빈 결과가 되고,
+    # 그 결과 CPU 세대와 무관하게 매번 CPU=AMD / AFTERHASWELL=OFF 로
+    # 오판되는 문제가 있었다(MSHELL Manager 의 모델 선택 기능을 DSM 쪽에
+    # 이식하며 실기 검증 중 발견). /proc/cpuinfo 는 lscpu 가 참조하는
+    # 것과 같은 원천 데이터라 벤더/movbe 플래그를 동일하게 판별할 수
+    # 있고, DSM 을 포함해 모든 리눅스 환경에 항상 존재한다.
+    if grep -qi "GenuineIntel" /proc/cpuinfo 2>/dev/null; then
         CPU="INTEL"
     else
         #if [ $(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//' | grep -e N36L -e N40L -e N54L | wc -l) -gt 0 ]; then
@@ -3281,17 +3289,17 @@ function checkcpu() {
         #    writeConfigKey "general" "loadermode" "${LDRMODE}"
         #else
             CPU="AMD"
-        #fi        
+        #fi
     fi
-    
-    if [ $(lscpu |grep movbe |wc -l) -gt 0 ]; then    
+
+    if grep -qw "movbe" /proc/cpuinfo 2>/dev/null; then
         AFTERHASWELL="ON"
     else
         AFTERHASWELL="OFF"
     fi
-    
+
     if [ "$MACHINE" = "VIRTUAL" ] && [ "$HYPERVISOR" = "KVM" ]; then
-        AFTERHASWELL="ON"    
+        AFTERHASWELL="ON"
     fi
 
 }
