@@ -5565,7 +5565,21 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
     cat >/tmp/netconsole-early.sh <<'NCEOF'
 #!/bin/sh
-NETCONSOLE_PARAM=$(cat /proc/cmdline | tr ' ' '\n' | grep '^netconsole=' | cut -d= -f2-)
+# 이 스크립트는 Main() 진입 직후, acovermissingbin 의 on_early(usr.tgz 로
+# tr/grep/cut 등을 갖춘 실제 busybox 유틸을 usr/sbin, usr/lib 에 풀어주는
+# 단계)보다도 이른 시점에 실행된다. 실기 확인: /var/log/lrc 에
+# "/netconsole-early.sh: line 2: tr: not found" 로 tr 이 아직 없어
+# NETCONSOLE_PARAM 이 항상 빈 값이 되고 insmod 자체가 시도되지 않았다.
+# tr/grep/cut 같은 외부 유틸 없이 셸 내장 word-splitting + case 패턴
+# 매칭만으로 /proc/cmdline 에서 netconsole= 를 뽑는다.
+NETCONSOLE_PARAM=""
+for _nc_tok in $(cat /proc/cmdline); do
+  case "${_nc_tok}" in
+    netconsole=*)
+      NETCONSOLE_PARAM="${_nc_tok#netconsole=}"
+      ;;
+  esac
+done
 if [ -n "${NETCONSOLE_PARAM}" ]; then
   for KO in /usr/lib/modules/netconsole.ko /lib/modules/netconsole.ko; do
     if [ -f "${KO}" ]; then
