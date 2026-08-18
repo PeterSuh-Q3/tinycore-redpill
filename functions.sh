@@ -3356,6 +3356,17 @@ function getBus() {
 # git clone redpill-load
 function gitclone() {
     git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    # clone 실패(또는 부분 실패로 .git 없는 손상된 디렉터리)를 여기서
+    # 바로 잡지 않으면, 뒤이은 모든 단계(bundled-exts.json 읽기, 확장
+    # 다운로드, redpill.ko 복사 등)가 존재하지 않거나 손상된
+    # redpill-load 를 전제로 계속 진행되다가 한참 뒤 전혀 무관해 보이는
+    # 단계에서야 실패로 드러난다(실기에서 재현: clone 직후 디렉터리가
+    # 지워진 상태로 "cp: cannot create regular file .../rp-lkm/..." 까지
+    # 진행됨). clone 이 실패하면 즉시 중단한다.
+    if [ $? -ne 0 ] || [ ! -d "/home/tc/redpill-load/.git" ]; then
+        cecho r "Failed to clone redpill-load from GitHub. Check network connectivity and try again."
+        exit 99
+    fi
     patchredpillload
 }
 
