@@ -1260,7 +1260,7 @@ function netconsoleMenu() {
   [ $? -ne 0 ] && return
 
   writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
-  dialog --clear --backtitle "`backtitle`" --msgbox "저장했습니다. 다음 빌드부터 적용됩니다." 0 0
+  dialog --clear --backtitle "`backtitle`" --msgbox "저장했습니다.\n\n⚠️ 지금 바로 로더를 다시 빌드해야 적용됩니다 (빌드 메뉴로 이동해 주세요)." 0 0
 }
 
 ###############################################################################
@@ -3601,7 +3601,7 @@ while true; do
     y) sudo /root/boot.sh normal ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
-    t) netconsoleMenu;  NEXT="t" ;;
+    t) netconsoleMenu;  NEXT="p" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
     b) backuploader;   NEXT="r" ;;
