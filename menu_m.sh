@@ -2886,7 +2886,17 @@ CHKDISK=$(readConfigKey "general" "check_diskcnt")
 [ -z "${CHKDISK}" ] && writeConfigKey "general" "check_diskcnt" "false"
 
 # add git download 2023.10.18
+# addon_gitdown() 자체는 재시도/타임아웃/미러순환에 반환값(0/1)까지 이미
+# 잘 갖추고 있는데, 정작 이 유일한 호출부가 그 반환값을 전혀 확인하지
+# 않고 있었다 - 실패해도 그대로 cd /home/tc 로 넘어가 /dev/shm/tcrp-addons
+# 가 비어있는 채로 빌드가 계속 진행되고, 한참 뒤 확장 설치 단계에서야
+# "Failed to copy /dev/shm/tcrp-addons/.../rpext-index.json" 로 실패가
+# 드러났다(실기에서 확인). 여기서 실패를 확인해 즉시 중단한다.
 addon_gitdown
+if [ $? -ne 0 ]; then
+  cecho r "Failed to download tcrp-addons after retries. Check network connectivity and try again."
+  exit 99
+fi
 
 #if [ -d /dev/shm/tcrp-modules ]; then
 #  echo "tcrp-modules already downloaded!"    

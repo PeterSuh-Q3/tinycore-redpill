@@ -3684,7 +3684,15 @@ function copyextractor() {
     sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
 
     if [ "${BUS}" = "block"  ]; then
-      git clone https://github.com/technorabilia/syno-extract-system-patch.git
+      # clone 실패를 확인하지 않으면 cd 가 그대로 실패한 채 넘어가
+      # docker build 가 엉뚱한(현재) 디렉터리를 대상으로 실행되거나
+      # 조용히 실패해, 뒤늦게 이미지가 없다는 식으로 원인과 동떨어진
+      # 곳에서 문제가 드러난다.
+      if ! git clone https://github.com/technorabilia/syno-extract-system-patch.git || \
+         [ ! -d syno-extract-system-patch/.git ]; then
+        echo "[ERROR] Failed to clone syno-extract-system-patch from GitHub. Check network connectivity and try again."
+        exit 99
+      fi
       cd syno-extract-system-patch
       sudo docker build --tag syno-extract-system-patch .
       sudo mkdir -p ~/data/in
@@ -7213,7 +7221,15 @@ function my() {
   tcrppart="${loaderdisk}3"
 
   if [ "${BUS}" = "block" ]; then
-    git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git"
+    # clone 실패를 확인하지 않으면 이어지는 mv -f ./tcrp-addons/* 가
+    # "no such file or directory" 로 조용히 실패하거나 아무것도 옮기지
+    # 못한 채 넘어가, /dev/shm/tcrp-addons 가 빈 상태로 빌드가 계속
+    # 진행되다가 한참 뒤 확장 설치 단계에서야 실패가 드러난다.
+    if ! git clone --depth=1 "https://github.com/PeterSuh-Q3/tcrp-addons.git" || \
+       [ ! -d ./tcrp-addons/.git ]; then
+      echo "[ERROR] Failed to clone tcrp-addons from GitHub. Check network connectivity and try again."
+      exit 99
+    fi
     mkdir -p /dev/shm/tcrp-addons
     rm -rf ./tcrp-addons/.git/
     mv -f ./tcrp-addons/* /dev/shm/tcrp-addons/
