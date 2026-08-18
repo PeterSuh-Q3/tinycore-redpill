@@ -1256,7 +1256,7 @@ function netconsoleMenu() {
   netconsole_val="${src_port}@${src_ip}/${src_dev},${target_port}@${target_ip}/${target_mac}"
 
   dialog --clear --backtitle "`backtitle`" \
-    --yesno "다음 설정으로 저장할까요?\n\n${netconsole_val}\n\n리스너 PC 에서는 미리 아래 명령으로 대기하고 계셔야 합니다:\n\nnc -lu -k ${target_port}" 0 0
+    --yesno "다음 설정으로 저장할까요?\n\n${netconsole_val}\n\n리스너 PC 에서는 미리 아래 명령으로 대기하고 계셔야 합니다:\n\nmacOS/Linux: nc -lu -k ${target_port}\nWindows (ncat): ncat -lu ${target_port}" 0 0
   [ $? -ne 0 ] && return
 
   writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
