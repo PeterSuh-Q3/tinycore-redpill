@@ -5567,9 +5567,16 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
 #!/bin/sh
 # 이 스크립트는 Main() 진입 직후, acovermissingbin 의 on_early(usr.tgz 로
 # tr/grep/cut 등을 갖춘 실제 busybox 유틸을 usr/sbin, usr/lib 에 풀어주는
-# 단계)보다도 이른 시점에 실행된다. 실기 확인: /var/log/lrc 에
-# "/netconsole-early.sh: line 2: tr: not found" 로 tr 이 아직 없어
-# NETCONSOLE_PARAM 이 항상 빈 값이 되고 insmod 자체가 시도되지 않았다.
+# 단계)보다도, 그리고 eth0 실제 NIC 드라이버가 로드되는 시점보다도 이른
+# 시점에 실행된다. 실기 확인: (1) tr 이 아직 없어 "tr: not found" 로
+# NETCONSOLE_PARAM 파싱 자체가 실패했었고(수정함, 아래 참고), (2) 그 다음엔
+# "insmod: can't insert '.../netconsole.ko': No such device" - eth0 가
+# 아직 커널에 등록되기 전이라 netpoll 이 타겟 인터페이스를 못 찾음.
+# Main() 은 이 스크립트 호출 뒤에 이어서 RunWithLog .../linuxrc.syno.impl
+# 을 실행하는데, 그 안에서 실제 NIC 드라이버가 로드된다 - 즉 여기서 동기적으로
+# 기다려봐야 그동안 아무 것도 진행되지 않아 소용없다(단일 프로세스 순차 실행).
+# 그래서 호출하는 쪽(sed 로 삽입되는 라인)에서 백그라운드(&)로 띄우고, 이
+# 스크립트 자신은 짧게 폴링하며 eth0/모듈이 준비될 때까지 재시도한다.
 # tr/grep/cut 같은 외부 유틸 없이 셸 내장 word-splitting + case 패턴
 # 매칭만으로 /proc/cmdline 에서 netconsole= 를 뽑는다.
 NETCONSOLE_PARAM=""
@@ -5581,12 +5588,23 @@ for _nc_tok in $(cat /proc/cmdline); do
   esac
 done
 if [ -n "${NETCONSOLE_PARAM}" ]; then
-  for KO in /usr/lib/modules/netconsole.ko /lib/modules/netconsole.ko; do
-    if [ -f "${KO}" ]; then
-      insmod "${KO}" netconsole="${NETCONSOLE_PARAM}" 2>/var/log/netconsole.err
+  KO=""
+  for _cand in /usr/lib/modules/netconsole.ko /lib/modules/netconsole.ko; do
+    if [ -f "${_cand}" ]; then
+      KO="${_cand}"
       break
     fi
   done
+  if [ -n "${KO}" ]; then
+    _nc_i=0
+    while [ "${_nc_i}" -lt 60 ]; do
+      if insmod "${KO}" netconsole="${NETCONSOLE_PARAM}" 2>/var/log/netconsole.err; then
+        break
+      fi
+      _nc_i=$((_nc_i + 1))
+      sleep 1
+    done
+  fi
 fi
 NCEOF
     sudo cp /tmp/netconsole-early.sh $rdtemp/netconsole-early.sh
@@ -5601,7 +5619,12 @@ NCEOF
     # 마운트돼 있으면서도 여전히 Main() 안의 RunWithLog .../linuxrc.syno.impl
     # (DSM 파티션 마운트 등 본 로직) 보다는 이르다 - 이게 이 파일 구조에서 실제로
     # 도달 가능한 가장 이른 지점이다.
-    sudo sed -i '/^Main() {/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
+    # eth0 실제 NIC 드라이버는 이 뒤에 이어지는 RunWithLog .../linuxrc.syno.impl
+    # 안에서 로드된다 - 여기서 동기 호출하면(&없이) 드라이버가 없는 채로
+    # insmod 가 "No such device" 로 실패하고 끝나버린다(실기 확인). 백그라운드(&)
+    # 로 띄워 Main() 이 곧장 .impl 로 진행되게 하고, 스크립트 자신이 안에서
+    # 짧게 폴링 재시도한다.
+    sudo sed -i '/^Main() {/a \\n/netconsole-early.sh \&' $rdtemp/linuxrc.syno
     rm -f /tmp/netconsole-early.sh
     # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
     # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
