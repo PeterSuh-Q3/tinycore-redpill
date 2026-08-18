@@ -5537,7 +5537,11 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     NETCONSOLE_KO_FOUND=0
     if [ -f "${NETCONSOLE_KO_SRC}" ]; then
         _NC_TMPDIR="$(mktemp -d)"
-        if tar -xf "${NETCONSOLE_KO_SRC}" -C "${_NC_TMPDIR}" usr/lib/modules/netconsole.ko 2>/dev/null \
+        # BusyBox tar 는 아카이브 멤버명을 정확히 일치시켜야 하는데, 이 .pat 은
+        # tar -cf x.pat ./ 로 만들어져 내부 경로가 "./usr/lib/modules/netconsole.ko"
+        # (선행 "./" 포함)이다. "./" 없이 요청하면 "not found in archive" 로 매번
+        # 조용히 실패해 항상 hda1.tgz 폴백만 타는 것을 실기로 확인했다.
+        if tar -xf "${NETCONSOLE_KO_SRC}" -C "${_NC_TMPDIR}" ./usr/lib/modules/netconsole.ko 2>/dev/null \
            && [ -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" ]; then
             NETCONSOLE_KO_FOUND=1
         else
@@ -5881,9 +5885,12 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 # hda1.tgz 가 없어 매번 hda1.tgz 로만 시도하면 재압축할 때마다
                 # netconsole.ko 가 조용히 빠지는 회귀가 생긴다(실기 확인). patfile 에서
                 # usr/lib/modules/netconsole.ko 를 직접 추출 시도부터 하고, 없을 때만
-                # hda1.tgz 를 거친다.
+                # hda1.tgz 를 거친다. BusyBox tar 는 이 .pat 이 tar -cf x.pat ./ 로
+                # 만들어져 내부 경로가 "./usr/lib/modules/netconsole.ko" 인 것을 "./"
+                # 없이 요청하면 못 찾는 것을 실기로 확인 - 재압축 시마다 netconsole.ko
+                # 가 빠지던 회귀의 진짜 원인이었다.
                 if [ "${MINIPAT_OK}" -eq 1 ]; then
-                    if tar -xf "${patfile}" -C "${MINIPAT_INNER}" usr/lib/modules/netconsole.ko 2>/dev/null \
+                    if tar -xf "${patfile}" -C "${MINIPAT_INNER}" ./usr/lib/modules/netconsole.ko 2>/dev/null \
                        && [ -f "${MINIPAT_INNER}/usr/lib/modules/netconsole.ko" ]; then
                         echo "[netconsole] embedded netconsole.ko into minipat cache (already present in patfile)"
                     else
