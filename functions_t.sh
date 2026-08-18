@@ -5473,9 +5473,31 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
-        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
-        sudo cat $rdtemp/linuxrc.syno  
+        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno
+        sudo cat $rdtemp/linuxrc.syno
     fi
+
+    # [netconsole-early] usb_line 의 netconsole= 를 linuxrc.syno 최초 실행 시점에 바로
+    # insmod 한다 - on_early 확장 훅보다도 이른 지점(DSM 파티션 마운트/확장 매니저
+    # 실행 전)이라 커널 패닉을 더 넓게 잡을 수 있다. rd.gz 안에 이미 있는 stock
+    # netconsole.ko 를 그대로 쓰므로 별도 모듈 번들링이 필요 없다.
+    # netconsole= 가 cmdline 에 없으면 조용히 스킵 - 일반 부팅에는 영향 없음.
+    cat >/tmp/netconsole-early.sh <<'NCEOF'
+#!/bin/sh
+NETCONSOLE_PARAM=$(cat /proc/cmdline | tr ' ' '\n' | grep '^netconsole=' | cut -d= -f2-)
+if [ -n "${NETCONSOLE_PARAM}" ]; then
+  for KO in /usr/lib/modules/netconsole.ko /lib/modules/netconsole.ko; do
+    if [ -f "${KO}" ]; then
+      insmod "${KO}" netconsole="${NETCONSOLE_PARAM}" 2>/var/log/netconsole.err
+      break
+    fi
+  done
+fi
+NCEOF
+    sudo cp /tmp/netconsole-early.sh $rdtemp/netconsole-early.sh
+    sudo chmod +x $rdtemp/netconsole-early.sh
+    sudo sed -i '/^echo "START/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
+    rm -f /tmp/netconsole-early.sh
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
