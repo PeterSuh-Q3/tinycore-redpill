@@ -6,6 +6,33 @@ rploaderver="1.4.3.1"
 builddate="2026.08.17"
 redpillmake="prod"
 
+# raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
+# push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을
+# 헷갈리게 만드는 사고가 실측 확인되어(2026-08-18), curl 을 감싸는 함수를 두고
+# raw.githubusercontent.com 을 향하는 모든 curl 호출(.pat/extractor/friend
+# 다운로드 등 이 파일 안의 60여 곳 포함)에 요청마다 바뀌는 쿼리스트링을 자동으로
+# 붙여 캐시를 우회한다(쿼리스트링이 다르면 캐시 키가 달라져 항상 MISS 로 최신을
+# 받아옴을 실측 확인). 다른 도메인(GitHub API, 릴리즈 자산 등)은 건드리지 않는다.
+# menu.sh 에도 동일 정의가 있다(중복 정의는 무해 - bash 는 마지막 정의를 쓴다);
+# 이 파일이 menu.sh 를 거치지 않고(menu_t.sh/menu_m.sh 등에서) 직접 소싱되는
+# 경로도 있어 이 파일 자체에도 넣어 항상 보장한다.
+function curl() {
+    local _args=() _a
+    for _a in "$@"; do
+        case "${_a}" in
+            *raw.githubusercontent.com*)
+                if [[ "${_a}" == *\?* ]]; then
+                    _a="${_a}&_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                else
+                    _a="${_a}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                fi
+                ;;
+        esac
+        _args+=("${_a}")
+    done
+    command curl "${_args[@]}"
+}
+
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
 # X11/urxvt/glibc 로케일 스택과 TinyCore 커널 전용 .tcz(scsi-*-tinycore64 등) 분기를
 # Alpine 환경에서 건너뛰기 위해 사용.

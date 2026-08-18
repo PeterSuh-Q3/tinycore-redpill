@@ -15,18 +15,37 @@ if [ -z "${TERM:-}" ] || [ "${TERM}" = "dumb" ]; then
 fi
 
 ##### INCLUDES ######################################################################################
+# raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
+# push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을
+# 헷갈리게 만드는 사고가 실측 확인되어(2026-08-18), curl 을 감싸는 함수를 두고
+# raw.githubusercontent.com 을 향하는 모든 curl 호출(functions_t.sh 안의 .pat/
+# extractor/friend 다운로드 포함, 61곳+)에 요청마다 바뀌는 쿼리스트링을 자동으로
+# 붙여 캐시를 우회한다(쿼리스트링이 다르면 캐시 키가 달라져 항상 MISS 로 최신을
+# 받아옴을 실측 확인). 다른 도메인(GitHub API, 릴리즈 자산 등)은 건드리지 않는다.
+# 실제 curl 바이너리는 `command curl` 로 그대로 호출되므로 옵션/동작은 동일하다.
+function curl() {
+    local _args=() _a
+    for _a in "$@"; do
+        case "${_a}" in
+            *raw.githubusercontent.com*)
+                if [[ "${_a}" == *\?* ]]; then
+                    _a="${_a}&_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                else
+                    _a="${_a}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                fi
+                ;;
+        esac
+        _args+=("${_a}")
+    done
+    command curl "${_args[@]}"
+}
+
 # GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
 # 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
 # 검증 실패 시 기존 파일을 보존(덮어쓰지 않음).
 function safe_fetch() {
     local _url="$1" _dest="$2" _sentinel="$3"
     local _tmp="/dev/shm/.safe_fetch.$$"
-    # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
-    # push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을
-    # 헷갈리게 만드는 사고가 실측 확인되어, 매 요청마다 바뀌는 쿼리스트링을 붙여
-    # 캐시를 우회한다(쿼리스트링이 다르면 캐시 키가 달라져 항상 MISS 로 최신을
-    # 받아옴을 실측 확인).
-    _url="${_url}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
     if curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
        && [ -s "${_tmp}" ] \
        && grep -q "${_sentinel}" "${_tmp}" \
