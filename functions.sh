@@ -2,9 +2,36 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.1"
-builddate="2026.08.17"
+rploaderver="1.4.3.2"
+builddate="2026.08.19"
 redpillmake="prod"
+
+# raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
+# push 직후 재빌드하면 방금 고친 로직 대신 구버전이 그대로 내려와 디버깅을
+# 헷갈리게 만드는 사고가 실측 확인되어(2026-08-18), curl 을 감싸는 함수를 두고
+# raw.githubusercontent.com 을 향하는 모든 curl 호출(.pat/extractor/friend
+# 다운로드 등 이 파일 안의 60여 곳 포함)에 요청마다 바뀌는 쿼리스트링을 자동으로
+# 붙여 캐시를 우회한다(쿼리스트링이 다르면 캐시 키가 달라져 항상 MISS 로 최신을
+# 받아옴을 실측 확인). 다른 도메인(GitHub API, 릴리즈 자산 등)은 건드리지 않는다.
+# menu.sh 에도 동일 정의가 있다(중복 정의는 무해 - bash 는 마지막 정의를 쓴다);
+# 이 파일이 menu.sh 를 거치지 않고(menu_t.sh/menu_m.sh 등에서) 직접 소싱되는
+# 경로도 있어 이 파일 자체에도 넣어 항상 보장한다.
+function curl() {
+    local _args=() _a
+    for _a in "$@"; do
+        case "${_a}" in
+            *raw.githubusercontent.com*)
+                if [[ "${_a}" == *\?* ]]; then
+                    _a="${_a}&_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                else
+                    _a="${_a}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
+                fi
+                ;;
+        esac
+        _args+=("${_a}")
+    done
+    command curl "${_args[@]}"
+}
 
 # Alpine(musl) 이식 판별. ttyd 단일화 전략(docs/alpine-migration-plan.md §4)에 따라
 # X11/urxvt/glibc 로케일 스택과 TinyCore 커널 전용 .tcz(scsi-*-tinycore64 등) 분기를
@@ -3859,6 +3886,23 @@ function processpat() {
     echo "Checking for cached pat file"
     [ -d $local_cache ] && msgnormal "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
 
+    # [netconsole] 이 기능이 생기기 전에 만들어진 캐시(미니팻)는 netconsole.ko 를
+    # 내장하고 있지 않다. 그런 캐시를 그대로 쓰면 buildloader() 가 이번 빌드에서도
+    # netconsole.ko 를 못 찾으므로, 캐시된 pat 에 없으면 지워서 아래 로직이
+    # "캐시 없음"으로 보고 원본을 새로 받아 다시 만들도록 강제한다.
+    # 주의: 이 함수는 재귀 호출된다(암호화 pat 다운로드 직후 재호출) - 그 시점의
+    # 캐시는 아직 암호화된 상태라 tar -tf 가 실패(빈 리스팅)하는데, 그걸 "netconsole.ko
+    # 없음"으로 오판해 방금 받은 파일을 지우면 무한 재다운로드 루프에 빠진다.
+    # tar 리스팅이 실제로 비어있지 않을 때(=유효한 tar, 이미 복호화됨)만 검사한다.
+    for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
+        [ -f "${_nc_cached}" ] || continue
+        _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
+        if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
+            echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
+            rm -f "${_nc_cached}"
+        fi
+    done
+
     if [ -d ${local_cache} ] && [ -f ${local_cache}/*${SYNOMODEL}*.pat ] || [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ]; then
 
         [ -f /home/tc/custom-module/*${SYNOMODEL}*.pat ] && patfile=$(ls /home/tc/custom-module/*${SYNOMODEL}*.pat | head -1)
@@ -3962,7 +4006,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
             exit 99
         fi
 
-        [ -n $pat_url ] && curl -kL ${pat_url} -o "/${local_cache}/${SYNOMODEL}.pat"
+        [ -n $pat_url ] && curl -kL# ${pat_url} -o "/${local_cache}/${SYNOMODEL}.pat"
         patfile="/${local_cache}/${SYNOMODEL}.pat"
         if [ -f ${patfile} ]; then
             testarchive ${patfile}
@@ -5473,9 +5517,118 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
-        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno             
-        sudo cat $rdtemp/linuxrc.syno  
+        sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno
     fi
+
+    # [netconsole-early] usb_line 의 netconsole= 를 linuxrc.syno 최초 실행 시점에 바로
+    # insmod 한다 - on_early 확장 훅보다도 이른 지점(DSM 파티션 마운트/확장 매니저
+    # 실행 전)이라 커널 패닉을 더 넓게 잡을 수 있다. netconsole.ko 는 부트타임
+    # ramdisk 계열(rd.gz/all-modules/custom-modules)에는 없고 DSM 자체 .pat 안에만
+    # 있다. processpat() 의 "이미 캐시됨" 분기는 auxfiles 의 pat 을
+    # /home/tc/redpill-load/cache/ 로 mv 하면서도 patfile 변수 자체는 갱신하지
+    # 않는 기존 버그가 있어(실기 확인: 캐시 재사용 빌드에서 netconsole.ko 추출
+    # 실패), 그 변수에 의존하지 않고 processpat() 과 동일한 우선순위로 직접
+    # 경로를 고른다: auxfiles(영구 캐시, 미니팻이면 netconsole.ko 내장되어 있음)
+    # 가 있으면 그걸 쓰고, 없으면(첫 빌드라 아직 미니팻화 전) 이번 빌드용으로
+    # 막 받은/복호화된 /home/tc/redpill-load/cache/${SYNOMODEL}.pat 을 쓴다.
+    NETCONSOLE_KO_SRC="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"
+    [ -f "${NETCONSOLE_KO_SRC}" ] || NETCONSOLE_KO_SRC="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+    NETCONSOLE_KO_FOUND=0
+    if [ -f "${NETCONSOLE_KO_SRC}" ]; then
+        _NC_TMPDIR="$(mktemp -d)"
+        # BusyBox tar 는 아카이브 멤버명을 정확히 일치시켜야 하는데, 이 .pat 은
+        # tar -cf x.pat ./ 로 만들어져 내부 경로가 "./usr/lib/modules/netconsole.ko"
+        # (선행 "./" 포함)이다. "./" 없이 요청하면 "not found in archive" 로 매번
+        # 조용히 실패해 항상 hda1.tgz 폴백만 타는 것을 실기로 확인했다.
+        if tar -xf "${NETCONSOLE_KO_SRC}" -C "${_NC_TMPDIR}" ./usr/lib/modules/netconsole.ko 2>/dev/null \
+           && [ -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" ]; then
+            NETCONSOLE_KO_FOUND=1
+        else
+            _nc_hda1_entry="$(tar -tf "${NETCONSOLE_KO_SRC}" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)"
+            if [ -n "${_nc_hda1_entry}" ] \
+               && tar -xf "${NETCONSOLE_KO_SRC}" -C "${_NC_TMPDIR}" "${_nc_hda1_entry}" 2>/dev/null \
+               && tar -xf "${_NC_TMPDIR}/${_nc_hda1_entry}" -C "${_NC_TMPDIR}" usr/lib/modules/netconsole.ko 2>/dev/null \
+               && [ -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" ]; then
+                NETCONSOLE_KO_FOUND=1
+            fi
+        fi
+        if [ "${NETCONSOLE_KO_FOUND}" -eq 1 ]; then
+            sudo mkdir -p $rdtemp/usr/lib/modules
+            sudo cp -f "${_NC_TMPDIR}/usr/lib/modules/netconsole.ko" $rdtemp/usr/lib/modules/netconsole.ko
+            echo "[netconsole] bundled netconsole.ko into ramdisk"
+        else
+            echo "[netconsole] netconsole.ko not found in ${NETCONSOLE_KO_SRC} - insmod will be skipped at boot"
+        fi
+        rm -rf "${_NC_TMPDIR}"
+    else
+        echo "[netconsole] patfile ${NETCONSOLE_KO_SRC} not found - insmod will be skipped at boot"
+    fi
+    cat >/tmp/netconsole-early.sh <<'NCEOF'
+#!/bin/sh
+# 이 스크립트는 Main() 진입 직후, acovermissingbin 의 on_early(usr.tgz 로
+# tr/grep/cut 등을 갖춘 실제 busybox 유틸을 usr/sbin, usr/lib 에 풀어주는
+# 단계)보다도, 그리고 eth0 실제 NIC 드라이버가 로드되는 시점보다도 이른
+# 시점에 실행된다. 실기 확인: (1) tr 이 아직 없어 "tr: not found" 로
+# NETCONSOLE_PARAM 파싱 자체가 실패했었고(수정함, 아래 참고), (2) 그 다음엔
+# "insmod: can't insert '.../netconsole.ko': No such device" - eth0 가
+# 아직 커널에 등록되기 전이라 netpoll 이 타겟 인터페이스를 못 찾음.
+# Main() 은 이 스크립트 호출 뒤에 이어서 RunWithLog .../linuxrc.syno.impl
+# 을 실행하는데, 그 안에서 실제 NIC 드라이버가 로드된다 - 즉 여기서 동기적으로
+# 기다려봐야 그동안 아무 것도 진행되지 않아 소용없다(단일 프로세스 순차 실행).
+# 그래서 호출하는 쪽(sed 로 삽입되는 라인)에서 백그라운드(&)로 띄우고, 이
+# 스크립트 자신은 짧게 폴링하며 eth0/모듈이 준비될 때까지 재시도한다.
+# tr/grep/cut 같은 외부 유틸 없이 셸 내장 word-splitting + case 패턴
+# 매칭만으로 /proc/cmdline 에서 netconsole= 를 뽑는다.
+NETCONSOLE_PARAM=""
+for _nc_tok in $(cat /proc/cmdline); do
+  case "${_nc_tok}" in
+    netconsole=*)
+      NETCONSOLE_PARAM="${_nc_tok#netconsole=}"
+      ;;
+  esac
+done
+if [ -n "${NETCONSOLE_PARAM}" ]; then
+  KO=""
+  for _cand in /usr/lib/modules/netconsole.ko /lib/modules/netconsole.ko; do
+    if [ -f "${_cand}" ]; then
+      KO="${_cand}"
+      break
+    fi
+  done
+  if [ -n "${KO}" ]; then
+    _nc_i=0
+    while [ "${_nc_i}" -lt 60 ]; do
+      if insmod "${KO}" netconsole="${NETCONSOLE_PARAM}" 2>/var/log/netconsole.err; then
+        break
+      fi
+      _nc_i=$((_nc_i + 1))
+      sleep 1
+    done
+  fi
+fi
+NCEOF
+    sudo cp /tmp/netconsole-early.sh $rdtemp/netconsole-early.sh
+    sudo chmod +x $rdtemp/netconsole-early.sh
+    # "echo START" 직후(파일 맨 위)는 WithTypedMounted 가 아직 /proc 를 마운트하기
+    # 전이라 netconsole-early.sh 의 `cat /proc/cmdline` 이 조용히 실패해 아무 것도
+    # 안 하고 끝나는 것을 실기로 확인(실제 부팅에서 insmod 자체가 시도되지 않음 -
+    # 수동 실행 시엔 이미 /proc 가 있는 완전 부팅 상태라 성공했던 것과 대조됨).
+    # linuxrc.syno 는 "WithTypedMounted proc ... WithTypedMounted sysfs ...
+    # WithTypedMounted devtmpfs ... Main" 체인으로 /proc/sys/dev 를 먼저 마운트한
+    # 뒤에야 Main() 을 호출하므로, Main() 함수 본문 첫 줄에 넣으면 /proc 는 이미
+    # 마운트돼 있으면서도 여전히 Main() 안의 RunWithLog .../linuxrc.syno.impl
+    # (DSM 파티션 마운트 등 본 로직) 보다는 이르다 - 이게 이 파일 구조에서 실제로
+    # 도달 가능한 가장 이른 지점이다.
+    # eth0 실제 NIC 드라이버는 이 뒤에 이어지는 RunWithLog .../linuxrc.syno.impl
+    # 안에서 로드된다 - 여기서 동기 호출하면(&없이) 드라이버가 없는 채로
+    # insmod 가 "No such device" 로 실패하고 끝나버린다(실기 확인). 백그라운드(&)
+    # 로 띄워 Main() 이 곧장 .impl 로 진행되게 하고, 스크립트 자신이 안에서
+    # 짧게 폴링 재시도한다.
+    sudo sed -i '/^Main() {/a \\n/netconsole-early.sh \&' $rdtemp/linuxrc.syno
+    rm -f /tmp/netconsole-early.sh
+    # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
+    # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
+    sudo cat $rdtemp/linuxrc.syno
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
@@ -5749,6 +5902,7 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 MINIPAT_OK=1
                 MINIPAT_RESOLVED=""
                 MINIPAT_LISTING="$(tar -tf "${patfile}" 2>/dev/null)"
+
                 for _mp_f in ${MINIPAT_FILES}; do
                     _mp_resolved="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)${_mp_f}\$" | head -1)"
                     if [ -z "${_mp_resolved}" ]; then
@@ -5758,6 +5912,39 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                     fi
                     MINIPAT_RESOLVED="${MINIPAT_RESOLVED}${MINIPAT_RESOLVED:+ }${_mp_resolved}"
                 done
+
+                # [netconsole] hda1.tgz 는 미니팻 대상 목록(MINIPAT_FILES)에 없어서
+                # 그대로 두면 버려진다. 그 안의 netconsole.ko(부트타임 ramdisk 계열엔
+                # 없고 DSM 자체 설치본에만 있는 모듈)를, 원본 .pat 이 아직 손 안에 있는
+                # 지금 미리 뽑아 미니팻 본문(MINIPAT_INNER)에 usr/lib/modules/netconsole.ko
+                # 로 같이 담아둔다 - 이렇게 미니팻 자체에 내장해야 다음 빌드가 이 미니팻
+                # 캐시만 재사용해도(hda1.tgz 는 이미 사라진 뒤라도) 계속 꺼내 쓸 수 있다.
+                # 주의: 이 함수가 "이미 netconsole.ko 를 내장한 미니팻"을 다시 patfile
+                # 로 받아 재압축하는 경우(재실행/재캐싱)도 있는데, 그런 입력엔 애초에
+                # hda1.tgz 가 없어 매번 hda1.tgz 로만 시도하면 재압축할 때마다
+                # netconsole.ko 가 조용히 빠지는 회귀가 생긴다(실기 확인). patfile 에서
+                # usr/lib/modules/netconsole.ko 를 직접 추출 시도부터 하고, 없을 때만
+                # hda1.tgz 를 거친다. BusyBox tar 는 이 .pat 이 tar -cf x.pat ./ 로
+                # 만들어져 내부 경로가 "./usr/lib/modules/netconsole.ko" 인 것을 "./"
+                # 없이 요청하면 못 찾는 것을 실기로 확인 - 재압축 시마다 netconsole.ko
+                # 가 빠지던 회귀의 진짜 원인이었다.
+                if [ "${MINIPAT_OK}" -eq 1 ]; then
+                    if tar -xf "${patfile}" -C "${MINIPAT_INNER}" ./usr/lib/modules/netconsole.ko 2>/dev/null \
+                       && [ -f "${MINIPAT_INNER}/usr/lib/modules/netconsole.ko" ]; then
+                        echo "[netconsole] embedded netconsole.ko into minipat cache (already present in patfile)"
+                    else
+                        _nc_hda1="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)hda1\.tgz\$" | head -1)"
+                        if [ -n "${_nc_hda1}" ] \
+                           && tar -xf "${patfile}" -C "${MINIPAT_TMPDIR}" "${_nc_hda1}" 2>/dev/null \
+                           && tar -xf "${MINIPAT_TMPDIR}/${_nc_hda1}" -C "${MINIPAT_INNER}" usr/lib/modules/netconsole.ko 2>/dev/null \
+                           && [ -f "${MINIPAT_INNER}/usr/lib/modules/netconsole.ko" ]; then
+                            echo "[netconsole] embedded netconsole.ko into minipat cache (extracted from hda1.tgz)"
+                        else
+                            echo "[netconsole] netconsole.ko not embedded into minipat cache (not found in patfile or hda1.tgz)"
+                        fi
+                    fi
+                fi
+
                 if [ "${MINIPAT_OK}" -eq 1 ]; then
                     if tar -xf "${patfile}" -C "${MINIPAT_INNER}" ${MINIPAT_RESOLVED} 2>/dev/null \
                        && tar -cf "${MINIPAT_TMPDIR}/$(basename ${patfile})" -C "${MINIPAT_INNER}" . 2>/dev/null; then
