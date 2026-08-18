@@ -5525,12 +5525,15 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # insmod 한다 - on_early 확장 훅보다도 이른 지점(DSM 파티션 마운트/확장 매니저
     # 실행 전)이라 커널 패닉을 더 넓게 잡을 수 있다. netconsole.ko 는 부트타임
     # ramdisk 계열(rd.gz/all-modules/custom-modules)에는 없고 DSM 자체 .pat 안에만
-    # 있다. 이 시점에 이미 확정된 이번 빌드의 patfile
-    # (/home/tc/redpill-load/cache/${SYNOMODEL}.pat - 원본 풀 pat 이든, 이전에
-    # netconsole.ko 를 내장해 캐싱해 둔 미니팻이든 상관없음)에서 직접 뽑아 쓰므로,
-    # 별도 캐시 파일의 생성 순서에 좌우되지 않는다. 풀 pat 이면 usr/lib/modules/
-    # netconsole.ko 가 없을 수 있어 hda1.tgz 를 거쳐 한 번 더 시도한다.
-    NETCONSOLE_KO_SRC="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+    # 있다. processpat() 의 "이미 캐시됨" 분기는 auxfiles 의 pat 을
+    # /home/tc/redpill-load/cache/ 로 mv 하면서도 patfile 변수 자체는 갱신하지
+    # 않는 기존 버그가 있어(실기 확인: 캐시 재사용 빌드에서 netconsole.ko 추출
+    # 실패), 그 변수에 의존하지 않고 processpat() 과 동일한 우선순위로 직접
+    # 경로를 고른다: auxfiles(영구 캐시, 미니팻이면 netconsole.ko 내장되어 있음)
+    # 가 있으면 그걸 쓰고, 없으면(첫 빌드라 아직 미니팻화 전) 이번 빌드용으로
+    # 막 받은/복호화된 /home/tc/redpill-load/cache/${SYNOMODEL}.pat 을 쓴다.
+    NETCONSOLE_KO_SRC="/mnt/${tcrppart}/auxfiles/${SYNOMODEL}.pat"
+    [ -f "${NETCONSOLE_KO_SRC}" ] || NETCONSOLE_KO_SRC="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
     NETCONSOLE_KO_FOUND=0
     if [ -f "${NETCONSOLE_KO_SRC}" ]; then
         _NC_TMPDIR="$(mktemp -d)"
