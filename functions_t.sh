@@ -5574,7 +5574,17 @@ fi
 NCEOF
     sudo cp /tmp/netconsole-early.sh $rdtemp/netconsole-early.sh
     sudo chmod +x $rdtemp/netconsole-early.sh
-    sudo sed -i '/^echo "START/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
+    # "echo START" 직후(파일 맨 위)는 WithTypedMounted 가 아직 /proc 를 마운트하기
+    # 전이라 netconsole-early.sh 의 `cat /proc/cmdline` 이 조용히 실패해 아무 것도
+    # 안 하고 끝나는 것을 실기로 확인(실제 부팅에서 insmod 자체가 시도되지 않음 -
+    # 수동 실행 시엔 이미 /proc 가 있는 완전 부팅 상태라 성공했던 것과 대조됨).
+    # linuxrc.syno 는 "WithTypedMounted proc ... WithTypedMounted sysfs ...
+    # WithTypedMounted devtmpfs ... Main" 체인으로 /proc/sys/dev 를 먼저 마운트한
+    # 뒤에야 Main() 을 호출하므로, Main() 함수 본문 첫 줄에 넣으면 /proc 는 이미
+    # 마운트돼 있으면서도 여전히 Main() 안의 RunWithLog .../linuxrc.syno.impl
+    # (DSM 파티션 마운트 등 본 로직) 보다는 이르다 - 이게 이 파일 구조에서 실제로
+    # 도달 가능한 가장 이른 지점이다.
+    sudo sed -i '/^Main() {/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
     rm -f /tmp/netconsole-early.sh
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
