@@ -519,3 +519,55 @@ msgstr "ENTER: переключить выбранный элемент ON/OFF\\
 #: MSGRU131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "Среда выполнения контейнеров NVIDIA (Docker): %s"
+
+#: MSGRU134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "Лог NetConsole (интернет не нужен - лог загрузки вплоть до паники передаётся в реальном времени по локальной сети)"
+
+#: MSGRU135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "Настройка раннего лога NetConsole\n\nТекущий статус: %s"
+
+#: MSGRU136
+msgid "Not configured"
+msgstr "Не настроено"
+
+#: MSGRU137
+msgid "Configure listener IP (create/update)"
+msgstr "Настроить IP получателя (создать/обновить)"
+
+#: MSGRU138
+msgid "Disable (remove configuration)"
+msgstr "Отключить (удалить настройку)"
+
+#: MSGRU139
+msgid "NetConsole configuration removed."
+msgstr "Настройка NetConsole удалена."
+
+#: MSGRU140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Введите IP-адрес компьютера, который будет получать логи (слушатель)\n\n(Должен находиться в той же локальной сети/коммутаторе - интернет/DHCP не требуется)\nПример: 192.168.1.100"
+
+#: MSGRU141
+msgid "Not a valid IP address. Please try again."
+msgstr "Некорректный формат IP-адреса. Попробуйте снова."
+
+#: MSGRU142
+msgid "Could not detect a network interface."
+msgstr "Не удалось обнаружить сетевой интерфейс."
+
+#: MSGRU143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Не удалось автоматически определить MAC-адрес получателя (%s).\n\nПроверьте, что он подключён к тому же коммутатору/маршрутизатору, и что брандмауэр получателя не блокирует ping (ICMP).\n\nПродолжить, введя MAC-адрес вручную?"
+
+#: MSGRU144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Введите MAC-адрес получателя (пример: aa:bb:cc:dd:ee:ff)"
+
+#: MSGRU145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Сохранить эту настройку?\n\n%s\n\nУбедитесь, что компьютер-получатель уже ожидает со следующей командой:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGRU146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Сохранено.\n\n[!] Чтобы изменения вступили в силу, необходимо немедленно пересобрать загрузчик (перейдите в меню сборки)."

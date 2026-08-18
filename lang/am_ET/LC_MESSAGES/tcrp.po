@@ -519,3 +519,55 @@ msgstr "ENTER: የተመረጠውን ንጥል ON/OFF ቀያይር\\nSave & Exit
 #: MSGET131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "የNVIDIA ኮንቴይነር ማስኬጃ (Docker): %s"
+
+#: MSGET134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole ምዝግብ (ኢንተርኔት አያስፈልግም - ከማስነሻ እስከ ብልሽት ያለው ምዝግብ በላን በቀጥታ ጊዜ ይተላለፋል)"
+
+#: MSGET135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "የNetConsole ቀደምት ምዝግብ ማዋቀሪያ\n\nወቅታዊ ሁኔታ: %s"
+
+#: MSGET136
+msgid "Not configured"
+msgstr "አልተዋቀረም"
+
+#: MSGET137
+msgid "Configure listener IP (create/update)"
+msgstr "የተቀባይ IP ማዋቀር (መፍጠር/ማዘመን)"
+
+#: MSGET138
+msgid "Disable (remove configuration)"
+msgstr "አሰናክል (ማዋቀሪያውን አስወግድ)"
+
+#: MSGET139
+msgid "NetConsole configuration removed."
+msgstr "የNetConsole ማዋቀሪያ ተወግዷል።"
+
+#: MSGET140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "ምዝግቦችን የሚቀበለውን ኮምፒዩተር (ተቀባይ) IP አድራሻ ያስገቡ\n\n(በተመሳሳይ ላን/ስዊች ላይ መሆን አለበት - ኢንተርኔት/DHCP አያስፈልግም)\nምሳሌ: 192.168.1.100"
+
+#: MSGET141
+msgid "Not a valid IP address. Please try again."
+msgstr "ትክክለኛ IP አድራሻ አይደለም። እባክዎ እንደገና ይሞክሩ።"
+
+#: MSGET142
+msgid "Could not detect a network interface."
+msgstr "የአውታረ መረብ በይነገጽ ማግኘት አልተቻለም።"
+
+#: MSGET143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "የተቀባዩን (%s) MAC አድራሻ በራስ-ሰር ማግኘት አልተቻለም።\n\nእባክዎ ተመሳሳይ ስዊች/ራውተር ላይ መገናኘቱን፣ እና የተቀባዩ ፋየርዎል ፒንግን (ICMP) እንደማያግድ ያረጋግጡ።\n\nMAC አድራሻውን በእጅ በማስገባት መቀጠል ይፈልጋሉ?"
+
+#: MSGET144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "የተቀባዩን MAC አድራሻ ያስገቡ (ምሳሌ: aa:bb:cc:dd:ee:ff)"
+
+#: MSGET145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "ይህን ማዋቀሪያ ማስቀመጥ ይፈልጋሉ?\n\n%s\n\nየተቀባይ ኮምፒዩተር ከዚህ ትዕዛዝ ጋር አስቀድሞ በመጠባበቅ ላይ መሆኑን ያረጋግጡ:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGET146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "ተቀምጧል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት (እባክዎ ወደ ግንባታ ምናሌ ይሂዱ)።"

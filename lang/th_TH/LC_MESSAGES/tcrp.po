@@ -519,3 +519,55 @@ msgstr "ENTER: สลับรายการที่เลือก ON/OFF\\nS
 #: MSGTH131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA คอนเทนเนอร์รันไทม์ (Docker): %s"
+
+#: MSGTH134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "บันทึก NetConsole (ไม่ต้องใช้อินเทอร์เน็ต - ส่งบันทึกตั้งแต่บูตจนถึงแพนิกแบบเรียลไทม์ผ่าน LAN)"
+
+#: MSGTH135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "ตั้งค่าบันทึกเริ่มต้นของ NetConsole\n\nสถานะปัจจุบัน: %s"
+
+#: MSGTH136
+msgid "Not configured"
+msgstr "ยังไม่ได้ตั้งค่า"
+
+#: MSGTH137
+msgid "Configure listener IP (create/update)"
+msgstr "ตั้งค่า IP ของผู้รับฟัง (สร้าง/อัปเดต)"
+
+#: MSGTH138
+msgid "Disable (remove configuration)"
+msgstr "ปิดใช้งาน (ลบการตั้งค่า)"
+
+#: MSGTH139
+msgid "NetConsole configuration removed."
+msgstr "ลบการตั้งค่า NetConsole แล้ว"
+
+#: MSGTH140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "ป้อนที่อยู่ IP ของเครื่องที่จะรับบันทึก (ผู้รับฟัง)\n\n(ต้องอยู่ใน LAN/สวิตช์เดียวกัน - ไม่ต้องใช้อินเทอร์เน็ต/DHCP)\nตัวอย่าง: 192.168.1.100"
+
+#: MSGTH141
+msgid "Not a valid IP address. Please try again."
+msgstr "รูปแบบที่อยู่ IP ไม่ถูกต้อง กรุณาลองอีกครั้ง"
+
+#: MSGTH142
+msgid "Could not detect a network interface."
+msgstr "ไม่พบอินเทอร์เฟซเครือข่าย"
+
+#: MSGTH143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "ไม่สามารถค้นหาที่อยู่ MAC ของผู้รับฟัง (%s) โดยอัตโนมัติ\n\nโปรดตรวจสอบว่าเชื่อมต่อกับสวิตช์/เราเตอร์เดียวกัน และไฟร์วอลล์ของผู้รับฟังไม่ได้บล็อก ping (ICMP)\n\nต้องการดำเนินการต่อโดยป้อนที่อยู่ MAC ด้วยตนเองหรือไม่?"
+
+#: MSGTH144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "ป้อนที่อยู่ MAC ของผู้รับฟัง (ตัวอย่าง: aa:bb:cc:dd:ee:ff)"
+
+#: MSGTH145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "บันทึกการตั้งค่านี้หรือไม่?\n\n%s\n\nตรวจสอบให้แน่ใจว่าเครื่องผู้รับฟังกำลังรอด้วยคำสั่งต่อไปนี้อยู่แล้ว:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGTH146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "บันทึกแล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล (โปรดไปที่เมนูบิลด์)"

@@ -519,3 +519,55 @@ msgstr "ENTER: 切換所選項目 ON/OFF\\nSave & Exit: 儲存並離開"
 #: MSGTW131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA 容器執行環境 (Docker): %s"
+
+#: MSGTW134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole日誌 (無需網際網路 - 透過區域網路即時傳輸開機到當機的日誌)"
+
+#: MSGTW135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole早期日誌設定\n\n目前狀態: %s"
+
+#: MSGTW136
+msgid "Not configured"
+msgstr "尚未設定"
+
+#: MSGTW137
+msgid "Configure listener IP (create/update)"
+msgstr "設定接收端IP (建立/更新)"
+
+#: MSGTW138
+msgid "Disable (remove configuration)"
+msgstr "停用 (移除設定)"
+
+#: MSGTW139
+msgid "NetConsole configuration removed."
+msgstr "已移除NetConsole設定。"
+
+#: MSGTW140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "請輸入接收日誌的電腦(接收端)的IP位址\n\n(必須與本機在同一區域網路/交換器上 - 不需要網際網路/DHCP)\n範例: 192.168.1.100"
+
+#: MSGTW141
+msgid "Not a valid IP address. Please try again."
+msgstr "不是有效的IP位址,請重新輸入。"
+
+#: MSGTW142
+msgid "Could not detect a network interface."
+msgstr "找不到網路介面。"
+
+#: MSGTW143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "無法自動找到接收端(%s)的MAC位址。\n\n請確認是否連接到同一台交換器/路由器,以及接收端的防火牆是否封鎖了ping(ICMP)。\n\n是否要手動輸入MAC位址繼續?"
+
+#: MSGTW144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "請輸入接收端的MAC位址 (範例: aa:bb:cc:dd:ee:ff)"
+
+#: MSGTW145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "是否儲存此設定?\n\n%s\n\n請確保接收端電腦已經用以下指令等待接收:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGTW146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "已儲存。\n\n[!] 必須立即重新建置載入器才能生效 (請前往建置選單)。"

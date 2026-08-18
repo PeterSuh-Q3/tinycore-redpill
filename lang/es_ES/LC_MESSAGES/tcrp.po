@@ -519,3 +519,55 @@ msgstr "ENTER: Alternar elemento seleccionado ON/OFF\\nSave & Exit: Guardar y sa
 #: MSGES131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "Entorno de ejecución de contenedores NVIDIA (Docker): %s"
+
+#: MSGES134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "Registro NetConsole (no requiere Internet - registro de arranque hasta el pánico en tiempo real por LAN)"
+
+#: MSGES135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "Configuración del registro temprano NetConsole\n\nEstado actual: %s"
+
+#: MSGES136
+msgid "Not configured"
+msgstr "No configurado"
+
+#: MSGES137
+msgid "Configure listener IP (create/update)"
+msgstr "Configurar IP del receptor (crear/actualizar)"
+
+#: MSGES138
+msgid "Disable (remove configuration)"
+msgstr "Deshabilitar (eliminar configuración)"
+
+#: MSGES139
+msgid "NetConsole configuration removed."
+msgstr "Configuración de NetConsole eliminada."
+
+#: MSGES140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Introduzca la dirección IP del PC que recibirá los registros (receptor)\n\n(Debe estar en la misma LAN/switch - no se requiere Internet/DHCP)\nEjemplo: 192.168.1.100"
+
+#: MSGES141
+msgid "Not a valid IP address. Please try again."
+msgstr "Dirección IP no válida. Inténtelo de nuevo."
+
+#: MSGES142
+msgid "Could not detect a network interface."
+msgstr "No se pudo detectar una interfaz de red."
+
+#: MSGES143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "No se pudo encontrar automáticamente la dirección MAC del receptor (%s).\n\nCompruebe que esté conectado al mismo switch/router y que el firewall del receptor no bloquee el ping (ICMP).\n\n¿Desea continuar introduciendo la dirección MAC manualmente?"
+
+#: MSGES144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Introduzca la dirección MAC del receptor (ejemplo: aa:bb:cc:dd:ee:ff)"
+
+#: MSGES145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "¿Guardar esta configuración?\n\n%s\n\nAsegúrese de que el PC receptor ya está esperando con el siguiente comando:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGES146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Guardado.\n\n[!] Debe reconstruir el cargador ahora para que esto surta efecto (vaya al menú de compilación)."

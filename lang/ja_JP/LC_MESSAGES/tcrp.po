@@ -519,3 +519,55 @@ msgstr "ENTER: 選択項目のON/OFF切替\\nSave & Exit: 保存して終了"
 #: MSGJP131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA コンテナランタイム (Docker): %s"
+
+#: MSGJP134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsoleログ (インターネット不要 - LAN経由でブート〜パニックログをリアルタイム送信)"
+
+#: MSGJP135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole早期ログ設定\n\n現在の状態: %s"
+
+#: MSGJP136
+msgid "Not configured"
+msgstr "未設定"
+
+#: MSGJP137
+msgid "Configure listener IP (create/update)"
+msgstr "リスナーIPを入力して設定/更新"
+
+#: MSGJP138
+msgid "Disable (remove configuration)"
+msgstr "無効化 (設定を削除)"
+
+#: MSGJP139
+msgid "NetConsole configuration removed."
+msgstr "NetConsoleの設定を削除しました。"
+
+#: MSGJP140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "ログを受信するPC(リスナー)のIPアドレスを入力してください\n\n(同じLAN/スイッチに接続されている必要があります - インターネット/DHCPは不要です)\n例: 192.168.1.100"
+
+#: MSGJP141
+msgid "Not a valid IP address. Please try again."
+msgstr "正しいIPアドレスの形式ではありません。もう一度入力してください。"
+
+#: MSGJP142
+msgid "Could not detect a network interface."
+msgstr "ネットワークインターフェースが見つかりませんでした。"
+
+#: MSGJP143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "リスナー(%s)のMACアドレスを自動で見つけられませんでした。\n\n同じスイッチ/ルーターに接続されているか、リスナーPCのファイアウォールがping(ICMP)をブロックしていないか確認してください。\n\nMACアドレスを手動で入力して続行しますか?"
+
+#: MSGJP144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "リスナーのMACアドレスを入力してください (例: aa:bb:cc:dd:ee:ff)"
+
+#: MSGJP145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "この設定を保存しますか?\n\n%s\n\nリスナーPCで以下のコマンドを実行して待機しておいてください:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGJP146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "保存しました。\n\n[!] 今すぐローダーを再ビルドしないと反映されません (ビルドメニューへ移動してください)。"

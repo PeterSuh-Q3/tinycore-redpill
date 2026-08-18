@@ -519,3 +519,55 @@ msgstr "ENTER: चयनित आइटम ON/OFF टॉगल करें\\nS
 #: MSGIN131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA कंटेनर रनटाइम (Docker): %s"
+
+#: MSGIN134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "नेटकंसोल लॉग (इंटरनेट की आवश्यकता नहीं - LAN के माध्यम से बूट-से-पैनिक लॉग रीयल-टाइम में)"
+
+#: MSGIN135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "नेटकंसोल अर्ली लॉग सेटअप\n\nवर्तमान स्थिति: %s"
+
+#: MSGIN136
+msgid "Not configured"
+msgstr "कॉन्फ़िगर नहीं किया गया"
+
+#: MSGIN137
+msgid "Configure listener IP (create/update)"
+msgstr "लिसनर IP कॉन्फ़िगर करें (बनाएं/अपडेट करें)"
+
+#: MSGIN138
+msgid "Disable (remove configuration)"
+msgstr "अक्षम करें (कॉन्फ़िगरेशन हटाएं)"
+
+#: MSGIN139
+msgid "NetConsole configuration removed."
+msgstr "नेटकंसोल कॉन्फ़िगरेशन हटा दिया गया।"
+
+#: MSGIN140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "उस PC (लिसनर) का IP पता दर्ज करें जो लॉग प्राप्त करेगा\n\n(समान LAN/स्विच पर होना चाहिए - इंटरनेट/DHCP आवश्यक नहीं है)\nउदाहरण: 192.168.1.100"
+
+#: MSGIN141
+msgid "Not a valid IP address. Please try again."
+msgstr "मान्य IP पता नहीं है। कृपया पुनः प्रयास करें।"
+
+#: MSGIN142
+msgid "Could not detect a network interface."
+msgstr "नेटवर्क इंटरफ़ेस का पता नहीं चला।"
+
+#: MSGIN143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "लिसनर (%s) का MAC पता स्वचालित रूप से नहीं मिल सका।\n\nकृपया जांचें कि यह समान स्विच/राउटर से जुड़ा है, और लिसनर का फ़ायरवॉल ping (ICMP) को ब्लॉक नहीं कर रहा है।\n\nक्या आप MAC पता मैन्युअल रूप से दर्ज करके जारी रखना चाहते हैं?"
+
+#: MSGIN144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "लिसनर का MAC पता दर्ज करें (उदाहरण: aa:bb:cc:dd:ee:ff)"
+
+#: MSGIN145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "यह कॉन्फ़िगरेशन सहेजें?\n\n%s\n\nसुनिश्चित करें कि लिसनर PC पहले से निम्न कमांड के साथ प्रतीक्षा कर रहा है:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGIN146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "सहेजा गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा (कृपया बिल्ड मेनू पर जाएं)।"

@@ -519,3 +519,55 @@ msgstr "ENTER: Alihkan item terpilih ON/OFF\\nSave & Exit: Simpan dan keluar"
 #: MSGID131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "Runtime kontainer NVIDIA (Docker): %s"
+
+#: MSGID134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "Log NetConsole (tidak perlu internet - log boot hingga panic dikirim secara real-time melalui LAN)"
+
+#: MSGID135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "Pengaturan Log Awal NetConsole\n\nStatus saat ini: %s"
+
+#: MSGID136
+msgid "Not configured"
+msgstr "Belum dikonfigurasi"
+
+#: MSGID137
+msgid "Configure listener IP (create/update)"
+msgstr "Konfigurasi IP penerima (buat/perbarui)"
+
+#: MSGID138
+msgid "Disable (remove configuration)"
+msgstr "Nonaktifkan (hapus konfigurasi)"
+
+#: MSGID139
+msgid "NetConsole configuration removed."
+msgstr "Konfigurasi NetConsole telah dihapus."
+
+#: MSGID140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Masukkan alamat IP PC yang akan menerima log (penerima)\n\n(Harus berada di LAN/switch yang sama - Internet/DHCP tidak diperlukan)\nContoh: 192.168.1.100"
+
+#: MSGID141
+msgid "Not a valid IP address. Please try again."
+msgstr "Format alamat IP tidak valid. Silakan coba lagi."
+
+#: MSGID142
+msgid "Could not detect a network interface."
+msgstr "Tidak dapat mendeteksi antarmuka jaringan."
+
+#: MSGID143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Tidak dapat menemukan alamat MAC penerima (%s) secara otomatis.\n\nPeriksa apakah terhubung ke switch/router yang sama, dan apakah firewall penerima tidak memblokir ping (ICMP).\n\nApakah Anda ingin melanjutkan dengan memasukkan alamat MAC secara manual?"
+
+#: MSGID144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Masukkan alamat MAC penerima (contoh: aa:bb:cc:dd:ee:ff)"
+
+#: MSGID145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Simpan konfigurasi ini?\n\n%s\n\nPastikan PC penerima sudah menunggu dengan perintah berikut:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGID146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Tersimpan.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku (silakan buka menu build)."

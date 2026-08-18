@@ -519,3 +519,55 @@ msgstr "ENTER: Kiválasztott elem ON/OFF váltása\\nSave & Exit: Mentés és ki
 #: MSGHU131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA konténer futtatókörnyezet (Docker): %s"
+
+#: MSGHU134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole napló (nincs szükség internetre - a rendszerindítástól a panicig valós idejű napló LAN-on keresztül)"
+
+#: MSGHU135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole korai napló beállítása\n\nJelenlegi állapot: %s"
+
+#: MSGHU136
+msgid "Not configured"
+msgstr "Nincs beállítva"
+
+#: MSGHU137
+msgid "Configure listener IP (create/update)"
+msgstr "Figyelő IP beállítása (létrehozás/frissítés)"
+
+#: MSGHU138
+msgid "Disable (remove configuration)"
+msgstr "Letiltás (beállítás eltávolítása)"
+
+#: MSGHU139
+msgid "NetConsole configuration removed."
+msgstr "A NetConsole beállítás eltávolítva."
+
+#: MSGHU140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Adja meg a naplókat fogadó számítógép (figyelő) IP-címét\n\n(Ugyanazon a LAN-on/switch-en kell lennie - internet/DHCP nem szükséges)\nPélda: 192.168.1.100"
+
+#: MSGHU141
+msgid "Not a valid IP address. Please try again."
+msgstr "Érvénytelen IP-cím. Próbálja újra."
+
+#: MSGHU142
+msgid "Could not detect a network interface."
+msgstr "Nem sikerült hálózati interfészt találni."
+
+#: MSGHU143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Nem sikerült automatikusan megtalálni a figyelő (%s) MAC-címét.\n\nEllenőrizze, hogy ugyanahhoz a switch-hez/routerhez csatlakozik-e, és hogy a figyelő tűzfala nem blokkolja-e a pinget (ICMP).\n\nSzeretné manuálisan megadni a MAC-címet?"
+
+#: MSGHU144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Adja meg a figyelő MAC-címét (példa: aa:bb:cc:dd:ee:ff)"
+
+#: MSGHU145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Menti ezt a beállítást?\n\n%s\n\nGyőződjön meg róla, hogy a figyelő számítógép már várakozik a következő paranccsal:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGHU146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Mentve.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt (kérjük, lépjen a build menübe)."

@@ -519,3 +519,55 @@ msgstr "ENTER: Attiva/disattiva elemento selezionato ON/OFF\\nSave & Exit: Salva
 #: MSGIT131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "Runtime per container NVIDIA (Docker): %s"
+
+#: MSGIT134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "Log NetConsole (Internet non necessario - log di avvio fino al panic trasmesso in tempo reale via LAN)"
+
+#: MSGIT135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "Configurazione log iniziale NetConsole\n\nStato attuale: %s"
+
+#: MSGIT136
+msgid "Not configured"
+msgstr "Non configurato"
+
+#: MSGIT137
+msgid "Configure listener IP (create/update)"
+msgstr "Configura IP del ricevitore (crea/aggiorna)"
+
+#: MSGIT138
+msgid "Disable (remove configuration)"
+msgstr "Disabilita (rimuovi configurazione)"
+
+#: MSGIT139
+msgid "NetConsole configuration removed."
+msgstr "Configurazione NetConsole rimossa."
+
+#: MSGIT140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Inserisci l'indirizzo IP del PC che riceverà i log (ricevitore)\n\n(Deve trovarsi sulla stessa LAN/switch - Internet/DHCP non necessari)\nEsempio: 192.168.1.100"
+
+#: MSGIT141
+msgid "Not a valid IP address. Please try again."
+msgstr "Indirizzo IP non valido. Riprova."
+
+#: MSGIT142
+msgid "Could not detect a network interface."
+msgstr "Impossibile rilevare un'interfaccia di rete."
+
+#: MSGIT143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Impossibile trovare automaticamente l'indirizzo MAC del ricevitore (%s).\n\nVerifica che sia connesso allo stesso switch/router e che il firewall del ricevitore non blocchi il ping (ICMP).\n\nVuoi continuare inserendo manualmente l'indirizzo MAC?"
+
+#: MSGIT144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Inserisci l'indirizzo MAC del ricevitore (esempio: aa:bb:cc:dd:ee:ff)"
+
+#: MSGIT145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Salvare questa configurazione?\n\n%s\n\nAssicurati che il PC ricevitore sia già in attesa con il seguente comando:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGIT146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Salvato.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto (vai al menu di compilazione)."

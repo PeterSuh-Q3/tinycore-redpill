@@ -519,3 +519,55 @@ msgstr "ENTER: 切换所选项目 ON/OFF\\nSave & Exit: 保存并退出"
 #: MSGCN131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA 容器运行时 (Docker): %s"
+
+#: MSGCN134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole日志 (无需互联网 - 通过局域网实时传输启动到崩溃的日志)"
+
+#: MSGCN135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole早期日志设置\n\n当前状态: %s"
+
+#: MSGCN136
+msgid "Not configured"
+msgstr "未配置"
+
+#: MSGCN137
+msgid "Configure listener IP (create/update)"
+msgstr "配置监听端IP (创建/更新)"
+
+#: MSGCN138
+msgid "Disable (remove configuration)"
+msgstr "禁用 (删除配置)"
+
+#: MSGCN139
+msgid "NetConsole configuration removed."
+msgstr "已删除NetConsole配置。"
+
+#: MSGCN140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "请输入接收日志的电脑(监听端)的IP地址\n\n(必须与本机在同一局域网/交换机上 - 不需要互联网/DHCP)\n示例: 192.168.1.100"
+
+#: MSGCN141
+msgid "Not a valid IP address. Please try again."
+msgstr "不是有效的IP地址,请重新输入。"
+
+#: MSGCN142
+msgid "Could not detect a network interface."
+msgstr "未能检测到网络接口。"
+
+#: MSGCN143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "未能自动找到监听端(%s)的MAC地址。\n\n请检查是否连接到同一交换机/路由器,以及监听端的防火墙是否阻止了ping(ICMP)。\n\n是否要手动输入MAC地址继续?"
+
+#: MSGCN144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "请输入监听端的MAC地址 (示例: aa:bb:cc:dd:ee:ff)"
+
+#: MSGCN145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "是否保存此配置?\n\n%s\n\n请确保监听端电脑已经用以下命令等待接收:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGCN146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "已保存。\n\n[!] 必须立即重新构建加载器才能生效 (请转到构建菜单)。"

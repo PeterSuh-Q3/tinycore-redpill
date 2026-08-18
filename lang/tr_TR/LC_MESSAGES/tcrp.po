@@ -519,3 +519,55 @@ msgstr "ENTER: Seçili öğeyi ON/OFF değiştir\\nSave & Exit: Kaydet ve çık"
 #: MSGTR131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA konteyner çalışma zamanı (Docker): %s"
+
+#: MSGTR134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole günlüğü (İnternet gerekmez - önyükleme'den panic'e kadar gerçek zamanlı günlük LAN üzerinden gönderilir)"
+
+#: MSGTR135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole Erken Günlük Ayarı\n\nMevcut durum: %s"
+
+#: MSGTR136
+msgid "Not configured"
+msgstr "Yapılandırılmadı"
+
+#: MSGTR137
+msgid "Configure listener IP (create/update)"
+msgstr "Dinleyici IP'sini yapılandır (oluştur/güncelle)"
+
+#: MSGTR138
+msgid "Disable (remove configuration)"
+msgstr "Devre dışı bırak (yapılandırmayı kaldır)"
+
+#: MSGTR139
+msgid "NetConsole configuration removed."
+msgstr "NetConsole yapılandırması kaldırıldı."
+
+#: MSGTR140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Günlükleri alacak bilgisayarın (dinleyici) IP adresini girin\n\n(Aynı LAN/switch üzerinde olmalıdır - İnternet/DHCP gerekmez)\nÖrnek: 192.168.1.100"
+
+#: MSGTR141
+msgid "Not a valid IP address. Please try again."
+msgstr "Geçerli bir IP adresi değil. Lütfen tekrar deneyin."
+
+#: MSGTR142
+msgid "Could not detect a network interface."
+msgstr "Bir ağ arayüzü tespit edilemedi."
+
+#: MSGTR143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Dinleyicinin (%s) MAC adresi otomatik olarak bulunamadı.\n\nAynı switch/router'a bağlı olduğundan ve dinleyicinin güvenlik duvarının ping'i (ICMP) engellemediğinden emin olun.\n\nMAC adresini manuel olarak girerek devam etmek ister misiniz?"
+
+#: MSGTR144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Dinleyicinin MAC adresini girin (örnek: aa:bb:cc:dd:ee:ff)"
+
+#: MSGTR145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Bu yapılandırma kaydedilsin mi?\n\n%s\n\nDinleyici bilgisayarın aşağıdaki komutla zaten beklemede olduğundan emin olun:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGTR146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Kaydedildi.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir (lütfen build menüsüne gidin)."

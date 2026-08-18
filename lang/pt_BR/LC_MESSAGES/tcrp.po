@@ -519,3 +519,55 @@ msgstr "ENTER: Alternar item selecionado ON/OFF\\nSave & Exit: Salvar e sair"
 #: MSGBR131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "Runtime de contêiner NVIDIA (Docker): %s"
+
+#: MSGBR134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "Log do NetConsole (não precisa de Internet - log de boot até o panic transmitido em tempo real pela rede local)"
+
+#: MSGBR135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "Configuração do log inicial do NetConsole\n\nStatus atual: %s"
+
+#: MSGBR136
+msgid "Not configured"
+msgstr "Não configurado"
+
+#: MSGBR137
+msgid "Configure listener IP (create/update)"
+msgstr "Configurar IP do receptor (criar/atualizar)"
+
+#: MSGBR138
+msgid "Disable (remove configuration)"
+msgstr "Desativar (remover configuração)"
+
+#: MSGBR139
+msgid "NetConsole configuration removed."
+msgstr "Configuração do NetConsole removida."
+
+#: MSGBR140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Digite o endereço IP do PC que receberá os logs (receptor)\n\n(Deve estar na mesma LAN/switch - Internet/DHCP não é necessário)\nExemplo: 192.168.1.100"
+
+#: MSGBR141
+msgid "Not a valid IP address. Please try again."
+msgstr "Endereço IP inválido. Tente novamente."
+
+#: MSGBR142
+msgid "Could not detect a network interface."
+msgstr "Não foi possível detectar uma interface de rede."
+
+#: MSGBR143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Não foi possível encontrar automaticamente o endereço MAC do receptor (%s).\n\nVerifique se ele está conectado ao mesmo switch/roteador e se o firewall do receptor não está bloqueando o ping (ICMP).\n\nDeseja continuar inserindo o endereço MAC manualmente?"
+
+#: MSGBR144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Digite o endereço MAC do receptor (exemplo: aa:bb:cc:dd:ee:ff)"
+
+#: MSGBR145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Salvar esta configuração?\n\n%s\n\nCertifique-se de que o PC receptor já esteja aguardando com o seguinte comando:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGBR146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Salvo.\n\n[!] Você deve reconstruir o loader agora para que isso tenha efeito (vá para o menu de compilação)."

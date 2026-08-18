@@ -519,3 +519,55 @@ msgstr "ENTER: Ausgewähltes Element EIN/AUS umschalten\\nSave & Exit: Speichern
 #: MSGDE131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "NVIDIA Container-Runtime (Docker): %s"
+
+#: MSGDE134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "NetConsole-Log (kein Internet nötig - Boot-bis-Panic-Log in Echtzeit über LAN)"
+
+#: MSGDE135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "NetConsole-Frühprotokoll einrichten\n\nAktueller Status: %s"
+
+#: MSGDE136
+msgid "Not configured"
+msgstr "Nicht konfiguriert"
+
+#: MSGDE137
+msgid "Configure listener IP (create/update)"
+msgstr "Listener-IP konfigurieren (erstellen/aktualisieren)"
+
+#: MSGDE138
+msgid "Disable (remove configuration)"
+msgstr "Deaktivieren (Konfiguration entfernen)"
+
+#: MSGDE139
+msgid "NetConsole configuration removed."
+msgstr "NetConsole-Konfiguration entfernt."
+
+#: MSGDE140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "Geben Sie die IP-Adresse des PCs ein, der die Logs empfängt (Listener)\n\n(Muss sich im selben LAN/Switch befinden - Internet/DHCP nicht erforderlich)\nBeispiel: 192.168.1.100"
+
+#: MSGDE141
+msgid "Not a valid IP address. Please try again."
+msgstr "Keine gültige IP-Adresse. Bitte erneut versuchen."
+
+#: MSGDE142
+msgid "Could not detect a network interface."
+msgstr "Es konnte keine Netzwerkschnittstelle erkannt werden."
+
+#: MSGDE143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "Die MAC-Adresse des Listeners (%s) konnte nicht automatisch gefunden werden.\n\nBitte prüfen Sie, ob er mit demselben Switch/Router verbunden ist und ob die Firewall des Listeners Ping (ICMP) nicht blockiert.\n\nMöchten Sie mit manueller Eingabe der MAC-Adresse fortfahren?"
+
+#: MSGDE144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "Geben Sie die MAC-Adresse des Listeners ein (Beispiel: aa:bb:cc:dd:ee:ff)"
+
+#: MSGDE145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "Diese Konfiguration speichern?\n\n%s\n\nStellen Sie sicher, dass der Listener-PC bereits mit folgendem Befehl wartet:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGDE146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Gespeichert.\n\n[!] Sie müssen den Loader jetzt neu erstellen, damit dies wirksam wird (bitte zum Build-Menü gehen)."

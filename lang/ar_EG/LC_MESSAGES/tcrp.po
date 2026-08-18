@@ -519,3 +519,55 @@ msgstr "ENTER: تبديل العنصر المحدد ON/OFF\\nSave & Exit: حفظ
 #: MSGEG131
 msgid "NVIDIA container runtime (Docker): %s"
 msgstr "بيئة تشغيل حاويات NVIDIA (Docker): %s"
+
+#: MSGEG134
+msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN)"
+msgstr "سجل NetConsole (لا حاجة للإنترنت - سجل الإقلاع حتى الانهيار يُرسل في الوقت الفعلي عبر الشبكة المحلية)"
+
+#: MSGEG135
+msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
+msgstr "إعداد سجل NetConsole المبكر\n\nالحالة الحالية: %s"
+
+#: MSGEG136
+msgid "Not configured"
+msgstr "غير مُهيأ"
+
+#: MSGEG137
+msgid "Configure listener IP (create/update)"
+msgstr "تهيئة IP المستمع (إنشاء/تحديث)"
+
+#: MSGEG138
+msgid "Disable (remove configuration)"
+msgstr "تعطيل (إزالة الإعداد)"
+
+#: MSGEG139
+msgid "NetConsole configuration removed."
+msgstr "تمت إزالة إعداد NetConsole."
+
+#: MSGEG140
+msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
+msgstr "أدخل عنوان IP للجهاز الذي سيستقبل السجلات (المستمع)\n\n(يجب أن يكون على نفس الشبكة المحلية/المحول - لا حاجة للإنترنت/DHCP)\nمثال: 192.168.1.100"
+
+#: MSGEG141
+msgid "Not a valid IP address. Please try again."
+msgstr "عنوان IP غير صالح. حاول مرة أخرى."
+
+#: MSGEG142
+msgid "Could not detect a network interface."
+msgstr "تعذر اكتشاف واجهة شبكة."
+
+#: MSGEG143
+msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
+msgstr "تعذر العثور تلقائيًا على عنوان MAC للمستمع (%s).\n\nتحقق من اتصاله بنفس المحول/الراوتر، ومن أن جدار حماية المستمع لا يحظر ping (ICMP).\n\nهل تريد المتابعة بإدخال عنوان MAC يدويًا؟"
+
+#: MSGEG144
+msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
+msgstr "أدخل عنوان MAC للمستمع (مثال: aa:bb:cc:dd:ee:ff)"
+
+#: MSGEG145
+msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgstr "هل تريد حفظ هذا الإعداد؟\n\n%s\n\nتأكد من أن جهاز المستمع في وضع الانتظار بالفعل باستخدام الأمر التالي:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+
+#: MSGEG146
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "تم الحفظ.\n\n[!] يجب عليك إعادة بناء المحمّل الآن ليصبح ساري المفعول (يرجى الانتقال إلى قائمة البناء)."
