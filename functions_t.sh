@@ -5518,7 +5518,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
         sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno
-        sudo cat $rdtemp/linuxrc.syno
     fi
 
     # [netconsole-early] usb_line 의 netconsole= 를 linuxrc.syno 최초 실행 시점에 바로
@@ -5590,6 +5589,9 @@ NCEOF
     # 도달 가능한 가장 이른 지점이다.
     sudo sed -i '/^Main() {/a \\n/netconsole-early.sh' $rdtemp/linuxrc.syno
     rm -f /tmp/netconsole-early.sh
+    # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
+    # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
+    sudo cat $rdtemp/linuxrc.syno
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
