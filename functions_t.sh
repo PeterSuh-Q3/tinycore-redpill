@@ -5866,15 +5866,26 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                 # 지금 미리 뽑아 미니팻 본문(MINIPAT_INNER)에 usr/lib/modules/netconsole.ko
                 # 로 같이 담아둔다 - 이렇게 미니팻 자체에 내장해야 다음 빌드가 이 미니팻
                 # 캐시만 재사용해도(hda1.tgz 는 이미 사라진 뒤라도) 계속 꺼내 쓸 수 있다.
+                # 주의: 이 함수가 "이미 netconsole.ko 를 내장한 미니팻"을 다시 patfile
+                # 로 받아 재압축하는 경우(재실행/재캐싱)도 있는데, 그런 입력엔 애초에
+                # hda1.tgz 가 없어 매번 hda1.tgz 로만 시도하면 재압축할 때마다
+                # netconsole.ko 가 조용히 빠지는 회귀가 생긴다(실기 확인). patfile 에서
+                # usr/lib/modules/netconsole.ko 를 직접 추출 시도부터 하고, 없을 때만
+                # hda1.tgz 를 거친다.
                 if [ "${MINIPAT_OK}" -eq 1 ]; then
-                    _nc_hda1="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)hda1\.tgz\$" | head -1)"
-                    if [ -n "${_nc_hda1}" ] \
-                       && tar -xf "${patfile}" -C "${MINIPAT_TMPDIR}" "${_nc_hda1}" 2>/dev/null \
-                       && tar -xf "${MINIPAT_TMPDIR}/${_nc_hda1}" -C "${MINIPAT_INNER}" usr/lib/modules/netconsole.ko 2>/dev/null \
+                    if tar -xf "${patfile}" -C "${MINIPAT_INNER}" usr/lib/modules/netconsole.ko 2>/dev/null \
                        && [ -f "${MINIPAT_INNER}/usr/lib/modules/netconsole.ko" ]; then
-                        echo "[netconsole] embedded netconsole.ko into minipat cache"
+                        echo "[netconsole] embedded netconsole.ko into minipat cache (already present in patfile)"
                     else
-                        echo "[netconsole] netconsole.ko not embedded into minipat cache (not found in hda1.tgz)"
+                        _nc_hda1="$(echo "${MINIPAT_LISTING}" | grep -E "(^|/)hda1\.tgz\$" | head -1)"
+                        if [ -n "${_nc_hda1}" ] \
+                           && tar -xf "${patfile}" -C "${MINIPAT_TMPDIR}" "${_nc_hda1}" 2>/dev/null \
+                           && tar -xf "${MINIPAT_TMPDIR}/${_nc_hda1}" -C "${MINIPAT_INNER}" usr/lib/modules/netconsole.ko 2>/dev/null \
+                           && [ -f "${MINIPAT_INNER}/usr/lib/modules/netconsole.ko" ]; then
+                            echo "[netconsole] embedded netconsole.ko into minipat cache (extracted from hda1.tgz)"
+                        else
+                            echo "[netconsole] netconsole.ko not embedded into minipat cache (not found in patfile or hda1.tgz)"
+                        fi
                     fi
                 fi
 
