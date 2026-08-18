@@ -506,6 +506,12 @@ function history() {
              of replacing it with a plain file. DeleteConfigKey() and preserve_usb_line_options()
              now drop general.usb_line entries for extra_cmdline keys (sn/mac1-8/vid/pid/
              netif_num) that no longer exist, instead of leaving them orphaned indefinitely.
+    1.4.3.2 NetConsole early log: stream the boot log to another PC over UDP in real time, no
+            serial port/internet/DHCP required, right up to the last line before a panic. New Environment
+            menu item auto-detects everything but the listener IP, translated into all 18 langMenu()
+            locales. Plus raw.githubusercontent.com CDN cache busting for every curl call and several
+            small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup, git-clone
+            validation, checkcpu without lscpu).             
     --------------------------------------------------------------------------------------
 EOF
 }
