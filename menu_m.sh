@@ -964,6 +964,7 @@ function modelMenu() {
   MODEL="`<${TMP_PATH}/resp`"
   writeConfigKey "general" "model" "${MODEL}"
   setSuggest $MODEL
+  resetNvidiaIfUnsupported
 
   enforceBmi2VersionCap
 
@@ -1741,7 +1742,8 @@ function langMenu() {
   load_zz
   
   setSuggest $MODEL
-  
+  resetNvidiaIfUnsupported
+
   return 0
 
 }
@@ -1962,6 +1964,42 @@ function add-addon() {
 
 function del-addon() {
   jsonfile=$(jq "del(.[\"${1}\"])" ~/redpill-load/bundled-exts.json) && echo $jsonfile | jq . > ~/redpill-load/bundled-exts.json
+}
+
+# nvidiadriver 애드온이 발행하지 않는 플랫폼 목록. tcrp-addons 의
+# nvidia-index.json 이 실제 발행 대상이라 여기가 진실의 원천이어야 맞지만,
+# 매 모델선택마다 네트워크로 확인하는 건 무겁고 메뉴 조작 자체를 네트워크
+# 의존으로 만든다. 대신 그 파일이 의도적으로 빼둔 플랫폼(denverton 은 DVA
+# 순정모듈 요구사항 때문에, avoton/braswell/bromolow/cedarview 는 커널
+# 3.10 이라 애초에 빌드 대상이 아님)을 여기 그대로 미러링한다. 이 목록이
+# nvidia-index.json 과 벌어지면(신규 플랫폼 추가/제외) 여기도 같이
+# 갱신해야 한다.
+NVIDIA_UNSUPPORTED_PLATFORMS="denverton avoton braswell bromolow cedarview"
+
+# 모델 확정 직후(플랫폼이 막 갱신된 시점) 호출한다. 지금 platform 이 위
+# 목록에 있는데 NVIDIA_ENABLED 가 이전 세션에서 켜진 채로 남아있으면,
+# 존재하지 않는 플랫폼의 애드온을 리빌드가 찾다가 실패한다 - DVA3219/
+# DVA3221 을 고르기 전에 다른 모델에서 nvidiadriver 를 켜둔 적이 있으면
+# 정확히 이 순서로 재현된다. bundled-exts.json 이 nvidiadriver 활성화의
+# 진실의 원천이므로(주석 참고: NVIDIA_ENABLED 시작부 로직) del-addon 으로
+# 직접 지우고, 표시용 거울값(general.nvidia_enabled)도 함께 되돌린다.
+# setSuggest() 자체가 아니라 여기 별도 함수로 둔 이유: setSuggest 는 모델
+# 목록을 그릴 때 후보 전체를 서브셸에서 미리보기용으로도 호출하는데(940번
+# 줄), 그 시점에 del-addon 을 실행하면 사용자가 아직 아무것도 고르지 않은
+# 상태에서 파일이 바뀌어버린다. 그래서 실제로 모델이 확정되는 지점에서만
+# 명시적으로 불러야 한다.
+function resetNvidiaIfUnsupported() {
+  local base="${platform%%(*}"
+  case " ${NVIDIA_UNSUPPORTED_PLATFORMS} " in
+    *" ${base} "*)
+      if [ "${NVIDIA_ENABLED}" = "true" ]; then
+        del-addon "nvidiadriver"
+        NVIDIA_ENABLED="false"
+        writeConfigKey "general" "nvidia_enabled" "false"
+        echo "nvidiadriver: ${base} 는 미지원 플랫폼이라 자동으로 비활성화했습니다 (빌드 오류 방지)"
+      fi
+      ;;
+  esac
 }
 
 ###############################################################################
@@ -3467,6 +3505,7 @@ fi
 
 NEXT="m"
 setSuggest $MODEL
+resetNvidiaIfUnsupported
 bfbay=$(readConfigKey "general" "bay")
 if [ -z "${bfbay}" ]; then
   bay=${bfbay}
