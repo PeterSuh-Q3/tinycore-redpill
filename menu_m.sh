@@ -318,13 +318,15 @@ FKC=$(readConfigKey "general" "friendautoupd")
 CONFIG_BUILDDATE=$(readConfigKey "general" "builddate")
 CONFIG_BOARD=$(readConfigKey "general" "board")
 
-# 릴리즈 준비 스크립트가 functions.sh에 기록한 빌드 날짜를 최초 메뉴 진입 시
-# user_config.json의 general 섹션에도 보존한다. 이미 저장된 날짜는 사용자가
-# 사용 중인 로더의 빌드 이력이므로 새 메뉴 버전으로 덮어쓰지 않는다.
-if [ -z "${CONFIG_BUILDDATE}" ]; then
-    CONFIG_BUILDDATE="${builddate}"
-    writeConfigKey "general" "builddate" "${CONFIG_BUILDDATE}"
-fi
+# MSHELL Manager System Info 탭의 "Build:"는 이 값을 그대로 보여준다 - "이
+# 로더가 최초로 만들어진 날짜"가 아니라 "가장 최근에 실제로 빌드된 날짜"를
+# 사용자가 기대하므로, 메뉴 진입 시 매번 functions.sh 의 현재 builddate 로
+# 갱신한다(예전의 "최초 1회만 기록" 방식은 재빌드해도 날짜가 안 바뀌어
+# 오해를 샀다 - 실기 확인).
+# ${builddate:-unknown}: builddate 변수 자체가 아직 없던 구버전 functions.sh
+# 와 짝을 이루는 과도기적인 경우에도 set -u 로 메뉴가 죽지 않도록 방어.
+CONFIG_BUILDDATE="${builddate:-unknown}"
+writeConfigKey "general" "builddate" "${CONFIG_BUILDDATE}"
 
 # SSD 캐시 패널 레이아웃은 선택하지 않은 기존 설정에도 기본값을 명시적으로
 # 저장해, 메뉴 라벨과 실제 user_config.json 값이 항상 일치하게 한다.
