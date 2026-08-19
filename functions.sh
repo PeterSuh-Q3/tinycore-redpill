@@ -7746,9 +7746,17 @@ function my() {
 
   # DT(Device-Tree) 모델 여부. noconfig/non-noconfig 두 분기 모두에서 SataPortMap
   # 관련 처리 대상인지 판단하는 데 같은 기준을 쓴다.
+  # 2026-08-19: 하드코딩된 v1000/r1000/geminilake(nk) 목록이 실제 공식
+  # DT/kernel5 플랫폼 목록(kver5platforms, functions.sh:165)과 어긋나 있어
+  # epyc7002(SA6400)/epyc7003/epyc7003ntb/icelaked 이 빠져 있었다 - 이
+  # 플랫폼들은 DT(model.dts의 internal_slot)로 디스크를 매핑해서
+  # SataPortMap/DiskIdxMap 을 아예 안 쓰는데도 prefillDefaultSataPortMap()이
+  # 불필요하게 채워 넣고 있었다(svrforum.com/all_nas/3173289, N54L+SA6400
+  # HBA 조합에서 온보드 SATA SSD 하나가 누락되는 문의 중 발견). 실제
+  # 플랫폼 목록을 그대로 재사용해 어긋날 일이 없게 한다.
   DT_MODEL="N"
   if [ "$ORIGIN_PLATFORM" = "v1000" ] || [ "$ORIGIN_PLATFORM" = "r1000" ] || [ "$ORIGIN_PLATFORM" = "geminilake" ] || \
-     [ "$ORIGIN_PLATFORM" = "v1000nk" ] || [ "$ORIGIN_PLATFORM" = "r1000nk" ] || [ "$ORIGIN_PLATFORM" = "geminilakenk" ]; then
+     echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}"; then
       DT_MODEL="Y"
   fi
 
