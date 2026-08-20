@@ -6572,7 +6572,9 @@ function wr_part1() {
     echo "Modifying grub.cfg for new loader boot..."
     sudo sed -i '61,$d' "${mdiskpart}"/boot/grub/grub.cfg
     tcrpfriendentry_hdd ${1} | sudo tee --append "${mdiskpart}"/boot/grub/grub.cfg
-    xtcrpconfigureentry_hdd ${1} | sudo tee --append "${mdiskpart}"/boot/grub/grub.cfg
+    # 2026-08-21: 데이터 디스크 주입 부팅에는 FRIEND 커널 진입점 하나면 충분하고,
+    # "xTCRP Configure Boot Loader" 항목은 xtcrp.tgz(방금 제거한 다운로드/백업
+    # 단계)를 전제로 한 로더 재설정 경로라 여기서는 의미가 없어 같이 뺀다.
 
     sudo cp -vf /mnt/${loaderdisk}3/bzImage-friend  "${mdiskpart}"
     sudo cp -vf /mnt/${loaderdisk}3/initrd-friend  "${mdiskpart}"
@@ -6674,32 +6676,13 @@ function wr_part3() {
 
     cd /mnt/${loaderdisk}3 && find . -name "*dsm*" -o -name "user_config.json" | sudo cpio -pdm "${mdiskpart}" 2>/dev/null
 
-    
-    TGZURL="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/refs/heads/alpine-redpill/xtcrp.tgz"
-
-    SPACELEFT=$(df --block-size=1 | grep "${mdiskpart}" | awk '{print $4}') # Check disk space left
-    FILESIZE=$(curl -k -sLI "${TGZURL}" | grep -i Content-Length | awk '{print$2}')
-    
-    FILESIZE=$(echo "${FILESIZE}" | tr -d '\r')
-    SPACELEFT=$(echo "${SPACELEFT}" | tr -d '\r')
-    
-    FILESIZE_FORMATTED=$(printf "%'d" "${FILESIZE}")
-    SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
-    FILESIZE_MB=$((FILESIZE / 1024 / 1024))
-    SPACELEFT_MB=$((SPACELEFT / 1024 / 1024))    
-    
-    echo "FILESIZE  = ${FILESIZE_FORMATTED} bytes (${FILESIZE_MB} MB)"
-    echo "SPACELEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
-    
-    if [ 0${FILESIZE} -ge 0${SPACELEFT} ]; then
-      # No disk space to download, change it to RAMDISK
-      echo "No adequate space on ${mdiskpart} to download file, skip download xtcrp.tgz... "
-      true
-      return 0
-    fi
-    
-    sudo curl -kL# "${TGZURL}" -o "${mdiskpart}"/xtcrp.tgz
-    backupxtcrp ${mdiskpart}
+    # 2026-08-21: xtcrp.tgz(약 264MB) 다운로드+백업(backupxtcrp) 단계를 제거했다.
+    # 이 파티션(7번)은 애초에 79~83MB 안팎의 여유공간만 있어 xtcrp.tgz가 들어갈
+    # 수조차 없고(공간 부족 시 조용히 skip되긴 하지만), 설령 이전에 남은
+    # /dev/shm/xtcrp.tar 잔재가 있으면 backupxtcrp() 내부의 `gunzip`(-f 없이
+    # 호출)이 "File exists"로 실패해 "Failed to decompress ... Restoring
+    # backup."로 죽는 문제도 실기에서 확인됨. 이 주입 기능 자체가 xtcrp.tgz를
+    # 필요로 하지 않으므로 아예 시도하지 않는다.
     true
 }
 
