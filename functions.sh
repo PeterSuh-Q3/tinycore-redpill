@@ -6731,7 +6731,35 @@ function get_disk_type_cnt() {
         echo "EXT_CNT=$EXT_CNT"
         echo "BIOS_CNT=$BIOS_CNT"
         echo "TB2T_CNT=$TB2T_CNT"
-    fi    
+    fi
+}
+
+# SHR/RAID 데이터 디스크는 보통 mdadm 이 자동조립한 md 배열과 그 위의 LVM VG가
+# 이미 활성 상태다. 이 상태에서 fdisk/gdisk 로 파티션을 새로 만들고
+# blockdev --rereadpt 를 하면 커널이 "Resource busy"로 거부한다(실기에서
+# 재현). 한 번만 정지시켜도 안심할 수 없다 - 파티션 테이블 변경 자체가
+# udev change 이벤트를 유발해 mdadm 이 rereadpt 시도 직전에 다시 자동조립을
+# 걸어버리는 레이스도 실기에서 확인됐다. 그래서 rereadpt 직전마다 매번
+# 다시 정지시키고, 실패하면 짧게 대기 후 재시도한다. 데이터 자체는 건드리지
+# 않고 단순히 비활성화만 하므로(vgchange -an / mdadm --stop) 안전하게
+# 재시도 가능하다.
+function rereadPartitionTable() {
+    local edisk="${1}"
+    local _mdd _vg _try
+
+    for _try in 1 2 3; do
+        for _mdd in $(lsblk -ln -o NAME,TYPE "${edisk}" 2>/dev/null | awk '$2 ~ /^raid/{print $1}'); do
+            for _vg in $(sudo pvs --noheadings -o vg_name "/dev/${_mdd}" 2>/dev/null); do
+                echo "Deactivating LVM VG ${_vg} on /dev/${_mdd}..."
+                sudo vgchange -an "${_vg}" >/dev/null 2>&1
+            done
+            echo "Stopping md array /dev/${_mdd} (built on ${edisk}) before rereading partition table..."
+            sudo mdadm --stop "/dev/${_mdd}" >/dev/null 2>&1
+        done
+        sudo blockdev --rereadpt "${edisk}" && return 0
+        sleep 2
+    done
+    return 1
 }
 
 function inject_loader() {
@@ -6790,7 +6818,7 @@ function inject_loader() {
                       IS_GPT="ON"
                   fi
   
-                  partitions=$(fdisk -l "$edisk" | grep "^$edisk[0-9]")
+                  partitions=$(sudo fdisk -l "$edisk" | grep "^$edisk[0-9]")
           
                   start_1=$(echo "$partitions" | grep "${edisk}1" | awk '{print $2}')
                   start_2=$(echo "$partitions" | grep "${edisk}2" | awk '{print $2}')
@@ -6933,9 +6961,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         # SHR OR RAID can make primary partition
                         echo -e "Create primary partitions on disk. ${model} \n"
                         # get 1st partition's end sector
-                        end_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
+                        end_sector="$(sudo fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 1)" | awk '{print $3}')"
 
-                        if [ $end_sector = "4982527" ]; then
+                        if [ "${end_sector}" = "4982527" ]; then
                         # Before DSM 7.0.1    
                             last_sector="9176832"
                         else
@@ -6963,8 +6991,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             return
                         fi
                         sleep 2
-                        sudo blockdev --rereadpt "${edisk}"
-                        
+                        rereadPartitionTable "${edisk}"
+
                         if [ $? -ne 0 ]; then
                             echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
@@ -6973,9 +7001,9 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         sleep 4         
 
                         # make 6th partition
-                        last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
+                        last_sector="$(sudo fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 5)" | awk '{print $3}')"
                         # for RAID 1, RAID 5, RAID 6, BASIC ETC...
-                        [ -z $last_sector ] && last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
+                        [ -z "${last_sector}" ] && last_sector="$(sudo fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
 
                         if [ $TB2T_CNT -ge 1 ]; then
                             # +1 sectors 
@@ -7010,8 +7038,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             return
                         fi
                         sleep 2
-                        sudo blockdev --rereadpt "${edisk}"
-                        
+                        rereadPartitionTable "${edisk}"
+
                         if [ $? -ne 0 ]; then
                             echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                             remove_loader
@@ -7022,11 +7050,11 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                         echo -e "Create 7th partition on disks... $edisk\n"
                         if [ $(/sbin/blkid | grep "8765-4321" | wc -l) -eq 0 ]; then
                             # make 7th partition
-                            last_sector="$(fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
+                            last_sector="$(sudo fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 6)" | awk '{print $3}')"
 
                             if [ $TB2T_CNT -ge 1 ]; then
-                                # +1 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
+                                # +1 sectors
+                                [ -n "${last_sector}" ] && last_sector=$((${last_sector} + 1))
                             else
                                 if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                     # +65 sectors 
@@ -7051,8 +7079,8 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                                 return
                             fi
                             sleep 2
-                            sudo blockdev --rereadpt "${edisk}"
-                            
+                            rereadPartitionTable "${edisk}"
+
                             if [ $? -ne 0 ]; then
                                 echo -e "Failed to reread partition table on ${edisk}. Stop processing!!!\n"
                                 remove_loader
@@ -7078,7 +7106,7 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
                         fi
                         sleep 2
-                        sudo blockdev --rereadpt "${edisk}"                        
+                        rereadPartitionTable "${edisk}"
                         [ $? -ne 0 ] && returnto "Make BIOS Boot Parttion (GPT) or Activate (MBR) on ${edisk} failed. Stop processing!!! " && remove_loader && return
                         sleep 2
 
@@ -7089,17 +7117,38 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
                             echo "Creating FAT16 filesystem on partition $(get_partition "${edisk}" 4)"
                             sudo mkfs.vfat -i 12345678 -F16 "$(get_partition "${edisk}" 4)" > /dev/null 2>&1
                         fi
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to create filesystem on $(get_partition "${edisk}" 4). Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
                         synop1=$(get_partition "${edisk}" 4)
                         wr_part1 "4"
                         [ $? -ne 0 ] && remove_loader && return
 
-                        sudo mkfs.vfat -F16 "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
+                        # 6/7번 파티션은 남는 공간을 그러모아 만드는 몇 MB짜리 스테이징
+                        # 공간이라 -F16 을 강제하면 dosfstools가 "too small ... filesystem"
+                        # 으로 거부한다(실기에서 재현, 5.9MB 파티션). 크기를 강제하지 않고
+                        # mkfs.vfat 이 크기에 맞는 FAT 종류를 알아서 고르게 하고, 실패하면
+                        # (구 코드는 여기서 exit code 를 버려서 실패해도 그대로 마운트를
+                        # 시도하다 "wrong fs type"으로 뒤늦게 죽었다) 여기서 바로 멈춘다.
+                        sudo mkfs.vfat "$(get_partition "${edisk}" 6)" > /dev/null 2>&1
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to create filesystem on $(get_partition "${edisk}" 6). Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
                         synop2=$(get_partition "${edisk}" 6)
                         wr_part2 "6"
                         [ $? -ne 0 ] && remove_loader && return
 
                         #prepare_img
-                        sudo mkfs.vfat -i 87654321 -F16 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
+                        sudo mkfs.vfat -i 87654321 "$(get_partition "${edisk}" 7)" > /dev/null 2>&1
+                        if [ $? -ne 0 ]; then
+                            echo -e "Failed to create filesystem on $(get_partition "${edisk}" 7). Stop processing!!!\n"
+                            remove_loader
+                            return
+                        fi
                         synop3=$(get_partition "${edisk}" 7)
                         wr_part3 "7"
                         [ $? -ne 0 ] && remove_loader && return
@@ -7241,10 +7290,16 @@ function remove_loader() {
                 IFS=' ' read -ra partitions <<< "$target_partitions"
                 for part in "${partitions[@]}"; do
                     echo "Processing Delete: Partition $part on GPT disk"
+                    # 이전 실패한 주입 시도가 이 파티션을 마운트해 둔 채 남아있을 수
+                    # 있다(실기에서 재현: /mnt/sdb4가 언마운트 안 된 채로 남아있어서
+                    # 다음 재시도의 재파티션이 "Resource busy"로 죽었다). 삭제 전에
+                    # 먼저 언마운트한다.
+                    sudo umount -f "${disk}${part}" > /dev/null 2>&1
                     sudo sgdisk -d "$part" "$disk" > /dev/null 2>&1
                 done
+                rereadPartitionTable "$disk" > /dev/null 2>&1
             fi
-    
+
         elif [[ "$partition_table" == "dos" ]]; then
             echo "Detected MBR (DOS) partition table on $disk"
             
@@ -7259,10 +7314,13 @@ function remove_loader() {
                 IFS=' ' read -ra partitions <<< "$target_partitions"
                 for part in "${partitions[@]}"; do
                     echo "Processing Delete: Partition $part on MBR disk"
+                    # GPT 쪽과 동일한 이유로 삭제 전에 먼저 언마운트한다.
+                    sudo umount -f "${disk}${part}" > /dev/null 2>&1
                     echo -e "d\n${part}\nw\n" | sudo fdisk "$disk" > /dev/null 2>&1
                 done
+                rereadPartitionTable "$disk" > /dev/null 2>&1
             fi
-    
+
         else
             echo "Unknown partition table type for $disk. Skipping..."
         fi
