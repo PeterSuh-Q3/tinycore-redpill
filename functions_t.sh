@@ -6623,19 +6623,33 @@ function wr_part3() {
     sudo rm -rf "${mdiskpart}"/*
 
     diskid=$(echo "${fediskpart}" | sed 's#/dev/##')
-    spacechk "${loaderdisk}3" "${diskid}"
+
+    # 2026-08-20: spacechk()가 찍던 "SOURCE SPACE USED"는 로더 파티션3
+    # 전체 디스크 사용량(캐시/pat 파일 등 포함)이라, 실제로 이 파티션에
+    # 복사되는 zImage-dsm+initrd-dsm 크기와는 무관한데도 마치 전송량인 것처럼
+    # 보여서 혼란을 줬다(실기에서 "1.17GB 필요"로 오인한 사례). 목적지 여유
+    # 공간만 직접 계산하고, 실제 복사 대상 파일은 항목별로 보여준다.
+    SPACELEFT=$(df --block-size=1 | awk '/'${diskid}'/{print $4}')
+    SPACELEFT_FORMATTED=$(printf "%'d" "${SPACELEFT}")
+    SPACELEFT_MB=$(awk "BEGIN {printf \"%.1f\", ${SPACELEFT} / 1024 / 1024}")
+    msgwarning "TARGET SPACE LEFT = ${SPACELEFT_FORMATTED} bytes (${SPACELEFT_MB} MB)"
+
     FILESIZE1=$(ls -l /mnt/${loaderdisk}3/zImage-dsm | awk '{print$5}')
     FILESIZE2=$(ls -l /mnt/${loaderdisk}3/initrd-dsm | awk '{print$5}')
-    
+
     a_num=$(echo $FILESIZE1 | bc)
     b_num=$(echo $FILESIZE2 | bc)
     t_num=$(($a_num + $b_num + 2000 ))
     TOTALUSED=$(echo $t_num)
 
+    msgwarning "Files to copy onto ${fediskpart}:"
+    msgwarning "  zImage-dsm = $(printf "%'d" "${a_num}") bytes ($(awk "BEGIN {printf \"%.1f\", ${a_num} / 1024 / 1024}") MB)"
+    msgwarning "  initrd-dsm = $(printf "%'d" "${b_num}") bytes ($(awk "BEGIN {printf \"%.1f\", ${b_num} / 1024 / 1024}") MB)"
+
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
     msgwarning "TARGET TOTAL USED = ${TOTALUSED_FORMATTED} bytes (${TOTALUSED_MB} MB)"
-    
+
     if [ 0${TOTALUSED} -ge 0${SPACELEFT} ]; then
         mountpoint -q "${mdiskpart}" && sudo umount "${mdiskpart}"
         returnto "Source Partition is too big ${TOTALUSED}, Space left ${SPACELEFT} !!!. Stop processing!!! " 
