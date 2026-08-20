@@ -5816,7 +5816,22 @@ NCEOF
     if [ "${BUS}" != "block" ]; then
         [ "${MLMETHOD}" = "PML" ] && sudo touch "${RAMDISK_PATH}/addons/pml_on" || sudo rm -f "${RAMDISK_PATH}/addons/pml_on"
     fi
-    
+
+    # 2026-08-21: exts/all-modules/firmwareamdgpu.tgz는 (kernel5 플랫폼 기준)
+    # initrd-dsm 전체의 약 28%(28MB)를 차지하는데, tcrp-modules의
+    # all-modules/src/install.sh는 하드웨어 감지 없이 "파일이 있으면 무조건
+    # 설치"한다 - AMD GPU가 없는 대부분의 서버(예: epyc7002/SA6400은 AMD EPYC
+    # CPU 서버 플랫폼일 뿐 AMD GPU 유무와는 무관)에서도 항상 그대로 실린다.
+    # 위쪽(line ~5414)에서 이미 쓰는 것과 동일한 AMD VGA 감지 패턴을 재사용해,
+    # 실제 AMD GPU가 없으면 cpio로 묶기 전에 이 파일만 제거한다. PML이든
+    # IML이든 exts/ 트리 전체가 그대로 initrd-dsm에 포함되므로 MLMETHOD와
+    # 무관하게 항상 확인한다.
+    if [ -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" ] && ! lspci -nn 2>/dev/null | grep -qi 'VGA.*\[1002:'; then
+        _AMDGPU_FW_SIZE=$(du -h "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" 2>/dev/null | awk '{print $1}')
+        echo "No AMD GPU detected - dropping exts/all-modules/firmwareamdgpu.tgz (${_AMDGPU_FW_SIZE}) from initrd-dsm"
+        sudo rm -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz"
+    fi
+
     # Reassembly ramdisk ( no compress, use cpio raw type )
     if [ "$RD_COMPRESSED" = "false" ]; then
         if [ "$FRKRNL" = "NO" ]; then
