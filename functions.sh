@@ -6849,30 +6849,45 @@ function inject_loader() {
   SHR=$((SHR + GPT))
   SHR_EX=$((SHR_EX + GPT_EX))
   # 사용자 메뉴 제공 및 선택 처리
+  # 2026-08-19: 텍스트 read -p 프롬프트를 dialog --menu 로 전환. 이 위의
+  # 진단 echo(감지된 디스크 타입/파티션 시작섹터 등)는 진행 로그라 그대로
+  # 두고, "선택"이라는 의사결정 지점만 다이얼로그로 바꾼다 - 전체를
+  # 다이얼로그로 감싸면 이 함수에서 자주 나오는 에러 출력(fdisk/mount 등)이
+  # 팝업 뒤로 숨어 원인 추적이 어려워질 위험이 커서 의도적으로 최소화함.
   if [ -z "$FIRST_SHR" ]; then
       if [ ${#DETECTED_DISKS[@]} -gt 0 ]; then
           echo "Detected SHR(MBR) or GPT disks:"
+          : > "${TMP_PATH}/menu_injectdisk"
           for i in "${!DETECTED_DISKS[@]}"; do
               echo "$((i + 1)). ${DETECTED_DISKS[$i]}"
+              echo "$((i + 1)) \"${DETECTED_DISKS[$i]}\"" >> "${TMP_PATH}/menu_injectdisk"
           done
-      
-          while true; do
-              read -p "Select a disk (enter the number): " selection
-              
-              if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "${#DETECTED_DISKS[@]}" ]; then
-                  FIRST_SHR="${DETECTED_DISKS[$((selection - 1))]}"
-                  break
-              else
-                  echo "Invalid selection. Please try again."
-              fi
-          done
-      
-          echo "You selected: $FIRST_SHR"
+
+          dialog --backtitle "$(backtitle)" --title "Select a disk" \
+              --menu "Detected SHR(MBR) or GPT disks:" 0 0 $(dlgmenuheight ${#DETECTED_DISKS[@]}) \
+              --file "${TMP_PATH}/menu_injectdisk" 2>"${TMP_PATH}/resp_injectdisk"
+
+          if [ $? -eq 0 ]; then
+              selection="$(cat "${TMP_PATH}/resp_injectdisk")"
+              FIRST_SHR="${DETECTED_DISKS[$((selection - 1))]}"
+              echo "You selected: $FIRST_SHR"
+          else
+              echo "No disk selected."
+          fi
+          rm -f "${TMP_PATH}/menu_injectdisk" "${TMP_PATH}/resp_injectdisk"
       else
           echo "No MBR SHR or GPT disks detected."
       fi
-  fi    
-  
+  fi
+
+  # 예전 read -p 루프는 취소가 불가능해 FIRST_SHR이 항상 채워졌지만,
+  # dialog --menu는 Cancel/Esc로 빈 값이 나올 수 있다 - 아래 SHR_EX/SHR
+  # 카운트 체크는 FIRST_SHR 유무와 무관하게 통과해버리므로 여기서 명시적으로
+  # 막아준다.
+  if [ -z "$FIRST_SHR" ]; then
+      returnto "No disk selected. Function Exit now!!! Press any key to continue..." && return
+  fi
+
   [ -n "$FIRST_SHR" ] && echo -e "Selected Synodisk Bootloader Inject Disk: $FIRST_SHR \n"
 
   [ -n "$FIRST_SHR" ] && sudo $FDISK -l "${FIRST_SHR}"
@@ -6892,18 +6907,13 @@ function inject_loader() {
   fi
 
   echo -e "do_ex_first = ${do_ex_first} \n"
-  
-echo -n "(Warning) Do you want to port the bootloader to Syno disk? [yY/nN] : "
-readanswer
-if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+
+dialog --backtitle "$(backtitle)" --title "Inject Bootloader" \
+    --yesno "(Warning) Do you want to port the bootloader to Syno disk?\n\nTarget disk: ${FIRST_SHR}" 0 0
+if [ $? -eq 0 ]; then
     synomodel="$(jq -r -e '.general.model' $userconfigfile)"
     synoversion="$(jq -r -e '.general.version' $userconfigfile)"
     getvarsmshell "${synomodel}-${synoversion}"
-    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
-        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
-        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
-    fi    
-
     tce-load -i gdisk
     if [ $? -eq 0 ]; then
         echo "Install gdisk OK !!!"
@@ -7248,14 +7258,9 @@ function debug_msg() {
 
 function remove_loader() {
 
-  echo -n "(Warning) Do you want to remove partitions from Syno disk? [yY/nN] : "
-  readanswer
-  if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-
-    if [ ! -f /tmp/tce/optional/inject-tool.tgz ]; then
-        curl -kL# https://github.com/PeterSuh-Q3/tinycore-redpill/raw/refs/heads/main/inject-tool.tgz -o /tmp/tce/optional/inject-tool.tgz
-        tar -zxvf /tmp/tce/optional/inject-tool.tgz -C /tmp/tce/optional/    
-    fi    
+  dialog --backtitle "$(backtitle)" --title "Remove Injected Bootloader" \
+      --yesno "(Warning) Do you want to remove partitions from Syno disk?" 0 0
+  if [ $? -eq 0 ]; then
 
     tce-load -i gdisk
     if [ $? -eq 0 ]; then
