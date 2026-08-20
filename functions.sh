@@ -6741,8 +6741,12 @@ function inject_loader() {
   fi
 
   plat=$(cat /mnt/${loaderdisk}1/GRUB_VER | grep PLATFORM | cut -d "=" -f2 | tr '[:upper:]' '[:lower:]' | sed 's/"//g')
-  if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-      returnto "${plat} is not supported... Stop processing!!! " 
+  # ORIGIN_PLATFORM은 getvarsmshell()(my() 빌드 흐름)에서만 설정되는 변수라,
+  # my()를 거치지 않고 바로 호출되는 이 "부트로더 주입" 기능에서는 정의된 적이
+  # 없어 set -u 하에서 "unbound variable"로 즉시 죽었다(실기에서 재현). 바로
+  # 위에서 이미 빌드된 로더의 GRUB_VER에서 읽어온 plat을 검사해야 한다.
+  if echo ${kver5platforms} | grep -qw ${plat}; then
+      returnto "${plat} is not supported... Stop processing!!! "
       return
   fi
 
