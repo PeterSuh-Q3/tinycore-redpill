@@ -6991,7 +6991,7 @@ if [ $? -eq 0 ]; then
                             fi
                             echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                         else
-                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인
@@ -7016,18 +7016,25 @@ if [ $? -eq 0 ]; then
                         [ -z "${last_sector}" ] && last_sector="$(sudo fdisk -l "${edisk}" | grep "$(get_partition "${edisk}" 3)" | awk '{print $3}')"
 
                         if [ $TB2T_CNT -ge 1 ]; then
-                            # +1 sectors 
+                            # +1 sectors
                             [ -n $last_sector ] && last_sector=$((${last_sector} + 1))
                         else
-                            if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
-                                # +65 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
-                            else
-                                # +513 sectors 
-                                [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
-                            fi   
+                            # 2026-08-20: 이전에는 플랫폼별로 +513/+65 섹터의 고정
+                            # 오프셋을 뒀는데, 이 값들은 예전 fdisk 버전에서만 우연히
+                            # 맞던 매직넘버였다. 최신 util-linux fdisk(2.42.1, 새 로지컬
+                            # 파티션에 1MiB 정렬을 강제)에서는 +513으로 부족해 "Sector
+                            # X is already allocated"로 거부되고, 스크립트가 예상 못 한
+                            # 재입력 프롬프트가 뜨면서 이후 모든 파이프 입력(+13M, w)이
+                            # 한 칸씩 밀려 fdisk 자신의 기본값(짜투리 공간 시작부의 작은
+                            # 갭)으로 파티션이 엉뚱하게 생기는 문제가 실기에서 재현됨.
+                            # 고정 오프셋 대신 1MiB(2048섹터) 경계로 올림한다. 실기에서
+                            # 최소 허용 시작 섹터가 딱 다음 경계(+1칸)보다도 더 뒤였던
+                            # 것을 확인했으므로(정확한 예약 크기는 알 수 없어 안전하게)
+                            # 한 칸 더(+2칸) 여유를 둔다 - 짜투리 공간이 수십~수백MB라
+                            # 1MiB 정도 더 쓰는 건 무시할 수준이다.
+                            [ -n "${last_sector}" ] && last_sector=$(( (last_sector / 2048 + 2) * 2048 ))
                         fi
-                        
+
                         # +13M
                         echo -e "Create 6th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
@@ -7038,7 +7045,7 @@ if [ $? -eq 0 ]; then
                             else
                                 partsize="13M"
                             fi
-                            echo -e "n\n$last_sector\n+$partsize\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n$last_sector\n+$partsize\nw\n" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                         fi
 
                         # gdisk 명령의 성공 여부 확인 (6th partition)
@@ -7066,20 +7073,16 @@ if [ $? -eq 0 ]; then
                                 # +1 sectors
                                 [ -n "${last_sector}" ] && last_sector=$((${last_sector} + 1))
                             else
-                                if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
-                                    # +65 sectors 
-                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 65))
-                                else
-                                    # +513 sectors 
-                                    [ -n $last_sector ] && last_sector=$((${last_sector} + 513))
-                                fi
+                                # 6th 파티션과 동일한 이유(고정 섹터 오프셋이 최신 fdisk의
+                                # 1MiB 정렬 강제를 못 넘음) - 다음 1MiB 경계로 올림한다.
+                                [ -n "${last_sector}" ] && last_sector=$(( (last_sector / 2048 + 2) * 2048 ))
                             fi
-                            
+
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
                                 echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
                             else
-                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                                echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                             fi
 
                             # gdisk 명령의 성공 여부 확인 (7th partition)
@@ -7113,7 +7116,7 @@ if [ $? -eq 0 ]; then
                                 fi
                             fi    
                         else
-                            echo -e "a\n4\nw" | sudo /sbin/fdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "a\n4\nw" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                         fi
                         sleep 2
                         rereadPartitionTable "${edisk}"
@@ -7321,7 +7324,7 @@ function remove_loader() {
                     echo "Processing Delete: Partition $part on MBR disk"
                     # GPT 쪽과 동일한 이유로 삭제 전에 먼저 언마운트한다.
                     sudo umount -f "${disk}${part}" > /dev/null 2>&1
-                    echo -e "d\n${part}\nw\n" | sudo fdisk "$disk" > /dev/null 2>&1
+                    echo -e "d\n${part}\nw\n" | sudo fdisk -w always -W always "$disk" > /dev/null 2>&1
                 done
                 rereadPartitionTable "$disk" > /dev/null 2>&1
             fi
