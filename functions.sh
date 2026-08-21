@@ -6790,6 +6790,12 @@ function rereadPartitionTable() {
 
 function inject_loader() {
 
+  # Keep cleanup variables defined even when disk classification rejects every
+  # candidate; set -u must not terminate the menu while reporting the error.
+  synop1=""
+  synop2=""
+  synop3=""
+
   if [ ! -f /mnt/${loaderdisk}3/bzImage-friend ] || [ ! -f /mnt/${loaderdisk}3/initrd-friend ] || [ ! -f /mnt/${loaderdisk}3/zImage-dsm ] || [ ! -f /mnt/${loaderdisk}3/initrd-dsm ] || [ ! -f /mnt/${loaderdisk}3/user_config.json ] || [ ! $(grep -i "Tiny Core Friend" /mnt/${loaderdisk}1/boot/grub/grub.cfg | wc -l) -eq 1 ]; then
     returnto "The loader has not been built yet. Start with the build.... Stop processing!!! " && return
   fi
@@ -6992,7 +6998,7 @@ if [ $? -eq 0 ]; then
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ -z "${BOOTMAKE}" ] && [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 0 ]; then
+                elif [ -z "${BOOTMAKE}" ] && [ $RAID_CNT -eq 3 ] && { [ $DOS_CNT -eq 0 ] || [ $TB2T_CNT -ge 1 ]; }; then
 
                     prepare_grub
                     [ $? -ne 0 ] && return
@@ -7230,7 +7236,7 @@ if [ $? -eq 0 ]; then
                 if [ $RAID_CNT -eq 0 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -eq 0 ] && [ $EXT_CNT -eq 0 ]; then
                     echo "Skip this disk as it is a loader disk. $model"
                     continue
-                elif [ $RAID_CNT -eq 3 ] && [ $DOS_CNT -eq 3 ] && [ $W95_CNT -ge 1 ] && [ $EXT_CNT -eq 0 ]; then
+                elif [ $RAID_CNT -eq 3 ] && [ $W95_CNT -ge 1 ] && [ $EXT_CNT -eq 0 ] && { [ $DOS_CNT -eq 3 ] || [ $TB2T_CNT -ge 1 ]; }; then
                     # single SHR 
                     prepare_grub
                     [ $? -ne 0 ] && remove_loader && return
