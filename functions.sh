@@ -5764,17 +5764,25 @@ NCEOF
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # The shared aeudev recipe owns MSHELL Manager release metadata.  Keep it
-    # outside this build script so a new SPK only changes that recipe.
-    MSHELL_MANAGER_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/recipes/universal.json"
-    MSHELL_MANAGER_MANIFEST="$(curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_MANIFEST_URL}" 2>/dev/null)"
-    MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.name // empty' 2>/dev/null)"
-    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.url // empty' 2>/dev/null)"
-    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -r '.mshell_manager.sha256 // empty' 2>/dev/null)"
+    # MSHELL Manager는 이제 alpine-redpill/tools에 .spk를 커밋해 두지 않는다.
+    # syno-amdgpu-driver(AMD 런타임)와 동일하게, 공개 미러 repo
+    # mshell-manager-rel의 releases/latest를 GitHub API로 직접 조회해
+    # 최신 자산의 URL/sha256(네이티브 digest 필드)을 얻는다. 소스는
+    # private mshell-manager repo가 갖고 있고, 이 repo는 릴리즈마다
+    # 자동으로 미러링된다(2026-08-22).
+    MSHELL_MANAGER_RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/mshell-manager-rel/releases/latest"
+    MSHELL_MANAGER_RELEASE_JSON="$(curl -kfsSL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_RELEASE_API}" 2>/dev/null)"
+    MSHELL_MANAGER_ASSET_JSON="$(printf '%s' "${MSHELL_MANAGER_RELEASE_JSON}" | jq -c '
+      .assets[]? | select(.name | test("^MshellManager-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))}
+    ' 2>/dev/null | head -n 1)"
+    MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
+    MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
     if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^MshellManager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
         ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
-      echo "[!] MSHELL Manager metadata in aeudev recipe is missing or invalid; skipped."
+      echo "[!] MSHELL Manager latest release metadata is missing or invalid; skipped."
     elif ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
         -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
       echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
@@ -5784,11 +5792,10 @@ NCEOF
       echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     else
-      # aeudev's DSM-side installer reads this verified metadata after boot.
-      # Keeping it beside the SPK lets that installer compare versions and
-      # perform upgrades without duplicating release data in its shell code.
-      printf '%s' "${MSHELL_MANAGER_MANIFEST}" | jq -c '.mshell_manager' \
-        > "${RAMDISK_PATH}/addons/mshell-manager.json"
+      # aeudev's DSM-side installer는 부팅 후 이 검증된 메타데이터를 읽는다.
+      # SPK 옆에 두면 그 설치기가 릴리즈 데이터를 셸 코드에 중복시키지 않고도
+      # 버전 비교와 업그레이드를 수행할 수 있다.
+      printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" > "${RAMDISK_PATH}/addons/mshell-manager.json"
       echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
     fi
 
