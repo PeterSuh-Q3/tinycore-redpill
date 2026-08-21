@@ -520,7 +520,7 @@ function history() {
             locales. Plus raw.githubusercontent.com CDN cache busting for every curl call and several
             small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup, git-clone
             validation, checkcpu without lscpu).
-    1.4.3.3 HEADLINE: "Inject Bootloader to Syno DISK" (inject_loader/remove_loader) repaired
+    1.4.3.3 HEADLINE: Inject Bootloader to Syno DISK (inject_loader/remove_loader) repaired
             end-to-end on real hardware, including the >2TB GPT path. Fixed: missing sudo on
             fdisk -l plus unquoted comparisons crashing partition-boundary math; blockdev
             --rereadpt "Resource busy" from a still-assembled md/LVM stack (new
@@ -1155,7 +1155,7 @@ EOF
 # no longer depending on lscpu.
 
 # 2026.08.22 v1.4.3.3
-# HEADLINE: "Inject Bootloader to Syno DISK" (inject_loader/remove_loader) repaired end-to-end
+# HEADLINE: Inject Bootloader to Syno DISK (inject_loader/remove_loader) repaired end-to-end
 # on real hardware, including the >2TB GPT path. Fixed: missing sudo on fdisk -l plus unquoted
 # comparisons crashing partition-boundary math; blockdev --rereadpt "Resource busy" from a
 # still-assembled md/LVM stack (new rereadPartitionTable() helper stops and retries); forced
@@ -1494,7 +1494,7 @@ function showlastupdate() {
 # and several small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup,
 # git-clone validation, checkcpu without lscpu).
 # 2026.08.22 v1.4.3.3
-# "Inject Bootloader to Syno DISK" repaired end-to-end on real hardware (>2TB GPT path
+# Inject Bootloader to Syno DISK repaired end-to-end on real hardware (>2TB GPT path
 # included): fixed fdisk/blockdev/mkfs.vfat/mount/sector-math/gdisk-path bugs found while
 # testing on real hardware, dropped xtcrp.tgz from the injection path, added a dialog UI and a
 # per-file size breakdown for partition 4. MSHELL Manager and Syno Smart Info now pull their
