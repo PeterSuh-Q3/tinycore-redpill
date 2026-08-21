@@ -6818,6 +6818,10 @@ function inject_loader() {
       get_disk_type_cnt "${edisk}" "N"
       
       if [ $RAID_CNT -eq 3 ]; then
+          # GPT layouts may label the EFI/system partitions differently across
+          # fdisk versions (for example 2 Linux filesystem entries plus one
+          # EFI System entry).  Do not reject a valid GPT disk solely because
+          # DOS_CNT/W95_CNT does not match the historical 3/0 layout.
           case "$DOS_CNT $W95_CNT" in
               "0 1")
                   echo "This is SHR Type Hard Disk. $edisk"
@@ -6830,7 +6834,7 @@ function inject_loader() {
                   DETECTED_DISKS+=("$edisk")  # 배열에 추가
                   FIRST_SHR="$edisk"
                   ;;
-              "0 0" | "3 0")
+              *\ 0)
                   EXPECTED_START_1=8192
                   EXPECTED_START_2=16785408
   
