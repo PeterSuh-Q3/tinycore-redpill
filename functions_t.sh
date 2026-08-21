@@ -6539,7 +6539,13 @@ function wr_part1() {
     b_num=$(echo $FILESIZE2 | bc)
     c_num=$(echo $SPACEUSED | bc)
     t_num=$(($a_num + $b_num + $c_num))
-    
+
+    # 2026-08-21: wr_part3()의 "Files to copy onto..." 항목별 표기와 동일한
+    # 스타일로, FRIEND 커널 두 파일의 크기도 여기서 보여준다.
+    msgwarning "Files to copy onto ${fediskpart}:"
+    msgwarning "  bzImage-friend = $(printf "%'d" "${a_num}") bytes ($(awk "BEGIN {printf \"%.1f\", ${a_num} / 1024 / 1024}") MB)"
+    msgwarning "  initrd-friend  = $(printf "%'d" "${b_num}") bytes ($(awk "BEGIN {printf \"%.1f\", ${b_num} / 1024 / 1024}") MB)"
+
     TOTALUSED=$(echo $t_num)
     TOTALUSED_FORMATTED=$(printf "%'d" "${TOTALUSED}")
     TOTALUSED_MB=$(awk "BEGIN {printf \"%.1f\", ${TOTALUSED} / 1024 / 1024}")
