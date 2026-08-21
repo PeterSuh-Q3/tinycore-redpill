@@ -5799,6 +5799,34 @@ NCEOF
       echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
     fi
 
+    # Syno Smart Info(SynoSmartInfo)는 이미 공개 repo라 mshell-manager-rel 같은
+    # 미러가 필요 없다 - releases/latest를 바로 조회한다(2026-08-22).
+    SSI_RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/SynoSmartInfo/releases/latest"
+    SSI_RELEASE_JSON="$(curl -kfsSL --retry 2 --connect-timeout 15 "${SSI_RELEASE_API}" 2>/dev/null)"
+    SSI_ASSET_JSON="$(printf '%s' "${SSI_RELEASE_JSON}" | jq -c '
+      .assets[]? | select(.name | test("^Synosmartinfo-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))}
+    ' 2>/dev/null | head -n 1)"
+    SSI_SPK="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
+    SSI_URL="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
+    SSI_SHA256="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
+    if ! echo "${SSI_SPK}" | grep -Eq '^Synosmartinfo-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
+        [ "${SSI_URL##*/}" != "${SSI_SPK}" ] || \
+        ! echo "${SSI_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
+      echo "[!] Syno Smart Info latest release metadata is missing or invalid; skipped."
+    elif ! curl -kfL --retry 2 --connect-timeout 15 "${SSI_URL}" \
+        -o "${RAMDISK_PATH}/addons/${SSI_SPK}"; then
+      echo "[!] Syno Smart Info SPK download failed; addon will retry after DSM boots."
+      sudo rm -f "${RAMDISK_PATH}/addons/${SSI_SPK}"
+    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${SSI_SPK}" 2>/dev/null | awk '{print $1}')" != \
+        "${SSI_SHA256}" ]; then
+      echo "[!] Syno Smart Info SPK checksum mismatch; discarded."
+      sudo rm -f "${RAMDISK_PATH}/addons/${SSI_SPK}"
+    else
+      printf '%s' "${SSI_ASSET_JSON}" > "${RAMDISK_PATH}/addons/synosmartinfo.json"
+      echo "Syno Smart Info SPK saved to /addons/${SSI_SPK}"
+    fi
+
     # If a supported AMD display controller is present, stage the matching
     # runtime SPK from the latest release for every MSHELL module mode.
     if [ -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
