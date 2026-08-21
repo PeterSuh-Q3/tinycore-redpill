@@ -6,7 +6,12 @@ map_pkg() {
     e2fsprogs) echo e2fsprogs ;;
     mdadm) echo mdadm ;;
     ntpclient) echo chrony ;;
-    grub2-multi) echo grub ;;
+    # TinyCore의 grub2-multi는 이름 그대로 BIOS+EFI 멀티타깃 패키지다. Alpine은
+    # 이걸 코어(grub) / i386-pc 타깃(grub-bios) / x86_64-efi 타깃(grub-efi)으로
+    # 쪼개 놨는데, 예전엔 코어만 설치해서 grub-install 자체는 있어도 타깃 모듈이
+    # 없어 "modinfo.sh doesn't exist. Please specify --target or --directory"로
+    # 죽었다(실기 재현). functions.sh는 두 타깃을 모두 쓰므로 셋 다 설치한다.
+    grub2-multi) echo "grub grub-efi grub-bios" ;;
     gdisk) echo gptfdisk ;;
     bc) echo bc ;;
     dosfstools) echo dosfstools ;;
@@ -24,17 +29,24 @@ for arg in "$@"; do
     -*) continue ;;
   esac
   pkg="${arg%.tcz}"
-  apkpkg="$(map_pkg "$pkg")"
-  if apk info -e "$apkpkg" >/dev/null 2>&1; then
-    echo "[tce-load-shim] $pkg -> $apkpkg (already installed)"
+  # 매핑 결과는 공백으로 구분된 1개 이상의 패키지다(grub2-multi -> 3개). 하나로
+  # 뭉뚱그려 apk info -e 로 검사하면 셋 중 하나만 깔려 있어도 "already installed"
+  # 로 오판하므로, 반드시 개별 검사해서 빠진 것만 설치한다.
+  apkpkgs="$(map_pkg "$pkg")"
+  missing=""
+  for p in ${apkpkgs}; do
+    apk info -e "$p" >/dev/null 2>&1 || missing="${missing} $p"
+  done
+  if [ -z "${missing}" ]; then
+    echo "[tce-load-shim] $pkg -> ${apkpkgs} (already installed)"
   else
-    echo "[tce-load-shim] $pkg -> apk add $apkpkg"
+    echo "[tce-load-shim] $pkg -> apk add${missing}"
     # tc 사용자로 이 shim이 sudo 없이 호출되는 경우가 있어(예: functions.sh의
     # "tce-load -i grub2-multi") apk add에 sudo가 없으면 root 권한 없이 조용히
     # 실패한다. 실패해도 이 스크립트는 계속 진행되고, 실제 원인(권한 부족)이
     # 아니라 "apk 대응 패키지 없음"처럼 보이는 경고만 남아 나중에
     # "grub-install: command not found" 같은 형태로 뒤늦게 드러났다(실기에서
     # 재현). sudo를 붙여 실제로 설치되게 한다.
-    sudo apk add "$apkpkg" >/dev/null 2>&1 || echo "[tce-load-shim] WARN: apk add $apkpkg failed (no apk equivalent?)"
+    sudo apk add ${missing} >/dev/null 2>&1 || echo "[tce-load-shim] WARN: apk add${missing} failed (no apk equivalent?)"
   fi
 done
