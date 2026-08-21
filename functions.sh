@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.2"
+rploaderver="1.4.3.3"
 builddate="2026.08.19"
 redpillmake="prod"
 
@@ -519,7 +519,32 @@ function history() {
             menu item auto-detects everything but the listener IP, translated into all 18 langMenu()
             locales. Plus raw.githubusercontent.com CDN cache busting for every curl call and several
             small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup, git-clone
-            validation, checkcpu without lscpu).             
+            validation, checkcpu without lscpu).
+    1.4.3.3 HEADLINE: "Inject Bootloader to Syno DISK" (inject_loader/remove_loader) repaired
+            end-to-end on real hardware, including the >2TB GPT path. Fixed: missing sudo on
+            fdisk -l plus unquoted comparisons crashing partition-boundary math; blockdev
+            --rereadpt "Resource busy" from a still-assembled md/LVM stack (new
+            rereadPartitionTable() helper stops and retries); forced mkfs.vfat -F16 silently
+            failing on small leftover-space partitions with its exit code discarded;
+            remove_loader() leaving stale mounts across GPT/MBR delete loops; an unbound
+            ORIGIN_PLATFORM crash (inject_loader() runs standalone, not through
+            getvarsmshell()); trailing-gap sector math landing partitions 6/7 in the wrong
+            (leading) gap on newer util-linux fdisk, and its "wipe signature?" prompt
+            desyncing piped automation; a hardcoded /usr/local/sbin/gdisk path and a missing
+            sgdisk/grub-efi/grub-bios mapping in the tce-load shim that broke the GPT branch's
+            grub-install outright; xtcrp.tgz dropped from the injection path (never fit the
+            leftover space anyway). Also: dialog UI for disk selection and confirmations, a
+            per-file size breakdown for partition 4 (bzImage-friend/initrd-friend) matching
+            partition 7's style, and wr_part3()'s space-check log no longer reporting the
+            whole loader partition's usage as the transfer size.
+            MSHELL Manager now pulls from the public mshell-manager-rel release mirror via
+            the GitHub API at build time instead of a version-pinned copy pushed into
+            alpine-redpill/tools; Syno Smart Info is staged the same way, straight from its
+            own public releases/latest. Neither addon needs a metadata edit here on release
+            any more. Also: firmwareamdgpu.tgz (~28% of initrd-dsm) is now dropped when no
+            AMD GPU is detected on the build box, and prefillDefaultSataPortMap() reuses
+            kver5platforms instead of a hand-maintained DT-platform exclusion list that had
+            drifted out of sync.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1129,6 +1154,30 @@ EOF
 # MODULES_TAG accuracy, usb_line orphan cleanup, git-clone failure validation, and checkcpu()
 # no longer depending on lscpu.
 
+# 2026.08.22 v1.4.3.3
+# HEADLINE: "Inject Bootloader to Syno DISK" (inject_loader/remove_loader) repaired end-to-end
+# on real hardware, including the >2TB GPT path. Fixed: missing sudo on fdisk -l plus unquoted
+# comparisons crashing partition-boundary math; blockdev --rereadpt "Resource busy" from a
+# still-assembled md/LVM stack (new rereadPartitionTable() helper stops and retries); forced
+# mkfs.vfat -F16 silently failing on small leftover-space partitions with its exit code
+# discarded; remove_loader() leaving stale mounts across GPT/MBR delete loops; an unbound
+# ORIGIN_PLATFORM crash (inject_loader() runs standalone, not through getvarsmshell()); trailing-
+# gap sector math landing partitions 6/7 in the wrong (leading) gap on newer util-linux fdisk,
+# and its "wipe signature?" prompt desyncing piped automation; a hardcoded
+# /usr/local/sbin/gdisk path and a missing sgdisk/grub-efi/grub-bios mapping in the tce-load
+# shim that broke the GPT branch's grub-install outright; xtcrp.tgz dropped from the injection
+# path (never fit the leftover space anyway). Also: dialog UI for disk selection and
+# confirmations, a per-file size breakdown for partition 4 (bzImage-friend/initrd-friend)
+# matching partition 7's style, and wr_part3()'s space-check log no longer reporting the whole
+# loader partition's usage as the transfer size.
+# MSHELL Manager now pulls from the public mshell-manager-rel release mirror via the GitHub API
+# at build time instead of a version-pinned copy pushed into alpine-redpill/tools; Syno Smart
+# Info is staged the same way, straight from its own public releases/latest. Neither addon
+# needs a metadata edit here on release any more. Also: firmwareamdgpu.tgz (~28% of initrd-dsm)
+# is now dropped when no AMD GPU is detected on the build box, and prefillDefaultSataPortMap()
+# reuses kver5platforms instead of a hand-maintained DT-platform exclusion list that had
+# drifted out of sync.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1444,6 +1493,13 @@ function showlastupdate() {
 # listener IP, translated into all 18 languages. Plus raw.githubusercontent.com cache busting
 # and several small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup,
 # git-clone validation, checkcpu without lscpu).
+# 2026.08.22 v1.4.3.3
+# "Inject Bootloader to Syno DISK" repaired end-to-end on real hardware (>2TB GPT path
+# included): fixed fdisk/blockdev/mkfs.vfat/mount/sector-math/gdisk-path bugs found while
+# testing on real hardware, dropped xtcrp.tgz from the injection path, added a dialog UI and a
+# per-file size breakdown for partition 4. MSHELL Manager and Syno Smart Info now pull their
+# latest release directly from their own public GitHub Releases API instead of a version-pinned
+# copy pushed into this repo.
 EOF
 }
 
