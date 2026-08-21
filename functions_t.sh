@@ -133,6 +133,14 @@ dlgmenuheight() {
 # 확인(2026-07-12)해 동적 해석으로 교체.
 FDISK="$(command -v fdisk 2>/dev/null || echo /sbin/fdisk)"
 
+# gdisk 절대경로. 2TB 초과 디스크(GPT) 주입 경로가 TinyCore 시절의
+# /usr/local/sbin/gdisk 를 하드코딩하고 있었는데, Alpine의 gptfdisk 패키지는
+# /usr/bin/gdisk 에 설치한다. 게다가 그 호출들은 전부 출력을 /dev/null 로
+# 버려서(> /dev/null 2>&1) "command not found"가 보이지도 않고, 파티션이
+# 안 만들어진 채 다음 단계(blockdev --rereadpt, mount)에서 엉뚱하게 실패했다.
+# FDISK 와 동일하게 동적 해석으로 교체(2026-08-21 실기 확인).
+GDISK="$(command -v gdisk 2>/dev/null || echo /usr/sbin/gdisk)"
+
 # 자동 업데이트(safe_fetch/git clone) 대상 브랜치. main은 v1.3.1.1에서 동결
 # (더 이상 업데이트 없음), alpine-redpill이 v1.4.0.0부터 이어받았다(2026-07-15).
 # 2026-07-22: is_alpine()으로 분기하던 것을 제거 - mshell(Alpine)뿐 아니라
@@ -7007,7 +7015,7 @@ if [ $? -eq 0 ]; then
                             else
                                 parttype="8300"
                             fi
-                            echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n4\n$last_sector\n+127M\n$parttype\nw\ny\n" | sudo ${GDISK} "${edisk}" > /dev/null 2>&1
                         else
                             echo -e "n\np\n$last_sector\n+127M\nw\n" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                         fi
@@ -7056,7 +7064,7 @@ if [ $? -eq 0 ]; then
                         # +13M
                         echo -e "Create 6th partition on disks... $edisk\n"
                         if [ $TB2T_CNT -ge 1 ]; then
-                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                            echo -e "n\n6\n$last_sector\n+13M\n8300\nw\ny\n" | sudo ${GDISK} "${edisk}" > /dev/null 2>&1
                         else
                             if [ ${ORIGIN_PLATFORM} = "geminilake" ] || [ ${ORIGIN_PLATFORM} = "v1000" ] || [ ${ORIGIN_PLATFORM} = "geminilakenk" ] || [ ${ORIGIN_PLATFORM} = "v1000nk" ] || [ ${ORIGIN_PLATFORM} = "r1000nk" ]; then
                                 partsize="12800K"
@@ -7098,7 +7106,7 @@ if [ $? -eq 0 ]; then
 
                             # about +79M ~ +83M (last all space)
                             if [ $TB2T_CNT -ge 1 ]; then
-                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                echo -e "n\n7\n\n\n8300\nw\ny\n" | sudo ${GDISK} "${edisk}" > /dev/null 2>&1
                             else
                                 echo -e "n\n$last_sector\n\n\nw\n" | sudo /sbin/fdisk -w always -W always "${edisk}" > /dev/null 2>&1
                             fi
@@ -7130,7 +7138,7 @@ if [ $? -eq 0 ]; then
                                 if sudo gdisk -l "${edisk}" | grep -q 'EF02'; then
                                     echo -e "EF02 Partition is already exists!!!\n"
                                 else
-                                    echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo /usr/local/sbin/gdisk "${edisk}" > /dev/null 2>&1
+                                    echo -e "n\n\n\n+1M\nEF02\nw\ny" | sudo ${GDISK} "${edisk}" > /dev/null 2>&1
                                 fi
                             fi    
                         else

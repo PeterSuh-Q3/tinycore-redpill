@@ -12,7 +12,9 @@ map_pkg() {
     # 없어 "modinfo.sh doesn't exist. Please specify --target or --directory"로
     # 죽었다(실기 재현). functions.sh는 두 타깃을 모두 쓰므로 셋 다 설치한다.
     grub2-multi) echo "grub grub-efi grub-bios" ;;
-    gdisk) echo gptfdisk ;;
+    # Alpine은 gdisk(gptfdisk)와 sgdisk를 별개 패키지로 쪼개 놨다. functions.sh의
+    # remove_loader()는 GPT/MBR 양쪽 경로에서 sgdisk를 쓰므로 둘 다 필요하다.
+    gdisk) echo "gptfdisk sgdisk" ;;
     bc) echo bc ;;
     dosfstools) echo dosfstools ;;
     gettext) echo gettext ;;
