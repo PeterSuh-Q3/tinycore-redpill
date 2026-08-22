@@ -106,8 +106,17 @@ function _find_bin() {
 # 베어메탈 물리 NIC 는 가상랜 대비 링크 협상(auto-negotiation)/DHCP 응답이
 # 느린 경우가 많다. 물리 인터페이스를 강제로 link down/up 시켜 재협상을
 # 유발하고, DHCP 임대를 갱신해 인터넷 체크 성공 확률을 높인다.
+#
+# 예전엔 모든 물리 NIC를 무조건 kick했는데, 이러면 (a) 이미 정상 IP를
+# 받은 NIC까지 불필요하게 링크를 끊었다 올리고, (b) 케이블 자체가 안
+# 꽂힌(carrier=0) NIC에도 매번 3초짜리 udhcpc 타임아웃을 낭비했다.
+# carrier=0인 인터페이스는 down/up을 해봤자 반대편과 실제 신호 교환이
+# 없어 PHY 재협상 자체가 일어나지 않으므로(admin state만 토글) 아예
+# 손대지 않는다. 169.254.0.0/16(IPv4LL/APIPA)만으로는 "DHCP 대기중"과
+# "링크 없음"을 구분할 수 없어 캐리어를 별도로 확인해야 한다(2026-08-22
+# 실기 로그에서 이미 정상 IP를 받은 eth1까지 매번 kick되는 것을 보고 발견).
 function nic_link_kick() {
-  local ifaces dev IP ETHTOOL IFCONFIG UDHCPC
+  local ifaces dev IP ETHTOOL IFCONFIG UDHCPC carrier curip
   IP=$(_find_bin ip)
   ETHTOOL=$(_find_bin ethtool)
   IFCONFIG=$(_find_bin ifconfig)
@@ -116,6 +125,25 @@ function nic_link_kick() {
   ifaces=$(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en|em|p[0-9]+p)')
   [ -z "${ifaces}" ] && return 0
   for dev in ${ifaces}; do
+    carrier="$(cat "/sys/class/net/${dev}/carrier" 2>/dev/null)"
+    if [ "${carrier}" != "1" ]; then
+      echo "NIC '${dev}': no carrier (cable unplugged?), skipping kick."
+      continue
+    fi
+
+    if [ -n "${IP}" ]; then
+      curip="$(${IP} -4 -o addr show dev "${dev}" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)"
+    elif [ -n "${IFCONFIG}" ]; then
+      curip="$(${IFCONFIG} "${dev}" 2>/dev/null | grep -oE 'inet (addr:)?[0-9.]+' | awk '{print $NF}' | head -1)"
+    fi
+    case "${curip}" in
+      169.254.*|"") ;;
+      *)
+        echo "NIC '${dev}': already has address ${curip}, skipping kick."
+        continue
+        ;;
+    esac
+
     echo "Kicking NIC '${dev}' (link down/up + DHCP renew) to wake slow bare-metal link..."
     if [ -n "${IP}" ]; then
       sudo "${IP}" link set "${dev}" down 2>/dev/null
