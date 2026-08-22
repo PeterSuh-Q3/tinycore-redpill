@@ -7493,9 +7493,17 @@ function rploader() {
         else
             offline="NO"
             check_github
-        fi    
+        fi
 #        getlatestrploader
-#        gitdownload     # When called from the parent my.sh, -d flag authority check is not possible, pre-downloaded in advance 
+#        gitdownload     # When called from the parent my.sh, -d flag authority check is not possible, pre-downloaded in advance
+        # rploader() build는 MSHELL Manager의 su -c 자동재빌드가 쓰는 헤드리스
+        # 진입점으로, my()와 완전히 별개 경로다 - my():7891의 models.json
+        # 재다운로드를 거치지 않아 자동재빌드는 이 세션에 이미 있던(구버전일 수
+        # 있는) 로컬 models.json을 계속 재사용해 왔다(2026-08-22 발견, geminilakenk
+        # powersched 누락 조사 중). curl()은 raw.githubusercontent.com 호출에
+        # 자동으로 캐시버스팅 쿼리를 붙이므로(functions.sh:19) my()와 동일하게
+        # 안전하다.
+        [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/models.json
         checkUserConfig
         getredpillko
 #for test getredpillko
