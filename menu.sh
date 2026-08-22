@@ -117,6 +117,10 @@ function _find_bin() {
 # 실기 로그에서 이미 정상 IP를 받은 eth1까지 매번 kick되는 것을 보고 발견).
 function nic_link_kick() {
   local ifaces dev IP ETHTOOL IFCONFIG UDHCPC carrier curip
+  # 호출자가 "실제로 뭔가 kick했는지"를 알 수 있도록 전역으로 보고한다 -
+  # 전부 스킵됐다면(캐리어 없음/이미 정상 IP) 아무것도 안 바뀔 게 뻔하므로,
+  # 호출자는 그 attempt의 긴 폴링 대기를 건너뛸 수 있다.
+  NIC_KICKED="false"
   IP=$(_find_bin ip)
   ETHTOOL=$(_find_bin ethtool)
   IFCONFIG=$(_find_bin ifconfig)
@@ -145,6 +149,7 @@ function nic_link_kick() {
     esac
 
     echo "Kicking NIC '${dev}' (link down/up + DHCP renew) to wake slow bare-metal link..."
+    NIC_KICKED="true"
     if [ -n "${IP}" ]; then
       sudo "${IP}" link set "${dev}" down 2>/dev/null
       sleep 1
@@ -398,21 +403,31 @@ else
         echo ">>> Internet not ready. Retry ${attempt}/${max_attempt} for ${timeout}s (after NIC link-kick)..."
         nic_link_kick
       fi
-      start_time=$(date +%s)
-      while true; do
-        if check_internet; then
-          net_ok="true"
-          break
-        fi
-        current_time=$(date +%s)
-        elapsed=$(( current_time - start_time ))
-        if [ ${elapsed} -ge ${timeout} ]; then
-          echo "Internet connection wait time exceeded ${timeout} seconds (attempt ${attempt}/${max_attempt})"
-          break
-        fi
-        sleep 2
-        echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)... [attempt ${attempt}/${max_attempt}]"
-      done
+      if [ "${NIC_KICKED}" = "true" ]; then
+        # 백그라운드로 udhcpc가 돌아가고 있는 NIC가 있을 때만 결과가
+        # 바뀔 수 있으므로, 이때만 timeout 동안 2초 간격으로 폴링한다.
+        start_time=$(date +%s)
+        while true; do
+          if check_internet; then
+            net_ok="true"
+            break
+          fi
+          current_time=$(date +%s)
+          elapsed=$(( current_time - start_time ))
+          if [ ${elapsed} -ge ${timeout} ]; then
+            echo "Internet connection wait time exceeded ${timeout} seconds (attempt ${attempt}/${max_attempt})"
+            break
+          fi
+          sleep 2
+          echo "Waiting for internet connection by checking 8.8.8.8 (Google DNS)... [attempt ${attempt}/${max_attempt}]"
+        done
+      else
+        # 이번 attempt에서 kick한 NIC가 하나도 없다면(전부 carrier 없음
+        # 또는 이미 정상 IP) 아무것도 바뀌지 않았을 것이 확실하므로,
+        # timeout 동안 헛되이 폴링하지 않고 즉시 한 번만 확인한다.
+        echo "No NIC needed kicking this attempt; checking once instead of waiting ${timeout}s."
+        check_internet && net_ok="true"
+      fi
       [ "${net_ok}" = "true" ] && break
       attempt=$(( attempt + 1 ))
     done
