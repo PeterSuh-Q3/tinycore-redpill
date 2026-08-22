@@ -1,6 +1,13 @@
 #!/bin/bash
 #
-# Author : pocopico 
+# DEPRECATED (2026-08-22): superseded by the rploader() function inside
+# functions.sh (see the "1.0.3.0 Integrate my, rploader.sh, myfunc.h into
+# functions.sh" changelog entry). Not sourced or executed by any current
+# build/deploy path, and not packaged into my.sh.gz. Kept only for
+# historical reference - do not treat as live code, and do not read it
+# looking for current build-time behavior.
+#
+# Author : pocopico
 # Date : 221115
 # Version : 0.9.4.0-1
 #

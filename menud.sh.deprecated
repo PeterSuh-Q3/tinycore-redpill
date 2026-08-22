@@ -1,4 +1,11 @@
 #!/bin/bash
+#
+# DEPRECATED (2026-08-22): its only call site (rploader.sh's
+# `/home/tc/rploader.sh clean`) is itself dead code, and this file still
+# points at the old giteas.duckdns.org redpill-load mirror rather than the
+# current source functions.sh's own gitdownload() uses. Not sourced or
+# executed by any current build/deploy path, and not packaged into
+# my.sh.gz. Kept only for historical reference.
 
 function gitdownload() {
 
