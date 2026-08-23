@@ -3627,6 +3627,26 @@ function setnetwork() {
 
 }
 
+# CIDR 프리픽스(0-32)를 점4개짜리 넷마스크로 변환. DSM 램디스크의
+# ifcfg-ethN(RHEL 스타일)은 IPADDR/NETMASK를 쓰지 지금 저장 형식인
+# CIDR(user_config.json의 ipsettings.ipaddr, "x.x.x.x/nn")을 직접 받지
+# 않으므로 buildloader()의 static ifcfg 작성 시 변환이 필요하다.
+function _cidr_to_netmask() {
+    local prefix="${1:-0}" i mask=""
+    for i in 0 1 2 3; do
+        if [ "${prefix}" -ge 8 ]; then
+            mask="${mask}255."
+            prefix=$((prefix - 8))
+        elif [ "${prefix}" -gt 0 ]; then
+            mask="${mask}$((256 - 2 ** (8 - prefix)))."
+            prefix=0
+        else
+            mask="${mask}0."
+        fi
+    done
+    echo "${mask%.}"
+}
+
 function check_r8168_once() {
     if [ "$R8168_DETECTED" != "Y" ] && [[ "$DRIVER" == r816* ]]; then
         R8168_YN="Y"
@@ -5597,10 +5617,51 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     # Network card configuration file
+    # user_config.json.ipsettings 에 static이 설정돼 있으면 지정한 NIC 하나만
+    # BOOTPROTO=none(고정 IP)으로 쓰고 나머지는 그대로 DHCP. ipsettings는
+    # CIDR("x.x.x.x/nn")로 저장되므로 DSM의 RHEL 스타일 ifcfg가 요구하는
+    # IPADDR/NETMASK로 변환한다. 1차 구현은 단일 NIC만 지원(menu_m.sh의
+    # staticIpMenu() 참고, 2026-08-23).
+    STATIC_IPSET="$(jq -r '.ipsettings.ipset // empty' user_config.json 2>/dev/null)"
+    STATIC_IFACE=""
+    STATIC_ADDR=""
+    STATIC_GW=""
+    STATIC_DNS=""
+    if [ "${STATIC_IPSET}" = "static" ]; then
+        STATIC_IFACE="$(jq -r '.ipsettings.ipiface // empty' user_config.json 2>/dev/null)"
+        STATIC_ADDR="$(jq -r '.ipsettings.ipaddr // empty' user_config.json 2>/dev/null)"
+        STATIC_GW="$(jq -r '.ipsettings.ipgw // empty' user_config.json 2>/dev/null)"
+        STATIC_DNS="$(jq -r '.ipsettings.ipdns // empty' user_config.json 2>/dev/null)"
+        if ! echo "${STATIC_ADDR}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+            echo "[static-ip] Invalid or missing ipsettings.ipaddr (${STATIC_ADDR}); falling back to DHCP for all NICs."
+            STATIC_IPSET=""
+        fi
+    fi
     for N in $(seq 0 7); do
-      echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
+      if [ "${STATIC_IPSET}" = "static" ] && [ "${STATIC_IFACE}" = "eth${N}" ]; then
+        _static_ip="${STATIC_ADDR%%/*}"
+        _static_prefix="${STATIC_ADDR##*/}"
+        _static_netmask="$(_cidr_to_netmask "${_static_prefix}")"
+        {
+          echo "DEVICE=eth${N}"
+          echo "BOOTPROTO=none"
+          echo "ONBOOT=yes"
+          echo "IPADDR=${_static_ip}"
+          echo "NETMASK=${_static_netmask}"
+          [ -n "${STATIC_GW}" ] && echo "GATEWAY=${STATIC_GW}"
+          echo "IPV6INIT=dhcp"
+          echo "IPV6_ACCEPT_RA=1"
+        } >"/home/tc/ifcfg-eth${N}"
+        echo "[static-ip] eth${N} -> static ${_static_ip}/${_static_prefix} (netmask ${_static_netmask}), gateway=${STATIC_GW:-none}"
+      else
+        echo -e "DEVICE=eth${N}\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=dhcp\nIPV6_ACCEPT_RA=1" >"/home/tc/ifcfg-eth${N}"
+      fi
     done
     sudo cp -vf /home/tc/ifcfg-eth* $rdtemp/etc/sysconfig/network-scripts/
+    if [ "${STATIC_IPSET}" = "static" ] && [ -n "${STATIC_DNS}" ]; then
+      echo "nameserver ${STATIC_DNS}" | sudo tee -a "$rdtemp/etc/resolv.conf" >/dev/null
+      echo "[static-ip] Added nameserver ${STATIC_DNS} to ramdisk resolv.conf"
+    fi
 
     # SA6400 patches for JOT Mode
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
