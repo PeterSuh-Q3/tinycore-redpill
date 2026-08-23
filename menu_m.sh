@@ -1415,7 +1415,11 @@ function staticIpMenu() {
 # Keep it immediately after staticIpMenu() so an offline first boot never
 # reaches gitclone(), addon checkout, or any other Internet-dependent step.
 if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
-  tz="${tz:-US}"
+  # The normal language-selection routine has not run yet.  i18n.h exposes
+  # the gettext-backed fallback messages as MSGZZ*, so initialize that set
+  # instead of indexing the nonexistent MSGUS147 variables.
+  tz="${tz:-ZZ}"
+  load_zz
   staticIpMenu
   if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
     if dialog --clear --backtitle "Network setup" \
