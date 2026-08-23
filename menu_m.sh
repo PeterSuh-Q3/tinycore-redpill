@@ -1281,6 +1281,127 @@ function netconsoleMenu() {
 }
 
 ###############################################################################
+# Static IP 설정 메뉴 (1차: 단일 NIC만 지원). 여기서 쓰는 ipsettings
+# 스키마(ipset/ipiface/ipaddr/ipgw/ipdns/ipproxy)는 tcrpfriend의 boot.sh
+# setnetwork()가 이미 .ipsettings.ipaddr 등을 읽도록 구현되어 있어 그대로
+# 재사용한다(단, ipiface는 그 쪽 자동추측 버그를 피하려고 이번에 새로 추가한
+# 필드라 boot.sh 쪽에서 아직 안 읽는다 - 별도 후속 작업 필요). 이 함수는
+# "사용자가 설정값을 입력해 user_config.json에 저장"하는 캡처 단계까지만
+# 담당하며, DSM 램디스크 ifcfg-ethN 생성(functions.sh buildloader())과
+# FRIEND 쪽 적용 로직 수정은 아직 별도로 필요하다(2026-08-23).
+function staticIpMenu() {
+  local existing_ipset existing_iface existing_ipaddr existing_ipgw existing_ipdns existing_ipproxy status_str
+  local resp target_iface cur_ipaddr cur_ipgw cur_ipdns cur_ipproxy dev
+
+  eval "MSG147=\"\${MSG${tz}147}\""
+  eval "MSG148=\"\${MSG${tz}148}\""
+  eval "MSG149=\"\${MSG${tz}149}\""
+  eval "MSG150=\"\${MSG${tz}150}\""
+  eval "MSG151=\"\${MSG${tz}151}\""
+  eval "MSG152=\"\${MSG${tz}152}\""
+  eval "MSG153=\"\${MSG${tz}153}\""
+  eval "MSG154=\"\${MSG${tz}154}\""
+  eval "MSG155=\"\${MSG${tz}155}\""
+  eval "MSG156=\"\${MSG${tz}156}\""
+  eval "MSG157=\"\${MSG${tz}157}\""
+  eval "MSG158=\"\${MSG${tz}158}\""
+  eval "MSG159=\"\${MSG${tz}159}\""
+  eval "MSG160=\"\${MSG${tz}160}\""
+
+  existing_ipset=$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)
+  existing_iface=$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)
+  existing_ipaddr=$(jq -r '.ipsettings.ipaddr // empty' "${userconfigfile}" 2>/dev/null)
+  existing_ipgw=$(jq -r '.ipsettings.ipgw // empty' "${userconfigfile}" 2>/dev/null)
+  existing_ipdns=$(jq -r '.ipsettings.ipdns // empty' "${userconfigfile}" 2>/dev/null)
+  existing_ipproxy=$(jq -r '.ipsettings.ipproxy // empty' "${userconfigfile}" 2>/dev/null)
+
+  if [ "${existing_ipset}" = "static" ] && [ -n "${existing_ipaddr}" ]; then
+    status_str="${existing_iface:-?} ${existing_ipaddr}"
+  else
+    status_str="DHCP"
+  fi
+
+  dialog --clear --backtitle "`backtitle`" \
+    --menu "Static IP Settings (current: ${status_str})" 0 0 $(dlgmenuheight 2) \
+    e "${MSG147}" \
+    d "${MSG148}" \
+  2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  resp=$(<${TMP_PATH}/resp)
+  [ -z "${resp}" ] && return
+
+  if [ "${resp}" = "d" ]; then
+    DeleteConfigKey "ipsettings" "ipset"
+    DeleteConfigKey "ipsettings" "ipiface"
+    DeleteConfigKey "ipsettings" "ipaddr"
+    DeleteConfigKey "ipsettings" "ipgw"
+    DeleteConfigKey "ipsettings" "ipdns"
+    DeleteConfigKey "ipsettings" "ipproxy"
+    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG160}" 0 0
+    return
+  fi
+  [ "${resp}" = "e" ] || return
+
+  : > "${TMP_PATH}/menuip"
+  for dev in $(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en|em)'); do
+    echo "\"${dev}\" \"${dev}\"" >> "${TMP_PATH}/menuip"
+  done
+  if [ ! -s "${TMP_PATH}/menuip" ]; then
+    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG150}" 0 0
+    return
+  fi
+  dialog --clear --backtitle "`backtitle`" \
+    --menu "${MSG149}" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuip")) --file "${TMP_PATH}/menuip" \
+    2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  target_iface=$(<${TMP_PATH}/resp)
+  [ -z "${target_iface}" ] && return
+
+  cur_ipaddr="${existing_ipaddr}"
+  cur_ipgw="${existing_ipgw}"
+  cur_ipdns="${existing_ipdns}"
+  cur_ipproxy="${existing_ipproxy}"
+
+  while true; do
+    dialog --backtitle "`backtitle`" --form "$(printf "${MSG151}" "${target_iface}")" 16 70 4 \
+      "${MSG152}:" 1 1 "${cur_ipaddr}"  1 24 40 0 \
+      "${MSG153}:" 2 1 "${cur_ipgw}"    2 24 40 0 \
+      "${MSG154}:" 3 1 "${cur_ipdns}"   3 24 40 0 \
+      "${MSG155}:" 4 1 "${cur_ipproxy}" 4 24 40 0 \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+
+    cur_ipaddr=$(sed -n '1p' "${TMP_PATH}/resp")
+    cur_ipgw=$(sed -n '2p' "${TMP_PATH}/resp")
+    cur_ipdns=$(sed -n '3p' "${TMP_PATH}/resp")
+    cur_ipproxy=$(sed -n '4p' "${TMP_PATH}/resp")
+
+    if ! echo "${cur_ipaddr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+      dialog --backtitle "`backtitle`" --msgbox "${MSG156}" 0 0
+      continue
+    fi
+    if [ -n "${cur_ipgw}" ] && ! echo "${cur_ipgw}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+      dialog --backtitle "`backtitle`" --msgbox "${MSG157}" 0 0
+      continue
+    fi
+    break
+  done
+
+  dialog --clear --backtitle "`backtitle`" \
+    --yesno "$(printf "${MSG158}" "${target_iface}" "${cur_ipaddr}" "${cur_ipgw}" "${cur_ipdns}")" 0 0
+  [ $? -ne 0 ] && return
+
+  writeConfigKey "ipsettings" "ipset" "static"
+  writeConfigKey "ipsettings" "ipiface" "${target_iface}"
+  writeConfigKey "ipsettings" "ipaddr" "${cur_ipaddr}"
+  writeConfigKey "ipsettings" "ipgw" "${cur_ipgw}"
+  writeConfigKey "ipsettings" "ipdns" "${cur_ipdns}"
+  writeConfigKey "ipsettings" "ipproxy" "${cur_ipproxy}"
+
+  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG159}" 0 0
+}
+
+###############################################################################
 # Shows menu to user type one or generate randomly
 function serialMenu() {
   eval "MSG30=\"\${MSG${tz}30}\""
@@ -2317,11 +2438,18 @@ function additional() {
   eval "MSG121=\"\${MSG${tz}121}\""
   eval "MSG122=\"\${MSG${tz}122}\""
   eval "MSG123=\"\${MSG${tz}123}\""
+  eval "MSG161=\"\${MSG${tz}161}\""
 
   default_resp="l"
 
   while true; do
     [ "${PREVENT_INIT}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
+    if [ "$(jq -r '.ipsettings.ipset // empty' /home/tc/user_config.json 2>/dev/null)" = "static" ] && \
+       [ -n "$(jq -r '.ipsettings.ipaddr // empty' /home/tc/user_config.json 2>/dev/null)" ]; then
+      STATICIP_STATUS="$(jq -r '.ipsettings.ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings.ipaddr' /home/tc/user_config.json 2>/dev/null)"
+    else
+      STATICIP_STATUS="DHCP"
+    fi
     # dtsmapping(구 c) 은 최상위 z(build-pre-option) 하위메뉴 3번 항목으로
     # 이동했다 - 여기서는 제거.
     eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
@@ -2336,7 +2464,8 @@ function additional() {
     [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
     [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"    
+    eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"s \\\"${MSG161}: ${STATICIP_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menua")) --file "${TMP_PATH}/menua" \
     2>${TMP_PATH}/resp
@@ -2368,6 +2497,7 @@ function additional() {
     m) remove_loader && chk_shr_ex; default_resp="m";;
     i) packing_loader; default_resp="i";;
     k) keymapMenu; default_resp="k";;
+    s) staticIpMenu; default_resp="s";;
     *) return;;
     esac
     

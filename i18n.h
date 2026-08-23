@@ -144,4 +144,21 @@ MSGZZ144=$(gettext "tcrp" "Enter the listener's MAC address (example: aa:bb:cc:d
 MSGZZ145=$(gettext "tcrp" "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s")
 MSGZZ146=$(gettext "tcrp" "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu).")
 #MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
+
+## Static IP settings menu
+MSGZZ147=$(gettext "tcrp" "Configure Static IP")
+MSGZZ148=$(gettext "tcrp" "Use DHCP")
+MSGZZ149=$(gettext "tcrp" "Select the network interface for the static IP")
+MSGZZ150=$(gettext "tcrp" "Could not detect any network interfaces.")
+MSGZZ151=$(gettext "tcrp" "Enter the static network settings for %s")
+MSGZZ152=$(gettext "tcrp" "IP Address (CIDR)")
+MSGZZ153=$(gettext "tcrp" "Gateway")
+MSGZZ154=$(gettext "tcrp" "DNS Server")
+MSGZZ155=$(gettext "tcrp" "HTTP Proxy (optional)")
+MSGZZ156=$(gettext "tcrp" "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again.")
+MSGZZ157=$(gettext "tcrp" "Not a valid gateway address. Please try again.")
+MSGZZ158=$(gettext "tcrp" "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s")
+MSGZZ159=$(gettext "tcrp" "Saved.\n\n[!] You must rebuild the loader now for this to take effect.")
+MSGZZ160=$(gettext "tcrp" "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect.")
+MSGZZ161=$(gettext "tcrp" "Static IP Settings")
 }

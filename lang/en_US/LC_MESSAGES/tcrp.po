@@ -575,3 +575,63 @@ msgstr "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is alrea
 #: MSGUS146
 msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+
+#: MSGUS147
+msgid "Configure Static IP"
+msgstr "Configure Static IP"
+
+#: MSGUS148
+msgid "Use DHCP"
+msgstr "Use DHCP"
+
+#: MSGUS149
+msgid "Select the network interface for the static IP"
+msgstr "Select the network interface for the static IP"
+
+#: MSGUS150
+msgid "Could not detect any network interfaces."
+msgstr "Could not detect any network interfaces."
+
+#: MSGUS151
+msgid "Enter the static network settings for %s"
+msgstr "Enter the static network settings for %s"
+
+#: MSGUS152
+msgid "IP Address (CIDR)"
+msgstr "IP Address (CIDR)"
+
+#: MSGUS153
+msgid "Gateway"
+msgstr "Gateway"
+
+#: MSGUS154
+msgid "DNS Server"
+msgstr "DNS Server"
+
+#: MSGUS155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP Proxy (optional)"
+
+#: MSGUS156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+
+#: MSGUS157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Not a valid gateway address. Please try again."
+
+#: MSGUS158
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+
+#: MSGUS159
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+
+#: MSGUS160
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+
+#: MSGUS161
+msgid "Static IP Settings"
+msgstr "Static IP Settings"

@@ -575,3 +575,63 @@ msgstr "다음 설정으로 저장할까요?\\n\\n%s\\n\\n리스너 PC 에서는
 #: MSGKR146
 msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "저장했습니다.\\n\\n[!] 지금 바로 로더를 다시 빌드해야 적용됩니다 (빌드 메뉴로 이동해 주세요)."
+
+#: MSGKR147
+msgid "Configure Static IP"
+msgstr "고정 IP 설정"
+
+#: MSGKR148
+msgid "Use DHCP"
+msgstr "DHCP 사용"
+
+#: MSGKR149
+msgid "Select the network interface for the static IP"
+msgstr "고정 IP를 적용할 네트워크 인터페이스를 선택하세요"
+
+#: MSGKR150
+msgid "Could not detect any network interfaces."
+msgstr "네트워크 인터페이스를 하나도 찾지 못했습니다."
+
+#: MSGKR151
+msgid "Enter the static network settings for %s"
+msgstr "%s 에 적용할 고정 네트워크 설정을 입력하세요"
+
+#: MSGKR152
+msgid "IP Address (CIDR)"
+msgstr "IP 주소 (CIDR)"
+
+#: MSGKR153
+msgid "Gateway"
+msgstr "게이트웨이"
+
+#: MSGKR154
+msgid "DNS Server"
+msgstr "DNS 서버"
+
+#: MSGKR155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP 프록시 (선택)"
+
+#: MSGKR156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "올바른 IP 주소/CIDR 형식이 아닙니다 (예: 192.168.1.50/24). 다시 입력해 주세요."
+
+#: MSGKR157
+msgid "Not a valid gateway address. Please try again."
+msgstr "올바른 게이트웨이 주소가 아닙니다. 다시 입력해 주세요."
+
+#: MSGKR158
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "이 고정 IP 설정으로 저장할까요?\\n\\n인터페이스: %s\\nIP 주소: %s\\n게이트웨이: %s\\nDNS: %s"
+
+#: MSGKR159
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "저장했습니다.\\n\\n[!] 지금 바로 로더를 다시 빌드해야 적용됩니다."
+
+#: MSGKR160
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCP로 되돌렸습니다.\\n\\n[!] 지금 바로 로더를 다시 빌드해야 적용됩니다."
+
+#: MSGKR161
+msgid "Static IP Settings"
+msgstr "고정 IP 설정"
