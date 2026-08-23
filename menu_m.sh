@@ -1662,7 +1662,7 @@ function make() {
   if [ "${PREVENT_INIT}" = "OFF" ]; then
     my "${MODEL}"-"${BUILD}" noconfig "${1}" | tee "/home/tc/zlastbuild.log"
   else
-    my "${MODEL}"-"${BUILD}" noconfig "${1}" prevent_init | tee "/home/tc/zlastbuild.log"
+    my "${MODEL}"-"${BUILD}" noconfig "${1}" prevent_param | tee "/home/tc/zlastbuild.log"
   fi 
 
   if  [ -f /home/tc/custom-module/redpill.ko ]; then
