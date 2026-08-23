@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.3"
-builddate="2026.08.19"
+rploaderver="1.4.3.4"
+builddate="2026.08.23"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -545,6 +545,28 @@ function history() {
             AMD GPU is detected on the build box, and prefillDefaultSataPortMap() reuses
             kver5platforms instead of a hand-maintained DT-platform exclusion list that had
             drifted out of sync.
+    1.4.3.4 HEADLINE: Static IP assignment (Additional Functions, Static IP Settings) - pick
+            an interface, IP/CIDR, gateway, DNS, optional HTTP proxy (validated for an
+            http or https scheme before save). Saved to user_config.json and turned into
+            a network cmdline parameter (network.MAC equals address/netmask/gateway/dns)
+            at kexec time; baking a static ifcfg-ethN into the DSM ramdisk was tried first
+            and confirmed on real hardware to get silently overwritten by DSM's own
+            post-boot network manager regardless of how it was written. The tcrp-addons
+            misc add-on consumes that cmdline parameter twice, once during the ramdisk
+            patch stage and again via a new persistent mshell-network service that
+            reapplies it right after DSM's own network service finishes, so DSM's own
+            DHCP client cannot quietly win the race on a later boot. Verified end-to-end
+            on real hardware. Also: fixed safe_fetch/models.json in menu.sh test mode not
+            cache-busting against the CDN; fixed a buildloader bug where USB_LINE/CMD_LINE
+            assembly used a plus sign as if it were bash string concatenation, replaced
+            with a small cmdline_append helper used by both functions.sh and tcrpfriend's
+            boot.sh; fixed the Prevent SataPortMap/DiskIdxMap initialization toggle
+            passing a token my() doesn't recognize, which crashed the build when ON and
+            silently reset the values every rebuild when OFF; nic_link_kick now skips
+            NICs with no carrier or an already-valid address instead of kicking every
+            physical NIC unconditionally, saving up to 70 seconds across retries;
+            rploader's headless build path now re-downloads models.json like the
+            interactive my() path already did.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1178,6 +1200,27 @@ EOF
 # reuses kver5platforms instead of a hand-maintained DT-platform exclusion list that had
 # drifted out of sync.
 
+# 2026.08.23 v1.4.3.4
+# HEADLINE: Static IP assignment (Additional Functions, Static IP Settings) - pick an
+# interface, IP/CIDR, gateway, DNS, optional HTTP proxy (validated for an http or https
+# scheme before save). Saved to user_config.json and turned into a network cmdline parameter
+# (network.MAC equals address/netmask/gateway/dns) at kexec time; baking a static ifcfg-ethN
+# into the DSM ramdisk was tried first and confirmed on real hardware to get silently
+# overwritten by DSM's own post-boot network manager regardless of how it was written. The
+# tcrp-addons misc add-on consumes that cmdline parameter twice, once during the ramdisk
+# patch stage and again via a new persistent mshell-network service that reapplies it right
+# after DSM's own network service finishes, so DSM's own DHCP client cannot quietly win the
+# race on a later boot. Verified end-to-end on real hardware.
+# Also: fixed safe_fetch/models.json in menu.sh test mode not cache-busting against the CDN;
+# fixed a buildloader bug where USB_LINE/CMD_LINE assembly used a plus sign as if it were
+# bash string concatenation, replaced with a small cmdline_append helper used by both
+# functions.sh and tcrpfriend's boot.sh; fixed the Prevent SataPortMap/DiskIdxMap
+# initialization toggle passing a token my() doesn't recognize, which crashed the build when
+# ON and silently reset the values every rebuild when OFF; nic_link_kick now skips NICs with
+# no carrier or an already-valid address instead of kicking every physical NIC
+# unconditionally, saving up to 70 seconds across retries; rploader's headless build path
+# now re-downloads models.json like the interactive my() path already did.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1474,25 +1517,31 @@ function showlastupdate() {
 
 # 2026.08.07 v1.4.2.7
 # Added cache panel size selection and improved loader burner display locale and menu behavior
+
 # 2026.08.12 v1.4.2.8
 # Added AMD runtime staging MSHELL Manager updates MAC menu defaults USB cmdline preservation and
 # initial image GRUB display fix
+
 # 2026.08.15 v1.4.2.9
 # Added Alpine 3.8 kernel 4.14 BTRFS recovery environment with storage modules DHCP and BTRFS LVM mount support
+
 # 2026.08.16 v1.4.3.0
 # Fixed several non-interactive/friend-kernel build issues: prerelease tag lookup no longer fails
 # TLS verification without a CA bundle, PAT cache and extension index/recipe files written via
 # sudo on a friend kernel are no longer left unreadable to the tc user, and the build progress bar
 # no longer errors when no controlling terminal is attached.
+
 # 2026.08.17 v1.4.3.1
 # Promoted /home/tc/user_config.json symlink (avoids two separately-synced copies) and its
 # dependent usb_line/backup fixes from the test track.
+
 # 2026.08.19 v1.4.3.2
 # NetConsole early log: stream the boot log to another PC over UDP in real time, no serial
 # port/internet/DHCP required. New Environment menu item auto-detects everything but the
 # listener IP, translated into all 18 languages. Plus raw.githubusercontent.com cache busting
 # and several small fixes (SataPortMap defaults, MODULES_TAG accuracy, usb_line cleanup,
 # git-clone validation, checkcpu without lscpu).
+
 # 2026.08.22 v1.4.3.3
 # Inject Bootloader to Syno DISK repaired end-to-end on real hardware (>2TB GPT path
 # included): fixed fdisk/blockdev/mkfs.vfat/mount/sector-math/gdisk-path bugs found while
@@ -1500,6 +1549,17 @@ function showlastupdate() {
 # per-file size breakdown for partition 4. MSHELL Manager and Syno Smart Info now pull their
 # latest release directly from their own public GitHub Releases API instead of a version-pinned
 # copy pushed into this repo.
+
+# 2026.08.23 v1.4.3.4
+# Static IP assignment: Additional Functions, Static IP Settings, saved to user_config.json
+# and applied as a network cmdline parameter (network.MAC equals address/netmask/gateway/dns),
+# consumed by the tcrp-addons misc add-on both at ramdisk-patch time and via a new persistent
+# mshell-network service so DSM's own DHCP client cannot overwrite it after boot. Verified on
+# real hardware. Also: CDN cache busting for menu.sh test's safe_fetch/models.json, a
+# cmdline_append helper replacing a broken plus-sign string-concat bug in buildloader, a fix
+# for the Prevent SataPortMap/DiskIdxMap toggle passing the wrong token to my(), nic_link_kick
+# skipping NICs that don't need a kick, and rploader's headless build path re-downloading
+# models.json.
 EOF
 }
 
