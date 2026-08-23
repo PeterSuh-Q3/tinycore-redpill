@@ -593,8 +593,8 @@ msgid "Could not detect any network interfaces."
 msgstr "네트워크 인터페이스를 하나도 찾지 못했습니다."
 
 #: MSGKR151
-msgid "Enter the static network settings for %s"
-msgstr "%s 에 적용할 고정 네트워크 설정을 입력하세요"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s 에 적용할 고정 네트워크 설정을 입력하세요\\n\\n프록시 예시: http://192.168.1.10:3128 (모든 외부 접속이 프록시를 반드시 거쳐야 하는 네트워크가 아니라면 비워두세요)"
 
 #: MSGKR152
 msgid "IP Address (CIDR)"
@@ -635,3 +635,7 @@ msgstr "DHCP로 되돌렸습니다.\\n\\n[!] 지금 바로 로더를 다시 빌�
 #: MSGKR161
 msgid "Static IP Settings"
 msgstr "고정 IP 설정"
+
+#: MSGKR162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "프록시는 http:// 또는 https:// 로 시작해야 합니다 (예: http://192.168.1.10:3128). 다시 입력해 주세요."

@@ -1307,6 +1307,7 @@ function staticIpMenu() {
   eval "MSG158=\"\${MSG${tz}158}\""
   eval "MSG159=\"\${MSG${tz}159}\""
   eval "MSG160=\"\${MSG${tz}160}\""
+  eval "MSG162=\"\${MSG${tz}162}\""
 
   existing_ipset=$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)
   existing_iface=$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)
@@ -1382,6 +1383,12 @@ function staticIpMenu() {
     fi
     if [ -n "${cur_ipgw}" ] && ! echo "${cur_ipgw}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
       dialog --backtitle "`backtitle`" --msgbox "${MSG157}" 0 0
+      continue
+    fi
+    # 프록시는 스킴(http://, https://) 없이 IP/도메인만 입력하면 curl 등이
+    # 프록시 주소로 못 알아본다 - 저장 전에 미리 걸러서 안내한다.
+    if [ -n "${cur_ipproxy}" ] && ! echo "${cur_ipproxy}" | grep -qE '^https?://'; then
+      dialog --backtitle "`backtitle`" --msgbox "${MSG162}" 0 0
       continue
     fi
     break

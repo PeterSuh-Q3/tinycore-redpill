@@ -593,8 +593,8 @@ msgid "Could not detect any network interfaces."
 msgstr "Could not detect any network interfaces."
 
 #: MSGUS151
-msgid "Enter the static network settings for %s"
-msgstr "Enter the static network settings for %s"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
 
 #: MSGUS152
 msgid "IP Address (CIDR)"
@@ -635,3 +635,7 @@ msgstr "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to t
 #: MSGUS161
 msgid "Static IP Settings"
 msgstr "Static IP Settings"
+
+#: MSGUS162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
