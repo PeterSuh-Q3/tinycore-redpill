@@ -3153,6 +3153,31 @@ function readanswerwithskip() {
 }        
 
 
+# 커널 cmdline처럼 공백 1칸으로 구분된 문자열에 토큰을 이어붙인다.
+# "${VAR} token"처럼 조각마다 리딩 스페이스를 하드코딩하는 기존 방식은
+# VAR가 비어있을 때 불필요한 선행 공백이 남거나, 이미 공백으로 끝난
+# 문자열에 또 이어붙이면 스페이스가 여러 개로 늘어나는 문제가 있었다
+# (2026-08-23, static IP cmdline 조립 중 USB_LINE 빌드 로직에서 발견 -
+# tcrpfriend의 boot.sh에도 동일한 목적의 헬퍼를 별도로 둔다, 그쪽은 이
+# 함수를 source할 수 없는 별도 buildroot rootfs라 중복 구현). 항상
+# 정확히 스페이스 1칸으로만 구분되도록 정규화하고, 빈 토큰은 무시한다.
+# 사용: USB_LINE="$(cmdline_append "${USB_LINE}" "token1" "token2")"
+function cmdline_append() {
+    local acc="$1" tok
+    shift
+    while [ "${acc: -1}" = " " ]; do acc="${acc% }"; done
+    while [ "${acc:0:1}" = " " ]; do acc="${acc# }"; done
+    for tok in "$@"; do
+        [ -z "${tok}" ] && continue
+        if [ -z "${acc}" ]; then
+            acc="${tok}"
+        else
+            acc="${acc} ${tok}"
+        fi
+    done
+    printf '%s' "${acc}"
+}
+
 function sync_usb_line() {
     # 현재 usb_line 추출
     updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
@@ -5434,64 +5459,71 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
         SATA_DOM=$(echo "$SATA_LINE" | grep -oE 'synoboot_satadom=[^ ]+' | cut -d= -f2)
         if [ -n "$SATA_DOM" ]; then
-            SATA_LINE="synoboot_satadom=${SATA_DOM} "
-        fi        
+            SATA_LINE="$(cmdline_append "" "synoboot_satadom=${SATA_DOM}")"
+        fi
     fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
-        USB_LINE="${USB_LINE} nox2apic"
+        USB_LINE="$(cmdline_append "${USB_LINE}" "nox2apic")"
     fi
 
     if echo "apollolake geminilake geminilakenk" | grep -wq "${ORIGIN_PLATFORM}"; then
-        USB_LINE="${USB_LINE} intel_iommu=igfx_off"
+        USB_LINE="$(cmdline_append "${USB_LINE}" "intel_iommu=igfx_off")"
     fi
 
     if [ "$KVER" == "4.4.180" ]; then
-        USB_LINE="${USB_LINE} i915.enable_guc=0"
+        USB_LINE="$(cmdline_append "${USB_LINE}" "i915.enable_guc=0")"
     fi
 
     #if echo "geminilake v1000 r1000" | grep -wq "${ORIGIN_PLATFORM}"; then
     #    echo "add modprobe.blacklist=mpt3sas for Device-tree based platforms"
-    #    USB_LINE="${USB_LINE} modprobe.blacklist=mpt3sas"
+    #    USB_LINE="$(cmdline_append "${USB_LINE}" "modprobe.blacklist=mpt3sas")"
     #fi
-    
-    USB_LINE="${USB_LINE} pcie_aspm=off"
+
+    USB_LINE="$(cmdline_append "${USB_LINE}" "pcie_aspm=off")"
 
     if [ -v CPU ]; then
         if [ "${CPU}" == "AMD" ]; then
             echo "Add configuration disable_mtrr_trim for AMD"
-            USB_LINE="${USB_LINE} disable_mtrr_trim=1"
+            USB_LINE="$(cmdline_append "${USB_LINE}" "disable_mtrr_trim=1")"
         else
             #if echo "epyc7002 apollolake geminilake" | grep -wq "${ORIGIN_PLATFORM}"; then
             #    if [ "$MACHINE" = "VIRTUAL" ]; then
-            #        USB_LINE="${USB_LINE} intel_iommu=igfx_off "
-            #    fi   
-            #fi    
-    
+            #        USB_LINE="$(cmdline_append "${USB_LINE}" "intel_iommu=igfx_off")"
+            #    fi
+            #fi
+
             if [ -d "/home/tc/redpill-load/custom/extensions/nvmesystem" ]; then
                 echo "Add configuration pci=nommconf for nvmesystem addon"
-                USB_LINE="${USB_LINE} pci=nommconf"
+                USB_LINE="$(cmdline_append "${USB_LINE}" "pci=nommconf")"
             fi
         fi
     fi
 
     if lspci -nn | grep -qi 'VGA.*\[1002:'; then
         if [ "${MDLNAME}" == "custom-modules" ]; then
-            USB_LINE="${USB_LINE} amdgpu.exp_hw_support=1 pci=nocrs"
+            USB_LINE="$(cmdline_append "${USB_LINE}" "amdgpu.exp_hw_support=1" "pci=nocrs")"
         fi
     fi
 
-    [ "$WITHFRIEND" == "YES" ] && USB_LINE="${USB_LINE} syno_hw_version=${MODEL}"
+    [ "$WITHFRIEND" == "YES" ] && USB_LINE="$(cmdline_append "${USB_LINE}" "syno_hw_version=${MODEL}")"
 
     # /tmp/tempentry.txt only has generated defaults. Merge back options that
     # exist solely in general.usb_line before using and persisting CMD_LINE.
     USB_LINE="$(preserve_usb_line_options "${USB_LINE}")"
-    USB_LINE="${USB_LINE} "
 
     if [ "${BUS}" = "usb" ]; then
-        CMD_LINE=${USB_LINE}
+        CMD_LINE="${USB_LINE}"
     else
-        [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ] && CMD_LINE=${USB_LINE}+" "+${SATA_LINE} || CMD_LINE=${USB_LINE}
+        # 이전엔 CMD_LINE=${USB_LINE}+" "+${SATA_LINE} 로 되어 있었는데, bash는
+        # +를 문자열 연결 연산자로 취급하지 않아 리터럴 +/" 문자가 그대로
+        # CMD_LINE에 섞여 들어가는 버그였다(2026-08-23 발견, static IP cmdline
+        # 조립 작업 중). cmdline_append()로 정확히 스페이스 1칸으로 결합한다.
+        if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+            CMD_LINE="$(cmdline_append "${USB_LINE}" "${SATA_LINE}")"
+        else
+            CMD_LINE="${USB_LINE}"
+        fi
     fi
 
     #if echo ${nosas5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
