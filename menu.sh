@@ -450,15 +450,27 @@ else
       [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
     else
       echo "Internet connection failed after ${max_attempt} attempts."
+      # The static-IP menu must remain usable when this loader has no DHCP or
+      # Internet access yet.  Do not try to download anything in this branch:
+      # pass a one-shot flag to menu_m.sh, which will write user_config.json
+      # directly and offer an immediate reboot after the values are saved.
+      if dialog --clear --backtitle "Network setup" \
+          --yesno "Internet was not found after ${max_attempt} attempts.\n\nDo you want to configure a static IP now?" 0 0; then
+        export FORCE_STATIC_IP_SETUP="true"
+      fi
     fi
-    echo -n "Checking GitHub Access -> "
-    curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
-    if [ $? -eq 0 ]; then
-        echo "OK"
-    else
-        echo "Error: GitHub is unavailable. Please try again later."
-        read answer
-        exit 99
+    # A static-IP setup is intentionally offline.  Skip the GitHub probe and
+    # continue into menu_m.sh so the saved settings can be applied on reboot.
+    if [ "${FORCE_STATIC_IP_SETUP:-false}" != "true" ]; then
+      echo -n "Checking GitHub Access -> "
+      curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
+      if [ $? -eq 0 ]; then
+          echo "OK"
+      else
+          echo "Error: GitHub is unavailable. Please try again later."
+          read answer
+          exit 99
+      fi
     fi
 fi
 

@@ -1292,6 +1292,7 @@ function netconsoleMenu() {
 function staticIpMenu() {
   local existing_ipset existing_iface existing_ipaddr existing_ipgw existing_ipdns existing_ipproxy status_str
   local resp target_iface cur_ipaddr cur_ipgw cur_ipdns cur_ipproxy dev
+  STATIC_IP_CONFIGURED="false"
 
   eval "MSG147=\"\${MSG${tz}147}\""
   eval "MSG148=\"\${MSG${tz}148}\""
@@ -1405,6 +1406,7 @@ function staticIpMenu() {
   writeConfigKey "ipsettings" "ipgw" "${cur_ipgw}"
   writeConfigKey "ipsettings" "ipdns" "${cur_ipdns}"
   writeConfigKey "ipsettings" "ipproxy" "${cur_ipproxy}"
+  STATIC_IP_CONFIGURED="true"
 
   dialog --clear --backtitle "`backtitle`" --msgbox "${MSG159}" 0 0
 }
@@ -3654,6 +3656,24 @@ chk_shr_ex
 
 # Until urxtv is available, Korean menu is used only on remote terminals.
 _gv=""; kver=""; origin_plat=""; drmmode=""
+
+# Offline first-boot path: menu.sh sets this flag after all three Internet
+# attempts fail and the user requests static-IP configuration.  Enter the
+# existing settings form directly, without returning through Additional
+# Functions, building a loader, or creating a backup.  The values are written
+# to /mnt/tcrp/user_config.json by writeConfigKey(), then reboot immediately so
+# the next boot can use the new network settings.
+if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
+  staticIpMenu
+  if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
+    if dialog --clear --backtitle "Network setup" \
+        --yesno "Static IP settings were saved.\n\nDo you want to reboot now?" 0 0; then
+      sudo reboot
+    fi
+  fi
+  exit 0
+fi
+
 while true; do
   _gv="$(resolveLiveKver)"
   kver="${_gv%%|*}"
