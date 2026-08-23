@@ -5622,16 +5622,21 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # CIDR("x.x.x.x/nn")로 저장되므로 DSM의 RHEL 스타일 ifcfg가 요구하는
     # IPADDR/NETMASK로 변환한다. 1차 구현은 단일 NIC만 지원(menu_m.sh의
     # staticIpMenu() 참고, 2026-08-23).
-    STATIC_IPSET="$(jq -r '.ipsettings.ipset // empty' user_config.json 2>/dev/null)"
+    # buildloader()는 이 지점에 도달하기 전에 이미 $rdtemp로 cd해 있으므로
+    # user_config.json을 상대경로로 읽으면 (거기엔 없어서) jq가 조용히
+    # 실패한다 - $userconfigfile(절대경로, functions.sh:158)을 명시해야 한다
+    # (실기 45.34에서 STATIC_IPSET이 항상 빈 값이 되어 매번 DHCP로 폴백되던
+    # 것을 원인 규명, 2026-08-23).
+    STATIC_IPSET="$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)"
     STATIC_IFACE=""
     STATIC_ADDR=""
     STATIC_GW=""
     STATIC_DNS=""
     if [ "${STATIC_IPSET}" = "static" ]; then
-        STATIC_IFACE="$(jq -r '.ipsettings.ipiface // empty' user_config.json 2>/dev/null)"
-        STATIC_ADDR="$(jq -r '.ipsettings.ipaddr // empty' user_config.json 2>/dev/null)"
-        STATIC_GW="$(jq -r '.ipsettings.ipgw // empty' user_config.json 2>/dev/null)"
-        STATIC_DNS="$(jq -r '.ipsettings.ipdns // empty' user_config.json 2>/dev/null)"
+        STATIC_IFACE="$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)"
+        STATIC_ADDR="$(jq -r '.ipsettings.ipaddr // empty' "${userconfigfile}" 2>/dev/null)"
+        STATIC_GW="$(jq -r '.ipsettings.ipgw // empty' "${userconfigfile}" 2>/dev/null)"
+        STATIC_DNS="$(jq -r '.ipsettings.ipdns // empty' "${userconfigfile}" 2>/dev/null)"
         if ! echo "${STATIC_ADDR}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
             echo "[static-ip] Invalid or missing ipsettings.ipaddr (${STATIC_ADDR}); falling back to DHCP for all NICs."
             STATIC_IPSET=""
