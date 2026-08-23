@@ -474,6 +474,14 @@ else
     fi
 fi
 
+# Static-IP recovery is deliberately independent of the repository checkout.
+# Do not enter the normal models/git clone path after the offline prompt.
+if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
+    chmod +x /home/tc/menu_m.sh 2>/dev/null
+    /home/tc/menu_m.sh
+    exit $?
+fi
+
 if [ -z "${1-}" ]; then
   [ -f /tmp/test_mode ] && rm -f /tmp/test_mode
   oldver="unknown"  # 또는 원하는 기본값
