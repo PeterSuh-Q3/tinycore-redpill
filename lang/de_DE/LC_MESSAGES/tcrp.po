@@ -571,3 +571,71 @@ msgstr "Diese Konfiguration speichern?\n\n%s\n\nStellen Sie sicher, dass der Lis
 #: MSGDE146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Gespeichert.\n\n[!] Sie müssen den Loader jetzt neu erstellen, damit dies wirksam wird (bitte zum Build-Menü gehen)."
+
+#: MSGDE147
+msgid "Configure Static IP"
+msgstr "Statische IP konfigurieren"
+
+#: MSGDE148
+msgid "Use DHCP"
+msgstr "DHCP verwenden"
+
+#: MSGDE149
+msgid "Select the network interface for the static IP"
+msgstr "Wählen Sie die Netzwerkschnittstelle für die statische IP"
+
+#: MSGDE150
+msgid "Could not detect any network interfaces."
+msgstr "Es konnten keine Netzwerkschnittstellen erkannt werden."
+
+#: MSGDE151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Geben Sie die statischen Netzwerkeinstellungen für %s ein\n\nProxy-Beispiel: http://192.168.1.10:3128 (leer lassen, es sei denn, Ihr Netzwerk erfordert, dass der gesamte ausgehende Datenverkehr über einen Proxy läuft)"
+
+#: MSGDE152
+msgid "IP Address (CIDR)"
+msgstr "IP-Adresse (CIDR)"
+
+#: MSGDE153
+msgid "Gateway"
+msgstr "Gateway"
+
+#: MSGDE154
+msgid "DNS Server"
+msgstr "DNS-Server"
+
+#: MSGDE155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP-Proxy (optional)"
+
+#: MSGDE156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Keine gültige IP-Adresse/CIDR (Beispiel: 192.168.1.50/24). Bitte versuchen Sie es erneut."
+
+#: MSGDE157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Keine gültige Gateway-Adresse. Bitte versuchen Sie es erneut."
+
+#: MSGDE158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Diese statische IP-Konfiguration speichern?\n\nSchnittstelle: %s\nIP-Adresse: %s\nGateway: %s\nDNS: %s"
+
+#: MSGDE159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Gespeichert.\n\n[!] Sie müssen den Loader jetzt neu erstellen, damit dies wirksam wird."
+
+#: MSGDE160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Auf DHCP zurückgesetzt.\n\n[!] Sie müssen den Loader jetzt neu erstellen, damit dies wirksam wird."
+
+#: MSGDE161
+msgid "Static IP Settings"
+msgstr "Statische IP-Einstellungen"
+
+#: MSGDE162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Der Proxy muss mit http:// oder https:// beginnen (Beispiel: http://192.168.1.10:3128). Bitte versuchen Sie es erneut."
+
+#: MSGDE163
+msgid "Static IP Settings (current: %s)"
+msgstr "Statische IP-Einstellungen (aktuell: %s)"

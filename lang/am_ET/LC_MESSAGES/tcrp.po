@@ -571,3 +571,71 @@ msgstr "ይህን ማዋቀሪያ ማስቀመጥ ይፈልጋሉ?\n\n%s\n\nየ�
 #: MSGET146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "ተቀምጧል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት (እባክዎ ወደ ግንባታ ምናሌ ይሂዱ)።"
+
+#: MSGET147
+msgid "Configure Static IP"
+msgstr "መደበኛ IP አዋቅር"
+
+#: MSGET148
+msgid "Use DHCP"
+msgstr "DHCP ተጠቀም"
+
+#: MSGET149
+msgid "Select the network interface for the static IP"
+msgstr "ለመደበኛ IP የአውታረ መረብ በይነገጽ ይምረጡ"
+
+#: MSGET150
+msgid "Could not detect any network interfaces."
+msgstr "ምንም የአውታረ መረብ በይነገጽ ማግኘት አልተቻለም።"
+
+#: MSGET151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "ለ %s መደበኛ የአውታረ መረብ ቅንብሮችን ያስገቡ\n\nየፕሮክሲ ምሳሌ: http://192.168.1.10:3128 (አውታረ መረብዎ ሁሉም ወጪ ትራፊክ በፕሮክሲ በኩል እንዲያልፍ የማይፈልግ ከሆነ ባዶ ይተውት)"
+
+#: MSGET152
+msgid "IP Address (CIDR)"
+msgstr "የIP አድራሻ (CIDR)"
+
+#: MSGET153
+msgid "Gateway"
+msgstr "መግቢያ (Gateway)"
+
+#: MSGET154
+msgid "DNS Server"
+msgstr "DNS አገልጋይ"
+
+#: MSGET155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP ፕሮክሲ (አማራጭ)"
+
+#: MSGET156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "ትክክለኛ IP አድራሻ/CIDR አይደለም (ምሳሌ: 192.168.1.50/24)። እባክዎ እንደገና ይሞክሩ።"
+
+#: MSGET157
+msgid "Not a valid gateway address. Please try again."
+msgstr "ትክክለኛ የመግቢያ አድራሻ አይደለም። እባክዎ እንደገና ይሞክሩ።"
+
+#: MSGET158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "ይህን መደበኛ IP ውቅር ያስቀምጡ?\n\nበይነገጽ: %s\nየIP አድራሻ: %s\nመግቢያ: %s\nDNS: %s"
+
+#: MSGET159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "ተቀምጧል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
+
+#: MSGET160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "ወደ DHCP ተመልሷል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
+
+#: MSGET161
+msgid "Static IP Settings"
+msgstr "መደበኛ IP ቅንብሮች"
+
+#: MSGET162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "ፕሮክሲው በ http:// ወይም https:// መጀመር አለበት (ምሳሌ: http://192.168.1.10:3128)። እባክዎ እንደገና ይሞክሩ።"
+
+#: MSGET163
+msgid "Static IP Settings (current: %s)"
+msgstr "መደበኛ IP ቅንብሮች (የአሁኑ: %s)"

@@ -571,3 +571,71 @@ msgstr "هل تريد حفظ هذا الإعداد؟\n\n%s\n\nتأكد من أن
 #: MSGEG146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "تم الحفظ.\n\n[!] يجب عليك إعادة بناء المحمّل الآن ليصبح ساري المفعول (يرجى الانتقال إلى قائمة البناء)."
+
+#: MSGEG147
+msgid "Configure Static IP"
+msgstr "تكوين IP ثابت"
+
+#: MSGEG148
+msgid "Use DHCP"
+msgstr "استخدام DHCP"
+
+#: MSGEG149
+msgid "Select the network interface for the static IP"
+msgstr "اختر واجهة الشبكة لـ IP الثابت"
+
+#: MSGEG150
+msgid "Could not detect any network interfaces."
+msgstr "تعذر اكتشاف أي واجهات شبكة."
+
+#: MSGEG151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "أدخل إعدادات الشبكة الثابتة لـ %s\n\nمثال على البروكسي: http://192.168.1.10:3128 (اتركه فارغًا ما لم تتطلب شبكتك مرور جميع حركة المرور الصادرة عبر بروكسي)"
+
+#: MSGEG152
+msgid "IP Address (CIDR)"
+msgstr "عنوان IP (CIDR)"
+
+#: MSGEG153
+msgid "Gateway"
+msgstr "البوابة"
+
+#: MSGEG154
+msgid "DNS Server"
+msgstr "خادم DNS"
+
+#: MSGEG155
+msgid "HTTP Proxy (optional)"
+msgstr "بروكسي HTTP (اختياري)"
+
+#: MSGEG156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "عنوان IP/CIDR غير صالح (مثال: 192.168.1.50/24). يرجى المحاولة مرة أخرى."
+
+#: MSGEG157
+msgid "Not a valid gateway address. Please try again."
+msgstr "عنوان بوابة غير صالح. يرجى المحاولة مرة أخرى."
+
+#: MSGEG158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "هل تريد حفظ تكوين IP الثابت هذا؟\n\nالواجهة: %s\nعنوان IP: %s\nالبوابة: %s\nDNS: %s"
+
+#: MSGEG159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "تم الحفظ.\n\n[!] يجب عليك إعادة بناء المحمّل الآن ليصبح ساري المفعول."
+
+#: MSGEG160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "تمت العودة إلى DHCP.\n\n[!] يجب عليك إعادة بناء المحمّل الآن ليصبح ساري المفعول."
+
+#: MSGEG161
+msgid "Static IP Settings"
+msgstr "إعدادات IP الثابت"
+
+#: MSGEG162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "يجب أن يبدأ البروكسي بـ http:// أو https:// (مثال: http://192.168.1.10:3128). يرجى المحاولة مرة أخرى."
+
+#: MSGEG163
+msgid "Static IP Settings (current: %s)"
+msgstr "إعدادات IP الثابت (الحالي: %s)"

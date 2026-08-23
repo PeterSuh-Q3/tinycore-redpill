@@ -162,4 +162,5 @@ MSGZZ159=$(gettext "tcrp" "Saved.\n\n[!] You must rebuild the loader now for thi
 MSGZZ160=$(gettext "tcrp" "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect.")
 MSGZZ161=$(gettext "tcrp" "Static IP Settings")
 MSGZZ162=$(gettext "tcrp" "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again.")
+MSGZZ163=$(gettext "tcrp" "Static IP Settings (current: %s)")
 }

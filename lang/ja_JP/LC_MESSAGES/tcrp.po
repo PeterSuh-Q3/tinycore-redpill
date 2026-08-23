@@ -571,3 +571,71 @@ msgstr "この設定を保存しますか?\n\n%s\n\nリスナーPCで以下の�
 #: MSGJP146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "保存しました。\n\n[!] 今すぐローダーを再ビルドしないと反映されません (ビルドメニューへ移動してください)。"
+
+#: MSGJP147
+msgid "Configure Static IP"
+msgstr "静的IPを設定"
+
+#: MSGJP148
+msgid "Use DHCP"
+msgstr "DHCPを使用"
+
+#: MSGJP149
+msgid "Select the network interface for the static IP"
+msgstr "静的IPに使用するネットワークインターフェースを選択してください"
+
+#: MSGJP150
+msgid "Could not detect any network interfaces."
+msgstr "ネットワークインターフェースを検出できませんでした。"
+
+#: MSGJP151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s の静的ネットワーク設定を入力してください\n\nプロキシの例: http://192.168.1.10:3128 (すべての外向き通信をプロキシ経由にする必要がある場合以外は空欄のままにしてください)"
+
+#: MSGJP152
+msgid "IP Address (CIDR)"
+msgstr "IPアドレス (CIDR)"
+
+#: MSGJP153
+msgid "Gateway"
+msgstr "ゲートウェイ"
+
+#: MSGJP154
+msgid "DNS Server"
+msgstr "DNSサーバー"
+
+#: MSGJP155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTPプロキシ (任意)"
+
+#: MSGJP156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "有効なIPアドレス/CIDRではありません (例: 192.168.1.50/24)。もう一度入力してください。"
+
+#: MSGJP157
+msgid "Not a valid gateway address. Please try again."
+msgstr "有効なゲートウェイアドレスではありません。もう一度入力してください。"
+
+#: MSGJP158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "この静的IP設定を保存しますか?\n\nインターフェース: %s\nIPアドレス: %s\nゲートウェイ: %s\nDNS: %s"
+
+#: MSGJP159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "保存しました。\n\n[!] 今すぐローダーを再ビルドしないと反映されません。"
+
+#: MSGJP160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCPに戻しました。\n\n[!] 今すぐローダーを再ビルドしないと反映されません。"
+
+#: MSGJP161
+msgid "Static IP Settings"
+msgstr "静的IP設定"
+
+#: MSGJP162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "プロキシは http:// または https:// で始まる必要があります (例: http://192.168.1.10:3128)。もう一度入力してください。"
+
+#: MSGJP163
+msgid "Static IP Settings (current: %s)"
+msgstr "静的IP設定 (現在: %s)"

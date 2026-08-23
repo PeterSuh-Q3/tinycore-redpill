@@ -571,3 +571,71 @@ msgstr "यह कॉन्फ़िगरेशन सहेजें?\n\n%s\n\
 #: MSGIN146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "सहेजा गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा (कृपया बिल्ड मेनू पर जाएं)।"
+
+#: MSGIN147
+msgid "Configure Static IP"
+msgstr "स्थिर IP कॉन्फ़िगर करें"
+
+#: MSGIN148
+msgid "Use DHCP"
+msgstr "DHCP का उपयोग करें"
+
+#: MSGIN149
+msgid "Select the network interface for the static IP"
+msgstr "स्थिर IP के लिए नेटवर्क इंटरफ़ेस चुनें"
+
+#: MSGIN150
+msgid "Could not detect any network interfaces."
+msgstr "कोई नेटवर्क इंटरफ़ेस नहीं मिला।"
+
+#: MSGIN151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s के लिए स्थिर नेटवर्क सेटिंग्स दर्ज करें\n\nप्रॉक्सी उदाहरण: http://192.168.1.10:3128 (खाली छोड़ दें जब तक आपके नेटवर्क को सभी आउटबाउंड ट्रैफ़िक को प्रॉक्सी से गुजरने की आवश्यकता न हो)"
+
+#: MSGIN152
+msgid "IP Address (CIDR)"
+msgstr "IP पता (CIDR)"
+
+#: MSGIN153
+msgid "Gateway"
+msgstr "गेटवे"
+
+#: MSGIN154
+msgid "DNS Server"
+msgstr "DNS सर्वर"
+
+#: MSGIN155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP प्रॉक्सी (वैकल्पिक)"
+
+#: MSGIN156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "मान्य IP पता/CIDR नहीं है (उदाहरण: 192.168.1.50/24)। कृपया पुनः प्रयास करें।"
+
+#: MSGIN157
+msgid "Not a valid gateway address. Please try again."
+msgstr "मान्य गेटवे पता नहीं है। कृपया पुनः प्रयास करें।"
+
+#: MSGIN158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "यह स्थिर IP कॉन्फ़िगरेशन सहेजें?\n\nइंटरफ़ेस: %s\nIP पता: %s\nगेटवे: %s\nDNS: %s"
+
+#: MSGIN159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "सहेजा गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
+
+#: MSGIN160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCP पर वापस लौटाया गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
+
+#: MSGIN161
+msgid "Static IP Settings"
+msgstr "स्थिर IP सेटिंग्स"
+
+#: MSGIN162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "प्रॉक्सी को http:// या https:// से शुरू होना चाहिए (उदाहरण: http://192.168.1.10:3128)। कृपया पुनः प्रयास करें।"
+
+#: MSGIN163
+msgid "Static IP Settings (current: %s)"
+msgstr "स्थिर IP सेटिंग्स (वर्तमान: %s)"

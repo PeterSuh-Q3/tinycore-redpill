@@ -571,3 +571,71 @@ msgstr "Menti ezt a beállítást?\n\n%s\n\nGyőződjön meg róla, hogy a figye
 #: MSGHU146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Mentve.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt (kérjük, lépjen a build menübe)."
+
+#: MSGHU147
+msgid "Configure Static IP"
+msgstr "Statikus IP beállítása"
+
+#: MSGHU148
+msgid "Use DHCP"
+msgstr "DHCP használata"
+
+#: MSGHU149
+msgid "Select the network interface for the static IP"
+msgstr "Válassza ki a hálózati interfészt a statikus IP-hez"
+
+#: MSGHU150
+msgid "Could not detect any network interfaces."
+msgstr "Nem sikerült hálózati interfészt észlelni."
+
+#: MSGHU151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Adja meg a statikus hálózati beállításokat ehhez: %s\n\nProxy példa: http://192.168.1.10:3128 (hagyja üresen, hacsak a hálózata nem követeli meg, hogy minden kimenő forgalom proxyn keresztül menjen)"
+
+#: MSGHU152
+msgid "IP Address (CIDR)"
+msgstr "IP-cím (CIDR)"
+
+#: MSGHU153
+msgid "Gateway"
+msgstr "Átjáró"
+
+#: MSGHU154
+msgid "DNS Server"
+msgstr "DNS-kiszolgáló"
+
+#: MSGHU155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP proxy (opcionális)"
+
+#: MSGHU156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Érvénytelen IP-cím/CIDR (példa: 192.168.1.50/24). Kérjük, próbálja újra."
+
+#: MSGHU157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Érvénytelen átjárócím. Kérjük, próbálja újra."
+
+#: MSGHU158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Menti ezt a statikus IP-konfigurációt?\n\nInterfész: %s\nIP-cím: %s\nÁtjáró: %s\nDNS: %s"
+
+#: MSGHU159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Mentve.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
+
+#: MSGHU160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Visszaállítva DHCP-re.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
+
+#: MSGHU161
+msgid "Static IP Settings"
+msgstr "Statikus IP beállítások"
+
+#: MSGHU162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "A proxynak http:// vagy https:// előtaggal kell kezdődnie (példa: http://192.168.1.10:3128). Kérjük, próbálja újra."
+
+#: MSGHU163
+msgid "Static IP Settings (current: %s)"
+msgstr "Statikus IP beállítások (jelenlegi: %s)"

@@ -1308,6 +1308,7 @@ function staticIpMenu() {
   eval "MSG159=\"\${MSG${tz}159}\""
   eval "MSG160=\"\${MSG${tz}160}\""
   eval "MSG162=\"\${MSG${tz}162}\""
+  eval "MSG163=\"\${MSG${tz}163}\""
 
   existing_ipset=$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)
   existing_iface=$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)
@@ -1323,7 +1324,7 @@ function staticIpMenu() {
   fi
 
   dialog --clear --backtitle "`backtitle`" \
-    --menu "Static IP Settings (current: ${status_str})" 0 0 $(dlgmenuheight 2) \
+    --menu "$(printf "${MSG163}" "${status_str}")" 0 0 $(dlgmenuheight 2) \
     e "${MSG147}" \
     d "${MSG148}" \
   2>${TMP_PATH}/resp

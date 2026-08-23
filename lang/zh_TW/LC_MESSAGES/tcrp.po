@@ -571,3 +571,71 @@ msgstr "是否儲存此設定?\n\n%s\n\n請確保接收端電腦已經用以下�
 #: MSGTW146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "已儲存。\n\n[!] 必須立即重新建置載入器才能生效 (請前往建置選單)。"
+
+#: MSGTW147
+msgid "Configure Static IP"
+msgstr "設定靜態IP"
+
+#: MSGTW148
+msgid "Use DHCP"
+msgstr "使用DHCP"
+
+#: MSGTW149
+msgid "Select the network interface for the static IP"
+msgstr "選擇用於靜態IP的網路介面"
+
+#: MSGTW150
+msgid "Could not detect any network interfaces."
+msgstr "未偵測到任何網路介面。"
+
+#: MSGTW151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "請輸入 %s 的靜態網路設定\n\n代理範例: http://192.168.1.10:3128 (除非您的網路要求所有出站流量都必須經過代理,否則請留空)"
+
+#: MSGTW152
+msgid "IP Address (CIDR)"
+msgstr "IP位址 (CIDR)"
+
+#: MSGTW153
+msgid "Gateway"
+msgstr "閘道"
+
+#: MSGTW154
+msgid "DNS Server"
+msgstr "DNS伺服器"
+
+#: MSGTW155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP代理 (選填)"
+
+#: MSGTW156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "無效的IP位址/CIDR (範例: 192.168.1.50/24)。請重試。"
+
+#: MSGTW157
+msgid "Not a valid gateway address. Please try again."
+msgstr "無效的閘道位址。請重試。"
+
+#: MSGTW158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "儲存此靜態IP設定?\n\n介面: %s\nIP位址: %s\n閘道: %s\nDNS: %s"
+
+#: MSGTW159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "已儲存。\n\n[!] 必須立即重新建置載入器才能生效。"
+
+#: MSGTW160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "已還原為DHCP。\n\n[!] 必須立即重新建置載入器才能生效。"
+
+#: MSGTW161
+msgid "Static IP Settings"
+msgstr "靜態IP設定"
+
+#: MSGTW162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "代理必須以 http:// 或 https:// 開頭 (範例: http://192.168.1.10:3128)。請重試。"
+
+#: MSGTW163
+msgid "Static IP Settings (current: %s)"
+msgstr "靜態IP設定 (目前: %s)"

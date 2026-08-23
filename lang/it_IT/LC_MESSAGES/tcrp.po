@@ -571,3 +571,71 @@ msgstr "Salvare questa configurazione?\n\n%s\n\nAssicurati che il PC ricevitore 
 #: MSGIT146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Salvato.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto (vai al menu di compilazione)."
+
+#: MSGIT147
+msgid "Configure Static IP"
+msgstr "Configura IP statico"
+
+#: MSGIT148
+msgid "Use DHCP"
+msgstr "Usa DHCP"
+
+#: MSGIT149
+msgid "Select the network interface for the static IP"
+msgstr "Seleziona l'interfaccia di rete per l'IP statico"
+
+#: MSGIT150
+msgid "Could not detect any network interfaces."
+msgstr "Impossibile rilevare alcuna interfaccia di rete."
+
+#: MSGIT151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Inserisci le impostazioni di rete statiche per %s\n\nEsempio di proxy: http://192.168.1.10:3128 (lascia vuoto a meno che la tua rete non richieda che tutto il traffico in uscita passi attraverso un proxy)"
+
+#: MSGIT152
+msgid "IP Address (CIDR)"
+msgstr "Indirizzo IP (CIDR)"
+
+#: MSGIT153
+msgid "Gateway"
+msgstr "Gateway"
+
+#: MSGIT154
+msgid "DNS Server"
+msgstr "Server DNS"
+
+#: MSGIT155
+msgid "HTTP Proxy (optional)"
+msgstr "Proxy HTTP (opzionale)"
+
+#: MSGIT156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Indirizzo IP/CIDR non valido (esempio: 192.168.1.50/24). Riprova."
+
+#: MSGIT157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Indirizzo gateway non valido. Riprova."
+
+#: MSGIT158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Salvare questa configurazione IP statica?\n\nInterfaccia: %s\nIndirizzo IP: %s\nGateway: %s\nDNS: %s"
+
+#: MSGIT159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Salvato.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
+
+#: MSGIT160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Ripristinato DHCP.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
+
+#: MSGIT161
+msgid "Static IP Settings"
+msgstr "Impostazioni IP statico"
+
+#: MSGIT162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Il proxy deve iniziare con http:// o https:// (esempio: http://192.168.1.10:3128). Riprova."
+
+#: MSGIT163
+msgid "Static IP Settings (current: %s)"
+msgstr "Impostazioni IP statico (attuale: %s)"

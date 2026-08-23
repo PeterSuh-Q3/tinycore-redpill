@@ -571,3 +571,71 @@ msgstr "Bu yapılandırma kaydedilsin mi?\n\n%s\n\nDinleyici bilgisayarın aşa�
 #: MSGTR146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Kaydedildi.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir (lütfen build menüsüne gidin)."
+
+#: MSGTR147
+msgid "Configure Static IP"
+msgstr "Statik IP Yapılandır"
+
+#: MSGTR148
+msgid "Use DHCP"
+msgstr "DHCP Kullan"
+
+#: MSGTR149
+msgid "Select the network interface for the static IP"
+msgstr "Statik IP için ağ arayüzünü seçin"
+
+#: MSGTR150
+msgid "Could not detect any network interfaces."
+msgstr "Herhangi bir ağ arayüzü algılanamadı."
+
+#: MSGTR151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s için statik ağ ayarlarını girin\n\nProxy örneği: http://192.168.1.10:3128 (ağınız tüm giden trafiğin bir proxy üzerinden geçmesini gerektirmiyorsa boş bırakın)"
+
+#: MSGTR152
+msgid "IP Address (CIDR)"
+msgstr "IP Adresi (CIDR)"
+
+#: MSGTR153
+msgid "Gateway"
+msgstr "Ağ Geçidi"
+
+#: MSGTR154
+msgid "DNS Server"
+msgstr "DNS Sunucusu"
+
+#: MSGTR155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP Proxy (isteğe bağlı)"
+
+#: MSGTR156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Geçerli bir IP adresi/CIDR değil (örnek: 192.168.1.50/24). Lütfen tekrar deneyin."
+
+#: MSGTR157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Geçerli bir ağ geçidi adresi değil. Lütfen tekrar deneyin."
+
+#: MSGTR158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Bu statik IP yapılandırması kaydedilsin mi?\n\nArayüz: %s\nIP Adresi: %s\nAğ Geçidi: %s\nDNS: %s"
+
+#: MSGTR159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Kaydedildi.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
+
+#: MSGTR160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCP'ye geri döndürüldü.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
+
+#: MSGTR161
+msgid "Static IP Settings"
+msgstr "Statik IP Ayarları"
+
+#: MSGTR162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Proxy http:// veya https:// ile başlamalıdır (örnek: http://192.168.1.10:3128). Lütfen tekrar deneyin."
+
+#: MSGTR163
+msgid "Static IP Settings (current: %s)"
+msgstr "Statik IP Ayarları (mevcut: %s)"

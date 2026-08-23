@@ -571,3 +571,71 @@ msgstr "บันทึกการตั้งค่านี้หรือไ
 #: MSGTH146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "บันทึกแล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล (โปรดไปที่เมนูบิลด์)"
+
+#: MSGTH147
+msgid "Configure Static IP"
+msgstr "ตั้งค่า IP แบบคงที่"
+
+#: MSGTH148
+msgid "Use DHCP"
+msgstr "ใช้ DHCP"
+
+#: MSGTH149
+msgid "Select the network interface for the static IP"
+msgstr "เลือกอินเทอร์เฟซเครือข่ายสำหรับ IP แบบคงที่"
+
+#: MSGTH150
+msgid "Could not detect any network interfaces."
+msgstr "ตรวจไม่พบอินเทอร์เฟซเครือข่ายใดๆ"
+
+#: MSGTH151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "ป้อนการตั้งค่าเครือข่ายแบบคงที่สำหรับ %s\n\nตัวอย่างพร็อกซี: http://192.168.1.10:3128 (เว้นว่างไว้ เว้นแต่เครือข่ายของคุณกำหนดให้ทราฟฟิกขาออกทั้งหมดต้องผ่านพร็อกซี)"
+
+#: MSGTH152
+msgid "IP Address (CIDR)"
+msgstr "ที่อยู่ IP (CIDR)"
+
+#: MSGTH153
+msgid "Gateway"
+msgstr "เกตเวย์"
+
+#: MSGTH154
+msgid "DNS Server"
+msgstr "เซิร์ฟเวอร์ DNS"
+
+#: MSGTH155
+msgid "HTTP Proxy (optional)"
+msgstr "พร็อกซี HTTP (ไม่บังคับ)"
+
+#: MSGTH156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "ที่อยู่ IP/CIDR ไม่ถูกต้อง (ตัวอย่าง: 192.168.1.50/24) โปรดลองอีกครั้ง"
+
+#: MSGTH157
+msgid "Not a valid gateway address. Please try again."
+msgstr "ที่อยู่เกตเวย์ไม่ถูกต้อง โปรดลองอีกครั้ง"
+
+#: MSGTH158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "บันทึกการตั้งค่า IP แบบคงที่นี้หรือไม่?\n\nอินเทอร์เฟซ: %s\nที่อยู่ IP: %s\nเกตเวย์: %s\nDNS: %s"
+
+#: MSGTH159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "บันทึกแล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
+
+#: MSGTH160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "กลับไปใช้ DHCP แล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
+
+#: MSGTH161
+msgid "Static IP Settings"
+msgstr "การตั้งค่า IP แบบคงที่"
+
+#: MSGTH162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "พร็อกซีต้องขึ้นต้นด้วย http:// หรือ https:// (ตัวอย่าง: http://192.168.1.10:3128) โปรดลองอีกครั้ง"
+
+#: MSGTH163
+msgid "Static IP Settings (current: %s)"
+msgstr "การตั้งค่า IP แบบคงที่ (ปัจจุบัน: %s)"

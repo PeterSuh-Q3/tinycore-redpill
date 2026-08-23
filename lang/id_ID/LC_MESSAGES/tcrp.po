@@ -571,3 +571,71 @@ msgstr "Simpan konfigurasi ini?\n\n%s\n\nPastikan PC penerima sudah menunggu den
 #: MSGID146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Tersimpan.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku (silakan buka menu build)."
+
+#: MSGID147
+msgid "Configure Static IP"
+msgstr "Konfigurasi IP Statis"
+
+#: MSGID148
+msgid "Use DHCP"
+msgstr "Gunakan DHCP"
+
+#: MSGID149
+msgid "Select the network interface for the static IP"
+msgstr "Pilih antarmuka jaringan untuk IP statis"
+
+#: MSGID150
+msgid "Could not detect any network interfaces."
+msgstr "Tidak dapat mendeteksi antarmuka jaringan apa pun."
+
+#: MSGID151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Masukkan pengaturan jaringan statis untuk %s\n\nContoh proxy: http://192.168.1.10:3128 (biarkan kosong kecuali jaringan Anda mengharuskan semua lalu lintas keluar melalui proxy)"
+
+#: MSGID152
+msgid "IP Address (CIDR)"
+msgstr "Alamat IP (CIDR)"
+
+#: MSGID153
+msgid "Gateway"
+msgstr "Gateway"
+
+#: MSGID154
+msgid "DNS Server"
+msgstr "Server DNS"
+
+#: MSGID155
+msgid "HTTP Proxy (optional)"
+msgstr "Proxy HTTP (opsional)"
+
+#: MSGID156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Alamat IP/CIDR tidak valid (contoh: 192.168.1.50/24). Silakan coba lagi."
+
+#: MSGID157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Alamat gateway tidak valid. Silakan coba lagi."
+
+#: MSGID158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Simpan konfigurasi IP statis ini?\n\nAntarmuka: %s\nAlamat IP: %s\nGateway: %s\nDNS: %s"
+
+#: MSGID159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Tersimpan.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
+
+#: MSGID160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Dikembalikan ke DHCP.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
+
+#: MSGID161
+msgid "Static IP Settings"
+msgstr "Pengaturan IP Statis"
+
+#: MSGID162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Proxy harus dimulai dengan http:// atau https:// (contoh: http://192.168.1.10:3128). Silakan coba lagi."
+
+#: MSGID163
+msgid "Static IP Settings (current: %s)"
+msgstr "Pengaturan IP Statis (saat ini: %s)"

@@ -571,3 +571,71 @@ msgstr "Enregistrer cette configuration ?\n\n%s\n\nAssurez-vous que le PC récep
 #: MSGFR146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Enregistré.\n\n[!] Vous devez reconstruire le chargeur maintenant pour que cela prenne effet (veuillez aller au menu de compilation)."
+
+#: MSGFR147
+msgid "Configure Static IP"
+msgstr "Configurer une IP statique"
+
+#: MSGFR148
+msgid "Use DHCP"
+msgstr "Utiliser le DHCP"
+
+#: MSGFR149
+msgid "Select the network interface for the static IP"
+msgstr "Sélectionnez l'interface réseau pour l'IP statique"
+
+#: MSGFR150
+msgid "Could not detect any network interfaces."
+msgstr "Aucune interface réseau détectée."
+
+#: MSGFR151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Saisissez les paramètres réseau statiques pour %s\n\nExemple de proxy : http://192.168.1.10:3128 (laissez vide sauf si votre réseau exige que tout le trafic sortant passe par un proxy)"
+
+#: MSGFR152
+msgid "IP Address (CIDR)"
+msgstr "Adresse IP (CIDR)"
+
+#: MSGFR153
+msgid "Gateway"
+msgstr "Passerelle"
+
+#: MSGFR154
+msgid "DNS Server"
+msgstr "Serveur DNS"
+
+#: MSGFR155
+msgid "HTTP Proxy (optional)"
+msgstr "Proxy HTTP (facultatif)"
+
+#: MSGFR156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Adresse IP/CIDR invalide (exemple : 192.168.1.50/24). Veuillez réessayer."
+
+#: MSGFR157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Adresse de passerelle invalide. Veuillez réessayer."
+
+#: MSGFR158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Enregistrer cette configuration IP statique ?\n\nInterface : %s\nAdresse IP : %s\nPasserelle : %s\nDNS : %s"
+
+#: MSGFR159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Enregistré.\n\n[!] Vous devez reconstruire le chargeur maintenant pour que cela prenne effet."
+
+#: MSGFR160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Revenu au DHCP.\n\n[!] Vous devez reconstruire le chargeur maintenant pour que cela prenne effet."
+
+#: MSGFR161
+msgid "Static IP Settings"
+msgstr "Paramètres IP statique"
+
+#: MSGFR162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Le proxy doit commencer par http:// ou https:// (exemple : http://192.168.1.10:3128). Veuillez réessayer."
+
+#: MSGFR163
+msgid "Static IP Settings (current: %s)"
+msgstr "Paramètres IP statique (actuel : %s)"

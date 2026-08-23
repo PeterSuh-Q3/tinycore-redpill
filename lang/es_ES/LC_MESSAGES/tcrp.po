@@ -571,3 +571,71 @@ msgstr "¿Guardar esta configuración?\n\n%s\n\nAsegúrese de que el PC receptor
 #: MSGES146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Guardado.\n\n[!] Debe reconstruir el cargador ahora para que esto surta efecto (vaya al menú de compilación)."
+
+#: MSGES147
+msgid "Configure Static IP"
+msgstr "Configurar IP estática"
+
+#: MSGES148
+msgid "Use DHCP"
+msgstr "Usar DHCP"
+
+#: MSGES149
+msgid "Select the network interface for the static IP"
+msgstr "Seleccione la interfaz de red para la IP estática"
+
+#: MSGES150
+msgid "Could not detect any network interfaces."
+msgstr "No se pudo detectar ninguna interfaz de red."
+
+#: MSGES151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Introduzca la configuración de red estática para %s\n\nEjemplo de proxy: http://192.168.1.10:3128 (déjelo en blanco a menos que su red requiera que todo el tráfico saliente pase por un proxy)"
+
+#: MSGES152
+msgid "IP Address (CIDR)"
+msgstr "Dirección IP (CIDR)"
+
+#: MSGES153
+msgid "Gateway"
+msgstr "Puerta de enlace"
+
+#: MSGES154
+msgid "DNS Server"
+msgstr "Servidor DNS"
+
+#: MSGES155
+msgid "HTTP Proxy (optional)"
+msgstr "Proxy HTTP (opcional)"
+
+#: MSGES156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Dirección IP/CIDR no válida (ejemplo: 192.168.1.50/24). Inténtelo de nuevo."
+
+#: MSGES157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Dirección de puerta de enlace no válida. Inténtelo de nuevo."
+
+#: MSGES158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "¿Guardar esta configuración de IP estática?\n\nInterfaz: %s\nDirección IP: %s\nPuerta de enlace: %s\nDNS: %s"
+
+#: MSGES159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Guardado.\n\n[!] Debe reconstruir el cargador ahora para que esto surta efecto."
+
+#: MSGES160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Revertido a DHCP.\n\n[!] Debe reconstruir el cargador ahora para que esto surta efecto."
+
+#: MSGES161
+msgid "Static IP Settings"
+msgstr "Configuración de IP estática"
+
+#: MSGES162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "El proxy debe comenzar con http:// o https:// (ejemplo: http://192.168.1.10:3128). Inténtelo de nuevo."
+
+#: MSGES163
+msgid "Static IP Settings (current: %s)"
+msgstr "Configuración de IP estática (actual: %s)"

@@ -571,3 +571,71 @@ msgstr "Salvar esta configuração?\n\n%s\n\nCertifique-se de que o PC receptor 
 #: MSGBR146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Salvo.\n\n[!] Você deve reconstruir o loader agora para que isso tenha efeito (vá para o menu de compilação)."
+
+#: MSGBR147
+msgid "Configure Static IP"
+msgstr "Configurar IP estático"
+
+#: MSGBR148
+msgid "Use DHCP"
+msgstr "Usar DHCP"
+
+#: MSGBR149
+msgid "Select the network interface for the static IP"
+msgstr "Selecione a interface de rede para o IP estático"
+
+#: MSGBR150
+msgid "Could not detect any network interfaces."
+msgstr "Não foi possível detectar nenhuma interface de rede."
+
+#: MSGBR151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Digite as configurações de rede estáticas para %s\n\nExemplo de proxy: http://192.168.1.10:3128 (deixe em branco a menos que sua rede exija que todo o tráfego de saída passe por um proxy)"
+
+#: MSGBR152
+msgid "IP Address (CIDR)"
+msgstr "Endereço IP (CIDR)"
+
+#: MSGBR153
+msgid "Gateway"
+msgstr "Gateway"
+
+#: MSGBR154
+msgid "DNS Server"
+msgstr "Servidor DNS"
+
+#: MSGBR155
+msgid "HTTP Proxy (optional)"
+msgstr "Proxy HTTP (opcional)"
+
+#: MSGBR156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Endereço IP/CIDR inválido (exemplo: 192.168.1.50/24). Tente novamente."
+
+#: MSGBR157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Endereço de gateway inválido. Tente novamente."
+
+#: MSGBR158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Salvar esta configuração de IP estático?\n\nInterface: %s\nEndereço IP: %s\nGateway: %s\nDNS: %s"
+
+#: MSGBR159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Salvo.\n\n[!] Você deve reconstruir o loader agora para que isso tenha efeito."
+
+#: MSGBR160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Revertido para DHCP.\n\n[!] Você deve reconstruir o loader agora para que isso tenha efeito."
+
+#: MSGBR161
+msgid "Static IP Settings"
+msgstr "Configurações de IP estático"
+
+#: MSGBR162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "O proxy deve começar com http:// ou https:// (exemplo: http://192.168.1.10:3128). Tente novamente."
+
+#: MSGBR163
+msgid "Static IP Settings (current: %s)"
+msgstr "Configurações de IP estático (atual: %s)"

@@ -639,3 +639,7 @@ msgstr "고정 IP 설정"
 #: MSGKR162
 msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
 msgstr "프록시는 http:// 또는 https:// 로 시작해야 합니다 (예: http://192.168.1.10:3128). 다시 입력해 주세요."
+
+#: MSGKR163
+msgid "Static IP Settings (current: %s)"
+msgstr "고정 IP 설정 (현재: %s)"

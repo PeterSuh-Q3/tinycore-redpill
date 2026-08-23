@@ -571,3 +571,71 @@ msgstr "Сохранить эту настройку?\n\n%s\n\nУбедитес�
 #: MSGRU146
 msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
 msgstr "Сохранено.\n\n[!] Чтобы изменения вступили в силу, необходимо немедленно пересобрать загрузчик (перейдите в меню сборки)."
+
+#: MSGRU147
+msgid "Configure Static IP"
+msgstr "Настроить статический IP"
+
+#: MSGRU148
+msgid "Use DHCP"
+msgstr "Использовать DHCP"
+
+#: MSGRU149
+msgid "Select the network interface for the static IP"
+msgstr "Выберите сетевой интерфейс для статического IP"
+
+#: MSGRU150
+msgid "Could not detect any network interfaces."
+msgstr "Не удалось обнаружить ни одного сетевого интерфейса."
+
+#: MSGRU151
+msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Введите статические настройки сети для %s\n\nПример прокси: http://192.168.1.10:3128 (оставьте пустым, если ваша сеть не требует, чтобы весь исходящий трафик проходил через прокси)"
+
+#: MSGRU152
+msgid "IP Address (CIDR)"
+msgstr "IP-адрес (CIDR)"
+
+#: MSGRU153
+msgid "Gateway"
+msgstr "Шлюз"
+
+#: MSGRU154
+msgid "DNS Server"
+msgstr "DNS-сервер"
+
+#: MSGRU155
+msgid "HTTP Proxy (optional)"
+msgstr "HTTP-прокси (необязательно)"
+
+#: MSGRU156
+msgid "Not a valid IP address/CIDR (example: 192.168.1.50/24). Please try again."
+msgstr "Недопустимый IP-адрес/CIDR (пример: 192.168.1.50/24). Попробуйте снова."
+
+#: MSGRU157
+msgid "Not a valid gateway address. Please try again."
+msgstr "Недопустимый адрес шлюза. Попробуйте снова."
+
+#: MSGRU158
+msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
+msgstr "Сохранить эту статическую конфигурацию IP?\n\nИнтерфейс: %s\nIP-адрес: %s\nШлюз: %s\nDNS: %s"
+
+#: MSGRU159
+msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Сохранено.\n\n[!] Чтобы изменения вступили в силу, необходимо немедленно пересобрать загрузчик."
+
+#: MSGRU160
+msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Возвращено к DHCP.\n\n[!] Чтобы изменения вступили в силу, необходимо немедленно пересобрать загрузчик."
+
+#: MSGRU161
+msgid "Static IP Settings"
+msgstr "Настройки статического IP"
+
+#: MSGRU162
+msgid "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again."
+msgstr "Прокси должен начинаться с http:// или https:// (пример: http://192.168.1.10:3128). Попробуйте снова."
+
+#: MSGRU163
+msgid "Static IP Settings (current: %s)"
+msgstr "Настройки статического IP (текущий: %s)"
