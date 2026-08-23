@@ -46,6 +46,21 @@ function curl() {
 function safe_fetch() {
     local _url="$1" _dest="$2" _sentinel="$3"
     local _tmp="/dev/shm/.safe_fetch.$$"
+    # functions.sh:19의 curl() 캐시버스팅 오버라이드는 여기선 아직 적용 전이다
+    # (safe_fetch가 그 functions.sh 자체를 받아오는 데도 쓰이므로) - 그래서
+    # raw.githubusercontent.com의 CDN이 방금 푸시한 새 버전을 못 받고 몇 분
+    # 지난 캐시를 서빙하는 문제가 있었다(실기 45.34, 2026-08-23 재현: 푸시
+    # 직후 menu.sh test로 받았는데 구버전 그대로였음). 여기서도 직접
+    # _cb=타임스탬프를 붙여 우회한다.
+    case "${_url}" in
+        *raw.githubusercontent.com*)
+            if [[ "${_url}" == *\?* ]]; then
+                _url="${_url}&_cb=$(date +%s%N 2>/dev/null || date +%s)"
+            else
+                _url="${_url}?_cb=$(date +%s%N 2>/dev/null || date +%s)"
+            fi
+            ;;
+    esac
     if curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
        && [ -s "${_tmp}" ] \
        && grep -q "${_sentinel}" "${_tmp}" \
@@ -466,7 +481,11 @@ else
 fi  
 
 if [ "${offline}" = "NO" ]; then
-    curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/models.json
+    # functions.sh를 아직 안 거친 시점이라 curl() 캐시버스팅 오버라이드가
+    # 없다 - safe_fetch()와 동일한 이유로 직접 _cb를 붙인다. -O 대신 -o로
+    # 저장 파일명을 명시(쿼리스트링이 붙으면 -O가 "models.json?_cb=..."
+    # 같은 엉뚱한 파일명으로 저장할 수 있어 curl 버전에 기대지 않음).
+    curl -skL# -o models.json "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/models.json?_cb=$(date +%s%N 2>/dev/null || date +%s)"
     if [ "$oldver" = "test" ]; then
       gitdownload
       cecho g "###############################  This is Test Mode  ############################"
