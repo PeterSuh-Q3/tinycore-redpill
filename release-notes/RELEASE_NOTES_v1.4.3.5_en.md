@@ -2,7 +2,7 @@
 
 ## Offline static IP setup
 
-If the loader cannot reach the Internet after three attempts, it now asks whether a static IP should be configured. Choosing **Yes** enters the static network form directly without cloning repositories, downloading models, or starting a loader build. The values are written directly to `/mnt/tcrp/user_config.json`, followed by an optional immediate reboot.
+If the loader cannot reach the Internet after three attempts, it now asks whether a static IP should be configured. Choosing **Yes** enters the static network form directly without cloning repositories, downloading models, or starting a loader build. The values are written directly to `/mnt/tcrp/user_config.json`, then applied immediately to the running FRIEND kernel before `menu.sh` returns to the normal main menu.
 
 The offline path now initializes the gettext fallback messages before opening the form, preventing the early-start `MSGUS147` error.
 

@@ -638,7 +638,8 @@ function history() {
             physical NIC unconditionally, saving up to 70 seconds across retries;
             rploader's headless build path now re-downloads models.json like the
             interactive my() path already did.
-    1.4.3.5 Offline static IP setup centralized package manifest and user config persistence
+    1.4.3.5 Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
+             Centralized package manifest and user config persistence
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1294,7 +1295,8 @@ EOF
 # now re-downloads models.json like the interactive my() path already did.
 
 # 2026.08.24 v1.4.3.5
-# Offline static IP setup centralized package manifest and user config persistence
+# Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
+# Centralized package manifest and user config persistence
 
 function showlastupdate() {
     cat <<'EOF'
@@ -1636,7 +1638,8 @@ function showlastupdate() {
 # skipping NICs that don't need a kick, and rploader's headless build path re-downloading
 # models.json.
 # 2026.08.24 v1.4.3.5
-# Offline static IP setup centralized package manifest and user config persistence
+# Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
+# Centralized package manifest and user config persistence
 EOF
 }
 
