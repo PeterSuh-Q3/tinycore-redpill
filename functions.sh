@@ -5926,8 +5926,18 @@ NCEOF
     # This avoids three independent release/API lookups during every build.
     LATEST_PACKAGE_MANIFEST="/tmp/mshell-tcrp-latest.json"
     LATEST_PACKAGE_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/recipes/latest.json"
-    curl -kfsSL --retry 2 --connect-timeout 15 "${LATEST_PACKAGE_MANIFEST_URL}" \
-      -o "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null || rm -f "${LATEST_PACKAGE_MANIFEST}"
+    # aeudev's universal recipe downloads this file together with install.sh.
+    # Prefer that verified local copy; only use Raw GitHub as a fallback for
+    # older extension caches that predate the manifest file.
+    LATEST_PACKAGE_MANIFEST_LOCAL="/home/tc/redpill-load/custom/extensions/aeudev/latest.json"
+    if [ -s "${LATEST_PACKAGE_MANIFEST_LOCAL}" ]; then
+      cp -f "${LATEST_PACKAGE_MANIFEST_LOCAL}" "${LATEST_PACKAGE_MANIFEST}"
+      echo "Using aeudev bundled latest.json"
+    else
+      curl -kfsSL --retry 3 --connect-timeout 15 "${LATEST_PACKAGE_MANIFEST_URL}" \
+        -o "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null || rm -f "${LATEST_PACKAGE_MANIFEST}"
+      echo "Using Raw GitHub fallback for latest.json"
+    fi
     if [ ! -s "${LATEST_PACKAGE_MANIFEST}" ] || ! jq -e '.schema == 1 and (.packages | type == "object")' "${LATEST_PACKAGE_MANIFEST}" >/dev/null 2>&1; then
       echo "[!] Central package manifest unavailable or invalid; SPK staging skipped."
       rm -f "${LATEST_PACKAGE_MANIFEST}"
