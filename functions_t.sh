@@ -5929,7 +5929,11 @@ NCEOF
     # aeudev's universal recipe downloads this file together with install.sh.
     # Prefer that verified local copy; only use Raw GitHub as a fallback for
     # older extension caches that predate the manifest file.
-    LATEST_PACKAGE_MANIFEST_LOCAL="/home/tc/redpill-load/custom/extensions/aeudev/latest.json"
+    # Extension files are stored below the platform/kernel-specific recipe
+    # directory (for example aeudev/apollolake_44302/latest.json), not at the
+    # aeudev directory root.
+    LATEST_PACKAGE_MANIFEST_LOCAL="$(find /home/tc/redpill-load/custom/extensions/aeudev \
+      -type f -name latest.json -print -quit 2>/dev/null)"
     if [ -s "${LATEST_PACKAGE_MANIFEST_LOCAL}" ]; then
       cp -f "${LATEST_PACKAGE_MANIFEST_LOCAL}" "${LATEST_PACKAGE_MANIFEST}"
       echo "Using aeudev bundled latest.json"
