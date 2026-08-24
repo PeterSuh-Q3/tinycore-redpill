@@ -5948,7 +5948,7 @@ NCEOF
     fi
 
     MSHELL_MANAGER_ASSET_JSON="$(jq -c '
-      .packages.mshell_manager.assets[]? | select(.name | test("^MshellManager-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      .packages.mshell_manager.assets[]? | select(.name | endswith(".spk")) |
       {name, url, sha256}
     ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
@@ -5975,7 +5975,7 @@ NCEOF
     fi
 
     SSI_ASSET_JSON="$(jq -c '
-      .packages.syno_smart_info.assets[]? | select(.name | test("^Synosmartinfo-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      .packages.syno_smart_info.assets[]? | select(.name | endswith(".spk")) |
       {name, url, sha256}
     ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     SSI_SPK="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
