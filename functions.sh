@@ -156,6 +156,32 @@ modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build
 timezone="UTC"
 ntpserver="pool.ntp.org"
 userconfigfile="/home/tc/user_config.json"
+
+# Keep the configuration persistence check in the shared function library so
+# both menu_m.sh and the Buildroot boot.sh auto-rebuild path use the same rule.
+function sync_part_config() {
+    [ -L "$userconfigfile" ] && return 0
+    sudo cp "$userconfigfile" "/mnt/${tcrppart}/user_config.json"
+}
+
+function chk_filetime_n_backup() {
+    local before_hash="${1:-}"
+    local after_hash
+
+    after_hash="$(sha256sum "$userconfigfile" 2>/dev/null | awk '{print $1}')"
+    echo "user_config.json before: ${before_hash:-unavailable}"
+    echo "user_config.json after : ${after_hash:-unavailable}"
+
+    if [ -n "$before_hash" ] && [ -n "$after_hash" ] && [ "$before_hash" != "$after_hash" ]; then
+        echo "$userconfigfile changed, need to backup!"
+        sync_part_config
+        backuploader
+    fi
+}
+
+function refresh_userconfig_hash() {
+    userconfig_before_hash="$(sha256sum "$userconfigfile" 2>/dev/null | awk '{print $1}')"
+}
 # pats.json is kept at a persistent location (/home/tc) so that a redpill-load
 # directory clean/re-clone (e.g. after a failed build) does not remove the DSM
 # version source. It is mirrored into redpill-load/config for the loader build.

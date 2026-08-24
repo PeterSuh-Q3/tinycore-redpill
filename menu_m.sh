@@ -136,53 +136,29 @@ function read_with_timeout() {
     fi
 }
 
-###############################################################################
-# $userconfigfile 를 /mnt/${tcrppart}/user_config.json 으로 동기화한다.
-# mshellSymlinkUserConfig()(functions_t.sh) 가 켜져 있으면 $userconfigfile
-# 자체가 그 경로를 가리키는 심볼릭 링크라 두 경로가 이미 같은 파일이다 -
-# 이 상태에서 그대로 cp 를 수행하면 "same file" 오류가 난다(SN/MAC 생성
-# 메뉴 등에서 실기로 확인됨). 심볼릭 링크가 아닌 경우(안정 트랙)만 실제로
-# 복사한다.
-function sync_part_config() {
-  [ -L "$userconfigfile" ] && return 0
-  sudo cp "$userconfigfile" "/mnt/${tcrppart}/user_config.json"
-}
+# Capture the configuration before menu operations.  The loader copy may now
+# be the same file as /home/tc/user_config.json, so comparing two paths cannot
+# detect a change.
+userconfig_before_hash="$(sha256sum "$userconfigfile" 2>/dev/null | awk '{print $1}')"
 
 function chk_filetime_n_backup() {
-  # 2026-08-16 (테스트 트랙에서만 실질적으로 갈라짐, 파일 자체는 공용):
-  # mshellSymlinkUserConfig()(functions_t.sh)가 켜져 있으면 $userconfigfile
-  # 은 file2 와 같은 파일을 가리키는 심볼릭 링크라, 아래 md5 비교는 영원히
-  # "같다"로만 나온다 - sync할 것도 없고(이미 한 파일), 그 결과로
-  # backuploader() 가 다시는 호출되지 않게 되어 재부팅 전 백업이라는
-  # 이 함수의 진짜 목적 자체가 조용히 사라진다(실기에서 실제 확인됨).
-  # 심볼릭 링크가 아닌 안정 트랙에서는 predicate 이 거짓이라 원래
-  # diff 기반 로직 그대로 실행되고, 동작은 한 글자도 안 바뀐다.
-  if [ -L "$userconfigfile" ]; then
-    backuploader
-    return
-  fi
+  local before_hash after_hash
 
-  file1="$userconfigfile"
-  file2="/mnt/${tcrppart}/user_config.json"
+  before_hash="${userconfig_before_hash:-}"
+  after_hash="$(sha256sum "$userconfigfile" 2>/dev/null | awk '{print $1}')"
 
-  # md5sum 계산
-  md5_1=$(md5sum "$file1" | awk '{print $1}')
-  md5_2=$(md5sum "$file2" | awk '{print $1}')
+  echo "user_config.json before: ${before_hash:-unavailable}"
+  echo "user_config.json after : ${after_hash:-unavailable}"
 
-  echo "File 1 ($file1): $md5_1"
-  echo "File 2 ($file2): $md5_2"
-
-  # 비교
-  if [ "$md5_1" != "$md5_2" ]; then
-    echo "$file1 and $file2 are differnt!, need to backup!"
-    # Added a feature to immediately reflect changes to user_config.json (no need for loader build) 2025.03.29
-    sudo cp $userconfigfile /mnt/${tcrppart}/user_config.json
+  if [ -n "$before_hash" ] && [ -n "$after_hash" ] && [ "$before_hash" != "$after_hash" ]; then
+    echo "$userconfigfile changed, need to backup!"
+    sync_part_config
     backuploader
   fi
 }
  
 function restart() {
-    chk_filetime_n_backup
+    chk_filetime_n_backup "$userconfig_before_hash"
     echo "A reboot is required. Press any key to reboot..."
     read -n 1 -s  # Wait for a key press
     clear
@@ -191,7 +167,7 @@ function restart() {
 }
 
 function byebye() {
-    chk_filetime_n_backup
+    chk_filetime_n_backup "$userconfig_before_hash"
     writebackcache 
     sudo poweroff
 }
@@ -1922,7 +1898,7 @@ function keymapMenu() {
   writeConfigKey "general" "keymap" "${KEYMAP}"
   sed -i "/loadkmap/d" /opt/bootsync.sh
   echo "loadkmap < /usr/share/kmap/${LAYOUT}/${KEYMAP}.kmap &" >> /opt/bootsync.sh
-  backuploader
+  refresh_userconfig_hash
   
   echo
   echo "Since the keymap has been changed,"
@@ -2336,10 +2312,10 @@ function satadom_edit() {
     # 심볼릭 링크를 깨뜨릴 위험이 있다 - 출력을 임시파일로 받아 cp 로
     # 타깃에 써서(심볼릭 링크를 따라가며) 링크를 유지한다.
     sed "s/synoboot_satadom=[^ ]*/synoboot_satadom=${1}/g" /home/tc/user_config.json > "${TMP_PATH}/user_config.json.tmp" \
-        && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
-        && rm -f "${TMP_PATH}/user_config.json.tmp"
+    && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
+    && rm -f "${TMP_PATH}/user_config.json.tmp"
     sync_part_config
-    backuploader
+    refresh_userconfig_hash
 }
 
 function i915_edit() {
@@ -2361,7 +2337,7 @@ function i915_edit() {
 
   writeConfigKey "general" "i915mode" "${I915MODE}"
   sync_part_config
-  backuploader
+  refresh_userconfig_hash
 }
 
 function defaultchange() {
@@ -3118,7 +3094,7 @@ function showAutoUpdateMenu() {
       writeConfigKey "general" "friendautoupd" "${FKC}"
       dialog --infobox "${MSG114}" 3 25
       sleep 1
-      backuploader
+      refresh_userconfig_hash
       clear
       return 0
     fi
