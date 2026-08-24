@@ -5922,18 +5922,31 @@ NCEOF
     #copy user dts file.
     [ -f /home/tc/model.dts ] && sudo cp /home/tc/model.dts "${RAMDISK_PATH}/addons/model.dts"
 
-    # MSHELL Manager는 이제 alpine-redpill/tools에 .spk를 커밋해 두지 않는다.
-    # syno-amdgpu-driver(AMD 런타임)와 동일하게, 공개 미러 repo
-    # mshell-manager-rel의 releases/latest를 GitHub API로 직접 조회해
-    # 최신 자산의 URL/sha256(네이티브 digest 필드)을 얻는다. 소스는
-    # private mshell-manager repo가 갖고 있고, 이 repo는 릴리즈마다
-    # 자동으로 미러링된다(2026-08-22).
-    MSHELL_MANAGER_RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/mshell-manager-rel/releases/latest"
-    MSHELL_MANAGER_RELEASE_JSON="$(curl -kfsSL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_RELEASE_API}" 2>/dev/null)"
-    MSHELL_MANAGER_ASSET_JSON="$(printf '%s' "${MSHELL_MANAGER_RELEASE_JSON}" | jq -c '
-      .assets[]? | select(.name | test("^MshellManager-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
-      {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))}
-    ' 2>/dev/null | head -n 1)"
+    # Package versions and checksums are centrally maintained by tcrp-modules.
+    # This avoids three independent release/API lookups during every build.
+    LATEST_PACKAGE_MANIFEST="/tmp/mshell-tcrp-latest.json"
+    LATEST_PACKAGE_MANIFEST_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/aeudev/recipes/latest.json"
+    # aeudev's universal recipe downloads this file together with install.sh.
+    # Prefer that verified local copy; only use Raw GitHub as a fallback for
+    # older extension caches that predate the manifest file.
+    LATEST_PACKAGE_MANIFEST_LOCAL="/home/tc/redpill-load/custom/extensions/aeudev/latest.json"
+    if [ -s "${LATEST_PACKAGE_MANIFEST_LOCAL}" ]; then
+      cp -f "${LATEST_PACKAGE_MANIFEST_LOCAL}" "${LATEST_PACKAGE_MANIFEST}"
+      echo "Using aeudev bundled latest.json"
+    else
+      curl -kfsSL --retry 3 --connect-timeout 15 "${LATEST_PACKAGE_MANIFEST_URL}" \
+        -o "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null || rm -f "${LATEST_PACKAGE_MANIFEST}"
+      echo "Using Raw GitHub fallback for latest.json"
+    fi
+    if [ ! -s "${LATEST_PACKAGE_MANIFEST}" ] || ! jq -e '.schema == 1 and (.packages | type == "object")' "${LATEST_PACKAGE_MANIFEST}" >/dev/null 2>&1; then
+      echo "[!] Central package manifest unavailable or invalid; SPK staging skipped."
+      rm -f "${LATEST_PACKAGE_MANIFEST}"
+    fi
+
+    MSHELL_MANAGER_ASSET_JSON="$(jq -c '
+      .packages.mshell_manager.assets[]? | select(.name | test("^MshellManager-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      {name, url, sha256}
+    ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
@@ -5957,14 +5970,10 @@ NCEOF
       echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
     fi
 
-    # Syno Smart Info(SynoSmartInfo)는 이미 공개 repo라 mshell-manager-rel 같은
-    # 미러가 필요 없다 - releases/latest를 바로 조회한다(2026-08-22).
-    SSI_RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/SynoSmartInfo/releases/latest"
-    SSI_RELEASE_JSON="$(curl -kfsSL --retry 2 --connect-timeout 15 "${SSI_RELEASE_API}" 2>/dev/null)"
-    SSI_ASSET_JSON="$(printf '%s' "${SSI_RELEASE_JSON}" | jq -c '
-      .assets[]? | select(.name | test("^Synosmartinfo-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
-      {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))}
-    ' 2>/dev/null | head -n 1)"
+    SSI_ASSET_JSON="$(jq -c '
+      .packages.syno_smart_info.assets[]? | select(.name | test("^Synosmartinfo-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      {name, url, sha256}
+    ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     SSI_SPK="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     SSI_URL="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     SSI_SHA256="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
@@ -5989,7 +5998,7 @@ NCEOF
     # runtime SPK from the latest release for every MSHELL module mode.
     if [ -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
       /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" "${KVER}" \
-        "${RAMDISK_PATH}/addons" || echo "[amdgpu] optional staging failed; continuing loader build"
+        "${RAMDISK_PATH}/addons" "${LATEST_PACKAGE_MANIFEST}" || echo "[amdgpu] optional staging failed; continuing loader build"
     fi
 
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu
