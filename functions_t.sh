@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.4"
-builddate="2026.08.23"
+rploaderver="1.4.3.5"
+builddate="2026.08.24"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -593,6 +593,7 @@ function history() {
             physical NIC unconditionally, saving up to 70 seconds across retries;
             rploader's headless build path now re-downloads models.json like the
             interactive my() path already did.
+    1.4.3.5 Offline static IP setup centralized package manifest and user config persistence
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1247,6 +1248,9 @@ EOF
 # unconditionally, saving up to 70 seconds across retries; rploader's headless build path
 # now re-downloads models.json like the interactive my() path already did.
 
+# 2026.08.24 v1.4.3.5
+# Offline static IP setup centralized package manifest and user config persistence
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1586,6 +1590,8 @@ function showlastupdate() {
 # for the Prevent SataPortMap/DiskIdxMap toggle passing the wrong token to my(), nic_link_kick
 # skipping NICs that don't need a kick, and rploader's headless build path re-downloading
 # models.json.
+# 2026.08.24 v1.4.3.5
+# Offline static IP setup centralized package manifest and user config persistence
 EOF
 }
 
