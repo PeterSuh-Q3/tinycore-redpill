@@ -1401,6 +1401,10 @@ if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
     if apply_static_ip_now; then
       dialog --clear --backtitle "Network setup" \
           --msgbox "Static IP was applied to the running FRIEND kernel.\n\nThe network will be checked again by menu.sh." 0 0
+      # The flag was exported by menu.sh only for this one-shot setup path.
+      # Clear it before re-entering menu.sh, otherwise the child process would
+      # reopen staticIpMenu() forever even after the address was applied.
+      unset FORCE_STATIC_IP_SETUP
       exec /home/tc/menu.sh
     else
       dialog --clear --backtitle "Network setup" \
