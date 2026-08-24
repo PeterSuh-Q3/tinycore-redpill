@@ -9,7 +9,7 @@ PLATFORM="${1:?platform is required}"
 DSM_VERSION="${2:?DSM version is required}"
 KERNEL_VERSION="${3:?kernel version is required}"
 ADDONS_DIR="${4:?addons directory is required}"
-RELEASE_API="https://api.github.com/repos/PeterSuh-Q3/syno-amdgpu-driver/releases/latest"
+MANIFEST_PATH="${5:-}"
 
 # AMD userspace runtime integrates the SynoCommunity Jellyfin SPK. Only stage
 # it for the x64 platforms declared by that package's current DSM 7.2+ build.
@@ -53,14 +53,14 @@ for GPU_CLASS in 0300 0302 0380; do
 done
 [ "${GPU_DETECTED}" = "true" ] || { echo "[amdgpu] no supported AMD display controller detected"; exit 0; }
 
-RELEASE_JSON="$(curl -fsSL --retry 2 --connect-timeout 15 "${RELEASE_API}")" || {
-  echo "[amdgpu] failed to query latest release" >&2
+if [ -n "${MANIFEST_PATH}" ] && [ -s "${MANIFEST_PATH}" ]; then
+  ASSET_JSON="$(jq -c --arg suffix "-7.4-x86_64-${KERNEL_ASSET}.spk" '
+    .packages.amd_gpu_runtime.assets[]? | select(.name | endswith($suffix)) |
+    {name, url, sha256}' "${MANIFEST_PATH}" | head -n 1)"
+else
+  echo "[amdgpu] central package manifest is unavailable" >&2
   exit 0
-}
-
-ASSET_JSON="$(printf '%s' "${RELEASE_JSON}" | jq -c --arg suffix "-7.4-x86_64-${KERNEL_ASSET}.spk" '
-  .assets[] | select(.name | endswith($suffix)) |
-  {name, url: .browser_download_url, sha256: ((.digest // "") | sub("^sha256:"; ""))} ' | head -n 1)"
+fi
 
 ASSET_NAME="$(printf '%s' "${ASSET_JSON}" | jq -r '.name // empty')"
 ASSET_URL="$(printf '%s' "${ASSET_JSON}" | jq -r '.url // empty')"
