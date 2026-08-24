@@ -1398,9 +1398,13 @@ if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
   load_zz
   staticIpMenu
   if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
-    if dialog --clear --backtitle "Network setup" \
-        --yesno "Static IP settings were saved.\n\nDo you want to reboot now?" 0 0; then
-      sudo reboot
+    if apply_static_ip_now; then
+      dialog --clear --backtitle "Network setup" \
+          --msgbox "Static IP was applied to the running FRIEND kernel.\n\nThe network will be checked again by menu.sh." 0 0
+      exec /home/tc/menu.sh
+    else
+      dialog --clear --backtitle "Network setup" \
+          --msgbox "The static IP could not be applied to the running kernel." 0 0
     fi
   fi
   exit 0

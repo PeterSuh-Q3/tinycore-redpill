@@ -204,6 +204,51 @@ dsm6notsupported="broadwellntbap"
 R8168_YN="N"
 R8168_DETECTED="N"  # 한번만 체크하는 플래그
 
+# Apply the static network settings immediately in the running FRIEND kernel.
+# This is the network-only part of tcrpfriend/boot.sh setnetwork(): it is
+# intentionally safe to call from menu_m.sh after saving user_config.json and
+# does not kexec, rebuild, or reboot.  boot.sh still applies the same settings
+# during the normal FRIEND boot path.
+function apply_static_ip_now() {
+    local cfg="/mnt/tcrp/user_config.json"
+    local ethdev staticip staticdns staticgw staticproxy
+    [ -f "${cfg}" ] || cfg="${userconfigfile}"
+    [ -f "${cfg}" ] || { echo "Static IP config not found: ${cfg}" >&2; return 1; }
+
+    ethdev=$(jq -r -e '.ipsettings.ipiface // empty' "${cfg}" 2>/dev/null)
+    staticip=$(jq -r -e '.ipsettings.ipaddr // empty' "${cfg}" 2>/dev/null)
+    staticdns=$(jq -r -e '.ipsettings.ipdns // empty' "${cfg}" 2>/dev/null)
+    staticgw=$(jq -r -e '.ipsettings.ipgw // empty' "${cfg}" 2>/dev/null)
+    staticproxy=$(jq -r -e '.ipsettings.ipproxy // empty' "${cfg}" 2>/dev/null)
+    [ -n "${ethdev}" ] || ethdev=$(ip -o link show up 2>/dev/null | awk -F': ' '$2 != "lo" {print $2; exit}')
+    if ! echo "${staticip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$' || [ -z "${ethdev}" ]; then
+        echo "Invalid static IP configuration; staying on DHCP." >&2
+        return 1
+    fi
+
+    # Match boot.sh: release only the selected interface's DHCP lease, then
+    # replace its address and route instead of layering static and DHCP state.
+    if command -v dhcpcd >/dev/null 2>&1; then
+        sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
+    fi
+    sudo ip addr flush dev "${ethdev}" || return 1
+    sudo ip link set dev "${ethdev}" up || return 1
+    sudo ip addr add "${staticip}" dev "${ethdev}" || return 1
+    if [ -n "${staticgw}" ]; then
+        sudo ip route del default dev "${ethdev}" >/dev/null 2>&1 || true
+        sudo ip route add default via "${staticgw}" dev "${ethdev}" || return 1
+    fi
+    if [ -n "${staticdns}" ] && ! grep -qF "nameserver ${staticdns}" /etc/resolv.conf 2>/dev/null; then
+        echo "nameserver ${staticdns}" | sudo tee -a /etc/resolv.conf >/dev/null
+    fi
+    if [ -n "${staticproxy}" ]; then
+        export HTTP_PROXY="${staticproxy}" HTTPS_PROXY="${staticproxy}"
+        export http_proxy="${staticproxy}" https_proxy="${staticproxy}"
+    fi
+    echo "Static IP applied on ${ethdev}: ${staticip}"
+    return 0
+}
+
 #Check if FRIEND kernel exists
 if [[ "$(uname -a | grep -c tcrpfriend)" -gt 0 ]]; then
     FRKRNL="YES"
