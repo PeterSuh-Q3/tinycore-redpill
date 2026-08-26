@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.5"
-builddate="2026.08.24"
+rploaderver="1.4.3.6"
+builddate="2026.08.25"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -640,6 +640,12 @@ function history() {
             interactive my() path already did.
     1.4.3.5 Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
              Centralized package manifest and user config persistence
+    1.4.3.6 A saved static IP is now applied automatically on every boot, not just the
+            boot it was configured on. apply_saved_static_ip() runs before any DHCP
+            attempt and, if ipsettings.ipset is already static, applies the saved
+            IP/gateway/DNS/proxy directly and skips the 3-attempt DHCP retry loop
+            entirely, since it could never succeed on that network anyway. The
+            offline static IP setup dialog no longer reappears in this case either.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1298,6 +1304,14 @@ EOF
 # Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
 # Centralized package manifest and user config persistence
 
+# 2026.08.25 v1.4.3.6
+# HEADLINE: A saved static IP is now applied automatically on every boot, not just the
+# boot it was configured on. apply_saved_static_ip() runs before any DHCP attempt and,
+# if ipsettings.ipset is already static, applies the saved IP/gateway/DNS/proxy directly
+# and skips the 3-attempt DHCP retry loop entirely, since it could never succeed on that
+# network anyway. The offline static IP setup dialog no longer reappears in this case
+# either.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1637,9 +1651,18 @@ function showlastupdate() {
 # for the Prevent SataPortMap/DiskIdxMap toggle passing the wrong token to my(), nic_link_kick
 # skipping NICs that don't need a kick, and rploader's headless build path re-downloading
 # models.json.
+
 # 2026.08.24 v1.4.3.5
 # Offline static IP setup applies settings in the running FRIEND kernel and returns to the normal menu after network activation
 # Centralized package manifest and user config persistence
+
+# 2026.08.25 v1.4.3.6
+# A saved static IP is now applied automatically on every boot, not just the boot it was
+# configured on. apply_saved_static_ip() runs before any DHCP attempt and, if
+# ipsettings.ipset is already static, applies the saved IP/gateway/DNS/proxy directly and
+# skips the 3-attempt DHCP retry loop entirely, since it could never succeed on that
+# network anyway. The offline static IP setup dialog no longer reappears in this case
+# either.
 EOF
 }
 
