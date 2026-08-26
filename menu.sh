@@ -107,6 +107,42 @@ function check_internet() {
   return $?
 }
 
+# 지금까지는 인터넷 3회 연속 미응답 뒤 사용자가 그 자리에서 새로 입력한
+# 고정 IP만 반영했다 - 이미 이전 세션에서 저장해 둔 고정 IP 설정
+# (ipsettings.ipset=="static")이 있어도, 재부팅해서 menu.sh가 다시 뜨면
+# 그 값을 쓰지 않고 매번 처음부터 DHCP 대기/재시도를 반복했다. 이 함수는
+# 그 저장된 값이 있으면 DHCP 루프를 돌기 전에 먼저 이 로더 자신의 살아있는
+# 세션에 그대로 적용한다.
+function apply_saved_static_ip() {
+  local ipset iface addr gw dns proxy
+
+  ipset="$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)"
+  [ "${ipset}" = "static" ] || return 1
+
+  iface="$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)"
+  addr="$(jq -r '.ipsettings.ipaddr // empty' "${userconfigfile}" 2>/dev/null)"
+  gw="$(jq -r '.ipsettings.ipgw // empty' "${userconfigfile}" 2>/dev/null)"
+  dns="$(jq -r '.ipsettings.ipdns // empty' "${userconfigfile}" 2>/dev/null)"
+  proxy="$(jq -r '.ipsettings.ipproxy // empty' "${userconfigfile}" 2>/dev/null)"
+
+  if ! echo "${iface}" | grep -qE '^eth[0-7]$' || \
+     ! echo "${addr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+    echo "[!] Saved static IP settings look invalid (iface=${iface} addr=${addr}); falling back to DHCP."
+    return 1
+  fi
+
+  echo "Static IP is configured (${iface} ${addr}) - applying it to this loader session before any DHCP wait..."
+  sudo ip link set "${iface}" up 2>/dev/null
+  sudo ip addr flush dev "${iface}" 2>/dev/null
+  sudo ip addr add "${addr}" dev "${iface}" 2>/dev/null
+  [ -n "${gw}" ] && sudo ip route replace default via "${gw}" dev "${iface}" 2>/dev/null
+  [ -n "${dns}" ] && printf 'nameserver %s\n' "${dns}" | sudo tee /etc/resolv.conf >/dev/null
+  if [ -n "${proxy}" ]; then
+    export http_proxy="${proxy}" https_proxy="${proxy}"
+  fi
+  return 0
+}
+
 # 바이너리 풀경로 해석. TinyCore 는 ip/ethtool 이 /usr/local/sbin 에 있는데
 # sudo secure_path 에는 그 경로가 빠져 있어 이름만으론 'command not found'
 # 로 조용히 실패한다. 모든 후보 경로를 직접 뒤져 절대경로를 반환한다.
@@ -391,15 +427,25 @@ if [ -d /mnt/${tcrppart}/tcrp-addons/ ] && [ -d /mnt/${tcrppart}/tcrp-modules/ ]
     echo "Go directly to the menu. Press any key to continue..."
     read answer
 else
+    # 이미 저장된 고정 IP 설정이 있으면 그걸 이 로더 세션에 바로 적용하고,
+    # DHCP 대기/재시도 루프 자체를 건너뛴다 - static 위에 DHCP 임대가 얹혀
+    # 충돌할 이유가 없고, 어차피 DHCP가 응답할 네트워크가 아니라서
+    # link-kick/폴링을 반복해봤자 무의미하다.
+    net_ok="false"
+    static_ip_applied="false"
+    if apply_saved_static_ip; then
+      static_ip_applied="true"
+      check_internet && net_ok="true"
+    fi
+
     # 인터넷 체크: 1차 30초 시도, 실패 시 NIC 강제 link-kick 후
     # 20초 단위로 최대 2회 더 재시도(총 3회). 베어메탈의 느린 NIC 대응.
     # 1차 진입 직후 1회 즉시 체크 → 이미 되면 link-kick 자체를 건너뛰어
     # 가상랜에 불필요한 단절/지연을 주지 않고, 안 될 때만 선제 link-kick
     # 으로 베어메탈의 30초 대기를 줄인다.
-    net_ok="false"
     attempt=1
     max_attempt=3
-    while [ ${attempt} -le ${max_attempt} ]; do
+    while [ "${static_ip_applied}" != "true" ] && [ ${attempt} -le ${max_attempt} ]; do
       if [ ${attempt} -eq 1 ]; then
         timeout=30
         # 이미 연결돼 있으면 link-kick 없이 즉시 통과
@@ -448,6 +494,11 @@ else
     done
     if [ "${net_ok}" = "true" ]; then
       [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
+    elif [ "${static_ip_applied}" = "true" ]; then
+      # 저장된 고정 IP를 이미 적용했는데도 인터넷이 안 되는 상태 - 새로
+      # 값을 입력받는 FORCE_STATIC_IP_SETUP 오프라인 설정 다이얼로그는
+      # 지금 막 적용한 값과 같은 걸 다시 물어보는 셈이라 띄우지 않는다.
+      echo "Saved static IP was applied, but internet is still unreachable. Continuing anyway."
     else
       echo "Internet connection failed after ${max_attempt} attempts."
       # The static-IP menu must remain usable when this loader has no DHCP or
