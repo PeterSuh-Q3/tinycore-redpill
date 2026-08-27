@@ -1418,7 +1418,7 @@ function staticIpManageEntry() {
 # primary가 된다. gw를 채웠는데 이미 다른 primary가 있으면 교체 확인을 받는다.
 function staticIpEditForm() {
   local cfg="$1" target_iface="$2" idx="$3"
-  local cur_ipaddr cur_ipgw cur_ipdns
+  local cur_ipaddr="" cur_ipgw="" cur_ipdns=""
 
   if [ -n "${idx}" ]; then
     cur_ipaddr=$(jq -r ".ipsettings[${idx}].ipaddr // empty" "${cfg}" 2>/dev/null)
