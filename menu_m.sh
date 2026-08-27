@@ -2633,10 +2633,23 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "devmod" "${DMPM}"
       NEXT="z" ;;
     h)
+      # 메뉴 표시가 이미 (Enabled)/(Disabled)로 현재 상태를 보여주고 있으니,
+      # "추가하시겠습니까? [yY/nN]" 확인 질문 없이 그 자리에서 바로 토글한다
+      # (add-addon()의 대화형 확인은 여기선 생략 - menu.sh test에서 이 프롬프트
+      # 때문에 토글 자체가 막히는 것도 실기에서 확인됨).
       if [ "${VMTOOLS}" = "false" ]; then
-        add-addon "vmtools" && VMTOOLS="true" || VMTOOLS="false"
+        if [ "${DMPM}" = "DDSML" ]; then
+          dialog --clear --backtitle "`backtitle`" --msgbox "vmtools requires EUDEV or DDSML+EUDEV mode." 0 0
+        else
+          del-addon "vmtools"
+          jsonfile=$(jq --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools/rpext-index.json" \
+            '. + {"vmtools": $url}' /home/tc/redpill-load/bundled-exts.json) \
+            && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+          VMTOOLS="true"
+        fi
       else
-        del-addon "vmtools" && VMTOOLS="false"
+        del-addon "vmtools"
+        VMTOOLS="false"
       fi
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
       NEXT="z" ;;
