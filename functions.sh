@@ -182,6 +182,28 @@ function chk_filetime_n_backup() {
 function refresh_userconfig_hash() {
     userconfig_before_hash="$(sha256sum "$userconfigfile" 2>/dev/null | awk '{print $1}')"
 }
+
+# user_config.json 의 general.<addon> 값은 "다음 빌드 때 이 addon 을 자동으로
+# 다시 넣어줄지"에 대한 사용자 의도를 담는 플래그다 - 실제로 빌드에 포함되는지는
+# bundled-exts.json 에 그 키가 있느냐가 유일한 진실이다. 새 세션에서
+# bundled-exts.json 이 GitHub 기본값으로 새로 클론되면(vmtools 는 upstream
+# 기본 목록에 없음) 이 둘이 어긋난다 - 메뉴는 이전 세션에 저장된 플래그를 보고
+# "이미 추가됨"으로 표시하는데 실제 파일엔 없어서 빌드에서 조용히 누락되는
+# 버그가 실기에서 확인됐다(2026-08-27). menu_m.sh(대화형)와 buildloader()
+# (MSHELL Manager 헤드리스 재빌드 경로)양쪽에서 빌드 직전에 호출해, 의도한
+# addon 이 파일에 없으면 대화형 확인 없이 조용히 다시 넣어준다.
+function reconcile_addon_flags() {
+    local addon flag bundled="/home/tc/redpill-load/bundled-exts.json"
+    [ -f "${bundled}" ] || return 0
+    for addon in vmtools; do
+        flag="$(readConfigKey "general" "${addon}")"
+        if [ "${flag}" = "true" ] && ! jq -e --arg k "${addon}" 'has($k)' "${bundled}" >/dev/null 2>&1; then
+            jsonfile=$(jq --arg k "${addon}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${addon}/rpext-index.json" \
+                '. + {($k): $url}' "${bundled}") && echo "${jsonfile}" | jq . > "${bundled}"
+            echo "[reconcile_addon_flags] ${addon} was enabled (general.${addon}=true) but missing from bundled-exts.json - re-added automatically."
+        fi
+    done
+}
 # pats.json is kept at a persistent location (/home/tc) so that a redpill-load
 # directory clean/re-clone (e.g. after a failed build) does not remove the DSM
 # version source. It is mirrored into redpill-load/config for the loader build.
@@ -5491,6 +5513,11 @@ checkmachine
 
     DMPM="$(jq -r -e '.general.devmod' $userconfigfile)"
     msgnormal "Device Module Processing Method is ${DMPM}"
+
+    # 대화형(my())과 MSHELL Manager 헤드리스 재빌드(rploader()) 양쪽 모두
+    # buildloader() 를 거치므로, 여기서 한 번 호출해 두면 어느 경로로 빌드하든
+    # general.vmtools=true 인데 bundled-exts.json 에서 빠진 상태를 놓치지 않는다.
+    reconcile_addon_flags
 
     cd /home/tc
 

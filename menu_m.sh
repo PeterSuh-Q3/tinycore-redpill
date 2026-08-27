@@ -2593,7 +2593,7 @@ function build-pre-option() {
     eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
     eval "echo \"f \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
     eval "echo \"g \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
-    eval "echo \"h \\\"${vmtoolsaction} \${MSG64}\\\"\""                       >> "${TMP_PATH}/menud"
+    eval "echo \"h \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3677,7 +3677,17 @@ while true; do
     drmmode="Unknown DRM"
   fi
   [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
-  [ "${VMTOOLS}" = "false" ] && vmtoolsaction="Add" || vmtoolsaction="Remove"
+  # VMTOOLS(general.vmtools)는 "다음 빌드 때 자동으로 다시 넣어줄지"에 대한
+  # 의도 플래그일 뿐이다 - 실제로 빌드에 포함되는지는 bundled-exts.json에
+  # 그 키가 있느냐가 유일한 진실이므로, 표시는 항상 그 파일을 직접 확인해서
+  # 도출한다(nvidiadriver와 동일한 패턴, functions.sh:reconcile_addon_flags
+  # 참고). 이러면 세션 간 파일 리셋으로 플래그와 실제 상태가 어긋나도 메뉴
+  # 표시만큼은 항상 정확하다.
+  if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+    VMTOOLS="true"; vmtoolsaction="Enabled"
+  else
+    VMTOOLS="false"; vmtoolsaction="Disabled"
+  fi
   eval "MSG74=\"\${MSG${tz}74}\""
   eval "MSG75=\"\${MSG${tz}75}\""
   eval "MSG76=\"\${MSG${tz}76}\""
