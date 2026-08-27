@@ -1257,103 +1257,186 @@ function netconsoleMenu() {
 }
 
 ###############################################################################
-# Static IP 설정 메뉴 (1차: 단일 NIC만 지원). 여기서 쓰는 ipsettings
-# 스키마(ipset/ipiface/ipaddr/ipgw/ipdns/ipproxy)는 tcrpfriend의 boot.sh
-# setnetwork()가 이미 .ipsettings.ipaddr 등을 읽도록 구현되어 있어 그대로
-# 재사용한다(단, ipiface는 그 쪽 자동추측 버그를 피하려고 이번에 새로 추가한
-# 필드라 boot.sh 쪽에서 아직 안 읽는다 - 별도 후속 작업 필요). 이 함수는
-# "사용자가 설정값을 입력해 user_config.json에 저장"하는 캡처 단계까지만
-# 담당하며, DSM 램디스크 ifcfg-ethN 생성(functions.sh buildloader())과
-# FRIEND 쪽 적용 로직 수정은 아직 별도로 필요하다(2026-08-23).
+# Static IP 설정 메뉴 (2026-08-27: 최대 8포트까지 NIC별로 개별 설정하는
+# 멀티 NIC 버전으로 전환). 스키마는 functions.sh의 migrate_ipsettings_schema()가
+# 설명하는 대로 .ipsettings가 배열이고, 배열 원소 중 정확히 하나만
+# primary:true(기본 게이트웨이 소유자)를 가진다. 프록시는 NIC 개념이 아니라서
+# 최상위 .netproxy.ipproxy로 분리했다. 이 함수는 "사용자가 설정값을 입력해
+# user_config.json에 저장"하는 캡처 단계까지만 담당하고, 실제 부팅 적용은
+# tcrpfriend의 boot.sh(buildStaticNetworkCmdline/setnetwork)가 맡는다.
 function staticIpMenu() {
-  local existing_ipset existing_iface existing_ipaddr existing_ipgw existing_ipdns existing_ipproxy status_str
-  local resp target_iface cur_ipaddr cur_ipgw cur_ipdns cur_ipproxy dev
+  local cfg="${userconfigfile}"
+  migrate_ipsettings_schema "${cfg}"
   STATIC_IP_CONFIGURED="false"
 
-  eval "MSG147=\"\${MSG${tz}147}\""
-  eval "MSG148=\"\${MSG${tz}148}\""
-  eval "MSG149=\"\${MSG${tz}149}\""
   eval "MSG150=\"\${MSG${tz}150}\""
-  eval "MSG151=\"\${MSG${tz}151}\""
   eval "MSG152=\"\${MSG${tz}152}\""
   eval "MSG153=\"\${MSG${tz}153}\""
   eval "MSG154=\"\${MSG${tz}154}\""
-  eval "MSG155=\"\${MSG${tz}155}\""
   eval "MSG156=\"\${MSG${tz}156}\""
   eval "MSG157=\"\${MSG${tz}157}\""
-  eval "MSG158=\"\${MSG${tz}158}\""
   eval "MSG159=\"\${MSG${tz}159}\""
   eval "MSG160=\"\${MSG${tz}160}\""
   eval "MSG162=\"\${MSG${tz}162}\""
-  eval "MSG163=\"\${MSG${tz}163}\""
+  eval "MSG164=\"\${MSG${tz}164}\""
+  eval "MSG165=\"\${MSG${tz}165}\""
+  eval "MSG166=\"\${MSG${tz}166}\""
+  eval "MSG167=\"\${MSG${tz}167}\""
+  eval "MSG168=\"\${MSG${tz}168}\""
+  eval "MSG170=\"\${MSG${tz}170}\""
+  eval "MSG171=\"\${MSG${tz}171}\""
+  eval "MSG172=\"\${MSG${tz}172}\""
+  eval "MSG173=\"\${MSG${tz}173}\""
+  eval "MSG174=\"\${MSG${tz}174}\""
+  eval "MSG175=\"\${MSG${tz}175}\""
+  eval "MSG176=\"\${MSG${tz}176}\""
+  eval "MSG177=\"\${MSG${tz}177}\""
+  eval "MSG178=\"\${MSG${tz}178}\""
+  eval "MSG179=\"\${MSG${tz}179}\""
 
-  existing_ipset=$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)
-  existing_iface=$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)
-  existing_ipaddr=$(jq -r '.ipsettings.ipaddr // empty' "${userconfigfile}" 2>/dev/null)
-  existing_ipgw=$(jq -r '.ipsettings.ipgw // empty' "${userconfigfile}" 2>/dev/null)
-  existing_ipdns=$(jq -r '.ipsettings.ipdns // empty' "${userconfigfile}" 2>/dev/null)
-  existing_ipproxy=$(jq -r '.ipsettings.ipproxy // empty' "${userconfigfile}" 2>/dev/null)
+  while true; do
+    local count n
+    count=$(jq -r '(.ipsettings // [] | length)' "${cfg}" 2>/dev/null)
+    case "${count}" in ''|*[!0-9]*) count=0 ;; esac
 
-  if [ "${existing_ipset}" = "static" ] && [ -n "${existing_ipaddr}" ]; then
-    status_str="${existing_iface:-?} ${existing_ipaddr}"
+    : > "${TMP_PATH}/menuip"
+    for ((n = 0; n < count; n++)); do
+      local iface addr isprimary label
+      iface=$(jq -r ".ipsettings[${n}].ipiface" "${cfg}" 2>/dev/null)
+      addr=$(jq -r ".ipsettings[${n}].ipaddr" "${cfg}" 2>/dev/null)
+      isprimary=$(jq -r ".ipsettings[${n}].primary // false" "${cfg}" 2>/dev/null)
+      label="${iface}  ${addr}"
+      [ "${isprimary}" = "true" ] && label="${label} *"
+      echo "\"${n}\" \"${label}\"" >> "${TMP_PATH}/menuip"
+    done
+
+    local proxyval
+    proxyval=$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)
+    echo "\"x\" \"${MSG174}: ${proxyval:-${MSG179}}\"" >> "${TMP_PATH}/menuip"
+    [ "${count}" -lt 8 ] && echo "\"a\" \"${MSG164}\"" >> "${TMP_PATH}/menuip"
+    echo "\"q\" \"${MSG165}\"" >> "${TMP_PATH}/menuip"
+
+    dialog --clear --backtitle "`backtitle`" \
+      --menu "${MSG176}" 0 0 $(dlgmenuheight $((count + 3))) --file "${TMP_PATH}/menuip" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && break
+    local resp
+    resp=$(<${TMP_PATH}/resp)
+    [ -z "${resp}" ] && break
+
+    case "${resp}" in
+      q) break ;;
+      x) staticIpProxyMenu "${cfg}" ;;
+      a) staticIpAddEntry "${cfg}" ;;
+      *[0-9]*) staticIpManageEntry "${cfg}" "${resp}" ;;
+    esac
+  done
+}
+
+# 전역 프록시(HTTP_PROXY 등) 설정 - NIC과 무관하게 하나만 존재한다.
+function staticIpProxyMenu() {
+  local cfg="$1" cur newval
+  cur=$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)
+
+  while true; do
+    dialog --backtitle "`backtitle`" --inputbox "${MSG175}" 12 70 "${cur}" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    newval=$(<${TMP_PATH}/resp)
+
+    if [ -n "${newval}" ] && ! echo "${newval}" | grep -qE '^https?://'; then
+      dialog --backtitle "`backtitle`" --msgbox "${MSG162}" 0 0
+      continue
+    fi
+    break
+  done
+
+  local json
+  if [ -z "${newval}" ]; then
+    json=$(jq 'del(.netproxy.ipproxy)' "${cfg}")
   else
-    status_str="DHCP"
+    json=$(jq --arg p "${newval}" '.netproxy.ipproxy = $p' "${cfg}")
   fi
+  echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+}
 
-  dialog --clear --backtitle "`backtitle`" \
-    --menu "$(printf "${MSG163}" "${status_str}")" 0 0 $(dlgmenuheight 2) \
-    e "${MSG147}" \
-    d "${MSG148}" \
-  2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return
-
-  if [ "${resp}" = "d" ]; then
-    DeleteConfigKey "ipsettings" "ipset"
-    DeleteConfigKey "ipsettings" "ipiface"
-    DeleteConfigKey "ipsettings" "ipaddr"
-    DeleteConfigKey "ipsettings" "ipgw"
-    DeleteConfigKey "ipsettings" "ipdns"
-    DeleteConfigKey "ipsettings" "ipproxy"
-    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG160}" 0 0
-    return
-  fi
-  [ "${resp}" = "e" ] || return
+# 아직 .ipsettings[]에 없는 실물 NIC 중 하나를 골라 새로 추가한다.
+function staticIpAddEntry() {
+  local cfg="$1" dev already target_iface
 
   : > "${TMP_PATH}/menuip"
   for dev in $(ls /sys/class/net 2>/dev/null | grep -E '^(eth|en|em)'); do
-    echo "\"${dev}\" \"${dev}\"" >> "${TMP_PATH}/menuip"
+    already=$(jq -r --arg d "${dev}" '[.ipsettings[]? | select(.ipiface == $d)] | length' "${cfg}" 2>/dev/null)
+    [ "${already}" = "0" ] && echo "\"${dev}\" \"${dev}\"" >> "${TMP_PATH}/menuip"
   done
+
   if [ ! -s "${TMP_PATH}/menuip" ]; then
-    dialog --clear --backtitle "`backtitle`" --msgbox "${MSG150}" 0 0
+    if [ "$(ls /sys/class/net 2>/dev/null | grep -cE '^(eth|en|em)')" = "0" ]; then
+      dialog --clear --backtitle "`backtitle`" --msgbox "${MSG150}" 0 0
+    else
+      dialog --clear --backtitle "`backtitle`" --msgbox "${MSG171}" 0 0
+    fi
     return
   fi
+
   dialog --clear --backtitle "`backtitle`" \
-    --menu "${MSG149}" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuip")) --file "${TMP_PATH}/menuip" \
+    --menu "$(printf "${MSG178}" "NIC")" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuip")) --file "${TMP_PATH}/menuip" \
     2>${TMP_PATH}/resp
   [ $? -ne 0 ] && return
   target_iface=$(<${TMP_PATH}/resp)
   [ -z "${target_iface}" ] && return
 
-  cur_ipaddr="${existing_ipaddr}"
-  cur_ipgw="${existing_ipgw}"
-  cur_ipdns="${existing_ipdns}"
-  cur_ipproxy="${existing_ipproxy}"
+  staticIpEditForm "${cfg}" "${target_iface}" ""
+}
+
+# 이미 목록에 있는 항목(인덱스 $2)을 편집/주-지정/삭제하는 서브메뉴.
+function staticIpManageEntry() {
+  local cfg="$1" idx="$2" iface
+
+  iface=$(jq -r ".ipsettings[${idx}].ipiface" "${cfg}" 2>/dev/null)
+  [ -z "${iface}" ] || [ "${iface}" = "null" ] && return
+
+  dialog --clear --backtitle "`backtitle`" \
+    --menu "$(printf "${MSG178}" "${iface}")" 0 0 $(dlgmenuheight 3) \
+    e "${MSG167}" \
+    p "${MSG166}" \
+    d "${MSG168}" \
+  2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  local resp
+  resp=$(<${TMP_PATH}/resp)
+
+  case "${resp}" in
+    e) staticIpEditForm "${cfg}" "${iface}" "${idx}" ;;
+    p) staticIpSetPrimary "${cfg}" "${idx}" ;;
+    d) staticIpDeleteEntry "${cfg}" "${idx}" ;;
+  esac
+}
+
+# NIC 하나(신규 또는 기존 idx)의 ip/gw/dns를 입력받아 저장한다. idx가
+# 비어있으면 새 항목을 배열 끝에 추가하고, 그게 유일한 항목이면 자동으로
+# primary가 된다. gw를 채웠는데 이미 다른 primary가 있으면 교체 확인을 받는다.
+function staticIpEditForm() {
+  local cfg="$1" target_iface="$2" idx="$3"
+  local cur_ipaddr cur_ipgw cur_ipdns
+
+  if [ -n "${idx}" ]; then
+    cur_ipaddr=$(jq -r ".ipsettings[${idx}].ipaddr // empty" "${cfg}" 2>/dev/null)
+    cur_ipgw=$(jq -r ".ipsettings[${idx}].ipgw // empty" "${cfg}" 2>/dev/null)
+    cur_ipdns=$(jq -r ".ipsettings[${idx}].ipdns // empty" "${cfg}" 2>/dev/null)
+  fi
 
   while true; do
-    dialog --backtitle "`backtitle`" --form "$(printf "${MSG151}" "${target_iface}")" 16 70 4 \
-      "${MSG152}:" 1 1 "${cur_ipaddr}"  1 24 40 0 \
-      "${MSG153}:" 2 1 "${cur_ipgw}"    2 24 40 0 \
-      "${MSG154}:" 3 1 "${cur_ipdns}"   3 24 40 0 \
-      "${MSG155}:" 4 1 "${cur_ipproxy}" 4 24 40 0 \
+    dialog --backtitle "`backtitle`" --form "$(printf "${MSG177}" "${target_iface}")" 14 70 3 \
+      "${MSG152}:" 1 1 "${cur_ipaddr}" 1 24 40 0 \
+      "${MSG153}:" 2 1 "${cur_ipgw}"   2 24 40 0 \
+      "${MSG154}:" 3 1 "${cur_ipdns}"  3 24 40 0 \
       2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
 
     cur_ipaddr=$(sed -n '1p' "${TMP_PATH}/resp")
     cur_ipgw=$(sed -n '2p' "${TMP_PATH}/resp")
     cur_ipdns=$(sed -n '3p' "${TMP_PATH}/resp")
-    cur_ipproxy=$(sed -n '4p' "${TMP_PATH}/resp")
 
     if ! echo "${cur_ipaddr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
       dialog --backtitle "`backtitle`" --msgbox "${MSG156}" 0 0
@@ -1363,28 +1446,80 @@ function staticIpMenu() {
       dialog --backtitle "`backtitle`" --msgbox "${MSG157}" 0 0
       continue
     fi
-    # 프록시는 스킴(http://, https://) 없이 IP/도메인만 입력하면 curl 등이
-    # 프록시 주소로 못 알아본다 - 저장 전에 미리 걸러서 안내한다.
-    if [ -n "${cur_ipproxy}" ] && ! echo "${cur_ipproxy}" | grep -qE '^https?://'; then
-      dialog --backtitle "`backtitle`" --msgbox "${MSG162}" 0 0
-      continue
-    fi
     break
   done
 
-  dialog --clear --backtitle "`backtitle`" \
-    --yesno "$(printf "${MSG158}" "${target_iface}" "${cur_ipaddr}" "${cur_ipgw}" "${cur_ipdns}")" 0 0
+  local want_primary="false" existing_primary_iface
+  existing_primary_iface=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipiface // empty' "${cfg}" 2>/dev/null)
+
+  if [ -n "${cur_ipgw}" ]; then
+    if [ -z "${existing_primary_iface}" ] || [ "${existing_primary_iface}" = "${target_iface}" ]; then
+      want_primary="true"
+    else
+      dialog --clear --backtitle "`backtitle`" \
+        --yesno "$(printf "${MSG172}" "${existing_primary_iface}" "${target_iface}")" 0 0
+      [ $? -eq 0 ] && want_primary="true"
+    fi
+  fi
+
+  local json
+  if [ -n "${idx}" ]; then
+    json=$(jq --argjson i "${idx}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" --arg d "${cur_ipdns}" \
+      '.ipsettings[$i].ipset = "static" | .ipsettings[$i].ipaddr = $a | .ipsettings[$i].ipgw = $g | .ipsettings[$i].ipdns = $d' \
+      "${cfg}")
+  else
+    json=$(jq --arg f "${target_iface}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" --arg d "${cur_ipdns}" \
+      '.ipsettings += [{"ipset":"static","ipiface":$f,"ipaddr":$a,"ipgw":$g,"ipdns":$d,"primary":false}]' \
+      "${cfg}")
+  fi
+
+  if [ "${want_primary}" = "true" ]; then
+    json=$(echo "${json}" | jq --arg f "${target_iface}" \
+      '.ipsettings = [.ipsettings[] | .primary = (.ipiface == $f)]')
+  fi
+
+  echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  STATIC_IP_CONFIGURED="true"
+  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG159}" 0 0
+}
+
+# 지정한 인덱스를 primary(기본 게이트웨이 소유자)로 교체한다.
+function staticIpSetPrimary() {
+  local cfg="$1" idx="$2" iface existing_primary_iface json
+
+  iface=$(jq -r ".ipsettings[${idx}].ipiface" "${cfg}" 2>/dev/null)
+  existing_primary_iface=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipiface // empty' "${cfg}" 2>/dev/null)
+
+  if [ "${existing_primary_iface}" = "${iface}" ]; then
+    return
+  fi
+  if [ -n "${existing_primary_iface}" ]; then
+    dialog --clear --backtitle "`backtitle`" \
+      --yesno "$(printf "${MSG172}" "${existing_primary_iface}" "${iface}")" 0 0
+    [ $? -ne 0 ] && return
+  fi
+
+  json=$(jq --arg f "${iface}" '.ipsettings = [.ipsettings[] | .primary = (.ipiface == $f)]' "${cfg}")
+  echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  STATIC_IP_CONFIGURED="true"
+}
+
+# 배열에서 항목 하나를 지운다. 지운 게 primary였다면 남은 첫 항목을 자동
+# 승격한다(migrate_ipsettings_schema의 "primary는 항상 정확히 1개" 규칙과 동일).
+function staticIpDeleteEntry() {
+  local cfg="$1" idx="$2" iface json
+
+  iface=$(jq -r ".ipsettings[${idx}].ipiface" "${cfg}" 2>/dev/null)
+  dialog --clear --backtitle "`backtitle`" --yesno "$(printf "${MSG173}" "${iface}")" 0 0
   [ $? -ne 0 ] && return
 
-  writeConfigKey "ipsettings" "ipset" "static"
-  writeConfigKey "ipsettings" "ipiface" "${target_iface}"
-  writeConfigKey "ipsettings" "ipaddr" "${cur_ipaddr}"
-  writeConfigKey "ipsettings" "ipgw" "${cur_ipgw}"
-  writeConfigKey "ipsettings" "ipdns" "${cur_ipdns}"
-  writeConfigKey "ipsettings" "ipproxy" "${cur_ipproxy}"
-  STATIC_IP_CONFIGURED="true"
-
-  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG159}" 0 0
+  json=$(jq --argjson i "${idx}" 'del(.ipsettings[$i])' "${cfg}")
+  json=$(echo "${json}" | jq \
+    'if ((.ipsettings|length) > 0) and (([.ipsettings[] | select(.primary==true)] | length) == 0)
+        then .ipsettings[0].primary = true
+        else . end')
+  echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG160}" 0 0
 }
 
 # This branch is reached before the normal repository/model initialization.
@@ -2457,7 +2592,20 @@ function additional() {
 
   while true; do
     [ "${PREVENT_INIT}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
-    if [ "$(jq -r '.ipsettings.ipset // empty' /home/tc/user_config.json 2>/dev/null)" = "static" ] && \
+    # 2026-08-27: ipsettings가 멀티 NIC 배열로 바뀌면서(최대 8포트) 상태
+    # 표시도 항목 수에 맞춰 요약한다. 아직 flat object인 예전 설정이 남아
+    # 있을 수 있으므로 배열/object 둘 다 사용자가 실제로 static 메뉴를 열기
+    # 전엔 건드리지 않고 여기서는 읽기만 한다(마이그레이션은 staticIpMenu
+    # 진입 시 migrate_ipsettings_schema()가 수행).
+    ipsettings_type="$(jq -r '(.ipsettings // [] | type)' /home/tc/user_config.json 2>/dev/null)"
+    if [ "${ipsettings_type}" = "array" ]; then
+      ipsettings_n="$(jq -r '.ipsettings | length' /home/tc/user_config.json 2>/dev/null)"
+      case "${ipsettings_n}" in
+        ''|0) STATICIP_STATUS="DHCP" ;;
+        1) STATICIP_STATUS="$(jq -r '.ipsettings[0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings[0].ipaddr' /home/tc/user_config.json 2>/dev/null)" ;;
+        *) STATICIP_STATUS="$(jq -r '[.ipsettings[]|select(.primary==true)][0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '[.ipsettings[]|select(.primary==true)][0].ipaddr // "?"' /home/tc/user_config.json 2>/dev/null) (+$((ipsettings_n - 1)))" ;;
+      esac
+    elif [ "$(jq -r '.ipsettings.ipset // empty' /home/tc/user_config.json 2>/dev/null)" = "static" ] && \
        [ -n "$(jq -r '.ipsettings.ipaddr // empty' /home/tc/user_config.json 2>/dev/null)" ]; then
       STATICIP_STATUS="$(jq -r '.ipsettings.ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings.ipaddr' /home/tc/user_config.json 2>/dev/null)"
     else
