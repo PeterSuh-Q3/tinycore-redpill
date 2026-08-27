@@ -195,7 +195,7 @@ function refresh_userconfig_hash() {
 function reconcile_addon_flags() {
     local addon flag bundled="/home/tc/redpill-load/bundled-exts.json"
     [ -f "${bundled}" ] || return 0
-    for addon in vmtools; do
+    for addon in vmtools nvmesystem; do
         flag="$(readConfigKey "general" "${addon}")"
         if [ "${flag}" = "true" ] && ! jq -e --arg k "${addon}" 'has($k)' "${bundled}" >/dev/null 2>&1; then
             jsonfile=$(jq --arg k "${addon}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${addon}/rpext-index.json" \

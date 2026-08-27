@@ -2581,14 +2581,20 @@ function build-pre-option() {
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
-    # vmtoolsaction 은 최상위 Main loop 에서만 재계산되므로, 이 함수 자신의
-    # while 루프 안에서 h) 토글을 반복해도 그 값이 갱신되지 않아 화면에는
-    # 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서 확인됐다(2026-08-27).
-    # 매 반복마다 bundled-exts.json을 직접 다시 확인해 최신 상태를 보장한다.
+    # vmtoolsaction/nvmeaction 은 최상위 Main loop 에서만 재계산되므로, 이
+    # 함수 자신의 while 루프 안에서 g)/h) 토글을 반복해도 그 값이 갱신되지
+    # 않아 화면에는 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서
+    # 확인됐다(2026-08-27). 매 반복마다 bundled-exts.json을 직접 다시
+    # 확인해 최신 상태를 보장한다.
     if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
       VMTOOLS="true"; vmtoolsaction="Enabled"
     else
       VMTOOLS="false"; vmtoolsaction="Disabled"
+    fi
+    if jq -e 'has("nvmesystem")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+      NVMES="true"; nvmeaction="Enabled"
+    else
+      NVMES="false"; nvmeaction="Disabled"
     fi
     eval "echo \"a \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""  > "${TMP_PATH}/menud"
     eval "echo \"b \\\"\${MSG${tz}01}, (${DMPM})\\\"\""                          >> "${TMP_PATH}/menud"
@@ -2601,7 +2607,7 @@ function build-pre-option() {
     fi
     eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
     eval "echo \"f \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
-    eval "echo \"g \\\"${nvmeaction} \${MSG${tz}57}\\\"\""                      >> "${TMP_PATH}/menud"
+    eval "echo \"g \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
     eval "echo \"h \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
@@ -2618,6 +2624,11 @@ function build-pre-option() {
     e) storagepanel;      NEXT="z" ;;
     f) cachepanel;        NEXT="z" ;;
     g)
+      # h)(vmtools)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
+      # 프롬프트는 여기선 건너뛴다(위험 경고 dialog가 이미 실질적인 확인
+      # 역할을 하므로 이중 확인은 불필요, menu.sh test에서 이 프롬프트 때문에
+      # 토글이 막히는 문제도 vmtools에서 실기로 확인됨). bundled-exts.json을
+      # 직접 다뤄 확실히 반영한다.
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
           "\Z1\ZbUsing NVMe as a STANDALONE (single) volume is still EXPERIMENTAL and HIGHLY RISKY.\Zn\n\n\
@@ -2627,11 +2638,13 @@ Do you really want to continue enabling nvmesystem?" 0 0
         if [ $? -ne 0 ]; then
           continue
         fi
-        if add-addon "nvmesystem"; then
-          NVMES="true"
-          BLOCK_DDSML="Y"
-          DMPM="EUDEV"
-        fi
+        del-addon "nvmesystem"
+        jsonfile=$(jq --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvmesystem/rpext-index.json" \
+          '. + {"nvmesystem": $url}' /home/tc/redpill-load/bundled-exts.json) \
+          && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+        NVMES="true"
+        BLOCK_DDSML="Y"
+        DMPM="EUDEV"
       else
         del-addon "nvmesystem"
         NVMES="false"
@@ -3698,13 +3711,17 @@ while true; do
   else
     drmmode="Unknown DRM"
   fi
-  [ "${NVMES}" = "false" ] && nvmeaction="Add" || nvmeaction="Remove"
-  # VMTOOLS(general.vmtools)는 "다음 빌드 때 자동으로 다시 넣어줄지"에 대한
-  # 의도 플래그일 뿐이다 - 실제로 빌드에 포함되는지는 bundled-exts.json에
-  # 그 키가 있느냐가 유일한 진실이므로, 표시는 항상 그 파일을 직접 확인해서
-  # 도출한다(nvidiadriver와 동일한 패턴, functions.sh:reconcile_addon_flags
-  # 참고). 이러면 세션 간 파일 리셋으로 플래그와 실제 상태가 어긋나도 메뉴
-  # 표시만큼은 항상 정확하다.
+  # NVMES/VMTOOLS(general.nvmesystem/general.vmtools)는 "다음 빌드 때
+  # 자동으로 다시 넣어줄지"에 대한 의도 플래그일 뿐이다 - 실제로 빌드에
+  # 포함되는지는 bundled-exts.json에 그 키가 있느냐가 유일한 진실이므로,
+  # 표시는 항상 그 파일을 직접 확인해서 도출한다(nvidiadriver와 동일한
+  # 패턴, functions.sh:reconcile_addon_flags 참고). 이러면 세션 간 파일
+  # 리셋으로 플래그와 실제 상태가 어긋나도 메뉴 표시만큼은 항상 정확하다.
+  if jq -e 'has("nvmesystem")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+    NVMES="true"; nvmeaction="Enabled"
+  else
+    NVMES="false"; nvmeaction="Disabled"
+  fi
   if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
     VMTOOLS="true"; vmtoolsaction="Enabled"
   else
