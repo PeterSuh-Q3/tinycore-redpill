@@ -2581,6 +2581,15 @@ function build-pre-option() {
   MSG64="vmtools(with qemu-guest-agent) addon"
 
   while true; do
+    # vmtoolsaction 은 최상위 Main loop 에서만 재계산되므로, 이 함수 자신의
+    # while 루프 안에서 h) 토글을 반복해도 그 값이 갱신되지 않아 화면에는
+    # 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서 확인됐다(2026-08-27).
+    # 매 반복마다 bundled-exts.json을 직접 다시 확인해 최신 상태를 보장한다.
+    if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+      VMTOOLS="true"; vmtoolsaction="Enabled"
+    else
+      VMTOOLS="false"; vmtoolsaction="Disabled"
+    fi
     eval "echo \"a \\\"\${MSG${tz}06} (${drmmode}, ${MDLNAME}:${MLMETHOD})\\\"\""  > "${TMP_PATH}/menud"
     eval "echo \"b \\\"\${MSG${tz}01}, (${DMPM})\\\"\""                          >> "${TMP_PATH}/menud"
     # c(dtsmapping) 는 additional() 메뉴(n) 의 1번 항목이었던 것이 여기 3번
