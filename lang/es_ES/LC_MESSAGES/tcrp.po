@@ -639,3 +639,91 @@ msgstr "El proxy debe comenzar con http:// o https:// (ejemplo: http://192.168.1
 #: MSGES163
 msgid "Static IP Settings (current: %s)"
 msgstr "Configuración de IP estática (actual: %s)"
+
+#: MSGES164
+msgid "Add a new NIC"
+msgstr "Añadir una nueva NIC"
+
+#: MSGES165
+msgid "Done"
+msgstr "Hecho"
+
+#: MSGES166
+msgid "Set as primary gateway"
+msgstr "Establecer como puerta de enlace principal"
+
+#: MSGES167
+msgid "Edit"
+msgstr "Editar"
+
+#: MSGES168
+msgid "Delete"
+msgstr "Eliminar"
+
+#: MSGES170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Todas las interfaces de red detectadas ya tienen una IP estática, o se ha alcanzado el máximo de 8."
+
+#: MSGES171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "No hay interfaces de red sin configurar disponibles para añadir."
+
+#: MSGES172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s es actualmente la puerta de enlace principal.\n\n¿Reemplazarla por %s?"
+
+#: MSGES173
+msgid "Delete the static IP configuration for %s?"
+msgstr "¿Eliminar la configuración de IP estática de %s?"
+
+#: MSGES174
+msgid "HTTP Proxy"
+msgstr "Proxy HTTP"
+
+#: MSGES175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Configure un proxy HTTP global utilizado para todo el tráfico saliente (opcional, se aplica a todas las interfaces).\n\nEjemplo: http://192.168.1.10:3128\n\nDéjelo en blanco para desactivarlo."
+
+#: MSGES176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Configuración de IP estática (multi-NIC, máx. 8)"
+
+#: MSGES177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Introduzca la configuración de red estática para %s\n\nLa puerta de enlace puede dejarse en blanco si esta no es la NIC principal. Esto solo funciona correctamente si esta NIC comparte la subred de la NIC principal; de lo contrario, esta NIC solo alcanzará hosts de su propia subred local."
+
+#: MSGES178
+msgid "Manage %s"
+msgstr "Gestionar %s"
+
+#: MSGES179
+msgid "none"
+msgstr "ninguno"
+
+#: MSGES180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGES181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Configure el servidor DNS utilizado por todas las NIC estáticas (obligatorio en cuanto haya una NIC configurada).\n\nEjemplo: 8.8.8.8"
+
+#: MSGES182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "Se requiere un servidor DNS en cuanto al menos una NIC tenga una IP estática. Configúrelo antes de finalizar."
+
+#: MSGES183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "No es una dirección de servidor DNS válida. Inténtelo de nuevo."
+
+#: MSGES184
+msgid "required, not set"
+msgstr "obligatorio, no establecido"
+
+#: MSGES185
+msgid "Static IP settings applied to the running kernel."
+msgstr "La configuración de IP estática se aplicó al kernel en ejecución."
+
+#: MSGES186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "No se pudo aplicar la configuración de IP estática al kernel en ejecución. Aun así, tendrá efecto en el próximo arranque."

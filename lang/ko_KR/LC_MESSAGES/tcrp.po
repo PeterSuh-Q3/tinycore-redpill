@@ -643,3 +643,91 @@ msgstr "프록시는 http:// 또는 https:// 로 시작해야 합니다 (예: ht
 #: MSGKR163
 msgid "Static IP Settings (current: %s)"
 msgstr "고정 IP 설정 (현재: %s)"
+
+#: MSGKR164
+msgid "Add a new NIC"
+msgstr "새 NIC 추가"
+
+#: MSGKR165
+msgid "Done"
+msgstr "완료"
+
+#: MSGKR166
+msgid "Set as primary gateway"
+msgstr "주 게이트웨이로 지정"
+
+#: MSGKR167
+msgid "Edit"
+msgstr "편집"
+
+#: MSGKR168
+msgid "Delete"
+msgstr "삭제"
+
+#: MSGKR170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "감지된 모든 네트워크 인터페이스에 이미 고정 IP가 설정되어 있거나, 최대 8개에 도달했습니다."
+
+#: MSGKR171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "추가할 수 있는 미설정 네트워크 인터페이스가 없습니다."
+
+#: MSGKR172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s가 현재 주 게이트웨이입니다.\n\n%s로 교체할까요?"
+
+#: MSGKR173
+msgid "Delete the static IP configuration for %s?"
+msgstr "%s의 고정 IP 설정을 삭제할까요?"
+
+#: MSGKR174
+msgid "HTTP Proxy"
+msgstr "HTTP 프록시"
+
+#: MSGKR175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "모든 아웃바운드 트래픽에 사용할 전역 HTTP 프록시를 설정합니다(선택 사항, 모든 인터페이스에 적용).\n\n예: http://192.168.1.10:3128\n\n비워두면 비활성화됩니다."
+
+#: MSGKR176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "고정 IP 설정(멀티 NIC, 최대 8개)"
+
+#: MSGKR177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "%s의 고정 네트워크 설정을 입력하세요\n\n주 NIC이 아니면 게이트웨이를 비워둘 수 있습니다. 단, 이 NIC이 주 NIC과 같은 서브넷일 때만 정상 동작하며, 그렇지 않으면 이 NIC은 자신의 로컬 서브넷 안에서만 통신할 수 있습니다."
+
+#: MSGKR178
+msgid "Manage %s"
+msgstr "%s 관리"
+
+#: MSGKR179
+msgid "none"
+msgstr "없음"
+
+#: MSGKR180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGKR181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "모든 고정 IP NIC이 사용할 DNS 서버를 설정합니다(NIC이 1개라도 설정되면 필수).\n\n예: 8.8.8.8"
+
+#: MSGKR182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "NIC이 1개라도 고정 IP로 설정되면 DNS 서버가 필수입니다. 완료하기 전에 설정해 주세요."
+
+#: MSGKR183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "올바른 DNS 서버 주소가 아닙니다. 다시 시도해 주세요."
+
+#: MSGKR184
+msgid "required, not set"
+msgstr "필수, 미설정"
+
+#: MSGKR185
+msgid "Static IP settings applied to the running kernel."
+msgstr "실행 중인 커널에 고정 IP 설정을 적용했습니다."
+
+#: MSGKR186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "실행 중인 커널에 고정 IP 설정을 적용하지 못했습니다. 다음 부팅 시에는 적용됩니다."

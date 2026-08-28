@@ -639,3 +639,91 @@ msgstr "A proxynak http:// vagy https:// előtaggal kell kezdődnie (példa: htt
 #: MSGHU163
 msgid "Static IP Settings (current: %s)"
 msgstr "Statikus IP beállítások (jelenlegi: %s)"
+
+#: MSGHU164
+msgid "Add a new NIC"
+msgstr "Új NIC hozzáadása"
+
+#: MSGHU165
+msgid "Done"
+msgstr "Kész"
+
+#: MSGHU166
+msgid "Set as primary gateway"
+msgstr "Beállítás elsődleges átjáróként"
+
+#: MSGHU167
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: MSGHU168
+msgid "Delete"
+msgstr "Törlés"
+
+#: MSGHU170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Az összes felismert hálózati interfészhez már van statikus IP rendelve, vagy elérte a 8-as maximumot."
+
+#: MSGHU171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "Nincs hozzáadható, konfigurálatlan hálózati interfész."
+
+#: MSGHU172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s jelenleg az elsődleges átjáró.\n\nLecseréli erre: %s?"
+
+#: MSGHU173
+msgid "Delete the static IP configuration for %s?"
+msgstr "Törli %s statikus IP-beállítását?"
+
+#: MSGHU174
+msgid "HTTP Proxy"
+msgstr "HTTP proxy"
+
+#: MSGHU175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Állítsa be a minden kimenő forgalomhoz használt globális HTTP proxyt (opcionális, minden interfészre vonatkozik).\n\nPélda: http://192.168.1.10:3128\n\nHagyja üresen a letiltáshoz."
+
+#: MSGHU176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Statikus IP-beállítások (több NIC, max. 8)"
+
+#: MSGHU177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Adja meg a(z) %s statikus hálózati beállításait\n\nAz átjáró mező üresen hagyható, ha ez nem az elsődleges NIC. Ez csak akkor működik helyesen, ha ez a NIC ugyanazon az alhálózaton van, mint az elsődleges NIC - egyébként ez a NIC csak a saját helyi alhálózatán lévő gépeket éri el."
+
+#: MSGHU178
+msgid "Manage %s"
+msgstr "%s kezelése"
+
+#: MSGHU179
+msgid "none"
+msgstr "nincs"
+
+#: MSGHU180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGHU181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Állítsa be az összes statikus NIC által használt DNS-kiszolgálót (kötelező, amint bármelyik NIC be van állítva).\n\nPélda: 8.8.8.8"
+
+#: MSGHU182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "DNS-kiszolgáló megadása kötelező, amint legalább egy NIC statikus IP-vel rendelkezik. Kérjük, állítsa be, mielőtt befejezi."
+
+#: MSGHU183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "Érvénytelen DNS-kiszolgáló cím. Kérjük, próbálja újra."
+
+#: MSGHU184
+msgid "required, not set"
+msgstr "kötelező, nincs beállítva"
+
+#: MSGHU185
+msgid "Static IP settings applied to the running kernel."
+msgstr "A statikus IP-beállítások alkalmazva lettek a futó kernelen."
+
+#: MSGHU186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "Nem sikerült alkalmazni a statikus IP-beállításokat a futó kernelen. A következő indításkor mindenképpen érvénybe lépnek."

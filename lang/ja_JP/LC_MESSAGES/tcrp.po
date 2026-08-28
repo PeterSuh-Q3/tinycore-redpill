@@ -639,3 +639,91 @@ msgstr "プロキシは http:// または https:// で始まる必要があり�
 #: MSGJP163
 msgid "Static IP Settings (current: %s)"
 msgstr "静的IP設定 (現在: %s)"
+
+#: MSGJP164
+msgid "Add a new NIC"
+msgstr "新しいNICを追加"
+
+#: MSGJP165
+msgid "Done"
+msgstr "完了"
+
+#: MSGJP166
+msgid "Set as primary gateway"
+msgstr "プライマリゲートウェイに設定"
+
+#: MSGJP167
+msgid "Edit"
+msgstr "編集"
+
+#: MSGJP168
+msgid "Delete"
+msgstr "削除"
+
+#: MSGJP170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "検出されたすべてのネットワークインターフェースに固定IPが設定済みか、最大8個に達しています。"
+
+#: MSGJP171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "追加できる未設定のネットワークインターフェースがありません。"
+
+#: MSGJP172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s が現在プライマリゲートウェイです。\n\n%s に置き換えますか?"
+
+#: MSGJP173
+msgid "Delete the static IP configuration for %s?"
+msgstr "%s の固定IP設定を削除しますか?"
+
+#: MSGJP174
+msgid "HTTP Proxy"
+msgstr "HTTPプロキシ"
+
+#: MSGJP175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "すべての送信トラフィックに使用するグローバルHTTPプロキシを設定します(任意、すべてのインターフェースに適用されます)。\n\n例: http://192.168.1.10:3128\n\n空欄にすると無効になります。"
+
+#: MSGJP176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "固定IP設定(マルチNIC、最大8個)"
+
+#: MSGJP177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "%s の固定ネットワーク設定を入力してください\n\nプライマリNICでない場合、ゲートウェイは空欄でも構いません。ただし、これはこのNICがプライマリNICと同じサブネットにある場合にのみ正しく機能します。そうでない場合、このNICは自身のローカルサブネット内のホストにしか到達できません。"
+
+#: MSGJP178
+msgid "Manage %s"
+msgstr "%s の管理"
+
+#: MSGJP179
+msgid "none"
+msgstr "なし"
+
+#: MSGJP180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGJP181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "すべての固定IP NICが使用するDNSサーバーを設定します(いずれかのNICが設定されると必須になります)。\n\n例: 8.8.8.8"
+
+#: MSGJP182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "1つ以上のNICに固定IPが設定されている場合、DNSサーバーが必須です。完了する前に設定してください。"
+
+#: MSGJP183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "有効なDNSサーバーアドレスではありません。もう一度お試しください。"
+
+#: MSGJP184
+msgid "required, not set"
+msgstr "必須、未設定"
+
+#: MSGJP185
+msgid "Static IP settings applied to the running kernel."
+msgstr "実行中のカーネルに固定IP設定を適用しました。"
+
+#: MSGJP186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "実行中のカーネルに固定IP設定を適用できませんでした。次回起動時には反映されます。"

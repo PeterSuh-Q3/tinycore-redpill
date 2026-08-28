@@ -639,3 +639,91 @@ msgstr "O proxy deve começar com http:// ou https:// (exemplo: http://192.168.1
 #: MSGBR163
 msgid "Static IP Settings (current: %s)"
 msgstr "Configurações de IP estático (atual: %s)"
+
+#: MSGBR164
+msgid "Add a new NIC"
+msgstr "Adicionar nova NIC"
+
+#: MSGBR165
+msgid "Done"
+msgstr "Concluído"
+
+#: MSGBR166
+msgid "Set as primary gateway"
+msgstr "Definir como gateway primário"
+
+#: MSGBR167
+msgid "Edit"
+msgstr "Editar"
+
+#: MSGBR168
+msgid "Delete"
+msgstr "Excluir"
+
+#: MSGBR170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Todas as interfaces de rede detectadas já têm um IP estático, ou o máximo de 8 foi atingido."
+
+#: MSGBR171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "Não há interfaces de rede não configuradas disponíveis para adicionar."
+
+#: MSGBR172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s é atualmente o gateway primário.\n\nSubstituir por %s?"
+
+#: MSGBR173
+msgid "Delete the static IP configuration for %s?"
+msgstr "Excluir a configuração de IP estático de %s?"
+
+#: MSGBR174
+msgid "HTTP Proxy"
+msgstr "Proxy HTTP"
+
+#: MSGBR175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Configure um proxy HTTP global usado para todo o tráfego de saída (opcional, aplica-se a todas as interfaces).\n\nExemplo: http://192.168.1.10:3128\n\nDeixe em branco para desativar."
+
+#: MSGBR176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Configurações de IP estático (multi-NIC, máx. 8)"
+
+#: MSGBR177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Digite as configurações de rede estática para %s\n\nO gateway pode ficar em branco se esta não for a NIC primária. Isso só funciona corretamente se esta NIC compartilhar a sub-rede da NIC primária - caso contrário, esta NIC só alcançará hosts em sua própria sub-rede local."
+
+#: MSGBR178
+msgid "Manage %s"
+msgstr "Gerenciar %s"
+
+#: MSGBR179
+msgid "none"
+msgstr "nenhum"
+
+#: MSGBR180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGBR181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Defina o servidor DNS usado por todas as NICs estáticas (obrigatório assim que qualquer NIC for configurada).\n\nExemplo: 8.8.8.8"
+
+#: MSGBR182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "Um servidor DNS é obrigatório assim que pelo menos uma NIC tiver um IP estático. Defina-o antes de concluir."
+
+#: MSGBR183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "Endereço de servidor DNS inválido. Tente novamente."
+
+#: MSGBR184
+msgid "required, not set"
+msgstr "obrigatório, não definido"
+
+#: MSGBR185
+msgid "Static IP settings applied to the running kernel."
+msgstr "As configurações de IP estático foram aplicadas ao kernel em execução."
+
+#: MSGBR186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "Não foi possível aplicar as configurações de IP estático ao kernel em execução. Elas ainda terão efeito na próxima inicialização."

@@ -639,3 +639,91 @@ msgstr "Прокси должен начинаться с http:// или https:/
 #: MSGRU163
 msgid "Static IP Settings (current: %s)"
 msgstr "Настройки статического IP (текущий: %s)"
+
+#: MSGRU164
+msgid "Add a new NIC"
+msgstr "Добавить новый сетевой адаптер"
+
+#: MSGRU165
+msgid "Done"
+msgstr "Готово"
+
+#: MSGRU166
+msgid "Set as primary gateway"
+msgstr "Назначить основным шлюзом"
+
+#: MSGRU167
+msgid "Edit"
+msgstr "Изменить"
+
+#: MSGRU168
+msgid "Delete"
+msgstr "Удалить"
+
+#: MSGRU170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Все обнаруженные сетевые интерфейсы уже имеют статический IP, либо достигнут максимум в 8 штук."
+
+#: MSGRU171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "Нет доступных ненастроенных сетевых интерфейсов для добавления."
+
+#: MSGRU172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s в настоящее время является основным шлюзом.\n\nЗаменить на %s?"
+
+#: MSGRU173
+msgid "Delete the static IP configuration for %s?"
+msgstr "Удалить настройку статического IP для %s?"
+
+#: MSGRU174
+msgid "HTTP Proxy"
+msgstr "HTTP-прокси"
+
+#: MSGRU175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Настройте глобальный HTTP-прокси, используемый для всего исходящего трафика (необязательно, применяется ко всем интерфейсам).\n\nПример: http://192.168.1.10:3128\n\nОставьте пустым, чтобы отключить."
+
+#: MSGRU176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Настройки статического IP (несколько адаптеров, макс. 8)"
+
+#: MSGRU177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Введите настройки статической сети для %s\n\nШлюз можно оставить пустым, если это не основной адаптер. Это работает корректно только если этот адаптер находится в той же подсети, что и основной - иначе этот адаптер сможет обращаться только к узлам в своей локальной подсети."
+
+#: MSGRU178
+msgid "Manage %s"
+msgstr "Управление %s"
+
+#: MSGRU179
+msgid "none"
+msgstr "нет"
+
+#: MSGRU180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGRU181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Задайте DNS-сервер, используемый всеми адаптерами со статическим IP (обязательно, как только настроен хотя бы один адаптер).\n\nПример: 8.8.8.8"
+
+#: MSGRU182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "DNS-сервер обязателен, как только хотя бы один адаптер получает статический IP. Задайте его перед завершением."
+
+#: MSGRU183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "Некорректный адрес DNS-сервера. Попробуйте ещё раз."
+
+#: MSGRU184
+msgid "required, not set"
+msgstr "обязательно, не задано"
+
+#: MSGRU185
+msgid "Static IP settings applied to the running kernel."
+msgstr "Настройки статического IP применены к работающему ядру."
+
+#: MSGRU186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "Не удалось применить настройки статического IP к работающему ядру. Они всё равно вступят в силу при следующей загрузке."

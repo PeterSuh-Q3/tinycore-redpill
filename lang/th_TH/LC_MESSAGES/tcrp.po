@@ -639,3 +639,91 @@ msgstr "พร็อกซีต้องขึ้นต้นด้วย http:
 #: MSGTH163
 msgid "Static IP Settings (current: %s)"
 msgstr "การตั้งค่า IP แบบคงที่ (ปัจจุบัน: %s)"
+
+#: MSGTH164
+msgid "Add a new NIC"
+msgstr "เพิ่ม NIC ใหม่"
+
+#: MSGTH165
+msgid "Done"
+msgstr "เสร็จสิ้น"
+
+#: MSGTH166
+msgid "Set as primary gateway"
+msgstr "ตั้งเป็นเกตเวย์หลัก"
+
+#: MSGTH167
+msgid "Edit"
+msgstr "แก้ไข"
+
+#: MSGTH168
+msgid "Delete"
+msgstr "ลบ"
+
+#: MSGTH170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "อินเทอร์เฟซเครือข่ายที่ตรวจพบทั้งหมดมี IP แบบคงที่อยู่แล้ว หรือถึงจำนวนสูงสุด 8 รายการแล้ว"
+
+#: MSGTH171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "ไม่มีอินเทอร์เฟซเครือข่ายที่ยังไม่ได้ตั้งค่าให้เพิ่มได้"
+
+#: MSGTH172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s เป็นเกตเวย์หลักอยู่ในขณะนี้\n\nต้องการแทนที่ด้วย %s หรือไม่?"
+
+#: MSGTH173
+msgid "Delete the static IP configuration for %s?"
+msgstr "ต้องการลบการตั้งค่า IP แบบคงที่ของ %s หรือไม่?"
+
+#: MSGTH174
+msgid "HTTP Proxy"
+msgstr "HTTP Proxy"
+
+#: MSGTH175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "ตั้งค่า HTTP proxy ส่วนกลางที่ใช้กับทราฟฟิกขาออกทั้งหมด (ไม่บังคับ ใช้กับทุกอินเทอร์เฟซ)\n\nตัวอย่าง: http://192.168.1.10:3128\n\nเว้นว่างไว้เพื่อปิดใช้งาน"
+
+#: MSGTH176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "การตั้งค่า IP แบบคงที่ (หลาย NIC สูงสุด 8)"
+
+#: MSGTH177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "กรอกการตั้งค่าเครือข่ายแบบคงที่สำหรับ %s\n\nสามารถเว้นเกตเวย์ว่างไว้ได้หากนี่ไม่ใช่ NIC หลัก วิธีนี้จะทำงานได้ถูกต้องก็ต่อเมื่อ NIC นี้อยู่ในซับเน็ตเดียวกับ NIC หลักเท่านั้น มิฉะนั้น NIC นี้จะติดต่อได้เฉพาะโฮสต์ในซับเน็ตท้องถิ่นของตัวเองเท่านั้น"
+
+#: MSGTH178
+msgid "Manage %s"
+msgstr "จัดการ %s"
+
+#: MSGTH179
+msgid "none"
+msgstr "ไม่มี"
+
+#: MSGTH180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGTH181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "ตั้งค่าเซิร์ฟเวอร์ DNS ที่ NIC แบบคงที่ทั้งหมดจะใช้ (จำเป็นเมื่อมี NIC ใดถูกตั้งค่าแล้ว)\n\nตัวอย่าง: 8.8.8.8"
+
+#: MSGTH182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "ต้องมีเซิร์ฟเวอร์ DNS เมื่อมี NIC อย่างน้อยหนึ่งตัวที่ใช้ IP แบบคงที่ โปรดตั้งค่าก่อนเสร็จสิ้น"
+
+#: MSGTH183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "ที่อยู่เซิร์ฟเวอร์ DNS ไม่ถูกต้อง โปรดลองอีกครั้ง"
+
+#: MSGTH184
+msgid "required, not set"
+msgstr "จำเป็น ยังไม่ได้ตั้งค่า"
+
+#: MSGTH185
+msgid "Static IP settings applied to the running kernel."
+msgstr "นำการตั้งค่า IP แบบคงที่ไปใช้กับเคอร์เนลที่กำลังทำงานอยู่แล้ว"
+
+#: MSGTH186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "ไม่สามารถนำการตั้งค่า IP แบบคงที่ไปใช้กับเคอร์เนลที่กำลังทำงานอยู่ได้ อย่างไรก็ตามจะมีผลในการบูตครั้งถัดไป"

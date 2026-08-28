@@ -639,3 +639,91 @@ msgstr "Proxy harus dimulai dengan http:// atau https:// (contoh: http://192.168
 #: MSGID163
 msgid "Static IP Settings (current: %s)"
 msgstr "Pengaturan IP Statis (saat ini: %s)"
+
+#: MSGID164
+msgid "Add a new NIC"
+msgstr "Tambah NIC baru"
+
+#: MSGID165
+msgid "Done"
+msgstr "Selesai"
+
+#: MSGID166
+msgid "Set as primary gateway"
+msgstr "Jadikan gateway utama"
+
+#: MSGID167
+msgid "Edit"
+msgstr "Edit"
+
+#: MSGID168
+msgid "Delete"
+msgstr "Hapus"
+
+#: MSGID170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Semua antarmuka jaringan yang terdeteksi sudah memiliki IP statis, atau batas maksimum 8 telah tercapai."
+
+#: MSGID171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "Tidak ada antarmuka jaringan yang belum dikonfigurasi untuk ditambahkan."
+
+#: MSGID172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s saat ini adalah gateway utama.\n\nGanti dengan %s?"
+
+#: MSGID173
+msgid "Delete the static IP configuration for %s?"
+msgstr "Hapus konfigurasi IP statis untuk %s?"
+
+#: MSGID174
+msgid "HTTP Proxy"
+msgstr "Proxy HTTP"
+
+#: MSGID175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Konfigurasikan proxy HTTP global yang digunakan untuk semua lalu lintas keluar (opsional, berlaku untuk setiap antarmuka).\n\nContoh: http://192.168.1.10:3128\n\nBiarkan kosong untuk menonaktifkan."
+
+#: MSGID176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Pengaturan IP Statis (multi-NIC, maks 8)"
+
+#: MSGID177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Masukkan pengaturan jaringan statis untuk %s\n\nGateway boleh dikosongkan jika ini bukan NIC utama. Ini hanya berfungsi dengan benar jika NIC ini berbagi subnet yang sama dengan NIC utama - jika tidak, NIC ini hanya akan menjangkau host di subnet lokalnya sendiri."
+
+#: MSGID178
+msgid "Manage %s"
+msgstr "Kelola %s"
+
+#: MSGID179
+msgid "none"
+msgstr "tidak ada"
+
+#: MSGID180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGID181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Atur server DNS yang digunakan oleh semua NIC statis (wajib setelah ada NIC yang dikonfigurasi).\n\nContoh: 8.8.8.8"
+
+#: MSGID182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "Server DNS wajib diisi setelah setidaknya satu NIC memiliki IP statis. Harap atur sebelum selesai."
+
+#: MSGID183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "Alamat server DNS tidak valid. Silakan coba lagi."
+
+#: MSGID184
+msgid "required, not set"
+msgstr "wajib, belum diatur"
+
+#: MSGID185
+msgid "Static IP settings applied to the running kernel."
+msgstr "Pengaturan IP statis telah diterapkan ke kernel yang sedang berjalan."
+
+#: MSGID186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "Gagal menerapkan pengaturan IP statis ke kernel yang sedang berjalan. Pengaturan akan tetap berlaku pada boot berikutnya."

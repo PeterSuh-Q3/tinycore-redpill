@@ -639,3 +639,91 @@ msgstr "代理必须以 http:// 或 https:// 开头 (示例: http://192.168.1.10
 #: MSGCN163
 msgid "Static IP Settings (current: %s)"
 msgstr "静态IP设置 (当前: %s)"
+
+#: MSGCN164
+msgid "Add a new NIC"
+msgstr "添加新网卡"
+
+#: MSGCN165
+msgid "Done"
+msgstr "完成"
+
+#: MSGCN166
+msgid "Set as primary gateway"
+msgstr "设为主网关"
+
+#: MSGCN167
+msgid "Edit"
+msgstr "编辑"
+
+#: MSGCN168
+msgid "Delete"
+msgstr "删除"
+
+#: MSGCN170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "检测到的所有网络接口都已设置静态IP,或已达到最多8个的上限。"
+
+#: MSGCN171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "没有可添加的未配置网络接口。"
+
+#: MSGCN172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s 目前是主网关。\n\n要替换为 %s 吗?"
+
+#: MSGCN173
+msgid "Delete the static IP configuration for %s?"
+msgstr "要删除 %s 的静态IP配置吗?"
+
+#: MSGCN174
+msgid "HTTP Proxy"
+msgstr "HTTP 代理"
+
+#: MSGCN175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "配置用于所有出站流量的全局HTTP代理(可选,适用于所有接口)。\n\n示例: http://192.168.1.10:3128\n\n留空以禁用。"
+
+#: MSGCN176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "静态IP设置(多网卡,最多8个)"
+
+#: MSGCN177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "请输入 %s 的静态网络设置\n\n如果不是主网卡,网关可以留空。但这只有在该网卡与主网卡处于同一子网时才能正常工作 - 否则该网卡只能与其本地子网内的主机通信。"
+
+#: MSGCN178
+msgid "Manage %s"
+msgstr "管理 %s"
+
+#: MSGCN179
+msgid "none"
+msgstr "无"
+
+#: MSGCN180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGCN181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "设置所有静态IP网卡使用的DNS服务器(只要有一个网卡已配置即为必填)。\n\n示例: 8.8.8.8"
+
+#: MSGCN182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "只要有一个网卡设置了静态IP,就必须设置DNS服务器。请在完成前设置。"
+
+#: MSGCN183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "不是有效的DNS服务器地址,请重试。"
+
+#: MSGCN184
+msgid "required, not set"
+msgstr "必填,未设置"
+
+#: MSGCN185
+msgid "Static IP settings applied to the running kernel."
+msgstr "静态IP设置已应用到当前运行的内核。"
+
+#: MSGCN186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "未能将静态IP设置应用到当前运行的内核,将在下次启动时生效。"

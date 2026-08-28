@@ -639,3 +639,91 @@ msgstr "Le proxy doit commencer par http:// ou https:// (exemple : http://192.16
 #: MSGFR163
 msgid "Static IP Settings (current: %s)"
 msgstr "Paramètres IP statique (actuel : %s)"
+
+#: MSGFR164
+msgid "Add a new NIC"
+msgstr "Ajouter une nouvelle carte réseau"
+
+#: MSGFR165
+msgid "Done"
+msgstr "Terminé"
+
+#: MSGFR166
+msgid "Set as primary gateway"
+msgstr "Définir comme passerelle principale"
+
+#: MSGFR167
+msgid "Edit"
+msgstr "Modifier"
+
+#: MSGFR168
+msgid "Delete"
+msgstr "Supprimer"
+
+#: MSGFR170
+msgid "All detected network interfaces already have a static IP, or the maximum of 8 has been reached."
+msgstr "Toutes les interfaces réseau détectées ont déjà une IP statique, ou le maximum de 8 a été atteint."
+
+#: MSGFR171
+msgid "No unconfigured network interfaces are available to add."
+msgstr "Aucune interface réseau non configurée disponible à ajouter."
+
+#: MSGFR172
+msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
+msgstr "%s est actuellement la passerelle principale.\n\nLa remplacer par %s ?"
+
+#: MSGFR173
+msgid "Delete the static IP configuration for %s?"
+msgstr "Supprimer la configuration IP statique de %s ?"
+
+#: MSGFR174
+msgid "HTTP Proxy"
+msgstr "Proxy HTTP"
+
+#: MSGFR175
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
+msgstr "Configurez un proxy HTTP global utilisé pour tout le trafic sortant (facultatif, s'applique à chaque interface).\n\nExemple : http://192.168.1.10:3128\n\nLaissez vide pour désactiver."
+
+#: MSGFR176
+msgid "Static IP Settings (multi-NIC, max 8)"
+msgstr "Paramètres IP statique (multi-cartes, max 8)"
+
+#: MSGFR177
+msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Entrez les paramètres réseau statiques pour %s\n\nLa passerelle peut être laissée vide si ce n'est pas la carte principale. Cela ne fonctionne correctement que si cette carte partage le sous-réseau de la carte principale - sinon, cette carte n'atteindra que les hôtes de son propre sous-réseau local."
+
+#: MSGFR178
+msgid "Manage %s"
+msgstr "Gérer %s"
+
+#: MSGFR179
+msgid "none"
+msgstr "aucun"
+
+#: MSGFR180
+msgid "DNS"
+msgstr "DNS"
+
+#: MSGFR181
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
+msgstr "Définissez le serveur DNS utilisé par toutes les cartes en IP statique (requis dès qu'une carte est configurée).\n\nExemple : 8.8.8.8"
+
+#: MSGFR182
+msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
+msgstr "Un serveur DNS est requis dès qu'au moins une carte a une IP statique. Veuillez le définir avant de terminer."
+
+#: MSGFR183
+msgid "Not a valid DNS server address. Please try again."
+msgstr "Adresse de serveur DNS invalide. Veuillez réessayer."
+
+#: MSGFR184
+msgid "required, not set"
+msgstr "requis, non défini"
+
+#: MSGFR185
+msgid "Static IP settings applied to the running kernel."
+msgstr "Les paramètres IP statique ont été appliqués au noyau en cours d'exécution."
+
+#: MSGFR186
+msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
+msgstr "Impossible d'appliquer les paramètres IP statique au noyau en cours d'exécution. Ils prendront tout de même effet au prochain démarrage."
