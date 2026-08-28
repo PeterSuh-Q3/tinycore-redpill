@@ -654,7 +654,7 @@ msgstr "Jadikan gateway utama"
 
 #: MSGID167
 msgid "Edit"
-msgstr "Edit"
+msgstr "Sunting"
 
 #: MSGID168
 msgid "Delete"
