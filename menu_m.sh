@@ -2652,31 +2652,13 @@ function additional() {
   eval "MSG121=\"\${MSG${tz}121}\""
   eval "MSG122=\"\${MSG${tz}122}\""
   eval "MSG123=\"\${MSG${tz}123}\""
-  eval "MSG161=\"\${MSG${tz}161}\""
+  eval "MSG88=\"\${MSG${tz}88}\""
+  eval "MSG87=\"\${MSG${tz}87}\""
 
   default_resp="l"
 
   while true; do
     [ "${PREVENT_INIT}" = "ON" ] && PREVENT_STATUS="Enabled" || PREVENT_STATUS="Disabled"
-    # 2026-08-27: ipsettings가 멀티 NIC 배열로 바뀌면서(최대 8포트) 상태
-    # 표시도 항목 수에 맞춰 요약한다. 아직 flat object인 예전 설정이 남아
-    # 있을 수 있으므로 배열/object 둘 다 사용자가 실제로 static 메뉴를 열기
-    # 전엔 건드리지 않고 여기서는 읽기만 한다(마이그레이션은 staticIpMenu
-    # 진입 시 migrate_ipsettings_schema()가 수행).
-    ipsettings_type="$(jq -r '(.ipsettings // [] | type)' /home/tc/user_config.json 2>/dev/null)"
-    if [ "${ipsettings_type}" = "array" ]; then
-      ipsettings_n="$(jq -r '.ipsettings | length' /home/tc/user_config.json 2>/dev/null)"
-      case "${ipsettings_n}" in
-        ''|0) STATICIP_STATUS="DHCP" ;;
-        1) STATICIP_STATUS="$(jq -r '.ipsettings[0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings[0].ipaddr' /home/tc/user_config.json 2>/dev/null)" ;;
-        *) STATICIP_STATUS="$(jq -r '[.ipsettings[]|select(.primary==true)][0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '[.ipsettings[]|select(.primary==true)][0].ipaddr // "?"' /home/tc/user_config.json 2>/dev/null) (+$((ipsettings_n - 1)))" ;;
-      esac
-    elif [ "$(jq -r '.ipsettings.ipset // empty' /home/tc/user_config.json 2>/dev/null)" = "static" ] && \
-       [ -n "$(jq -r '.ipsettings.ipaddr // empty' /home/tc/user_config.json 2>/dev/null)" ]; then
-      STATICIP_STATUS="$(jq -r '.ipsettings.ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings.ipaddr' /home/tc/user_config.json 2>/dev/null)"
-    else
-      STATICIP_STATUS="DHCP"
-    fi
     # dtsmapping(구 c) 은 최상위 z(build-pre-option) 하위메뉴 3번 항목으로
     # 이동했다 - 여기서는 제거.
     eval "echo \"l \\\"${MSG60}\\\"\"" > "${TMP_PATH}/menua"
@@ -2692,7 +2674,8 @@ function additional() {
     [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"
-    eval "echo \"s \\\"${MSG161}: ${STATICIP_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"q \\\"${MSG88}\\\"\"" >> "${TMP_PATH}/menua"
+    eval "echo \"w \\\"${MSG87}\\\"\"" >> "${TMP_PATH}/menua"
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menua")) --file "${TMP_PATH}/menua" \
     2>${TMP_PATH}/resp
@@ -2724,7 +2707,8 @@ function additional() {
     m) remove_loader && chk_shr_ex; default_resp="m";;
     i) packing_loader; default_resp="i";;
     k) keymapMenu; default_resp="k";;
-    s) staticIpMenu; default_resp="s";;
+    q) showAutoUpdateMenu; default_resp="q";;
+    w) select_and_run_menu; default_resp="w";;
     *) return;;
     esac
     
@@ -3995,11 +3979,31 @@ while true; do
 
   # ===== Misc ===== (유지보수/시스템)
   echo '= "=============== Misc ==============="'                            >> "${TMP_PATH}/menu"
+  # 2026-08-27: ipsettings가 멀티 NIC 배열로 바뀌면서(최대 8포트) 상태 표시도
+  # 항목 수에 맞춰 요약한다. 아직 flat object인 예전 설정이 남아 있을 수
+  # 있으므로 배열/object 둘 다 사용자가 실제로 static 메뉴를 열기 전엔
+  # 건드리지 않고 여기서는 읽기만 한다(마이그레이션은 staticIpMenu 진입 시
+  # migrate_ipsettings_schema()가 수행). 2026-08-28: 추가기능 하위메뉴에서
+  # 메인메뉴 "추가기능" 바로 위로 이동.
+  ipsettings_type="$(jq -r '(.ipsettings // [] | type)' /home/tc/user_config.json 2>/dev/null)"
+  if [ "${ipsettings_type}" = "array" ]; then
+    ipsettings_n="$(jq -r '.ipsettings | length' /home/tc/user_config.json 2>/dev/null)"
+    case "${ipsettings_n}" in
+      ''|0) STATICIP_STATUS="DHCP" ;;
+      1) STATICIP_STATUS="$(jq -r '.ipsettings[0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings[0].ipaddr' /home/tc/user_config.json 2>/dev/null)" ;;
+      *) STATICIP_STATUS="$(jq -r '[.ipsettings[]|select(.primary==true)][0].ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '[.ipsettings[]|select(.primary==true)][0].ipaddr // "?"' /home/tc/user_config.json 2>/dev/null) (+$((ipsettings_n - 1)))" ;;
+    esac
+  elif [ "$(jq -r '.ipsettings.ipset // empty' /home/tc/user_config.json 2>/dev/null)" = "static" ] && \
+     [ -n "$(jq -r '.ipsettings.ipaddr // empty' /home/tc/user_config.json 2>/dev/null)" ]; then
+    STATICIP_STATUS="$(jq -r '.ipsettings.ipiface // "?"' /home/tc/user_config.json 2>/dev/null) $(jq -r '.ipsettings.ipaddr' /home/tc/user_config.json 2>/dev/null)"
+  else
+    STATICIP_STATUS="DHCP"
+  fi
+  eval "MSG161=\"\${MSG${tz}161}\""
+  eval "echo \"i \\\"${MSG161}: ${STATICIP_STATUS}\\\"\""  >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"w \\\"\${MSG${tz}87}\\\"\""               >> "${TMP_PATH}/menu"
-  eval "echo \"q \\\"\${MSG${tz}88}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"r \\\"\${MSG${tz}14}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"e \\\"\${MSG${tz}15}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"o \\\"\${MSG${tz}73}\\\"\""               >> "${TMP_PATH}/menu"
@@ -4061,14 +4065,13 @@ while true; do
         NEXT="p"
         ;;           
     y) sudo /root/boot.sh normal ;;
+    i) staticIpMenu;    NEXT="n" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
     t) netconsoleMenu;  NEXT="p" ;;
     u) editUserConfig;  NEXT="p" ;;
     l) langMenu ;;
     b) backuploader;   NEXT="r" ;;
-    w) select_and_run_menu; NEXT="r" ;;
-    q) showAutoUpdateMenu; NEXT="r" ;;
     r) restart ;;
     e) byebye ;;
     o) break ;;
