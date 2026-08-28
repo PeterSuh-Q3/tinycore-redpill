@@ -1293,6 +1293,11 @@ function staticIpMenu() {
   eval "MSG177=\"\${MSG${tz}177}\""
   eval "MSG178=\"\${MSG${tz}178}\""
   eval "MSG179=\"\${MSG${tz}179}\""
+  eval "MSG180=\"\${MSG${tz}180}\""
+  eval "MSG181=\"\${MSG${tz}181}\""
+  eval "MSG182=\"\${MSG${tz}182}\""
+  eval "MSG183=\"\${MSG${tz}183}\""
+  eval "MSG184=\"\${MSG${tz}184}\""
 
   while true; do
     local count n
@@ -1310,6 +1315,14 @@ function staticIpMenu() {
       echo "\"${n}\" \"${label}\"" >> "${TMP_PATH}/menuip"
     done
 
+    # DNS는 NIC 개념이 아니라 전역 값 하나다(2026-08-28 설계 정정 - Linux
+    # resolv.conf는 인터페이스를 구분하지 않아 NIC별로 둬도 그 NIC 전용으로
+    # 격리되지 않는다). NIC이 1개라도 설정돼 있으면 필수값이라 값이 없을 때
+    # 라벨에 경고 표시를 하고, "완료" 선택 시 아래에서 강제로 막는다.
+    local dnsval
+    dnsval=$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)
+    echo "\"d\" \"${MSG180}: ${dnsval:-${MSG184}}\"" >> "${TMP_PATH}/menuip"
+
     local proxyval
     proxyval=$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)
     echo "\"x\" \"${MSG174}: ${proxyval:-${MSG179}}\"" >> "${TMP_PATH}/menuip"
@@ -1317,7 +1330,7 @@ function staticIpMenu() {
     echo "\"q\" \"${MSG165}\"" >> "${TMP_PATH}/menuip"
 
     dialog --clear --backtitle "`backtitle`" \
-      --menu "${MSG176}" 0 0 $(dlgmenuheight $((count + 3))) --file "${TMP_PATH}/menuip" \
+      --menu "${MSG176}" 0 0 $(dlgmenuheight $((count + 4))) --file "${TMP_PATH}/menuip" \
       2>${TMP_PATH}/resp
     [ $? -ne 0 ] && break
     local resp
@@ -1325,12 +1338,48 @@ function staticIpMenu() {
     [ -z "${resp}" ] && break
 
     case "${resp}" in
-      q) break ;;
+      q)
+        if [ "${count}" -gt 0 ] && [ -z "${dnsval}" ]; then
+          dialog --clear --backtitle "`backtitle`" --msgbox "${MSG182}" 0 0
+          continue
+        fi
+        break
+        ;;
+      d) staticIpDnsMenu "${cfg}" ;;
       x) staticIpProxyMenu "${cfg}" ;;
       a) staticIpAddEntry "${cfg}" ;;
       *[0-9]*) staticIpManageEntry "${cfg}" "${resp}" ;;
     esac
   done
+}
+
+# 전역 DNS 설정 - NIC과 무관하게 하나만 존재하며, NIC이 1개라도 설정돼
+# 있으면 필수값이다(staticIpMenu()의 "완료" 처리에서 강제).
+function staticIpDnsMenu() {
+  local cfg="$1" cur newval
+
+  cur=$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)
+
+  while true; do
+    dialog --backtitle "`backtitle`" --inputbox "${MSG181}" 12 70 "${cur}" \
+      2>${TMP_PATH}/resp
+    [ $? -ne 0 ] && return
+    newval=$(<${TMP_PATH}/resp)
+
+    if [ -n "${newval}" ] && ! echo "${newval}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+      dialog --backtitle "`backtitle`" --msgbox "${MSG183}" 0 0
+      continue
+    fi
+    break
+  done
+
+  local json
+  if [ -z "${newval}" ]; then
+    json=$(jq 'del(.netdns.ipdns)' "${cfg}")
+  else
+    json=$(jq --arg d "${newval}" '.netdns.ipdns = $d' "${cfg}")
+  fi
+  echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
 }
 
 # 전역 프록시(HTTP_PROXY 등) 설정 - NIC과 무관하게 하나만 존재한다.
@@ -1413,30 +1462,29 @@ function staticIpManageEntry() {
   esac
 }
 
-# NIC 하나(신규 또는 기존 idx)의 ip/gw/dns를 입력받아 저장한다. idx가
-# 비어있으면 새 항목을 배열 끝에 추가하고, 그게 유일한 항목이면 자동으로
-# primary가 된다. gw를 채웠는데 이미 다른 primary가 있으면 교체 확인을 받는다.
+# NIC 하나(신규 또는 기존 idx)의 ip/gw를 입력받아 저장한다. DNS는 NIC별
+# 필드가 아니다(2026-08-28 설계 정정 - staticIpDnsMenu() 참고, 전역
+# .netdns.ipdns 하나만 존재). idx가 비어있으면 새 항목을 배열 끝에
+# 추가하고, 그게 유일한 항목이면 자동으로 primary가 된다. gw를 채웠는데
+# 이미 다른 primary가 있으면 교체 확인을 받는다.
 function staticIpEditForm() {
   local cfg="$1" target_iface="$2" idx="$3"
-  local cur_ipaddr="" cur_ipgw="" cur_ipdns=""
+  local cur_ipaddr="" cur_ipgw=""
 
   if [ -n "${idx}" ]; then
     cur_ipaddr=$(jq -r ".ipsettings[${idx}].ipaddr // empty" "${cfg}" 2>/dev/null)
     cur_ipgw=$(jq -r ".ipsettings[${idx}].ipgw // empty" "${cfg}" 2>/dev/null)
-    cur_ipdns=$(jq -r ".ipsettings[${idx}].ipdns // empty" "${cfg}" 2>/dev/null)
   fi
 
   while true; do
-    dialog --backtitle "`backtitle`" --form "$(printf "${MSG177}" "${target_iface}")" 14 70 3 \
+    dialog --backtitle "`backtitle`" --form "$(printf "${MSG177}" "${target_iface}")" 16 76 2 \
       "${MSG152}:" 1 1 "${cur_ipaddr}" 1 24 40 0 \
       "${MSG153}:" 2 1 "${cur_ipgw}"   2 24 40 0 \
-      "${MSG154}:" 3 1 "${cur_ipdns}"  3 24 40 0 \
       2>${TMP_PATH}/resp
     [ $? -ne 0 ] && return
 
     cur_ipaddr=$(sed -n '1p' "${TMP_PATH}/resp")
     cur_ipgw=$(sed -n '2p' "${TMP_PATH}/resp")
-    cur_ipdns=$(sed -n '3p' "${TMP_PATH}/resp")
 
     if ! echo "${cur_ipaddr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
       dialog --backtitle "`backtitle`" --msgbox "${MSG156}" 0 0
@@ -1449,27 +1497,38 @@ function staticIpEditForm() {
     break
   done
 
-  local want_primary="false" existing_primary_iface
+  # primary 승격 여부: 기존 primary가 없거나(첫 NIC) 자기 자신을 편집하는
+  # 중이면 gw 입력 여부와 무관하게 항상 primary. 다른 NIC이 이미 primary면
+  # gw를 입력했을 때만 교체 의사를 확인한다(안 그러면 아무 NIC이나 편집할
+  # 때마다 매번 승격 여부를 물어보게 됨).
+  local want_primary="false" existing_primary_iface existing_primary_gw
   existing_primary_iface=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipiface // empty' "${cfg}" 2>/dev/null)
+  existing_primary_gw=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipgw // empty' "${cfg}" 2>/dev/null)
 
-  if [ -n "${cur_ipgw}" ]; then
-    if [ -z "${existing_primary_iface}" ] || [ "${existing_primary_iface}" = "${target_iface}" ]; then
-      want_primary="true"
-    else
-      dialog --clear --backtitle "`backtitle`" \
-        --yesno "$(printf "${MSG172}" "${existing_primary_iface}" "${target_iface}")" 0 0
-      [ $? -eq 0 ] && want_primary="true"
-    fi
+  if [ -z "${existing_primary_iface}" ] || [ "${existing_primary_iface}" = "${target_iface}" ]; then
+    want_primary="true"
+  elif [ -n "${cur_ipgw}" ]; then
+    dialog --clear --backtitle "`backtitle`" \
+      --yesno "$(printf "${MSG172}" "${existing_primary_iface}" "${target_iface}")" 0 0
+    [ $? -eq 0 ] && want_primary="true"
+  fi
+
+  # non-primary는 gw 생략 가능이라고 폼에서 안내해놓고, 막상 이 NIC이
+  # primary로 승격되는데 자기 gw가 비어있으면 인터넷이 끊긴다 - 이전
+  # primary가 있었다면(=다른 NIC을 교체하는 경우) 그 gw를 그대로 물려받는다.
+  if [ "${want_primary}" = "true" ] && [ -z "${cur_ipgw}" ] \
+      && [ -n "${existing_primary_gw}" ] && [ "${existing_primary_iface}" != "${target_iface}" ]; then
+    cur_ipgw="${existing_primary_gw}"
   fi
 
   local json
   if [ -n "${idx}" ]; then
-    json=$(jq --argjson i "${idx}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" --arg d "${cur_ipdns}" \
-      '.ipsettings[$i].ipset = "static" | .ipsettings[$i].ipaddr = $a | .ipsettings[$i].ipgw = $g | .ipsettings[$i].ipdns = $d' \
+    json=$(jq --argjson i "${idx}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" \
+      '.ipsettings[$i].ipset = "static" | .ipsettings[$i].ipaddr = $a | .ipsettings[$i].ipgw = $g' \
       "${cfg}")
   else
-    json=$(jq --arg f "${target_iface}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" --arg d "${cur_ipdns}" \
-      '.ipsettings += [{"ipset":"static","ipiface":$f,"ipaddr":$a,"ipgw":$g,"ipdns":$d,"primary":false}]' \
+    json=$(jq --arg f "${target_iface}" --arg a "${cur_ipaddr}" --arg g "${cur_ipgw}" \
+      '.ipsettings += [{"ipset":"static","ipiface":$f,"ipaddr":$a,"ipgw":$g,"primary":false}]' \
       "${cfg}")
   fi
 
@@ -1485,7 +1544,7 @@ function staticIpEditForm() {
 
 # 지정한 인덱스를 primary(기본 게이트웨이 소유자)로 교체한다.
 function staticIpSetPrimary() {
-  local cfg="$1" idx="$2" iface existing_primary_iface json
+  local cfg="$1" idx="$2" iface existing_primary_iface existing_primary_gw json
 
   iface=$(jq -r ".ipsettings[${idx}].ipiface" "${cfg}" 2>/dev/null)
   existing_primary_iface=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipiface // empty' "${cfg}" 2>/dev/null)
@@ -1493,13 +1552,20 @@ function staticIpSetPrimary() {
   if [ "${existing_primary_iface}" = "${iface}" ]; then
     return
   fi
+  existing_primary_gw=$(jq -r '[.ipsettings[]? | select(.primary == true)][0].ipgw // empty' "${cfg}" 2>/dev/null)
   if [ -n "${existing_primary_iface}" ]; then
     dialog --clear --backtitle "`backtitle`" \
       --yesno "$(printf "${MSG172}" "${existing_primary_iface}" "${iface}")" 0 0
     [ $? -ne 0 ] && return
   fi
 
-  json=$(jq --arg f "${iface}" '.ipsettings = [.ipsettings[] | .primary = (.ipiface == $f)]' "${cfg}")
+  # 승격되는 NIC 자신의 gw가 비어있으면(non-primary는 gw 생략 가능하다고
+  # 안내했으므로) 이전 primary의 gw를 그대로 물려받는다 - primary인데
+  # 게이트웨이가 없어 인터넷이 끊기는 걸 방지.
+  json=$(jq --arg f "${iface}" --arg g "${existing_primary_gw}" \
+    '.ipsettings = [.ipsettings[] | .primary = (.ipiface == $f)]
+     | .ipsettings = [.ipsettings[] | if (.ipiface == $f) and ((.ipgw // "") == "") and ($g != "") then .ipgw = $g else . end]' \
+    "${cfg}")
   echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
   STATIC_IP_CONFIGURED="true"
 }
