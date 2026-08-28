@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "जोड़ने के लिए कोई अकॉन्फ़िगर्ड नेटवर्क इंटरफ़ेस उपलब्ध नहीं है।"
 
 #: MSGIN172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s वर्तमान में प्राथमिक गेटवे है।\n\nक्या इसे %s से बदलें?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s वर्तमान में प्राथमिक गेटवे है।\\n\\nक्या इसे %s से बदलें?"
 
 #: MSGIN173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "HTTP प्रॉक्सी"
 
 #: MSGIN175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "सभी आउटबाउंड ट्रैफ़िक के लिए उपयोग किया जाने वाला ग्लोबल HTTP प्रॉक्सी कॉन्फ़िगर करें (वैकल्पिक, हर इंटरफ़ेस पर लागू होता है)।\n\nउदाहरण: http://192.168.1.10:3128\n\nअक्षम करने के लिए खाली छोड़ें।"
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "सभी आउटबाउंड ट्रैफ़िक के लिए उपयोग किया जाने वाला ग्लोबल HTTP प्रॉक्सी कॉन्फ़िगर करें (वैकल्पिक, हर इंटरफ़ेस पर लागू होता है)।\\n\\nउदाहरण: http://192.168.1.10:3128\\n\\nअक्षम करने के लिए खाली छोड़ें।"
 
 #: MSGIN176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "स्थिर IP सेटिंग्स (मल्टी-NIC, अधिकतम 8)"
 
 #: MSGIN177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "%s के लिए स्थिर नेटवर्क सेटिंग्स दर्ज करें\n\nयदि यह प्राथमिक NIC नहीं है तो गेटवे खाली छोड़ा जा सकता है। यह तभी सही ढंग से काम करता है जब यह NIC प्राथमिक NIC के समान सबनेट साझा करता हो - अन्यथा यह NIC केवल अपने स्थानीय सबनेट के होस्ट तक ही पहुंच पाएगा।"
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "%s के लिए स्थिर नेटवर्क सेटिंग्स दर्ज करें\\n\\nयदि यह प्राथमिक NIC नहीं है तो गेटवे खाली छोड़ा जा सकता है। यह तभी सही ढंग से काम करता है जब यह NIC प्राथमिक NIC के समान सबनेट साझा करता हो - अन्यथा यह NIC केवल अपने स्थानीय सबनेट के होस्ट तक ही पहुंच पाएगा।"
 
 #: MSGIN178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGIN181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "सभी स्थिर NIC द्वारा उपयोग किया जाने वाला DNS सर्वर सेट करें (किसी भी NIC के कॉन्फ़िगर होते ही यह आवश्यक हो जाता है)।\n\nउदाहरण: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "सभी स्थिर NIC द्वारा उपयोग किया जाने वाला DNS सर्वर सेट करें (किसी भी NIC के कॉन्फ़िगर होते ही यह आवश्यक हो जाता है)।\\n\\nउदाहरण: 8.8.8.8"
 
 #: MSGIN182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."

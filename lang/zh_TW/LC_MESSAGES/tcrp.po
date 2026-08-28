@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "沒有可新增的未設定網路介面。"
 
 #: MSGTW172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s 目前是主要閘道。\n\n要替換為 %s 嗎?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s 目前是主要閘道。\\n\\n要替換為 %s 嗎?"
 
 #: MSGTW173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "HTTP 代理伺服器"
 
 #: MSGTW175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "設定用於所有輸出流量的全域HTTP代理伺服器(選填,套用於所有介面)。\n\n範例: http://192.168.1.10:3128\n\n留空以停用。"
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "設定用於所有輸出流量的全域HTTP代理伺服器(選填,套用於所有介面)。\\n\\n範例: http://192.168.1.10:3128\\n\\n留空以停用。"
 
 #: MSGTW176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "靜態IP設定(多網卡,最多8個)"
 
 #: MSGTW177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "請輸入 %s 的靜態網路設定\n\n如果不是主網卡,閘道可以留空。但這只有在該網卡與主網卡處於同一子網路時才能正常運作 - 否則該網卡只能與其本機子網路內的主機通訊。"
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "請輸入 %s 的靜態網路設定\\n\\n如果不是主網卡,閘道可以留空。但這只有在該網卡與主網卡處於同一子網路時才能正常運作 - 否則該網卡只能與其本機子網路內的主機通訊。"
 
 #: MSGTW178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGTW181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "設定所有靜態IP網卡使用的DNS伺服器(只要有一個網卡已設定即為必填)。\n\n範例: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "設定所有靜態IP網卡使用的DNS伺服器(只要有一個網卡已設定即為必填)。\\n\\n範例: 8.8.8.8"
 
 #: MSGTW182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."

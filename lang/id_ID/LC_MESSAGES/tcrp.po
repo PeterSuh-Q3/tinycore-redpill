@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "Tidak ada antarmuka jaringan yang belum dikonfigurasi untuk ditambahkan."
 
 #: MSGID172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s saat ini adalah gateway utama.\n\nGanti dengan %s?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s saat ini adalah gateway utama.\\n\\nGanti dengan %s?"
 
 #: MSGID173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "Proxy HTTP"
 
 #: MSGID175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "Konfigurasikan proxy HTTP global yang digunakan untuk semua lalu lintas keluar (opsional, berlaku untuk setiap antarmuka).\n\nContoh: http://192.168.1.10:3128\n\nBiarkan kosong untuk menonaktifkan."
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "Konfigurasikan proxy HTTP global yang digunakan untuk semua lalu lintas keluar (opsional, berlaku untuk setiap antarmuka).\\n\\nContoh: http://192.168.1.10:3128\\n\\nBiarkan kosong untuk menonaktifkan."
 
 #: MSGID176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "Pengaturan IP Statis (multi-NIC, maks 8)"
 
 #: MSGID177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "Masukkan pengaturan jaringan statis untuk %s\n\nGateway boleh dikosongkan jika ini bukan NIC utama. Ini hanya berfungsi dengan benar jika NIC ini berbagi subnet yang sama dengan NIC utama - jika tidak, NIC ini hanya akan menjangkau host di subnet lokalnya sendiri."
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Masukkan pengaturan jaringan statis untuk %s\\n\\nGateway boleh dikosongkan jika ini bukan NIC utama. Ini hanya berfungsi dengan benar jika NIC ini berbagi subnet yang sama dengan NIC utama - jika tidak, NIC ini hanya akan menjangkau host di subnet lokalnya sendiri."
 
 #: MSGID178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGID181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "Atur server DNS yang digunakan oleh semua NIC statis (wajib setelah ada NIC yang dikonfigurasi).\n\nContoh: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "Atur server DNS yang digunakan oleh semua NIC statis (wajib setelah ada NIC yang dikonfigurasi).\\n\\nContoh: 8.8.8.8"
 
 #: MSGID182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."

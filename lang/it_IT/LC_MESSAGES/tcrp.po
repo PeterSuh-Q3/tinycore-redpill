@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "Nessuna interfaccia di rete non configurata disponibile da aggiungere."
 
 #: MSGIT172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s è attualmente il gateway primario.\n\nSostituirlo con %s?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s è attualmente il gateway primario.\\n\\nSostituirlo con %s?"
 
 #: MSGIT173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "Proxy HTTP"
 
 #: MSGIT175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "Configura un proxy HTTP globale usato per tutto il traffico in uscita (opzionale, si applica a ogni interfaccia).\n\nEsempio: http://192.168.1.10:3128\n\nLascia vuoto per disabilitare."
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "Configura un proxy HTTP globale usato per tutto il traffico in uscita (opzionale, si applica a ogni interfaccia).\\n\\nEsempio: http://192.168.1.10:3128\\n\\nLascia vuoto per disabilitare."
 
 #: MSGIT176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "Impostazioni IP statico (multi-NIC, max 8)"
 
 #: MSGIT177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "Inserisci le impostazioni di rete statiche per %s\n\nIl gateway può essere lasciato vuoto se questa non è la NIC primaria. Funziona correttamente solo se questa NIC condivide la sottorete della NIC primaria, altrimenti questa NIC raggiungerà solo gli host della propria sottorete locale."
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Inserisci le impostazioni di rete statiche per %s\\n\\nIl gateway può essere lasciato vuoto se questa non è la NIC primaria. Funziona correttamente solo se questa NIC condivide la sottorete della NIC primaria, altrimenti questa NIC raggiungerà solo gli host della propria sottorete locale."
 
 #: MSGIT178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGIT181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "Imposta il server DNS usato da tutte le NIC statiche (obbligatorio non appena viene configurata una NIC).\n\nEsempio: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "Imposta il server DNS usato da tutte le NIC statiche (obbligatorio non appena viene configurata una NIC).\\n\\nEsempio: 8.8.8.8"
 
 #: MSGIT182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."

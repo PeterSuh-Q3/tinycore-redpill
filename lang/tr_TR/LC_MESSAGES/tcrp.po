@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "Eklenebilecek yapılandırılmamış ağ arabirimi yok."
 
 #: MSGTR172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s şu anda birincil ağ geçidi.\n\n%s ile değiştirilsin mi?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s şu anda birincil ağ geçidi.\\n\\n%s ile değiştirilsin mi?"
 
 #: MSGTR173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "HTTP Proxy"
 
 #: MSGTR175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "Tüm giden trafik için kullanılacak genel bir HTTP proxy yapılandırın (isteğe bağlı, tüm arabirimlere uygulanır).\n\nÖrnek: http://192.168.1.10:3128\n\nDevre dışı bırakmak için boş bırakın."
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "Tüm giden trafik için kullanılacak genel bir HTTP proxy yapılandırın (isteğe bağlı, tüm arabirimlere uygulanır).\\n\\nÖrnek: http://192.168.1.10:3128\\n\\nDevre dışı bırakmak için boş bırakın."
 
 #: MSGTR176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "Statik IP Ayarları (çoklu NIC, en fazla 8)"
 
 #: MSGTR177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "%s için statik ağ ayarlarını girin\n\nBu birincil NIC değilse ağ geçidi boş bırakılabilir. Bu yalnızca bu NIC birincil NIC ile aynı alt ağı paylaşıyorsa doğru çalışır - aksi halde bu NIC yalnızca kendi yerel alt ağındaki ana bilgisayarlara ulaşabilir."
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "%s için statik ağ ayarlarını girin\\n\\nBu birincil NIC değilse ağ geçidi boş bırakılabilir. Bu yalnızca bu NIC birincil NIC ile aynı alt ağı paylaşıyorsa doğru çalışır - aksi halde bu NIC yalnızca kendi yerel alt ağındaki ana bilgisayarlara ulaşabilir."
 
 #: MSGTR178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGTR181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "Tüm statik NIC'lerin kullandığı DNS sunucusunu ayarlayın (herhangi bir NIC yapılandırıldığında zorunludur).\n\nÖrnek: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "Tüm statik NIC'lerin kullandığı DNS sunucusunu ayarlayın (herhangi bir NIC yapılandırıldığında zorunludur).\\n\\nÖrnek: 8.8.8.8"
 
 #: MSGTR182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."

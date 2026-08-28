@@ -669,8 +669,8 @@ msgid "No unconfigured network interfaces are available to add."
 msgstr "Nincs hozzáadható, konfigurálatlan hálózati interfész."
 
 #: MSGHU172
-msgid "%s is currently the primary gateway.\n\nReplace it with %s?"
-msgstr "%s jelenleg az elsődleges átjáró.\n\nLecseréli erre: %s?"
+msgid "%s is currently the primary gateway.\\n\\nReplace it with %s?"
+msgstr "%s jelenleg az elsődleges átjáró.\\n\\nLecseréli erre: %s?"
 
 #: MSGHU173
 msgid "Delete the static IP configuration for %s?"
@@ -681,16 +681,16 @@ msgid "HTTP Proxy"
 msgstr "HTTP proxy"
 
 #: MSGHU175
-msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\n\nExample: http://192.168.1.10:3128\n\nLeave blank to disable."
-msgstr "Állítsa be a minden kimenő forgalomhoz használt globális HTTP proxyt (opcionális, minden interfészre vonatkozik).\n\nPélda: http://192.168.1.10:3128\n\nHagyja üresen a letiltáshoz."
+msgid "Configure a global HTTP proxy used for all outbound traffic (optional, applies to every interface).\\n\\nExample: http://192.168.1.10:3128\\n\\nLeave blank to disable."
+msgstr "Állítsa be a minden kimenő forgalomhoz használt globális HTTP proxyt (opcionális, minden interfészre vonatkozik).\\n\\nPélda: http://192.168.1.10:3128\\n\\nHagyja üresen a letiltáshoz."
 
 #: MSGHU176
 msgid "Static IP Settings (multi-NIC, max 8)"
 msgstr "Statikus IP-beállítások (több NIC, max. 8)"
 
 #: MSGHU177
-msgid "Enter the static network settings for %s\n\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
-msgstr "Adja meg a(z) %s statikus hálózati beállításait\n\nAz átjáró mező üresen hagyható, ha ez nem az elsődleges NIC. Ez csak akkor működik helyesen, ha ez a NIC ugyanazon az alhálózaton van, mint az elsődleges NIC - egyébként ez a NIC csak a saját helyi alhálózatán lévő gépeket éri el."
+msgid "Enter the static network settings for %s\\n\\nThe gateway may be left blank if this is not the primary NIC. This only works correctly if this NIC shares the primary NIC's subnet - otherwise this NIC will only reach hosts on its own local subnet."
+msgstr "Adja meg a(z) %s statikus hálózati beállításait\\n\\nAz átjáró mező üresen hagyható, ha ez nem az elsődleges NIC. Ez csak akkor működik helyesen, ha ez a NIC ugyanazon az alhálózaton van, mint az elsődleges NIC - egyébként ez a NIC csak a saját helyi alhálózatán lévő gépeket éri el."
 
 #: MSGHU178
 msgid "Manage %s"
@@ -705,8 +705,8 @@ msgid "DNS"
 msgstr "DNS"
 
 #: MSGHU181
-msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\n\nExample: 8.8.8.8"
-msgstr "Állítsa be az összes statikus NIC által használt DNS-kiszolgálót (kötelező, amint bármelyik NIC be van állítva).\n\nPélda: 8.8.8.8"
+msgid "Set the DNS server used by all static NICs (required once any NIC is configured).\\n\\nExample: 8.8.8.8"
+msgstr "Állítsa be az összes statikus NIC által használt DNS-kiszolgálót (kötelező, amint bármelyik NIC be van állítva).\\n\\nPélda: 8.8.8.8"
 
 #: MSGHU182
 msgid "A DNS server is required once at least one NIC has a static IP. Please set it before finishing."
