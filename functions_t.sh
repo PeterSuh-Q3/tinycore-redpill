@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.6"
-builddate="2026.08.25"
+rploaderver="1.4.3.7"
+builddate="2026.08.28"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -745,6 +745,21 @@ function history() {
             IP/gateway/DNS/proxy directly and skips the 3-attempt DHCP retry loop
             entirely, since it could never succeed on that network anyway. The
             offline static IP setup dialog no longer reappears in this case either.
+    1.4.3.7 HEADLINE: Static IP now supports up to 8 NICs with a single primary
+            gateway, replacing the old single NIC design. ipsettings becomes an
+            array with one primary entry owning the default route, and the
+            gateway may be left blank on other NICs (only meaningful if that NIC
+            shares the primary NIC's subnet). DNS moves out of each NIC and
+            becomes one required global setting instead, since Linux has no per
+            interface DNS concept, and is carried onto the primary NIC's
+            gateway automatically when a NIC is promoted. The Static IP menu
+            moves from the Additional Functions submenu up to the main menu,
+            while TCB and FKC Auto Update Management and Rebuild Previous
+            Version move down into Additional Functions in its place. Saving
+            static IP settings now applies them to the running FRIEND kernel
+            immediately instead of waiting for the next boot, and
+            netproxy/netdns are always present in user_config.json now instead
+            of only after a value is first saved.
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1411,6 +1426,20 @@ EOF
 # network anyway. The offline static IP setup dialog no longer reappears in this case
 # either.
 
+# 2026.08.28 v1.4.3.7
+# HEADLINE: Static IP now supports up to 8 NICs with a single primary gateway,
+# replacing the old single NIC design. ipsettings becomes an array with one primary
+# entry owning the default route, and the gateway may be left blank on other NICs
+# (only meaningful if that NIC shares the primary NIC's subnet). DNS moves out of
+# each NIC and becomes one required global setting instead, since Linux has no per
+# interface DNS concept, and is carried onto the primary NIC's gateway automatically
+# when a NIC is promoted. The Static IP menu moves from the Additional Functions
+# submenu up to the main menu, while TCB and FKC Auto Update Management and Rebuild
+# Previous Version move down into Additional Functions in its place. Saving static
+# IP settings now applies them to the running FRIEND kernel immediately instead of
+# waiting for the next boot, and netproxy/netdns are always present in
+# user_config.json now instead of only after a value is first saved.
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1762,6 +1791,12 @@ function showlastupdate() {
 # skips the 3-attempt DHCP retry loop entirely, since it could never succeed on that
 # network anyway. The offline static IP setup dialog no longer reappears in this case
 # either.
+
+# 2026.08.28 v1.4.3.7
+# Static IP now supports up to 8 NICs with a single primary gateway. DNS becomes one
+# required global setting instead of a per NIC field. The Static IP menu moves to the
+# main menu, and TCB/FKC Auto Update Management plus Rebuild Previous Version move into
+# Additional Functions in its place. Saved settings apply immediately on menu exit.
 EOF
 }
 
