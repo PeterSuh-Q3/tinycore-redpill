@@ -143,9 +143,6 @@ MSGZZ143=$(gettext "tcrp" "Could not automatically find the MAC address of the l
 MSGZZ144=$(gettext "tcrp" "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)")
 MSGZZ145=$(gettext "tcrp" "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s")
 MSGZZ146=$(gettext "tcrp" "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu).")
-#MSX=$(gettext "tcrp" "No NIC found! - Loader does not work without Network connection.")
-
-## Static IP settings menu
 MSGZZ147=$(gettext "tcrp" "Configure Static IP")
 MSGZZ148=$(gettext "tcrp" "Use DHCP")
 MSGZZ149=$(gettext "tcrp" "Select the network interface for the static IP")
@@ -163,8 +160,6 @@ MSGZZ160=$(gettext "tcrp" "Reverted to DHCP.\n\n[!] You must rebuild the loader 
 MSGZZ161=$(gettext "tcrp" "Static IP Settings")
 MSGZZ162=$(gettext "tcrp" "The proxy must start with http:// or https:// (example: http://192.168.1.10:3128). Please try again.")
 MSGZZ163=$(gettext "tcrp" "Static IP Settings (current: %s)")
-
-## Multi-NIC static IP settings (up to 8 ports)
 MSGZZ164=$(gettext "tcrp" "Add a new NIC")
 MSGZZ165=$(gettext "tcrp" "Done")
 MSGZZ166=$(gettext "tcrp" "Set as primary gateway")
