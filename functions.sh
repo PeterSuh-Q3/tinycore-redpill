@@ -328,17 +328,35 @@ function apply_static_ip_now() {
             continue
         fi
 
-        # Match boot.sh: release only this interface's DHCP lease, then
-        # replace its address and route instead of layering static and DHCP.
+        # Stop either DHCP client that can own this interface. FRIEND normally
+        # uses dhcpcd, while the Alpine/TinyCore menu environment may use
+        # BusyBox udhcpc.  Stopping only dhcpcd leaves udhcpc free to restore
+        # its lease and default route after the static address is applied.
         if command -v dhcpcd >/dev/null 2>&1; then
             sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
         fi
+        for udhcpc_pidfile in "/var/run/udhcpc.${ethdev}.pid" "/run/udhcpc.${ethdev}.pid"; do
+            if [ -r "${udhcpc_pidfile}" ]; then
+                udhcpc_pid=$(cat "${udhcpc_pidfile}" 2>/dev/null)
+                case "${udhcpc_pid}" in
+                    ''|*[!0-9]*) ;;
+                    *)
+                        if sudo test -r "/proc/${udhcpc_pid}/cmdline" \
+                            && sudo tr '\0' ' ' < "/proc/${udhcpc_pid}/cmdline" | grep -q "udhcpc.*-i ${ethdev}"; then
+                            sudo kill "${udhcpc_pid}" >/dev/null 2>&1 || true
+                        fi
+                        ;;
+                esac
+            fi
+        done
         sudo ip addr flush dev "${ethdev}" || continue
         sudo ip link set dev "${ethdev}" up || continue
         sudo ip addr add "${staticip}" dev "${ethdev}" || continue
         if [ "${isprimary}" = "true" ] && [ -n "${staticgw}" ]; then
-            sudo ip route del default dev "${ethdev}" >/dev/null 2>&1 || true
-            sudo ip route add default via "${staticgw}" dev "${ethdev}" || true
+            # A DHCP lease on another NIC can have left an additional default
+            # route behind.  Static mode has exactly one primary gateway.
+            while sudo ip route del default >/dev/null 2>&1; do :; done
+            sudo ip route replace default via "${staticgw}" dev "${ethdev}" || true
         fi
 
         echo "Static IP applied on ${ethdev}: ${staticip}"
