@@ -108,39 +108,59 @@ function check_internet() {
 }
 
 # 지금까지는 인터넷 3회 연속 미응답 뒤 사용자가 그 자리에서 새로 입력한
-# 고정 IP만 반영했다 - 이미 이전 세션에서 저장해 둔 고정 IP 설정
-# (ipsettings.ipset=="static")이 있어도, 재부팅해서 menu.sh가 다시 뜨면
-# 그 값을 쓰지 않고 매번 처음부터 DHCP 대기/재시도를 반복했다. 이 함수는
-# 그 저장된 값이 있으면 DHCP 루프를 돌기 전에 먼저 이 로더 자신의 살아있는
-# 세션에 그대로 적용한다.
+# 고정 IP만 반영했다 - 이미 이전 세션에서 저장해 둔 고정 IP 설정이 있어도,
+# 재부팅해서 menu.sh가 다시 뜨면 그 값을 쓰지 않고 매번 처음부터 DHCP
+# 대기/재시도를 반복했다. 이 함수는 그 저장된 값이 있으면 DHCP 루프를
+# 돌기 전에 먼저 이 로더 자신의 살아있는 세션에 그대로 적용한다.
+#
+# 2026-08-29: ipsettings가 멀티 NIC(최대 8포트) 배열로 바뀐 뒤 이 함수만
+# 옛날 flat object 스키마(.ipsettings.ipset 등)를 그대로 읽고 있어서,
+# 배열에서는 항상 null이 나와 매번 조용히 실패하는 회귀가 있었다(사용자
+# 지적으로 발견) - 저장된 고정 IP가 있어도 재부팅마다 불필요한 DHCP
+# 대기를 반복하고 있었다. functions.sh의 apply_static_ip_now()와 동일한
+# 스키마(배열 순회, primary만 기본 라우트 소유, DNS/프록시는 전역
+# netdns.ipdns/netproxy.ipproxy)로 다시 맞췄다.
 function apply_saved_static_ip() {
-  local ipset iface addr gw dns proxy
+  local cfg="${userconfigfile}"
+  migrate_ipsettings_schema "${cfg}"
 
-  ipset="$(jq -r '.ipsettings.ipset // empty' "${userconfigfile}" 2>/dev/null)"
-  [ "${ipset}" = "static" ] || return 1
+  local count applied=0
+  count=$(jq -r '(.ipsettings // [] | length)' "${cfg}" 2>/dev/null)
+  case "${count}" in ''|*[!0-9]*) count=0 ;; esac
+  [ "${count}" -gt 0 ] || return 1
 
-  iface="$(jq -r '.ipsettings.ipiface // empty' "${userconfigfile}" 2>/dev/null)"
-  addr="$(jq -r '.ipsettings.ipaddr // empty' "${userconfigfile}" 2>/dev/null)"
-  gw="$(jq -r '.ipsettings.ipgw // empty' "${userconfigfile}" 2>/dev/null)"
-  dns="$(jq -r '.ipsettings.ipdns // empty' "${userconfigfile}" 2>/dev/null)"
-  proxy="$(jq -r '.ipsettings.ipproxy // empty' "${userconfigfile}" 2>/dev/null)"
-
-  if ! echo "${iface}" | grep -qE '^eth[0-7]$' || \
-     ! echo "${addr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
-    echo "[!] Saved static IP settings look invalid (iface=${iface} addr=${addr}); falling back to DHCP."
-    return 1
-  fi
-
-  echo "Static IP is configured (${iface} ${addr}) - applying it to this loader session before any DHCP wait..."
-  sudo ip link set "${iface}" up 2>/dev/null
-  sudo ip addr flush dev "${iface}" 2>/dev/null
-  sudo ip addr add "${addr}" dev "${iface}" 2>/dev/null
-  [ -n "${gw}" ] && sudo ip route replace default via "${gw}" dev "${iface}" 2>/dev/null
-  [ -n "${dns}" ] && printf 'nameserver %s\n' "${dns}" | sudo tee /etc/resolv.conf >/dev/null
+  local proxy dns
+  proxy="$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)"
   if [ -n "${proxy}" ]; then
     export http_proxy="${proxy}" https_proxy="${proxy}"
   fi
-  return 0
+  dns="$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)"
+  [ -n "${dns}" ] && printf 'nameserver %s\n' "${dns}" | sudo tee /etc/resolv.conf >/dev/null
+
+  local i iface addr gw isprimary
+  for ((i = 0; i < count; i++)); do
+    iface="$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)"
+    addr="$(jq -r ".ipsettings[${i}].ipaddr // empty" "${cfg}" 2>/dev/null)"
+    gw="$(jq -r ".ipsettings[${i}].ipgw // empty" "${cfg}" 2>/dev/null)"
+    isprimary="$(jq -r ".ipsettings[${i}].primary // false" "${cfg}" 2>/dev/null)"
+
+    if ! echo "${iface}" | grep -qE '^eth[0-7]$' || \
+       ! echo "${addr}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'; then
+      echo "[!] Saved static IP entry looks invalid (iface=${iface} addr=${addr}); skipping."
+      continue
+    fi
+
+    echo "Static IP is configured (${iface} ${addr}) - applying it to this loader session before any DHCP wait..."
+    sudo ip link set "${iface}" up 2>/dev/null
+    sudo ip addr flush dev "${iface}" 2>/dev/null
+    sudo ip addr add "${addr}" dev "${iface}" 2>/dev/null
+    if [ "${isprimary}" = "true" ] && [ -n "${gw}" ]; then
+      sudo ip route replace default via "${gw}" dev "${iface}" 2>/dev/null
+    fi
+    applied=$((applied + 1))
+  done
+
+  [ "${applied}" -gt 0 ]
 }
 
 # 바이너리 풀경로 해석. TinyCore 는 ip/ethtool 이 /usr/local/sbin 에 있는데
