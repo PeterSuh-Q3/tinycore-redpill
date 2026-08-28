@@ -226,49 +226,126 @@ dsm6notsupported="broadwellntbap"
 R8168_YN="N"
 R8168_DETECTED="N"  # 한번만 체크하는 플래그
 
+# ipsettings는 원래 flat object(NIC 1개) 스키마였다가 멀티 NIC(최대 8포트)
+# 지원을 위해 배열로 바뀌었다(2026-08-27). 예전 flat object 설정을 만나면
+# primary:true를 붙인 1-원소 배열로, 그 외 null/누락이면 빈 배열로 감싸
+# 이후 모든 코드가 항상 배열이라고 가정할 수 있게 한다. proxy와 DNS는 NIC
+# 개념이 아니므로(DNS는 특히 Linux resolv.conf가 인터페이스를 구분하지 않아
+# NIC별로 둬도 "그 NIC 전용"으로 격리되지 않는다 - 2026-08-28, NIC별 DNS
+# 입력 UI를 두고 나서 나온 설계 정정) 최상위 .netproxy.ipproxy /
+# .netdns.ipdns로 옮긴다. 몇 번을 호출해도 안전하도록 매 단계 멱등이며,
+# tcrpfriend의 boot.sh에도 동일한 로직이 별도 구현되어 있다(별개의
+# buildroot rootfs라 이 파일을 source할 수 없음).
+function migrate_ipsettings_schema() {
+    local cfg="$1" t json oldproxy olddns
+    [ -f "${cfg}" ] || return 0
+    t="$(jq -r '(.ipsettings // [] | type)' "${cfg}" 2>/dev/null)"
+
+    if [ "${t}" = "object" ]; then
+        oldproxy=$(jq -r '.ipsettings.ipproxy // empty' "${cfg}" 2>/dev/null)
+        olddns=$(jq -r '.ipsettings.ipdns // empty' "${cfg}" 2>/dev/null)
+        json=$(jq 'if (.ipsettings.ipset // "") == "static" and (.ipsettings.ipaddr // "") != "" then
+                .ipsettings = [ (.ipsettings | del(.ipproxy, .ipdns) | . + {primary:true}) ]
+            else
+                .ipsettings = []
+            end' "${cfg}")
+        [ -n "${oldproxy}" ] && json=$(echo "${json}" | jq --arg p "${oldproxy}" '.netproxy.ipproxy = $p')
+        [ -n "${olddns}" ] && json=$(echo "${json}" | jq --arg d "${olddns}" '.netdns.ipdns = $d')
+        echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+    elif [ "${t}" != "array" ]; then
+        jq '.ipsettings = []' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+    fi
+
+    # 배열 원소에 아직 ipdns가 남아있으면(NIC별 DNS 입력을 받던 중간 스키마)
+    # 첫 값을 전역 .netdns.ipdns로 승격하고 원소들에서는 제거한다. primary가
+    # 하나도 없으면(과거 배열 스키마 실험판 등) 첫 항목을 primary로 승격하는
+    # 안전망도 동일하게 유지 - "게이트웨이는 항상 정확히 1개" 불변식을 이
+    # 함수를 거치기만 하면 항상 보장한다.
+    jq '
+      (if ((.ipsettings|type)=="array") and (([.ipsettings[]? | select((.ipdns? // "") != "")] | length) > 0)
+              and ((.netdns.ipdns // "") == "")
+          then .netdns.ipdns = ([.ipsettings[] | select((.ipdns? // "") != "")][0].ipdns)
+          else . end)
+      | (if (.ipsettings|type)=="array" then .ipsettings = [.ipsettings[] | del(.ipdns)] else . end)
+      | (if ((.ipsettings|type)=="array") and ((.ipsettings|length) > 0)
+              and (([.ipsettings[] | select(.primary==true)] | length) == 0)
+          then .ipsettings[0].primary = true
+          else . end)
+      # netproxy/netdns는 값을 한 번도 저장한 적 없으면 키 자체가 아예
+      # 없어서, user_config.json을 직접 열어보면 ipsettings 옆에 대표
+      # DNS/프록시 설정이 어디 있는지 안 보인다는 혼란을 준다(실기 지적,
+      # 2026-08-29). ipsettings처럼 빈 스캐폴드를 항상 남겨 다른 블록들과
+      # 동일하게 보이도록 한다.
+      | (if (.netproxy|type)!="object" then .netproxy = {"ipproxy": ""} else . end)
+      | (if (.netdns|type)!="object" then .netdns = {"ipdns": ""} else . end)
+    ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+}
+
 # Apply the static network settings immediately in the running FRIEND kernel.
 # This is the network-only part of tcrpfriend/boot.sh setnetwork(): it is
 # intentionally safe to call from menu_m.sh after saving user_config.json and
 # does not kexec, rebuild, or reboot.  boot.sh still applies the same settings
-# during the normal FRIEND boot path.
+# during the normal FRIEND boot path. Multi-NIC (2026-08-27): loops over every
+# .ipsettings[] entry; only the entry marked primary gets the default route,
+# so multiple static NICs never fight over "ip route add default". DNS
+# (2026-08-28) is a single global value (.netdns.ipdns), not per-NIC, and is
+# applied once regardless of NIC count.
 function apply_static_ip_now() {
     local cfg="/mnt/tcrp/user_config.json"
-    local ethdev staticip staticdns staticgw staticproxy
     [ -f "${cfg}" ] || cfg="${userconfigfile}"
     [ -f "${cfg}" ] || { echo "Static IP config not found: ${cfg}" >&2; return 1; }
 
-    ethdev=$(jq -r -e '.ipsettings.ipiface // empty' "${cfg}" 2>/dev/null)
-    staticip=$(jq -r -e '.ipsettings.ipaddr // empty' "${cfg}" 2>/dev/null)
-    staticdns=$(jq -r -e '.ipsettings.ipdns // empty' "${cfg}" 2>/dev/null)
-    staticgw=$(jq -r -e '.ipsettings.ipgw // empty' "${cfg}" 2>/dev/null)
-    staticproxy=$(jq -r -e '.ipsettings.ipproxy // empty' "${cfg}" 2>/dev/null)
-    [ -n "${ethdev}" ] || ethdev=$(ip -o link show up 2>/dev/null | awk -F': ' '$2 != "lo" {print $2; exit}')
-    if ! echo "${staticip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$' || [ -z "${ethdev}" ]; then
-        echo "Invalid static IP configuration; staying on DHCP." >&2
+    migrate_ipsettings_schema "${cfg}"
+
+    local count applied=0
+    count=$(jq -r '(.ipsettings // [] | length)' "${cfg}" 2>/dev/null)
+    case "${count}" in ''|*[!0-9]*) count=0 ;; esac
+    if [ "${count}" -eq 0 ]; then
+        echo "No static IP configured; staying on DHCP." >&2
         return 1
     fi
 
-    # Match boot.sh: release only the selected interface's DHCP lease, then
-    # replace its address and route instead of layering static and DHCP state.
-    if command -v dhcpcd >/dev/null 2>&1; then
-        sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
-    fi
-    sudo ip addr flush dev "${ethdev}" || return 1
-    sudo ip link set dev "${ethdev}" up || return 1
-    sudo ip addr add "${staticip}" dev "${ethdev}" || return 1
-    if [ -n "${staticgw}" ]; then
-        sudo ip route del default dev "${ethdev}" >/dev/null 2>&1 || true
-        sudo ip route add default via "${staticgw}" dev "${ethdev}" || return 1
-    fi
-    if [ -n "${staticdns}" ] && ! grep -qF "nameserver ${staticdns}" /etc/resolv.conf 2>/dev/null; then
-        echo "nameserver ${staticdns}" | sudo tee -a /etc/resolv.conf >/dev/null
-    fi
+    local staticproxy staticdns
+    staticproxy=$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)
     if [ -n "${staticproxy}" ]; then
         export HTTP_PROXY="${staticproxy}" HTTPS_PROXY="${staticproxy}"
         export http_proxy="${staticproxy}" https_proxy="${staticproxy}"
     fi
-    echo "Static IP applied on ${ethdev}: ${staticip}"
-    return 0
+    staticdns=$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)
+    if [ -n "${staticdns}" ] && ! grep -qF "nameserver ${staticdns}" /etc/resolv.conf 2>/dev/null; then
+        echo "nameserver ${staticdns}" | sudo tee -a /etc/resolv.conf >/dev/null
+    fi
+
+    local i ethdev staticip staticgw isprimary
+    for ((i = 0; i < count; i++)); do
+        ethdev=$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)
+        staticip=$(jq -r ".ipsettings[${i}].ipaddr // empty" "${cfg}" 2>/dev/null)
+        staticgw=$(jq -r ".ipsettings[${i}].ipgw // empty" "${cfg}" 2>/dev/null)
+        isprimary=$(jq -r ".ipsettings[${i}].primary // false" "${cfg}" 2>/dev/null)
+
+        if ! echo "${staticip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$' || [ -z "${ethdev}" ]; then
+            echo "Skipping invalid static IP entry (iface=${ethdev}, addr=${staticip})." >&2
+            continue
+        fi
+
+        # Match boot.sh: release only this interface's DHCP lease, then
+        # replace its address and route instead of layering static and DHCP.
+        if command -v dhcpcd >/dev/null 2>&1; then
+            sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
+        fi
+        sudo ip addr flush dev "${ethdev}" || continue
+        sudo ip link set dev "${ethdev}" up || continue
+        sudo ip addr add "${staticip}" dev "${ethdev}" || continue
+        if [ "${isprimary}" = "true" ] && [ -n "${staticgw}" ]; then
+            sudo ip route del default dev "${ethdev}" >/dev/null 2>&1 || true
+            sudo ip route add default via "${staticgw}" dev "${ethdev}" || true
+        fi
+
+        echo "Static IP applied on ${ethdev}: ${staticip}"
+        applied=$((applied + 1))
+    done
+
+    [ "${applied}" -gt 0 ]
 }
 
 #Check if FRIEND kernel exists
