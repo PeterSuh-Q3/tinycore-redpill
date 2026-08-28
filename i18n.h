@@ -185,4 +185,6 @@ MSGZZ181=$(gettext "tcrp" "Set the DNS server used by all static NICs (required 
 MSGZZ182=$(gettext "tcrp" "A DNS server is required once at least one NIC has a static IP. Please set it before finishing.")
 MSGZZ183=$(gettext "tcrp" "Not a valid DNS server address. Please try again.")
 MSGZZ184=$(gettext "tcrp" "required, not set")
+MSGZZ185=$(gettext "tcrp" "Static IP settings applied to the running kernel.")
+MSGZZ186=$(gettext "tcrp" "Could not apply static IP settings to the running kernel. They will still take effect on next boot.")
 }

@@ -1298,6 +1298,8 @@ function staticIpMenu() {
   eval "MSG182=\"\${MSG${tz}182}\""
   eval "MSG183=\"\${MSG${tz}183}\""
   eval "MSG184=\"\${MSG${tz}184}\""
+  eval "MSG185=\"\${MSG${tz}185}\""
+  eval "MSG186=\"\${MSG${tz}186}\""
 
   while true; do
     local count n
@@ -1351,6 +1353,21 @@ function staticIpMenu() {
       *[0-9]*) staticIpManageEntry "${cfg}" "${resp}" ;;
     esac
   done
+
+  # done 등으로 메뉴를 빠져나가는 순간 실행 중인 FRIEND 커널에 즉시
+  # 반영한다(2026-08-29) - 지금까지는 FORCE_STATIC_IP_SETUP(오프라인 첫
+  # 부팅 강제 경로)에서만 apply_static_ip_now()를 호출했고, 메인 메뉴에서
+  # 일반적으로 들어오는 이 경로는 user_config.json 저장만 하고 실제 적용은
+  # 다음 kexec/재부팅까지 미뤄지고 있었다.
+  STATIC_IP_APPLIED="false"
+  if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
+    if apply_static_ip_now; then
+      STATIC_IP_APPLIED="true"
+      dialog --clear --backtitle "`backtitle`" --msgbox "${MSG185}" 0 0
+    else
+      dialog --clear --backtitle "`backtitle`" --msgbox "${MSG186}" 0 0
+    fi
+  fi
 }
 
 # 전역 DNS 설정 - NIC과 무관하게 하나만 존재하며, NIC이 1개라도 설정돼
@@ -1597,20 +1614,17 @@ if [ "${FORCE_STATIC_IP_SETUP:-false}" = "true" ]; then
   # instead of indexing the nonexistent MSGUS147 variables.
   tz="${tz:-ZZ}"
   load_zz
+  # staticIpMenu() 자체가 이제 "완료"로 빠져나가는 순간 apply_static_ip_now()를
+  # 호출하고 성공/실패 메시지도 직접 보여준다(2026-08-29) - 여기서 다시
+  # 호출하면 같은 안내가 두 번 뜬다. 이 강제 첫부팅 경로에 남은 역할은 오직
+  # "적용됐으면 menu.sh를 재실행해 정상 흐름으로 넘어가는 것" 뿐이다.
   staticIpMenu
-  if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
-    if apply_static_ip_now; then
-      dialog --clear --backtitle "Network setup" \
-          --msgbox "Static IP was applied to the running FRIEND kernel.\n\nThe network will be checked again by menu.sh." 0 0
-      # The flag was exported by menu.sh only for this one-shot setup path.
-      # Clear it before re-entering menu.sh, otherwise the child process would
-      # reopen staticIpMenu() forever even after the address was applied.
-      unset FORCE_STATIC_IP_SETUP
-      exec /home/tc/menu.sh
-    else
-      dialog --clear --backtitle "Network setup" \
-          --msgbox "The static IP could not be applied to the running kernel." 0 0
-    fi
+  if [ "${STATIC_IP_APPLIED:-false}" = "true" ]; then
+    # The flag was exported by menu.sh only for this one-shot setup path.
+    # Clear it before re-entering menu.sh, otherwise the child process would
+    # reopen staticIpMenu() forever even after the address was applied.
+    unset FORCE_STATIC_IP_SETUP
+    exec /home/tc/menu.sh
   fi
   exit 0
 fi

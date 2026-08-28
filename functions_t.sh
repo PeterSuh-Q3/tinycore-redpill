@@ -271,6 +271,13 @@ function migrate_ipsettings_schema() {
               and (([.ipsettings[] | select(.primary==true)] | length) == 0)
           then .ipsettings[0].primary = true
           else . end)
+      # netproxy/netdns는 값을 한 번도 저장한 적 없으면 키 자체가 아예
+      # 없어서, user_config.json을 직접 열어보면 ipsettings 옆에 대표
+      # DNS/프록시 설정이 어디 있는지 안 보인다는 혼란을 준다(실기 지적,
+      # 2026-08-29). ipsettings처럼 빈 스캐폴드를 항상 남겨 다른 블록들과
+      # 동일하게 보이도록 한다.
+      | (if (.netproxy|type)!="object" then .netproxy = {"ipproxy": ""} else . end)
+      | (if (.netdns|type)!="object" then .netdns = {"ipdns": ""} else . end)
     ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
 }
 
