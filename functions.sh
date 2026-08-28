@@ -281,6 +281,55 @@ function migrate_ipsettings_schema() {
     ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
 }
 
+# Reverts one interface to DHCP in the running FRIEND kernel: flushes any
+# static address left on it, kills whichever DHCP client (dhcpcd or BusyBox
+# udhcpc) might still be pointed elsewhere, and starts a fresh DHCP request.
+# Used when a NIC is removed from ipsettings[] (staticIpDeleteEntry() in
+# menu_m.sh) - apply_static_ip_now() only ever touches interfaces still
+# present in ipsettings[], so without this the just-deleted NIC kept its old
+# static address/route with no DHCP client running to replace it (2026-08-29,
+# found on real hardware: deleting eth2-eth4 left them stuck on their old
+# static addresses instead of falling back to DHCP). Deliberately scoped to
+# exactly the one interface being reverted, not "every non-static NIC" -
+# blanket-flushing every DHCP interface on every save would risk disrupting
+# an already-working NIC (possibly the very one this menu session is
+# reachable through) for no reason.
+function revert_iface_to_dhcp() {
+    local ethdev="$1"
+    [ -n "${ethdev}" ] || return 0
+
+    if command -v dhcpcd >/dev/null 2>&1; then
+        sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
+    fi
+    local udhcpc_pidfile udhcpc_pid
+    for udhcpc_pidfile in "/var/run/udhcpc.${ethdev}.pid" "/run/udhcpc.${ethdev}.pid"; do
+        if [ -r "${udhcpc_pidfile}" ]; then
+            udhcpc_pid=$(cat "${udhcpc_pidfile}" 2>/dev/null)
+            case "${udhcpc_pid}" in
+                ''|*[!0-9]*) ;;
+                *)
+                    if sudo test -r "/proc/${udhcpc_pid}/cmdline" \
+                        && sudo tr '\0' ' ' < "/proc/${udhcpc_pid}/cmdline" | grep -q "udhcpc.*-i ${ethdev}"; then
+                        sudo kill "${udhcpc_pid}" >/dev/null 2>&1 || true
+                    fi
+                    ;;
+            esac
+        fi
+    done
+
+    sudo ip addr flush dev "${ethdev}" 2>/dev/null
+    sudo ip link set dev "${ethdev}" up 2>/dev/null
+
+    if command -v dhcpcd >/dev/null 2>&1; then
+        sudo dhcpcd -n "${ethdev}" >/dev/null 2>&1 &
+    else
+        local udhcpc_bin
+        udhcpc_bin=$(command -v udhcpc 2>/dev/null)
+        [ -n "${udhcpc_bin}" ] && sudo "${udhcpc_bin}" -i "${ethdev}" -n -q -t 3 -T 3 >/dev/null 2>&1 &
+    fi
+    echo "Reverted ${ethdev} to DHCP."
+}
+
 # Apply the static network settings immediately in the running FRIEND kernel.
 # This is the network-only part of tcrpfriend/boot.sh setnetwork(): it is
 # intentionally safe to call from menu_m.sh after saving user_config.json and

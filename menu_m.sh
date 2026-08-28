@@ -1602,6 +1602,11 @@ function staticIpDeleteEntry() {
         then .ipsettings[0].primary = true
         else . end')
   echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  # apply_static_ip_now()는 .ipsettings[]에 남아있는 NIC만 처리하므로, 방금
+  # 지운 이 NIC은 여기서 직접 DHCP로 되돌려야 한다 - 안 그러면 예전 고정
+  # IP가 그대로 붙어있고 DHCP 클라이언트도 안 뜬 채로 남는다(2026-08-29,
+  # 실기에서 eth2~eth4 삭제 후 재현됨).
+  revert_iface_to_dhcp "${iface}"
   dialog --clear --backtitle "`backtitle`" --msgbox "${MSG160}" 0 0
 }
 
