@@ -281,6 +281,32 @@ function migrate_ipsettings_schema() {
     ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
 }
 
+# Stop the DHCP client currently associated with one interface without
+# disturbing leases on other NICs.  Alpine uses BusyBox udhcpc whereas FRIEND
+# commonly uses dhcpcd, so both implementations must be covered.
+function stop_dhcp_client_for_iface() {
+    local ethdev="$1" udhcpc_pidfile udhcpc_pid
+    [ -n "${ethdev}" ] || return 0
+
+    if command -v dhcpcd >/dev/null 2>&1; then
+        sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
+    fi
+    for udhcpc_pidfile in "/var/run/udhcpc.${ethdev}.pid" "/run/udhcpc.${ethdev}.pid"; do
+        if [ -r "${udhcpc_pidfile}" ]; then
+            udhcpc_pid=$(cat "${udhcpc_pidfile}" 2>/dev/null)
+            case "${udhcpc_pid}" in
+                ''|*[!0-9]*) ;;
+                *)
+                    if sudo test -r "/proc/${udhcpc_pid}/cmdline" \
+                        && sudo tr '\0' ' ' < "/proc/${udhcpc_pid}/cmdline" | grep -q "udhcpc.*-i ${ethdev}"; then
+                        sudo kill "${udhcpc_pid}" >/dev/null 2>&1 || true
+                    fi
+                    ;;
+            esac
+        fi
+    done
+}
+
 # Reverts one interface to DHCP in the running FRIEND kernel: flushes any
 # static address left on it, kills whichever DHCP client (dhcpcd or BusyBox
 # udhcpc) might still be pointed elsewhere, and starts a fresh DHCP request.
@@ -298,24 +324,7 @@ function revert_iface_to_dhcp() {
     local ethdev="$1"
     [ -n "${ethdev}" ] || return 0
 
-    if command -v dhcpcd >/dev/null 2>&1; then
-        sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
-    fi
-    local udhcpc_pidfile udhcpc_pid
-    for udhcpc_pidfile in "/var/run/udhcpc.${ethdev}.pid" "/run/udhcpc.${ethdev}.pid"; do
-        if [ -r "${udhcpc_pidfile}" ]; then
-            udhcpc_pid=$(cat "${udhcpc_pidfile}" 2>/dev/null)
-            case "${udhcpc_pid}" in
-                ''|*[!0-9]*) ;;
-                *)
-                    if sudo test -r "/proc/${udhcpc_pid}/cmdline" \
-                        && sudo tr '\0' ' ' < "/proc/${udhcpc_pid}/cmdline" | grep -q "udhcpc.*-i ${ethdev}"; then
-                        sudo kill "${udhcpc_pid}" >/dev/null 2>&1 || true
-                    fi
-                    ;;
-            esac
-        fi
-    done
+    stop_dhcp_client_for_iface "${ethdev}"
 
     sudo ip addr flush dev "${ethdev}" 2>/dev/null
     sudo ip link set dev "${ethdev}" up 2>/dev/null
@@ -377,27 +386,7 @@ function apply_static_ip_now() {
             continue
         fi
 
-        # Stop either DHCP client that can own this interface. FRIEND normally
-        # uses dhcpcd, while the Alpine/TinyCore menu environment may use
-        # BusyBox udhcpc.  Stopping only dhcpcd leaves udhcpc free to restore
-        # its lease and default route after the static address is applied.
-        if command -v dhcpcd >/dev/null 2>&1; then
-            sudo dhcpcd -k "${ethdev}" >/dev/null 2>&1 || true
-        fi
-        for udhcpc_pidfile in "/var/run/udhcpc.${ethdev}.pid" "/run/udhcpc.${ethdev}.pid"; do
-            if [ -r "${udhcpc_pidfile}" ]; then
-                udhcpc_pid=$(cat "${udhcpc_pidfile}" 2>/dev/null)
-                case "${udhcpc_pid}" in
-                    ''|*[!0-9]*) ;;
-                    *)
-                        if sudo test -r "/proc/${udhcpc_pid}/cmdline" \
-                            && sudo tr '\0' ' ' < "/proc/${udhcpc_pid}/cmdline" | grep -q "udhcpc.*-i ${ethdev}"; then
-                            sudo kill "${udhcpc_pid}" >/dev/null 2>&1 || true
-                        fi
-                        ;;
-                esac
-            fi
-        done
+        stop_dhcp_client_for_iface "${ethdev}"
         sudo ip addr flush dev "${ethdev}" || continue
         sudo ip link set dev "${ethdev}" up || continue
         sudo ip addr add "${staticip}" dev "${ethdev}" || continue

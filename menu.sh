@@ -137,7 +137,21 @@ function apply_saved_static_ip() {
   dns="$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)"
   [ -n "${dns}" ] && printf 'nameserver %s\n' "${dns}" | sudo tee /etc/resolv.conf >/dev/null
 
-  local i iface addr gw isprimary
+  # Alpine's networking service starts udhcpc for every "iface ... dhcp"
+  # entry before menu.sh runs.  If even one saved static entry exists, leave
+  # no DHCP client alive to renew a lease and re-add a competing default route.
+  # Addresses already acquired on non-static NICs are deliberately retained;
+  # only their DHCP renewal/default-route ownership is stopped.  A NIC that
+  # the user later removes from static configuration is explicitly restarted
+  # by revert_iface_to_dhcp().
+  local live_iface
+  for live_iface in /sys/class/net/*; do
+    live_iface="${live_iface##*/}"
+    [ "${live_iface}" = "lo" ] && continue
+    stop_dhcp_client_for_iface "${live_iface}"
+  done
+
+  local i iface addr gw isprimary primary_iface="" primary_gw=""
   for ((i = 0; i < count; i++)); do
     iface="$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)"
     addr="$(jq -r ".ipsettings[${i}].ipaddr // empty" "${cfg}" 2>/dev/null)"
@@ -155,10 +169,19 @@ function apply_saved_static_ip() {
     sudo ip addr flush dev "${iface}" 2>/dev/null
     sudo ip addr add "${addr}" dev "${iface}" 2>/dev/null
     if [ "${isprimary}" = "true" ] && [ -n "${gw}" ]; then
-      sudo ip route replace default via "${gw}" dev "${iface}" 2>/dev/null
+      primary_iface="${iface}"
+      primary_gw="${gw}"
     fi
     applied=$((applied + 1))
   done
+
+  # A DHCP route from another NIC may already exist.  Remove every default
+  # route only after all static addresses are in place, then install exactly
+  # one route owned by the configured primary NIC.
+  if [ "${applied}" -gt 0 ] && [ -n "${primary_iface}" ] && [ -n "${primary_gw}" ]; then
+    while sudo ip route del default >/dev/null 2>&1; do :; done
+    sudo ip route replace default via "${primary_gw}" dev "${primary_iface}" 2>/dev/null
+  fi
 
   [ "${applied}" -gt 0 ]
 }
