@@ -338,6 +338,75 @@ function configure_udhcpc_static_policy() {
     rm -f "${policy_tmp}"
 }
 
+# Give an address its own routing table so replies sourced from that address
+# always leave through the NIC that owns it.  This is required when static and
+# DHCP NICs share one IPv4 subnet: main-table connected routes alone can send
+# a reply for eth0's address out through eth1.
+function configure_source_route_for_iface() {
+    local iface="$1" addr="$2" gateway="$3"
+    local ipaddr="${addr%/*}" ifindex table priority prefix
+    [ -n "${iface}" ] && [ -n "${ipaddr}" ] || return 1
+    ifindex=$(cat "/sys/class/net/${iface}/ifindex" 2>/dev/null) || return 1
+    case "${ifindex}" in ''|*[!0-9]*) return 1 ;; esac
+    table=$((200 + ifindex))
+    priority=$((12000 + ifindex))
+    prefix=$(ip -4 route show dev "${iface}" scope link 2>/dev/null | awk '$1 != "default" {print $1; exit}')
+    [ -n "${prefix}" ] || return 1
+    [ -n "${gateway}" ] || gateway=$(ip -4 route show table "${table}" default 2>/dev/null | awk '/via / {print $3; exit}')
+
+    while sudo ip rule del priority "${priority}" >/dev/null 2>&1; do :; done
+    sudo ip route flush table "${table}" >/dev/null 2>&1 || true
+    sudo ip route replace "${prefix}" dev "${iface}" src "${ipaddr}" table "${table}"
+    [ -n "${gateway}" ] && sudo ip route replace default via "${gateway}" dev "${iface}" table "${table}"
+    sudo ip rule add priority "${priority}" from "${ipaddr}/32" table "${table}"
+}
+
+# Persist the DHCP side of source routing across udhcpc bound/renew events.
+function configure_udhcpc_source_route_hook() {
+    local dhcp_ifaces="$*"
+    local policy_file="/etc/udhcpc/mshell-source-route.conf"
+    local hook_body='#!/bin/sh
+POLICY=/etc/udhcpc/mshell-source-route.conf
+[ -r "$POLICY" ] || exit 0
+. "$POLICY"
+case " $MSHELL_SOURCE_ROUTE_IFACES " in *" $interface "*) ;; *) exit 0 ;; esac
+ifindex=$(cat "/sys/class/net/$interface/ifindex" 2>/dev/null) || exit 0
+table=$((200 + ifindex))
+priority=$((12000 + ifindex))
+prefix=$(ip -4 route show dev "$interface" scope link 2>/dev/null | awk '\''$1 != "default" {print $1; exit}'\'')
+[ -n "$prefix" ] || exit 0
+while ip rule del priority "$priority" >/dev/null 2>&1; do :; done
+ip route flush table "$table" >/dev/null 2>&1 || true
+ip route replace "$prefix" dev "$interface" src "$ip" table "$table"
+set -- $router
+[ -n "$1" ] && ip route replace default via "$1" dev "$interface" table "$table"
+ip rule add priority "$priority" from "$ip/32" table "$table"
+'
+
+    [ -d /etc/udhcpc ] || return 0
+    sudo mkdir -p /etc/udhcpc/post-bound /etc/udhcpc/post-renew
+    printf 'MSHELL_SOURCE_ROUTE_IFACES="%s"\n' "${dhcp_ifaces}" | sudo tee "${policy_file}" >/dev/null
+    printf '%s' "${hook_body}" | sudo tee /etc/udhcpc/post-bound/90-mshell-source-route >/dev/null
+    printf '%s' "${hook_body}" | sudo tee /etc/udhcpc/post-renew/90-mshell-source-route >/dev/null
+    sudo chmod 755 /etc/udhcpc/post-bound/90-mshell-source-route /etc/udhcpc/post-renew/90-mshell-source-route
+}
+
+function clear_udhcpc_source_route_hook() {
+    local nic ifindex table priority
+    for nic in /sys/class/net/eth*; do
+        [ -e "${nic}/ifindex" ] || continue
+        ifindex=$(cat "${nic}/ifindex" 2>/dev/null)
+        case "${ifindex}" in ''|*[!0-9]*) continue ;; esac
+        table=$((200 + ifindex))
+        priority=$((12000 + ifindex))
+        while sudo ip rule del priority "${priority}" >/dev/null 2>&1; do :; done
+        sudo ip route flush table "${table}" >/dev/null 2>&1 || true
+    done
+    sudo rm -f /etc/udhcpc/mshell-source-route.conf \
+        /etc/udhcpc/post-bound/90-mshell-source-route \
+        /etc/udhcpc/post-renew/90-mshell-source-route
+}
+
 # Reverts one interface to DHCP in the running FRIEND kernel: flushes any
 # static address left on it, kills whichever DHCP client (dhcpcd or BusyBox
 # udhcpc) might still be pointed elsewhere, and starts a fresh DHCP request.

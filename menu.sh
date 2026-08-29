@@ -131,6 +131,7 @@ function apply_saved_static_ip() {
     # Remove only the policy lines managed by MSHELL so a subsequent pure
     # DHCP boot regains its normal gateway and DNS behaviour.
     configure_udhcpc_static_policy ""
+    clear_udhcpc_source_route_hook
     return 1
   fi
 
@@ -159,8 +160,19 @@ function apply_saved_static_ip() {
   done
   dhcp_ifaces="${dhcp_ifaces# }"
   configure_udhcpc_static_policy "${dns}" ${dhcp_ifaces}
+  configure_udhcpc_source_route_hook ${dhcp_ifaces}
 
-  local i iface addr gw isprimary primary_iface="" primary_gw=""
+  # Build a per-source routing table for each currently leased DHCP address.
+  # The udhcpc post-bound/post-renew hooks installed above maintain these when
+  # a lease later changes.
+  local dhcp_addr dhcp_gw
+  for live_iface in ${dhcp_ifaces}; do
+    dhcp_addr=$(ip -4 -o addr show dev "${live_iface}" scope global 2>/dev/null | awk '{print $4; exit}')
+    dhcp_gw=$(ip -4 route show default dev "${live_iface}" 2>/dev/null | awk '/via / {print $3; exit}')
+    [ -n "${dhcp_addr}" ] && configure_source_route_for_iface "${live_iface}" "${dhcp_addr}" "${dhcp_gw}"
+  done
+
+  local i iface addr gw isprimary primary_iface="" primary_gw="" primary_addr
   for ((i = 0; i < count; i++)); do
     iface="$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)"
     addr="$(jq -r ".ipsettings[${i}].ipaddr // empty" "${cfg}" 2>/dev/null)"
@@ -190,6 +202,8 @@ function apply_saved_static_ip() {
   if [ "${applied}" -gt 0 ] && [ -n "${primary_iface}" ] && [ -n "${primary_gw}" ]; then
     while sudo ip route del default >/dev/null 2>&1; do :; done
     sudo ip route replace default via "${primary_gw}" dev "${primary_iface}" 2>/dev/null
+    primary_addr=$(ip -4 -o addr show dev "${primary_iface}" scope global 2>/dev/null | awk '{print $4; exit}')
+    [ -n "${primary_addr}" ] && configure_source_route_for_iface "${primary_iface}" "${primary_addr}" "${primary_gw}"
   fi
 
   [ "${applied}" -gt 0 ]
