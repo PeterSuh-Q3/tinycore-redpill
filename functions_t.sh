@@ -307,6 +307,37 @@ function stop_dhcp_client_for_iface() {
     done
 }
 
+# Alpine's BusyBox udhcpc reads this file on every bound/renew event.  Keep
+# DHCP addresses alive on non-static NICs, but prevent them from owning a
+# gateway or overwriting an explicitly configured DNS server.
+function configure_udhcpc_static_policy() {
+    local staticdns="$1"
+    shift
+    local dhcp_ifaces="$*"
+    local policy_file="/etc/udhcpc/udhcpc.conf"
+    local policy_tmp="/tmp/udhcpc.conf.mshell.$$"
+
+    [ -d /etc/udhcpc ] || return 0
+    [ -f "${policy_file}" ] || return 0
+
+    sudo sed \
+        -e '/^# MSHELL static IP DHCP policy$/d' \
+        -e '/^NO_GATEWAY=.*# MSHELL static IP policy$/d' \
+        -e '/^NO_DNS=.*# MSHELL static IP policy$/d' \
+        "${policy_file}" >"${policy_tmp}" || { rm -f "${policy_tmp}"; return 1; }
+
+    {
+        printf '\n# MSHELL static IP DHCP policy\n'
+        printf 'NO_GATEWAY="%s" # MSHELL static IP policy\n' "${dhcp_ifaces}"
+        if [ -n "${staticdns}" ]; then
+            printf 'NO_DNS="%s" # MSHELL static IP policy\n' "${dhcp_ifaces}"
+        fi
+    } >>"${policy_tmp}"
+
+    sudo tee "${policy_file}" <"${policy_tmp}" >/dev/null
+    rm -f "${policy_tmp}"
+}
+
 # Reverts one interface to DHCP in the running FRIEND kernel: flushes any
 # static address left on it, kills whichever DHCP client (dhcpcd or BusyBox
 # udhcpc) might still be pointed elsewhere, and starts a fresh DHCP request.

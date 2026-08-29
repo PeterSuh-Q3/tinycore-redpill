@@ -127,7 +127,12 @@ function apply_saved_static_ip() {
   local count applied=0
   count=$(jq -r '(.ipsettings // [] | length)' "${cfg}" 2>/dev/null)
   case "${count}" in ''|*[!0-9]*) count=0 ;; esac
-  [ "${count}" -gt 0 ] || return 1
+  if [ "${count}" -eq 0 ]; then
+    # Remove only the policy lines managed by MSHELL so a subsequent pure
+    # DHCP boot regains its normal gateway and DNS behaviour.
+    configure_udhcpc_static_policy ""
+    return 1
+  fi
 
   local proxy dns
   proxy="$(jq -r '.netproxy.ipproxy // empty' "${cfg}" 2>/dev/null)"
@@ -137,19 +142,23 @@ function apply_saved_static_ip() {
   dns="$(jq -r '.netdns.ipdns // empty' "${cfg}" 2>/dev/null)"
   [ -n "${dns}" ] && printf 'nameserver %s\n' "${dns}" | sudo tee /etc/resolv.conf >/dev/null
 
-  # Alpine's networking service starts udhcpc for every "iface ... dhcp"
-  # entry before menu.sh runs.  If even one saved static entry exists, leave
-  # no DHCP client alive to renew a lease and re-add a competing default route.
-  # Addresses already acquired on non-static NICs are deliberately retained;
-  # only their DHCP renewal/default-route ownership is stopped.  A NIC that
-  # the user later removes from static configuration is explicitly restarted
-  # by revert_iface_to_dhcp().
-  local live_iface
+  # Keep non-static NICs on DHCP. Alpine's standard udhcpc policy supports
+  # NO_GATEWAY and NO_DNS: addresses/leases continue to renew, but DHCP never
+  # competes with the configured primary static route or overwrites its DNS.
+  local live_iface static_ifaces dhcp_ifaces=""
+  static_ifaces=$(jq -r '.ipsettings[]?.ipiface // empty' "${cfg}" 2>/dev/null)
   for live_iface in /sys/class/net/*; do
     live_iface="${live_iface##*/}"
-    [ "${live_iface}" = "lo" ] && continue
-    stop_dhcp_client_for_iface "${live_iface}"
+    case "${live_iface}" in eth[0-7]) ;; *) continue ;; esac
+    if printf '%s\n' "${static_ifaces}" | grep -qx "${live_iface}"; then
+      # Only a static NIC must relinquish its DHCP lease.
+      stop_dhcp_client_for_iface "${live_iface}"
+    else
+      dhcp_ifaces="${dhcp_ifaces} ${live_iface}"
+    fi
   done
+  dhcp_ifaces="${dhcp_ifaces# }"
+  configure_udhcpc_static_policy "${dns}" ${dhcp_ifaces}
 
   local i iface addr gw isprimary primary_iface="" primary_gw=""
   for ((i = 0; i < count; i++)); do
