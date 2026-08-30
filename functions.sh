@@ -6414,10 +6414,18 @@ NCEOF
     fi
 
     # If a supported AMD display controller is present, stage the matching
-    # runtime SPK from the latest release for every MSHELL module mode.
-    if [ -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
+    # runtime and amdgpu_top SPKs from the latest release.  Do not silently
+    # skip a missing helper: an old my.sh.gz used to make this condition false
+    # and produced an initrd with aeudev but no AMD payload to install.
+    if [ ! -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
+      echo "[amdgpu] staging helper is absent from my.sh.gz; AMD packages were not embedded"
+    else
       /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" "${KVER}" \
-        "${RAMDISK_PATH}/addons" "${LATEST_PACKAGE_MANIFEST}" || echo "[amdgpu] optional staging failed; continuing loader build"
+        "${RAMDISK_PATH}/addons" "${LATEST_PACKAGE_MANIFEST}" || echo "[amdgpu] package staging failed; continuing loader build"
+      if detect_amd_gpu && { [ ! -s "${RAMDISK_PATH}/addons/amdgpu-driver.json" ] || \
+          [ ! -s "${RAMDISK_PATH}/addons/amdgpu-top.json" ]; }; then
+        echo "[amdgpu] AMD GPU detected, but one or more verified AMD packages were not embedded"
+      fi
     fi
 
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu

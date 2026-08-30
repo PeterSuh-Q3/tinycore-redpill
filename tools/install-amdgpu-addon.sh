@@ -102,15 +102,27 @@ stage_amdgpu_package() {
   return 0
 }
 
-stage_amdgpu_package "amd_gpu_runtime" \
-  '^syno-amdgpu-runtime-[0-9]+\.[0-9]+\.[0-9]+-7\.4-x86_64-kernel(5\.10\.55|4\.4\.x)\.spk$' \
-  "amdgpu-driver.json"
+runtime_staged=0
+top_staged=0
 
-# amdgpu_top(모니터링 유틸)은 드라이버와 별개 패키지다 - 못 받아와도 위
-# 드라이버 스테이징 자체를 막을 이유는 없으므로 실패해도 스크립트를
-# 끝내지 않는다(있으면 좋은 부가 도구).
-stage_amdgpu_package "amdgpu_top" \
+if stage_amdgpu_package "amd_gpu_runtime" \
+  '^syno-amdgpu-runtime-[0-9]+\.[0-9]+\.[0-9]+-7\.4-x86_64-kernel(5\.10\.55|4\.4\.x)\.spk$' \
+  "amdgpu-driver.json"; then
+  runtime_staged=1
+fi
+
+# amdgpu_top(모니터링 유틸)은 런타임과 별개 패키지지만, 두 패키지를 모두
+# 설치 대상으로 명시한다. 하나라도 내려받지 못하면 비정상 빌드 결과를
+# 알아볼 수 있도록 호출자에 실패 상태를 전달한다.
+if stage_amdgpu_package "amdgpu_top" \
   '^syno-amdgpu-top-[0-9]+\.[0-9]+\.[0-9]+-7\.4-x86_64-kernel(5\.10\.55|4\.4\.x)\.spk$' \
-  "amdgpu-top.json"
+  "amdgpu-top.json"; then
+  top_staged=1
+fi
+
+if [ "${runtime_staged}" -ne 1 ] || [ "${top_staged}" -ne 1 ]; then
+  echo "[amdgpu] staging incomplete (runtime=${runtime_staged}, top=${top_staged})" >&2
+  exit 1
+fi
 
 exit 0
