@@ -127,6 +127,23 @@ dlgmenuheight() {
   echo "$n"
 }
 
+# AMD GPU 유무 판정. 예전엔 `lspci -nn | grep -qi 'VGA.*\[1002:'`처럼 PCI
+# 클래스 문자열에 "VGA"가 들어간 것(클래스 0300)만 잡았는데, 이건
+# tools/install-amdgpu-addon.sh가 런타임 SPK 스테이징에 쓰는 감지 범위
+# (0300/0302/0380)보다 좁다 - 0302(3D controller)나 0380(Display
+# controller)로 잡히는 AMD GPU(헤드리스/서버용 카드에서 흔함)는 VGA
+# grep으로는 안 걸린다. 그 결과 런타임 SPK는 정상적으로 깔리는데
+# firmwareamdgpu.tgz(커널 모듈이 실제로 필요로 하는 펌웨어)는 "AMD GPU
+# 없음"으로 오판되어 initrd에서 빠져버리는 불일치가 있었다(2026-08-29,
+# 사용자 지적으로 발견). 세 클래스를 전부 확인하도록 통일한다.
+detect_amd_gpu() {
+  local gpu_class
+  for gpu_class in 0300 0302 0380; do
+    lspci -n -d "1002::${gpu_class}" 2>/dev/null | grep -q . && return 0
+  done
+  return 1
+}
+
 # fdisk 절대경로. alpine-redpill은 항상 Alpine 위에서 도는 구조라
 # is_alpine 분기가 불필요 - Alpine의 util-linux는 /sbin/fdisk에 설치됨.
 # 하드코딩된 경로가 "command not found"로 조용히 실패하던 것을 실측
@@ -5958,7 +5975,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         fi
     fi
 
-    if lspci -nn | grep -qi 'VGA.*\[1002:'; then
+    if detect_amd_gpu; then
         if [ "${MDLNAME}" == "custom-modules" ]; then
             USB_LINE="$(cmdline_append "${USB_LINE}" "amdgpu.exp_hw_support=1" "pci=nocrs")"
         fi
@@ -6434,11 +6451,11 @@ NCEOF
     # all-modules/src/install.sh는 하드웨어 감지 없이 "파일이 있으면 무조건
     # 설치"한다 - AMD GPU가 없는 대부분의 서버(예: epyc7002/SA6400은 AMD EPYC
     # CPU 서버 플랫폼일 뿐 AMD GPU 유무와는 무관)에서도 항상 그대로 실린다.
-    # 위쪽(line ~5414)에서 이미 쓰는 것과 동일한 AMD VGA 감지 패턴을 재사용해,
-    # 실제 AMD GPU가 없으면 cpio로 묶기 전에 이 파일만 제거한다. PML이든
-    # IML이든 exts/ 트리 전체가 그대로 initrd-dsm에 포함되므로 MLMETHOD와
-    # 무관하게 항상 확인한다.
-    if [ -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" ] && ! lspci -nn 2>/dev/null | grep -qi 'VGA.*\[1002:'; then
+    # detect_amd_gpu()(위쪽 dlgmenuheight() 근처에 정의, install-amdgpu-addon.sh
+    # 와 동일한 0300/0302/0380 클래스 판정)를 재사용해, 실제 AMD GPU가 없으면
+    # cpio로 묶기 전에 이 파일만 제거한다. PML이든 IML이든 exts/ 트리 전체가
+    # 그대로 initrd-dsm에 포함되므로 MLMETHOD와 무관하게 항상 확인한다.
+    if [ -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" ] && ! detect_amd_gpu; then
         _AMDGPU_FW_SIZE=$(du -h "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" 2>/dev/null | awk '{print $1}')
         echo "No AMD GPU detected - dropping exts/all-modules/firmwareamdgpu.tgz (${_AMDGPU_FW_SIZE}) from initrd-dsm"
         sudo rm -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz"
