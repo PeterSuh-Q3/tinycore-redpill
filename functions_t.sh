@@ -491,7 +491,19 @@ function apply_static_ip_now() {
         echo "nameserver ${staticdns}" | sudo tee -a /etc/resolv.conf >/dev/null
     fi
 
-    local i ethdev staticip staticgw isprimary
+    # Remove stale DHCP/default routes once before applying addresses.  When
+    # several NICs share one subnet, leaving their defaults in the main table
+    # makes DNS and HTTPS traffic select an unpredictable interface.
+    while sudo ip route del default >/dev/null 2>&1; do :; done
+
+    local i ethdev staticip staticgw isprimary primary_iface primary_gw
+    for ((i = 0; i < count; i++)); do
+        if [ "$(jq -r ".ipsettings[${i}].primary // false" "${cfg}" 2>/dev/null)" = "true" ]; then
+            primary_iface=$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)
+            primary_gw=$(jq -r ".ipsettings[${i}].ipgw // empty" "${cfg}" 2>/dev/null)
+            break
+        fi
+    done
     for ((i = 0; i < count; i++)); do
         ethdev=$(jq -r ".ipsettings[${i}].ipiface // empty" "${cfg}" 2>/dev/null)
         staticip=$(jq -r ".ipsettings[${i}].ipaddr // empty" "${cfg}" 2>/dev/null)
@@ -510,13 +522,18 @@ function apply_static_ip_now() {
         if [ "${isprimary}" = "true" ] && [ -n "${staticgw}" ]; then
             # A DHCP lease on another NIC can have left an additional default
             # route behind.  Static mode has exactly one primary gateway.
-            while sudo ip route del default >/dev/null 2>&1; do :; done
             sudo ip route replace default via "${staticgw}" dev "${ethdev}" || true
         fi
 
         echo "Static IP applied on ${ethdev}: ${staticip}"
         applied=$((applied + 1))
     done
+
+    # Keep exactly one default route even when the primary entry had no valid
+    # address or appeared after a DHCP client recreated a route.
+    if [ -n "${primary_iface}" ] && [ -n "${primary_gw}" ]; then
+        sudo ip route replace default via "${primary_gw}" dev "${primary_iface}" || true
+    fi
 
     [ "${applied}" -gt 0 ]
 }
@@ -934,6 +951,10 @@ function history() {
             netproxy/netdns are always present in user_config.json now instead
             of only after a value is first saved.
     1.4.3.8 Multi NIC static routing and GPU package integration
+            Static IP activation now removes stale DHCP/default routes before
+            applying addresses and reasserts one primary gateway afterwards.
+            This prevents same-subnet multi-NIC systems from sending DNS and
+            HTTPS traffic through an unpredictable interface.
     --------------------------------------------------------------------------------------
 EOF
 }
