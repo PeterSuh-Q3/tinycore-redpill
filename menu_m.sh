@@ -3466,7 +3466,14 @@ config_ucode="${ucode}"
 # ipinfo.io 는 http→https 301 리다이렉트하므로 https 로 직접 조회한다.
 # (기존 http 요청은 301 빈 본문이 와서 country 가 비어버려, lcode 와
 #  불일치로 판정되어 ko_KR 처럼 이미 일치하는 언어에서도 오프롬프트 발생)
-country=$(curl -s -m 8 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
+# Test override for locale/China DoH simulation.  Normal users continue to
+# use the real public-IP country lookup; setting MSHELL_TEST_COUNTRY=CN makes
+# the detected region deterministic without changing network routing.
+if [ -n "${MSHELL_TEST_COUNTRY:-}" ]; then
+  country="${MSHELL_TEST_COUNTRY^^}"
+else
+  country=$(curl -s -m 8 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
+fi
 
 if [ -z "${ucode}" ]; then
   # 저장된 언어가 없으면(최초 실행) 감지된 국가를 채택
