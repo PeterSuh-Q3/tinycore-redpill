@@ -955,6 +955,9 @@ function history() {
             applying addresses and reasserts one primary gateway afterwards.
             This prevents same-subnet multi-NIC systems from sending DNS and
             HTTPS traffic through an unpredictable interface.
+            The routing cleanup is centralized in apply_static_ip_now() so all
+            static-IP application paths share the same behavior; no automatic
+            fallback DNS server is added.
     --------------------------------------------------------------------------------------
 EOF
 }
