@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.8"
+rploaderver="1.4.3.9"
 builddate="2026.09.04"
 redpillmake="prod"
 
@@ -971,6 +971,8 @@ function history() {
             preserving the user's saved
             DNS settings. SPK downloads for MSHELL Manager, Syno Smart Info,
             Intel GPU Top, and AMDGPU packages now show progress consistently.
+    1.4.3.9 Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
+             display
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1654,6 +1656,10 @@ EOF
 # 2026.09.04 v1.4.3.8
 # Multi NIC static routing and GPU package integration
 
+# 2026.09.04 v1.4.3.9
+# Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
+# display
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2014,6 +2020,10 @@ function showlastupdate() {
 
 # 2026.09.04 v1.4.3.8
 # Multi NIC static routing and GPU package integration
+
+# 2026.09.04 v1.4.3.9
+# Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
+# display
 EOF
 }
 

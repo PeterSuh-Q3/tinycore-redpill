@@ -40,6 +40,49 @@ function curl() {
     command curl "${_args[@]}"
 }
 
+# Bootstrap GitHub access before functions.sh can be refreshed.  This must run
+# before safe_fetch(), otherwise users in networks where GitHub/raw DNS is
+# blocked cannot reach the menu to select DoH mode in the first place.
+function bootstrap_github_access() {
+    local cfg mode fallback_dns domain ip
+    cfg="/mnt/tcrp/user_config.json"
+    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
+    mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
+    [ "${mode}" = "doh" ] || return 0
+    fallback_dns="1.1.1.1"
+    grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null || \
+        printf 'nameserver %s\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
+    for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
+        ip=$(command curl -fsSkL --connect-timeout 5 \
+          "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
+          -H 'accept: application/dns-json' 2>/dev/null | \
+          command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1)
+        if echo "${ip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' && \
+           ! grep -qE "[[:space:]]${domain}([[:space:]]|$)" /etc/hosts 2>/dev/null; then
+            printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
+        fi
+    done
+}
+
+bootstrap_github_access
+
+function offer_doh_fallback() {
+    local cfg="/mnt/tcrp/user_config.json" mode answer msg
+    [ -e /tmp/mshell-doh-prompted ] && return 1
+    : > /tmp/mshell-doh-prompted
+    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
+    mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
+    [ "${mode}" = "standard" ] || return 1
+    msg="GitHub access is unavailable. Use DoH bypass mode (for China) now?"
+    case "${LANG:-}" in zh_CN*|zh_SG*) msg="GitHub访问不稳定。现在启用DoH绕过模式（中国用户）吗？" ;; esac
+    command dialog --clear --yesno "${msg}" 0 0 2>/dev/null || return 1
+    command jq '.github_access.mode = "doh"' "${cfg}" > /tmp/mshell-user-config.json.$$ 2>/dev/null || return 1
+    sudo cp /tmp/mshell-user-config.json.$$ "${cfg}" 2>/dev/null || return 1
+    rm -f /tmp/mshell-user-config.json.$$
+    bootstrap_github_access
+    return 0
+}
+
 # GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
 # 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
 # 검증 실패 시 기존 파일을 보존(덮어쓰지 않음).
@@ -68,6 +111,11 @@ function safe_fetch() {
         mv -f "${_tmp}" "${_dest}"
         chmod +x "${_dest}" 2>/dev/null
         return 0
+    fi
+    if offer_doh_fallback; then
+        curl -fskL --retry 2 --retry-delay 1 -o "${_tmp}" "${_url}" \
+          && [ -s "${_tmp}" ] && grep -q "${_sentinel}" "${_tmp}" \
+          && bash -n "${_tmp}" 2>/dev/null && mv -f "${_tmp}" "${_dest}" && chmod +x "${_dest}" 2>/dev/null && return 0
     fi
     echo "[!] safe_fetch: invalid/failed download, keeping existing ${_dest} (${_url})"
     rm -f "${_tmp}"
@@ -111,9 +159,19 @@ function check_internet() {
 # add Cloudflare as a secondary resolver without changing user_config.json.
 function ensure_build_dns() {
   local fallback_dns="1.1.1.1"
+  local mode
+  mode=$(jq -r '.github_access.mode // "standard"' "${userconfigfile:-/home/tc/user_config.json}" 2>/dev/null)
+  [ "${mode}" = "doh" ] || return 0
   if ! grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null; then
     printf 'nameserver %s\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
   fi
+  for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
+    ip=$(curl -fsSkL --connect-timeout 5 "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
+      -H 'accept: application/dns-json' 2>/dev/null | jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1)
+    if echo "${ip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' && ! grep -qE "[[:space:]]${domain}([[:space:]]|$)" /etc/hosts 2>/dev/null; then
+      printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
+    fi
+  done
 }
 
 ensure_build_dns

@@ -1370,6 +1370,21 @@ function staticIpMenu() {
   fi
 }
 
+# Select the GitHub resolver strategy used by Alpine loader downloads.
+function githubDnsModeMenu() {
+  local choice current
+  current=$(jq -r '.github_access.mode // "standard"' /home/tc/user_config.json 2>/dev/null)
+  dialog --clear --backtitle "`backtitle`" --menu \
+    "${MSGZZ187}" 0 0 2 \
+    standard "${MSGZZ188}" \
+    doh "${MSGZZ189}" 2>${TMP_PATH}/resp
+  [ $? -ne 0 ] && return
+  choice=$(<${TMP_PATH}/resp)
+  case "${choice}" in
+    standard|doh) writeConfigKey "github_access" "mode" "${choice}" ;;
+  esac
+}
+
 # 전역 DNS 설정 - NIC과 무관하게 하나만 존재하며, NIC이 1개라도 설정돼
 # 있으면 필수값이다(staticIpMenu()의 "완료" 처리에서 강제).
 function staticIpDnsMenu() {
@@ -4020,6 +4035,9 @@ while true; do
   fi
   eval "MSG161=\"\${MSG${tz}161}\""
   eval "echo \"i \\\"${MSG161}: ${STATICIP_STATUS}\\\"\""  >> "${TMP_PATH}/menu"
+  github_dns_mode=$(jq -r '.github_access.mode // "standard"' /home/tc/user_config.json 2>/dev/null)
+  [ "${github_dns_mode}" = "doh" ] && github_dns_status="DoH" || github_dns_status="Standard DNS"
+  eval "echo \"d \\\"${MSGZZ187} [${github_dns_status}]\\\"\"" >> "${TMP_PATH}/menu"
   eval "echo \"n \\\"\${MSG${tz}59}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"x \\\"\${MSG${tz}07}\\\"\""               >> "${TMP_PATH}/menu"
   eval "echo \"b \\\"\${MSG${tz}13}\\\"\""               >> "${TMP_PATH}/menu"
@@ -4085,6 +4103,7 @@ while true; do
         ;;           
     y) sudo /root/boot.sh normal ;;
     i) staticIpMenu;    NEXT="n" ;;
+    d) githubDnsModeMenu; NEXT="d" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
     t) netconsoleMenu;  NEXT="p" ;;

@@ -181,5 +181,9 @@ MSGZZ182=$(gettext "tcrp" "A DNS server is required once at least one NIC has a 
 MSGZZ183=$(gettext "tcrp" "Not a valid DNS server address. Please try again.")
 MSGZZ184=$(gettext "tcrp" "required, not set")
 MSGZZ185=$(gettext "tcrp" "Static IP settings applied to the running kernel.")
+MSGZZ187=$(gettext "tcrp" "GitHub Access DNS Mode (for China users)")
+MSGZZ188=$(gettext "tcrp" "Standard DNS Mode")
+MSGZZ189=$(gettext "tcrp" "DoH Bypass Mode (for China users)")
+MSGZZ190=$(gettext "tcrp" "GitHub access is unavailable. Use DoH bypass mode now?")
 MSGZZ186=$(gettext "tcrp" "Could not apply static IP settings to the running kernel. They will still take effect on next boot.")
 }
