@@ -324,6 +324,15 @@ function stop_dhcp_client_for_iface() {
     done
 }
 
+# Remove stale defaults and install exactly one primary static gateway.  This
+# is shared by menu-time and boot-time static-IP application paths.
+function stabilize_static_primary_route() {
+    local iface="$1" gateway="$2"
+    [ -n "${iface}" ] && [ -n "${gateway}" ] || return 0
+    while sudo ip route del default >/dev/null 2>&1; do :; done
+    sudo ip route replace default via "${gateway}" dev "${iface}" >/dev/null 2>&1 || true
+}
+
 # Alpine's BusyBox udhcpc reads this file on every bound/renew event.  Keep
 # DHCP addresses alive on non-static NICs, but prevent them from owning a
 # gateway or overwriting an explicitly configured DNS server.
@@ -522,7 +531,7 @@ function apply_static_ip_now() {
         if [ "${isprimary}" = "true" ] && [ -n "${staticgw}" ]; then
             # A DHCP lease on another NIC can have left an additional default
             # route behind.  Static mode has exactly one primary gateway.
-            sudo ip route replace default via "${staticgw}" dev "${ethdev}" || true
+            stabilize_static_primary_route "${ethdev}" "${staticgw}"
         fi
 
         echo "Static IP applied on ${ethdev}: ${staticip}"
@@ -532,7 +541,7 @@ function apply_static_ip_now() {
     # Keep exactly one default route even when the primary entry had no valid
     # address or appeared after a DHCP client recreated a route.
     if [ -n "${primary_iface}" ] && [ -n "${primary_gw}" ]; then
-        sudo ip route replace default via "${primary_gw}" dev "${primary_iface}" || true
+        stabilize_static_primary_route "${primary_iface}" "${primary_gw}"
     fi
 
     [ "${applied}" -gt 0 ]

@@ -200,8 +200,7 @@ function apply_saved_static_ip() {
   # route only after all static addresses are in place, then install exactly
   # one route owned by the configured primary NIC.
   if [ "${applied}" -gt 0 ] && [ -n "${primary_iface}" ] && [ -n "${primary_gw}" ]; then
-    while sudo ip route del default >/dev/null 2>&1; do :; done
-    sudo ip route replace default via "${primary_gw}" dev "${primary_iface}" 2>/dev/null
+    stabilize_static_primary_route "${primary_iface}" "${primary_gw}"
     primary_addr=$(ip -4 -o addr show dev "${primary_iface}" scope global 2>/dev/null | awk '{print $4; exit}')
     [ -n "${primary_addr}" ] && configure_source_route_for_iface "${primary_iface}" "${primary_addr}" "${primary_gw}"
   fi
