@@ -727,3 +727,23 @@ msgstr "Statik IP ayarları çalışan çekirdeğe uygulandı."
 #: MSGTR186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "Statik IP ayarları çalışan çekirdeğe uygulanamadı. Yine de bir sonraki açılışta etkili olacaktır."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub Erişim DNS Modu (Çin'deki kullanıcılar için)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "Standart DNS Modu"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH Atlama Modu (Çin'deki kullanıcılar için)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub erişimi kullanılamıyor. DoH atlama modu şimdi kullanılsın mı?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "%s ülke kodu algılandı. Menü dili %s olarak değiştirilsin mi?"

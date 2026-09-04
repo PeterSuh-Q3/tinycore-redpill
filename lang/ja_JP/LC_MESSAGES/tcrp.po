@@ -727,3 +727,23 @@ msgstr "実行中のカーネルに固定IP設定を適用しました。"
 #: MSGJP186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "実行中のカーネルに固定IP設定を適用できませんでした。次回起動時には反映されます。"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub アクセス DNS モード（中国の利用者向け）"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "標準 DNS モード"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH バイパスモード（中国の利用者向け）"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub に接続できません。DoH バイパスモードを使用しますか？"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "国コード %s を検出しました。メニューの言語を %s に変更しますか？"

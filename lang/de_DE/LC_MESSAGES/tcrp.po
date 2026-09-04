@@ -727,3 +727,23 @@ msgstr "Statische IP-Einstellungen wurden auf den laufenden Kernel angewendet."
 #: MSGDE186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "Die statischen IP-Einstellungen konnten nicht auf den laufenden Kernel angewendet werden. Sie werden trotzdem beim nächsten Start wirksam."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub-Zugriff-DNS-Modus (für Nutzer in China)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "Standard-DNS-Modus"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH-Umgehungsmodus (für Nutzer in China)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub ist nicht erreichbar. DoH-Umgehungsmodus jetzt verwenden?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "Ländercode %s erkannt. Menüsprache auf %s ändern?"

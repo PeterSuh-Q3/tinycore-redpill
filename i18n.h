@@ -185,5 +185,6 @@ MSGZZ187=$(gettext "tcrp" "GitHub Access DNS Mode (for China users)")
 MSGZZ188=$(gettext "tcrp" "Standard DNS Mode")
 MSGZZ189=$(gettext "tcrp" "DoH Bypass Mode (for China users)")
 MSGZZ190=$(gettext "tcrp" "GitHub access is unavailable. Use DoH bypass mode now?")
+MSGZZ191=$(gettext "tcrp" "Country code %s detected. Change the menu language to %s?")
 MSGZZ186=$(gettext "tcrp" "Could not apply static IP settings to the running kernel. They will still take effect on next boot.")
 }

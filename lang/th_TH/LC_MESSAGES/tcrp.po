@@ -727,3 +727,23 @@ msgstr "นำการตั้งค่า IP แบบคงที่ไป�
 #: MSGTH186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "ไม่สามารถนำการตั้งค่า IP แบบคงที่ไปใช้กับเคอร์เนลที่กำลังทำงานอยู่ได้ อย่างไรก็ตามจะมีผลในการบูตครั้งถัดไป"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "โหมด DNS สำหรับเข้าถึง GitHub (สำหรับผู้ใช้ในจีน)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "โหมด DNS มาตรฐาน"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "โหมดข้ามผ่าน DoH (สำหรับผู้ใช้ในจีน)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "ไม่สามารถเข้าถึง GitHub ได้ ต้องการใช้โหมดข้ามผ่าน DoH ตอนนี้หรือไม่?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "ตรวจพบรหัสประเทศ %s ต้องการเปลี่ยนภาษาของเมนูเป็น %s หรือไม่?"

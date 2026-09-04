@@ -727,3 +727,23 @@ msgstr "تم تطبيق إعدادات IP الثابت على النواة قي�
 #: MSGEG186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "تعذّر تطبيق إعدادات IP الثابت على النواة قيد التشغيل. ستصبح سارية المفعول مع ذلك عند الإقلاع التالي."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "وضع DNS للوصول إلى GitHub (لمستخدمي الصين)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "وضع DNS القياسي"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "وضع تجاوز DoH (لمستخدمي الصين)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "يتعذر الوصول إلى GitHub. هل تريد استخدام وضع تجاوز DoH الآن؟"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "تم اكتشاف رمز البلد %s. هل تريد تغيير لغة القائمة إلى %s؟"

@@ -727,3 +727,23 @@ msgstr "ቋሚ IP ቅንብሮች እየሰራ ባለው kernel ላይ ተተግ
 #: MSGET186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "ቋሚ IP ቅንብሮችን እየሰራ ባለው kernel ላይ ማተግበር አልተቻለም። ያም ሆኖ በሚቀጥለው ማስነሻ ጊዜ ተግባራዊ ይሆናሉ።"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "የGitHub መዳረሻ DNS ሁነታ (ለቻይና ተጠቃሚዎች)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "መደበኛ DNS ሁነታ"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH ማለፊያ ሁነታ (ለቻይና ተጠቃሚዎች)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub መዳረሻ አይገኝም። አሁን DoH ማለፊያ ሁነታን ይጠቀሙ?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "የአገር ኮድ %s ተገኝቷል። የምናሌ ቋንቋን ወደ %s ይቀይሩ?"

@@ -727,3 +727,23 @@ msgstr "स्थिर IP सेटिंग्स चल रहे कर्�
 #: MSGIN186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "स्थिर IP सेटिंग्स चल रहे कर्नेल पर लागू नहीं की जा सकीं। ये अगले बूट पर फिर भी प्रभावी होंगी।"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub पहुँच DNS मोड (चीन के उपयोगकर्ताओं के लिए)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "मानक DNS मोड"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH बायपास मोड (चीन के उपयोगकर्ताओं के लिए)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub पहुँच उपलब्ध नहीं है। क्या अब DoH बायपास मोड का उपयोग करें?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "देश कोड %s पाया गया। मेनू भाषा को %s में बदलें?"

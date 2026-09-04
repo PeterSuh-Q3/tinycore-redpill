@@ -727,3 +727,23 @@ msgstr "A statikus IP-beállítások alkalmazva lettek a futó kernelen."
 #: MSGHU186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "Nem sikerült alkalmazni a statikus IP-beállításokat a futó kernelen. A következő indításkor mindenképpen érvénybe lépnek."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub-hozzáférés DNS-mód (kínai felhasználóknak)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "Normál DNS-mód"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH megkerülési mód (kínai felhasználóknak)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "A GitHub nem érhető el. Használja most a DoH megkerülési módot?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "A rendszer a következő országkódot észlelte: %s. Módosítja a menü nyelvét erre: %s?"

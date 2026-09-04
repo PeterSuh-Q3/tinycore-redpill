@@ -3475,6 +3475,19 @@ else
   country=$(curl -s -m 8 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
 fi
 
+# The first-run country question happens before the ordinary locale bootstrap
+# below.  Make an already bundled lang.tgz available now, without downloading
+# anything: a network-restricted user must still be able to select DoH later.
+bootstrap_locale_catalog() {
+  local lang_archive=""
+  [ -f /home/tc/lang.tgz ] && lang_archive=/home/tc/lang.tgz
+  [ -z "${lang_archive}" ] && [ -f lang.tgz ] && lang_archive=lang.tgz
+  [ -z "${lang_archive}" ] && return 1
+
+  sudo mkdir -p /usr/local/share/locale 2>/dev/null
+  gunzip -c "${lang_archive}" | sudo tar -xf - -C /usr/local/share/locale >/dev/null 2>&1
+}
+
 if [ -z "${ucode}" ]; then
   # 저장된 언어가 없으면(최초 실행) 감지된 국가를 채택
   [ -n "${country}" ] && lcode="${country}"
@@ -3482,9 +3495,24 @@ elif [ "${ucode}" = "en_US" ]; then
   # 기본값(en_US)일 때만 변경 여부를 묻는다. 유효한 다른 국가가 감지된 경우만.
   # 무입력(타임아웃) 시 Y 로 넘어가 감지된 지역으로 자동 전환된다.
   if [ -n "${country}" ] && [ "${lcode}" != "${country}" ]; then
-    answer=""
-    read_with_timeout "Country code ${country} has been detected. Do you want to change your locale settings to ${country}? [yY/nN] : " answer "Y"
-    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+    case "${country}" in
+      US) prompt_ucode=en_US ;; KR) prompt_ucode=ko_KR ;;
+      JP) prompt_ucode=ja_JP ;; CN) prompt_ucode=zh_CN ;;
+      TW) prompt_ucode=zh_TW ;; RU) prompt_ucode=ru_RU ;;
+      FR) prompt_ucode=fr_FR ;; DE) prompt_ucode=de_DE ;;
+      ES) prompt_ucode=es_ES ;; IT) prompt_ucode=it_IT ;;
+      BR) prompt_ucode=pt_BR ;; EG) prompt_ucode=ar_EG ;;
+      IN) prompt_ucode=hi_IN ;; HU) prompt_ucode=hu_HU ;;
+      ID) prompt_ucode=id_ID ;; TR) prompt_ucode=tr_TR ;;
+      *) prompt_ucode=en_US ;;
+    esac
+    bootstrap_locale_catalog
+    # Render using the detected region's catalogue rather than the still
+    # unchanged saved locale.  This keeps the first-run prompt in the
+    # language the user is being invited to select.
+    locale_prompt=$(LANGUAGE="${prompt_ucode}" TEXTDOMAINDIR=/usr/local/share/locale gettext "tcrp" "Country code %s detected. Change the menu language to %s?")
+    locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
+    if dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null; then
       lcode="${country}"
     fi
   fi

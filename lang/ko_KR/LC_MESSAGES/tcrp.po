@@ -731,3 +731,23 @@ msgstr "실행 중인 커널에 고정 IP 설정을 적용했습니다."
 #: MSGKR186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "실행 중인 커널에 고정 IP 설정을 적용하지 못했습니다. 다음 부팅 시에는 적용됩니다."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub 접속 DNS 모드(중국 사용자용)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "일반 DNS 모드"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH 우회 모드(중국 사용자용)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "GitHub에 접속할 수 없습니다. 지금 DoH 우회 모드를 사용하시겠습니까?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "국가 코드 %s가 감지되었습니다. 메뉴 언어를 %s로 변경하시겠습니까?"

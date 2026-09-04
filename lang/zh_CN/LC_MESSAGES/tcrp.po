@@ -727,3 +727,23 @@ msgstr "静态IP设置已应用到当前运行的内核。"
 #: MSGCN186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "未能将静态IP设置应用到当前运行的内核,将在下次启动时生效。"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub 访问 DNS 模式（适用于中国用户）"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "常规 DNS 模式"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH 绕过模式（适用于中国用户）"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "无法访问 GitHub。现在使用 DoH 绕过模式吗？"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "检测到国家代码 %s。是否将菜单语言切换为 %s？"

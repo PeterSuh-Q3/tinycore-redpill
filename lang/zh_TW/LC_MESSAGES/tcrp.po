@@ -727,3 +727,23 @@ msgstr "靜態IP設定已套用到目前執行中的核心。"
 #: MSGTW186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "無法將靜態IP設定套用到目前執行中的核心,將在下次開機時生效。"
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "GitHub 存取 DNS 模式（適用於中國使用者）"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "標準 DNS 模式"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "DoH 繞過模式（適用於中國使用者）"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "無法存取 GitHub。現在使用 DoH 繞過模式嗎？"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "偵測到國家代碼 %s。是否將選單語言切換為 %s？"

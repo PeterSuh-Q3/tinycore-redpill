@@ -727,3 +727,23 @@ msgstr "Pengaturan IP statis telah diterapkan ke kernel yang sedang berjalan."
 #: MSGID186
 msgid "Could not apply static IP settings to the running kernel. They will still take effect on next boot."
 msgstr "Gagal menerapkan pengaturan IP statis ke kernel yang sedang berjalan. Pengaturan akan tetap berlaku pada boot berikutnya."
+
+#: MSGZZ187
+msgid "GitHub Access DNS Mode (for China users)"
+msgstr "Mode DNS Akses GitHub (untuk pengguna di China)"
+
+#: MSGZZ188
+msgid "Standard DNS Mode"
+msgstr "Mode DNS Standar"
+
+#: MSGZZ189
+msgid "DoH Bypass Mode (for China users)"
+msgstr "Mode Bypass DoH (untuk pengguna di China)"
+
+#: MSGZZ190
+msgid "GitHub access is unavailable. Use DoH bypass mode now?"
+msgstr "Akses GitHub tidak tersedia. Gunakan mode bypass DoH sekarang?"
+
+#: MSGZZ191
+msgid "Country code %s detected. Change the menu language to %s?"
+msgstr "Kode negara %s terdeteksi. Ubah bahasa menu menjadi %s?"
