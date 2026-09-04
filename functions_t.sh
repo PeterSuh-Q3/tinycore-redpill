@@ -6413,7 +6413,7 @@ NCEOF
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
         ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
       echo "[!] MSHELL Manager latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
+    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
         -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
       echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
       sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
@@ -6440,7 +6440,7 @@ NCEOF
         [ "${SSI_URL##*/}" != "${SSI_SPK}" ] || \
         ! echo "${SSI_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
       echo "[!] Syno Smart Info latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --retry 2 --connect-timeout 15 "${SSI_URL}" \
+    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${SSI_URL}" \
         -o "${RAMDISK_PATH}/addons/${SSI_SPK}"; then
       echo "[!] Syno Smart Info SPK download failed; addon will retry after DSM boots."
       sudo rm -f "${RAMDISK_PATH}/addons/${SSI_SPK}"
@@ -6467,7 +6467,7 @@ NCEOF
         [ "${INTEL_GPU_TOP_URL##*/}" != "${INTEL_GPU_TOP_SPK}" ] || \
         ! echo "${INTEL_GPU_TOP_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
       echo "[!] Intel GPU Top latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --retry 2 --connect-timeout 15 "${INTEL_GPU_TOP_URL}" \
+    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${INTEL_GPU_TOP_URL}" \
         -o "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}"; then
       echo "[!] Intel GPU Top SPK download failed; addon will retry after DSM boots."
       sudo rm -f "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}"
