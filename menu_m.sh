@@ -3517,7 +3517,7 @@ elif [ "${ucode}" = "en_US" ] && [ "${MSHELL_LOCALE_PROMPT_DONE:-false}" != "tru
     # Render using the detected region's catalogue rather than the still
     # unchanged saved locale.  This keeps the first-run prompt in the
     # language the user is being invited to select.
-    locale_prompt=$(LANGUAGE="${prompt_ucode}" TEXTDOMAINDIR=/usr/local/share/locale gettext "tcrp" "Country code %s detected. Change the menu language to %s?")
+    locale_prompt=$(LANG="${prompt_ucode}.UTF-8" LANGUAGE="${prompt_ucode}" TEXTDOMAINDIR=/usr/local/share/locale gettext "tcrp" "Country code %s detected. Change the menu language to %s?")
     locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
     if dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null; then
       lcode="${country}"

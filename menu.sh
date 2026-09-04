@@ -119,7 +119,7 @@ function offer_detected_locale_early() {
         sudo mkdir -p /usr/local/share/locale 2>/dev/null
         gunzip -c "${lang_archive}" | sudo tar -xf - -C /usr/local/share/locale >/dev/null 2>&1
     fi
-    locale_prompt=$(LANGUAGE="${target_ucode}" TEXTDOMAINDIR=/usr/local/share/locale \
+    locale_prompt=$(LANG="${target_ucode}.UTF-8" LANGUAGE="${target_ucode}" TEXTDOMAINDIR=/usr/local/share/locale \
       gettext "tcrp" "Country code %s detected. Change the menu language to %s?" 2>/dev/null)
     [ -n "${locale_prompt}" ] || locale_prompt="Country code %s detected. Change the menu language to %s?"
     locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
