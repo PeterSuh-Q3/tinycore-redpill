@@ -967,6 +967,10 @@ function history() {
             The routing cleanup is centralized in apply_static_ip_now() so all
             static-IP application paths share the same behavior; no automatic
             fallback DNS server is added.
+            Alpine loader builds now add fallback DNS 1.1.1.1 at runtime only,
+            preserving the user's saved
+            DNS settings. SPK downloads for MSHELL Manager, Syno Smart Info,
+            Intel GPU Top, and AMDGPU packages now show progress consistently.
     --------------------------------------------------------------------------------------
 EOF
 }
