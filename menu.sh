@@ -2,10 +2,10 @@
 
 set -u # Unbound variable errors are not allowed
 
-# A locale decision belongs to one menu.sh run.  The main menu is a child
-# process and must not ask the same question again after the user selects No.
-LOCALE_PROMPT_MARKER=/tmp/mshell-locale-prompted
-rm -f "${LOCALE_PROMPT_MARKER}"
+# A locale decision belongs to one menu.sh process.  Its menu_m.sh child
+# receives MSHELL_LOCALE_PROMPT_DONE through the environment; do not use a
+# global /tmp marker because console and sx launchers run independent menu
+# processes during the same boot.
 MSHELL_TEST_FETCH_MARKER=/tmp/mshell-test-github-fetch-failed
 rm -f "${MSHELL_TEST_FETCH_MARKER}"
 MSHELL_DOH_PROMPT_MARKER=/tmp/mshell-doh-prompted
@@ -139,7 +139,6 @@ function offer_detected_locale_early() {
     locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
     command dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null
     locale_answer=$?
-    : > "${LOCALE_PROMPT_MARKER}"
     if [ "${locale_answer}" -eq 0 ]; then
         command jq --arg ucode "${target_ucode}" '.general.ucode = $ucode' "${cfg}" > "/tmp/mshell-locale.$$.json" 2>/dev/null || return 0
         sudo cp "/tmp/mshell-locale.$$.json" "${cfg}" 2>/dev/null
