@@ -128,7 +128,8 @@ def append_histories(content: str, date: str, version: str, summary: str) -> str
 
     start = content.index("function showlastupdate() {")
     end = content.index("\nEOF\n}", start)
-    content = content[:end] + "\n" + comment_entry.rstrip("\n") + content[end:]
+    # Keep a visual separator between history entries printed by showlastupdate.
+    content = content[:end] + "\n\n" + comment_entry.rstrip("\n") + content[end:]
     return content
 
 

@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.7"
-builddate="2026.08.28"
+rploaderver="1.4.3.8"
+builddate="2026.09.04"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -933,6 +933,7 @@ function history() {
             immediately instead of waiting for the next boot, and
             netproxy/netdns are always present in user_config.json now instead
             of only after a value is first saved.
+    1.4.3.8 Multi NIC static routing and GPU package integration
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1613,6 +1614,9 @@ EOF
 # waiting for the next boot, and netproxy/netdns are always present in
 # user_config.json now instead of only after a value is first saved.
 
+# 2026.09.04 v1.4.3.8
+# Multi NIC static routing and GPU package integration
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -1970,6 +1974,9 @@ function showlastupdate() {
 # required global setting instead of a per NIC field. The Static IP menu moves to the
 # main menu, and TCB/FKC Auto Update Management plus Rebuild Previous Version move into
 # Additional Functions in its place. Saved settings apply immediately on menu exit.
+
+# 2026.09.04 v1.4.3.8
+# Multi NIC static routing and GPU package integration
 EOF
 }
 
