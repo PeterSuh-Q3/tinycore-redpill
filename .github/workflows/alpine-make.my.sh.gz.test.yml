@@ -43,6 +43,11 @@ jobs:
           sudo mkdir -p ./mydata/home/tc/
           sudo tar -zxvf localhost.apkovl.tar.gz -C ./mydata/
 
+          # Verify tty1 does not depend on the late-installed agetty package.
+          test -x ./mydata/usr/local/sbin/mshell-autologin-tc
+          grep -q '^tty1::respawn:/sbin/getty -n -l /usr/local/sbin/mshell-autologin-tc 38400 tty1$' ./mydata/etc/inittab
+          ! grep -q '/sbin/agetty' ./mydata/etc/inittab
+
           # tc 계정의 실제 uid:gid를 원본 apkovl에서 동적으로 확인 (하드코딩 금지)
           TC_OWNER=$(stat -c '%u:%g' ./mydata/home/tc/functions.sh)
           echo "tc 계정 uid:gid = ${TC_OWNER}"
