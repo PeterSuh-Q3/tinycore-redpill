@@ -107,6 +107,17 @@ function check_internet() {
   return $?
 }
 
+# Alpine loader-build fallback only.  Keep the configured resolver first and
+# add Cloudflare as a secondary resolver without changing user_config.json.
+function ensure_build_dns() {
+  local fallback_dns="1.1.1.1"
+  if ! grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null; then
+    printf 'nameserver %s\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
+  fi
+}
+
+ensure_build_dns
+
 # 지금까지는 인터넷 3회 연속 미응답 뒤 사용자가 그 자리에서 새로 입력한
 # 고정 IP만 반영했다 - 이미 이전 세션에서 저장해 둔 고정 IP 설정이 있어도,
 # 재부팅해서 menu.sh가 다시 뜨면 그 값을 쓰지 않고 매번 처음부터 DHCP
@@ -500,6 +511,7 @@ else
     static_ip_applied="false"
     if apply_saved_static_ip; then
       static_ip_applied="true"
+      ensure_build_dns
       check_internet && net_ok="true"
     fi
 
@@ -515,6 +527,7 @@ else
         timeout=30
         # 이미 연결돼 있으면 link-kick 없이 즉시 통과
         # (getlatestmshell 은 루프 종료 후 net_ok 블록에서 1회만 호출)
+        ensure_build_dns
         if check_internet; then
           net_ok="true"
           break
@@ -534,6 +547,7 @@ else
         # 바뀔 수 있으므로, 이때만 timeout 동안 2초 간격으로 폴링한다.
         start_time=$(date +%s)
         while true; do
+          ensure_build_dns
           if check_internet; then
             net_ok="true"
             break
@@ -552,6 +566,7 @@ else
         # 또는 이미 정상 IP) 아무것도 바뀌지 않았을 것이 확실하므로,
         # timeout 동안 헛되이 폴링하지 않고 즉시 한 번만 확인한다.
         echo "No NIC needed kicking this attempt; checking once instead of waiting ${timeout}s."
+        ensure_build_dns
         check_internet && net_ok="true"
       fi
       [ "${net_ok}" = "true" ] && break
