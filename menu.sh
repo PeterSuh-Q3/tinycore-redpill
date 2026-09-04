@@ -181,7 +181,11 @@ function should_simulate_github_failure() {
 
 function check_github_access() {
     should_simulate_github_failure && return 1
-    curl -fskL --connect-timeout 8 -o /dev/null https://raw.githubusercontent.com/about.html
+    # about.html returns HTTP 404.  It used to look successful only because
+    # the old probe did not use -f; use a real project file so the preflight
+    # and the retry both test an actual HTTP 200 download.
+    curl -fskL --connect-timeout 8 -o /dev/null \
+      "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu.sh"
 }
 
 # GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
