@@ -8,6 +8,8 @@ LOCALE_PROMPT_MARKER=/tmp/mshell-locale-prompted
 rm -f "${LOCALE_PROMPT_MARKER}"
 MSHELL_TEST_FETCH_MARKER=/tmp/mshell-test-github-fetch-failed
 rm -f "${MSHELL_TEST_FETCH_MARKER}"
+MSHELL_DOH_PROMPT_MARKER=/tmp/mshell-doh-prompted
+rm -f "${MSHELL_DOH_PROMPT_MARKER}"
 
 # 2026-07-22: 이 환경의 sshd가 pty-req의 TERM 협상을 제대로 하지 않아, SSH로
 # 접속한 세션은 (실제 pty를 요청해도) TERM=dumb으로 떨어지는 것을 실측 확인.
