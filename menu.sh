@@ -76,6 +76,58 @@ function bootstrap_github_access() {
 
 bootstrap_github_access
 
+# Ask about the UI language before the normal repository checkout.  The main
+# menu used to do this only after cloning redpill-load and the addon/module
+# repositories, which made the first-run language choice arrive far too late.
+function offer_detected_locale_early() {
+    local cfg ucode country target_ucode locale_prompt lang_archive
+    cfg="/mnt/tcrp/user_config.json"
+    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
+    [ -f "${cfg}" ] || return 0
+    ucode=$(command jq -r '.general.ucode // "en_US"' "${cfg}" 2>/dev/null || echo en_US)
+    [ "${ucode}" = "en_US" ] || return 0
+
+    if [ -n "${MSHELL_TEST_COUNTRY:-}" ]; then
+        country="${MSHELL_TEST_COUNTRY^^}"
+    else
+        country=$(command curl -fsSkL --connect-timeout 5 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]')
+    fi
+    case "${country}" in
+      KR) target_ucode=ko_KR ;; JP) target_ucode=ja_JP ;;
+      CN) target_ucode=zh_CN ;; TW) target_ucode=zh_TW ;;
+      RU) target_ucode=ru_RU ;; FR) target_ucode=fr_FR ;;
+      DE) target_ucode=de_DE ;; ES) target_ucode=es_ES ;;
+      IT) target_ucode=it_IT ;; BR) target_ucode=pt_BR ;;
+      EG) target_ucode=ar_EG ;; IN) target_ucode=hi_IN ;;
+      HU) target_ucode=hu_HU ;; ID) target_ucode=id_ID ;;
+      TR) target_ucode=tr_TR ;;
+      *) return 0 ;;
+    esac
+
+    # lang.tgz is normally persisted by the loader.  Use it when available
+    # so this very first question is rendered in the detected language, but
+    # never fetch it here: this path must remain usable before GitHub/DoH is
+    # configured.
+    lang_archive=/home/tc/lang.tgz
+    [ -f "${lang_archive}" ] || lang_archive=lang.tgz
+    if [ -f "${lang_archive}" ]; then
+        sudo mkdir -p /usr/local/share/locale 2>/dev/null
+        gunzip -c "${lang_archive}" | sudo tar -xf - -C /usr/local/share/locale >/dev/null 2>&1
+    fi
+    locale_prompt=$(LANGUAGE="${target_ucode}" TEXTDOMAINDIR=/usr/local/share/locale \
+      gettext "tcrp" "Country code %s detected. Change the menu language to %s?" 2>/dev/null)
+    [ -n "${locale_prompt}" ] || locale_prompt="Country code %s detected. Change the menu language to %s?"
+    locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
+    if command dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null; then
+        command jq --arg ucode "${target_ucode}" '.general.ucode = $ucode' "${cfg}" > "/tmp/mshell-locale.$$.json" 2>/dev/null || return 0
+        sudo cp "/tmp/mshell-locale.$$.json" "${cfg}" 2>/dev/null
+        rm -f "/tmp/mshell-locale.$$.json"
+    fi
+}
+
+offer_detected_locale_early
+export MSHELL_LOCALE_PROMPT_DONE=true
+
 function offer_doh_fallback() {
     local cfg="/mnt/tcrp/user_config.json" mode answer msg
     [ -e /tmp/mshell-doh-prompted ] && return 1
