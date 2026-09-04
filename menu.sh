@@ -6,6 +6,8 @@ set -u # Unbound variable errors are not allowed
 # process and must not ask the same question again after the user selects No.
 LOCALE_PROMPT_MARKER=/tmp/mshell-locale-prompted
 rm -f "${LOCALE_PROMPT_MARKER}"
+MSHELL_TEST_FETCH_MARKER=/tmp/mshell-test-github-fetch-failed
+rm -f "${MSHELL_TEST_FETCH_MARKER}"
 
 # 2026-07-22: 이 환경의 sshd가 pty-req의 TERM 협상을 제대로 하지 않아, SSH로
 # 접속한 세션은 (실제 pty를 요청해도) TERM=dumb으로 떨어지는 것을 실측 확인.
@@ -167,7 +169,7 @@ function offer_doh_fallback() {
 # 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
 # 검증 실패 시 기존 파일을 보존(덮어쓰지 않음).
 function safe_fetch() {
-    local _url="$1" _dest="$2" _sentinel="$3"
+    local _url="$1" _dest="$2" _sentinel="$3" simulate_failure=false
     local _tmp="/dev/shm/.safe_fetch.$$"
     # functions.sh:19의 curl() 캐시버스팅 오버라이드는 여기선 아직 적용 전이다
     # (safe_fetch가 그 functions.sh 자체를 받아오는 데도 쓰이므로) - 그래서
@@ -184,7 +186,12 @@ function safe_fetch() {
             fi
             ;;
     esac
-    if curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
+    if [ "${MSHELL_TEST_GITHUB_FAILURE:-0}" = "1" ] && [ ! -e "${MSHELL_TEST_FETCH_MARKER}" ]; then
+        : > "${MSHELL_TEST_FETCH_MARKER}"
+        simulate_failure=true
+        echo "[TEST] Simulating one GitHub download failure to verify DoH fallback."
+    fi
+    if [ "${simulate_failure}" != "true" ] && curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
        && [ -s "${_tmp}" ] \
        && grep -q "${_sentinel}" "${_tmp}" \
        && bash -n "${_tmp}" 2>/dev/null; then
