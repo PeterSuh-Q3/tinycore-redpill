@@ -55,6 +55,18 @@ function cleanup_mshell_doh_overrides() {
     sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
 }
 
+# Do not depend on the system resolver to reach the DoH endpoint itself.
+# --resolve keeps the HTTPS hostname/SNI intact while connecting directly to
+# Cloudflare's public resolver address.
+function resolve_github_doh_ipv4() {
+    local domain="$1"
+    command curl -fsSkL --connect-timeout 5 \
+      --resolve cloudflare-dns.com:443:1.1.1.1 \
+      "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
+      -H 'accept: application/dns-json' 2>/dev/null | \
+      command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1
+}
+
 function bootstrap_github_access() {
     local cfg mode fallback_dns domain ip
     cfg="/mnt/tcrp/user_config.json"
@@ -64,14 +76,12 @@ function bootstrap_github_access() {
         cleanup_mshell_doh_overrides
         return 0
     fi
+    cleanup_mshell_doh_overrides
     fallback_dns="1.1.1.1"
     grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null || \
         printf 'nameserver %s # MSHELL DoH\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
     for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
-        ip=$(command curl -fsSkL --connect-timeout 5 \
-          "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
-          -H 'accept: application/dns-json' 2>/dev/null | \
-          command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1)
+        ip=$(resolve_github_doh_ipv4 "${domain}")
         if echo "${ip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' && \
            ! grep -qE "[[:space:]]${domain}([[:space:]]|$)" /etc/hosts 2>/dev/null; then
             printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
@@ -232,12 +242,12 @@ function ensure_build_dns() {
   local mode
   mode=$(jq -r '.github_access.mode // "standard"' "${userconfigfile:-/home/tc/user_config.json}" 2>/dev/null)
   [ "${mode}" = "doh" ] || return 0
+  cleanup_mshell_doh_overrides
   if ! grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null; then
     printf 'nameserver %s # MSHELL DoH\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
   fi
   for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
-    ip=$(curl -fsSkL --connect-timeout 5 "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
-      -H 'accept: application/dns-json' 2>/dev/null | jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1)
+    ip=$(resolve_github_doh_ipv4 "${domain}")
     if echo "${ip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$' && ! grep -qE "[[:space:]]${domain}([[:space:]]|$)" /etc/hosts 2>/dev/null; then
       printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
     fi

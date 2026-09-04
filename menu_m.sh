@@ -1388,7 +1388,25 @@ function githubDnsModeMenu() {
       sudo sed -i '/[[:space:]]# MSHELL DoH$/d' /etc/hosts 2>/dev/null
       sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
       ;;
-    doh) writeConfigKey "github_access" "mode" "${choice}" ;;
+    doh)
+      writeConfigKey "github_access" "mode" "${choice}"
+      # Apply the choice now, not only after the next menu.sh restart.  The
+      # DoH endpoint is pinned with --resolve so this works even when normal
+      # DNS cannot resolve cloudflare-dns.com.
+      sudo sed -i '/[[:space:]]# MSHELL DoH$/d' /etc/hosts 2>/dev/null
+      sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
+      grep -qF 'nameserver 1.1.1.1' /etc/resolv.conf 2>/dev/null || \
+        printf 'nameserver 1.1.1.1 # MSHELL DoH\n' | sudo tee -a /etc/resolv.conf >/dev/null
+      for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
+        ip=$(command curl -fsSkL --connect-timeout 5 --resolve cloudflare-dns.com:443:1.1.1.1 \
+          "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
+          -H 'accept: application/dns-json' 2>/dev/null | \
+          command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1)
+        if echo "${ip}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+          printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
+        fi
+      done
+      ;;
   esac
 }
 
