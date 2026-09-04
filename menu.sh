@@ -2,6 +2,11 @@
 
 set -u # Unbound variable errors are not allowed
 
+# A locale decision belongs to one menu.sh run.  The main menu is a child
+# process and must not ask the same question again after the user selects No.
+LOCALE_PROMPT_MARKER=/tmp/mshell-locale-prompted
+rm -f "${LOCALE_PROMPT_MARKER}"
+
 # 2026-07-22: 이 환경의 sshd가 pty-req의 TERM 협상을 제대로 하지 않아, SSH로
 # 접속한 세션은 (실제 pty를 요청해도) TERM=dumb으로 떨어지는 것을 실측 확인.
 # TERM=dumb에서는 dialog가 terminfo를 못 찾아 "Error opening terminal: unknown"
@@ -118,7 +123,10 @@ function offer_detected_locale_early() {
       gettext "tcrp" "Country code %s detected. Change the menu language to %s?" 2>/dev/null)
     [ -n "${locale_prompt}" ] || locale_prompt="Country code %s detected. Change the menu language to %s?"
     locale_prompt=$(printf "${locale_prompt}" "${country}" "${country}")
-    if command dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null; then
+    command dialog --clear --yesno "${locale_prompt}" 0 0 2>/dev/null
+    locale_answer=$?
+    : > "${LOCALE_PROMPT_MARKER}"
+    if [ "${locale_answer}" -eq 0 ]; then
         command jq --arg ucode "${target_ucode}" '.general.ucode = $ucode' "${cfg}" > "/tmp/mshell-locale.$$.json" 2>/dev/null || return 0
         sudo cp "/tmp/mshell-locale.$$.json" "${cfg}" 2>/dev/null
         rm -f "/tmp/mshell-locale.$$.json"

@@ -3498,7 +3498,7 @@ bootstrap_locale_catalog() {
 if [ -z "${ucode}" ]; then
   # 저장된 언어가 없으면(최초 실행) 감지된 국가를 채택
   [ -n "${country}" ] && lcode="${country}"
-elif [ "${ucode}" = "en_US" ] && [ "${MSHELL_LOCALE_PROMPT_DONE:-false}" != "true" ]; then
+elif [ "${ucode}" = "en_US" ] && [ "${MSHELL_LOCALE_PROMPT_DONE:-false}" != "true" ] && [ ! -e /tmp/mshell-locale-prompted ]; then
   # 기본값(en_US)일 때만 변경 여부를 묻는다. 유효한 다른 국가가 감지된 경우만.
   # 무입력(타임아웃) 시 Y 로 넘어가 감지된 지역으로 자동 전환된다.
   if [ -n "${country}" ] && [ "${lcode}" != "${country}" ]; then
