@@ -1,5 +1,5 @@
 89138c0486b59dcd4bcb2523ea2427c7cdc33423
-e9752cbd4b4fac932af2d0b06a08d60650632ef4
+d32116efe1db70ca8b5d3f7dc4227aefdd8b9dce
 a8f15bbb908950c5e574e0ec44b196b5ce23639e
 
-    1.4.3.7 HEADLINE: Static IP now supports up to 8 NICs with a single primary
+    1.4.3.8 Multi NIC static routing and GPU package integration
