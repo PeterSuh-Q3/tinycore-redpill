@@ -971,8 +971,8 @@ function history() {
             preserving the user's saved
             DNS settings. SPK downloads for MSHELL Manager, Syno Smart Info,
             Intel GPU Top, and AMDGPU packages now show progress consistently.
-    1.4.3.9 Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
-             display
+    1.4.3.9 Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
+             and reliable locale selection after network readiness
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1657,8 +1657,8 @@ EOF
 # Multi NIC static routing and GPU package integration
 
 # 2026.09.04 v1.4.3.9
-# Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
-# display
+# Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
+# and reliable locale selection after network readiness
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2022,8 +2022,8 @@ function showlastupdate() {
 # Multi NIC static routing and GPU package integration
 
 # 2026.09.04 v1.4.3.9
-# Added optional DoH fallback for Alpine GitHub downloads and unified SPK download progress
-# display
+# Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
+# and reliable locale selection after network readiness
 EOF
 }
 
