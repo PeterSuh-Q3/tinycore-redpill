@@ -1381,7 +1381,14 @@ function githubDnsModeMenu() {
   [ $? -ne 0 ] && return
   choice=$(<${TMP_PATH}/resp)
   case "${choice}" in
-    standard|doh) writeConfigKey "github_access" "mode" "${choice}" ;;
+    standard)
+      writeConfigKey "github_access" "mode" "${choice}"
+      # menu_m.sh runs as a child of menu.sh, so perform the immediate part
+      # here too.  Only MSHELL-tagged DoH host records are removed.
+      sudo sed -i '/[[:space:]]# MSHELL DoH$/d' /etc/hosts 2>/dev/null
+      sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
+      ;;
+    doh) writeConfigKey "github_access" "mode" "${choice}" ;;
   esac
 }
 

@@ -43,15 +43,25 @@ function curl() {
 # Bootstrap GitHub access before functions.sh can be refreshed.  This must run
 # before safe_fetch(), otherwise users in networks where GitHub/raw DNS is
 # blocked cannot reach the menu to select DoH mode in the first place.
+function cleanup_mshell_doh_overrides() {
+    # Only remove records created by MSHELL.  Never erase a resolver or host
+    # record that a user created independently.
+    sudo sed -i '/[[:space:]]# MSHELL DoH$/d' /etc/hosts 2>/dev/null
+    sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
+}
+
 function bootstrap_github_access() {
     local cfg mode fallback_dns domain ip
     cfg="/mnt/tcrp/user_config.json"
     [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
     mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
-    [ "${mode}" = "doh" ] || return 0
+    if [ "${mode}" != "doh" ]; then
+        cleanup_mshell_doh_overrides
+        return 0
+    fi
     fallback_dns="1.1.1.1"
     grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null || \
-        printf 'nameserver %s\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
+        printf 'nameserver %s # MSHELL DoH\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
     for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
         ip=$(command curl -fsSkL --connect-timeout 5 \
           "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
@@ -163,7 +173,7 @@ function ensure_build_dns() {
   mode=$(jq -r '.github_access.mode // "standard"' "${userconfigfile:-/home/tc/user_config.json}" 2>/dev/null)
   [ "${mode}" = "doh" ] || return 0
   if ! grep -qF "nameserver ${fallback_dns}" /etc/resolv.conf 2>/dev/null; then
-    printf 'nameserver %s\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
+    printf 'nameserver %s # MSHELL DoH\n' "${fallback_dns}" | sudo tee -a /etc/resolv.conf >/dev/null
   fi
   for domain in github.com raw.githubusercontent.com api.github.com release-assets.githubusercontent.com; do
     ip=$(curl -fsSkL --connect-timeout 5 "https://cloudflare-dns.com/dns-query?name=${domain}&type=A" \
