@@ -20,3 +20,8 @@ The multi-NIC Static IP feature introduced in v1.4.3.7 has been hardened for rea
 `syno-intel-gpu-top` is now embedded in `/addons` and queued for DSM installation on every loader build. It does not require an Intel GPU detection result or a loader kernel-family condition.
 
 ![Intel GPU Top](https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/docs/assets/07-intel-GPU.png)
+
+## Alpine build network resilience
+
+- Alpine loader builds now add `1.1.1.1` as a runtime-only fallback resolver while preserving the configured primary DNS and leaving `user_config.json` unchanged.
+- MSHELL Manager, Syno Smart Info, Intel GPU Top, and AMDGPU SPK downloads now use a consistent progress-bar display.

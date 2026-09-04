@@ -20,3 +20,8 @@ v1.4.3.7에서 도입한 멀티 NIC 고정 IP 기능을 실제 혼용 네트워�
 이제 모든 로더 빌드에서 `syno-intel-gpu-top`을 `/addons`에 내장하고 DSM 자동 설치 대상으로 등록합니다. Intel GPU 감지 결과나 로더 커널 계열에 따라 제외하지 않습니다.
 
 ![Intel GPU Top](https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/docs/assets/07-intel-GPU.png)
+
+## Alpine 빌드 네트워크 안정화
+
+- 알파인 로더 빌드에서 설정된 주 DNS는 유지하면서 `1.1.1.1`을 런타임 전용 보조 DNS로 추가합니다. `user_config.json`은 변경하지 않습니다.
+- MSHELL Manager, Syno Smart Info, Intel GPU Top, AMDGPU `.spk` 다운로드의 진행률 표시 방식을 통일했습니다.
