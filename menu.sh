@@ -95,9 +95,10 @@ function bootstrap_github_access() {
 
 bootstrap_github_access
 
-# Ask about the UI language before the normal repository checkout.  The main
-# menu used to do this only after cloning redpill-load and the addon/module
-# repositories, which made the first-run language choice arrive far too late.
+# Ask about the UI language after the loader network wait but before the
+# normal repository checkout.  SX starts menu.sh early in boot, before DHCP
+# and DNS are necessarily ready, so country detection cannot run at script
+# entry without intermittently skipping this prompt.
 function offer_detected_locale_early() {
     local cfg ucode country target_ucode locale_prompt lang_archive
     cfg="/mnt/tcrp/user_config.json"
@@ -145,9 +146,6 @@ function offer_detected_locale_early() {
         rm -f "/tmp/mshell-locale.$$.json"
     fi
 }
-
-offer_detected_locale_early
-export MSHELL_LOCALE_PROMPT_DONE=true
 
 function offer_doh_fallback() {
     local cfg="/mnt/tcrp/user_config.json" mode answer msg
@@ -755,6 +753,11 @@ else
         export FORCE_STATIC_IP_SETUP="true"
       fi
     fi
+    # Country detection needs the DHCP/DNS wait above, but must still happen
+    # before the GitHub probe and every git clone/download that follows.
+    offer_detected_locale_early
+    export MSHELL_LOCALE_PROMPT_DONE=true
+
     # A static-IP setup is intentionally offline.  Skip the GitHub probe and
     # continue into menu_m.sh so the saved settings can be applied on reboot.
     if [ "${FORCE_STATIC_IP_SETUP:-false}" != "true" ]; then
