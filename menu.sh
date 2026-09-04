@@ -165,6 +165,23 @@ function offer_doh_fallback() {
     return 0
 }
 
+# Test hook is consumed only once per menu.sh execution.  It is shared by the
+# GitHub preflight and safe_fetch(), so a test failure happens before any
+# repository clone rather than halfway through the update flow.
+function should_simulate_github_failure() {
+    if [ "${MSHELL_TEST_GITHUB_FAILURE:-0}" = "1" ] && [ ! -e "${MSHELL_TEST_FETCH_MARKER}" ]; then
+        : > "${MSHELL_TEST_FETCH_MARKER}"
+        echo "[TEST] Simulating one GitHub download failure to verify DoH fallback."
+        return 0
+    fi
+    return 1
+}
+
+function check_github_access() {
+    should_simulate_github_failure && return 1
+    curl -fskL --connect-timeout 8 -o /dev/null https://raw.githubusercontent.com/about.html
+}
+
 # GitHub 일시 오류(404/400/rate-limit)로 받은 에러 본문이 스크립트를 덮어써 깨지는 것을 방지.
 # 임시파일로 받아 (1)HTTP 성공(-f) (2)비어있지 않음 (3)sentinel 포함 (4)bash 문법 OK 일 때만 교체.
 # 검증 실패 시 기존 파일을 보존(덮어쓰지 않음).
@@ -186,10 +203,8 @@ function safe_fetch() {
             fi
             ;;
     esac
-    if [ "${MSHELL_TEST_GITHUB_FAILURE:-0}" = "1" ] && [ ! -e "${MSHELL_TEST_FETCH_MARKER}" ]; then
-        : > "${MSHELL_TEST_FETCH_MARKER}"
+    if should_simulate_github_failure; then
         simulate_failure=true
-        echo "[TEST] Simulating one GitHub download failure to verify DoH fallback."
     fi
     if [ "${simulate_failure}" != "true" ] && curl -fskL --retry 3 --retry-delay 2 -o "${_tmp}" "${_url}" \
        && [ -s "${_tmp}" ] \
@@ -739,13 +754,20 @@ else
     # continue into menu_m.sh so the saved settings can be applied on reboot.
     if [ "${FORCE_STATIC_IP_SETUP:-false}" != "true" ]; then
       echo -n "Checking GitHub Access -> "
-      curl --insecure -L -s https://raw.githubusercontent.com/about.html -O 2>&1 >/dev/null
-      if [ $? -eq 0 ]; then
+      if check_github_access; then
           echo "OK"
       else
-          echo "Error: GitHub is unavailable. Please try again later."
-          read answer
-          exit 99
+          echo "Error: GitHub is unavailable."
+          # This happens before gitdownload()/git clone.  Once DoH is
+          # accepted, bootstrap_github_access() writes hosts immediately and
+          # the exact same probe is retried before any repository traffic.
+          if offer_doh_fallback && check_github_access; then
+              echo "GitHub access restored with DoH bypass."
+          else
+              echo "Please try again later."
+              read answer
+              exit 99
+          fi
       fi
     fi
 fi
