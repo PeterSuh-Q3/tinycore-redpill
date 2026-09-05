@@ -82,7 +82,7 @@ stage_amdgpu_package() {
 
   mkdir -p "${ADDONS_DIR}"
   target="${ADDONS_DIR}/${asset_name}"
-  if ! curl -fL --progress-bar --retry 2 --connect-timeout 20 "${asset_url}" -o "${target}"; then
+  if ! curl -kfL --progress-bar --retry 2 --connect-timeout 20 "${asset_url}" -o "${target}"; then
     rm -f "${target}"
     echo "[amdgpu] ${manifest_key} package download failed" >&2
     return 1
