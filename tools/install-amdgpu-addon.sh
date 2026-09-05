@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Stage the matching Synology AMDGPU runtime + amdgpu_top SPKs in a loader
-# ramdisk. This is intentionally kept in alpine-redpill instead of
-# tcrp-addons: the packages are selected from the latest upstream release
-# at build time.
+# Stage the matching Synology AMDGPU runtime SPK in a loader ramdisk. This is
+# intentionally kept in alpine-redpill instead of tcrp-addons: the package is
+# selected from the latest upstream release at build time. AMDGPU Top is
+# bundled and managed by MSHELL Manager, so it is not staged here.
 set -u
 
 PLATFORM="${1:?platform is required}"
@@ -59,11 +59,8 @@ if [ -z "${MANIFEST_PATH}" ] || [ ! -s "${MANIFEST_PATH}" ]; then
   exit 0
 fi
 
-# 2026-08-30: syno-amdgpu-driver와 syno-amdgpu-top 릴리즈가 분리됐다(예전엔
-# 런타임 SPK 하나에 같이 들어있었음) - 매니페스트(packages.amd_gpu_runtime /
-# packages.amdgpu_top)에서 각각 따로 받아온다. 이 지점에 도달했다는 건 이미
-# kernel 4.4.x가 아니라는 뜻(위에서 이미 exit 0으로 걸러짐)이므로 별도 커널
-# 분기 없이 둘 다 시도한다.
+# The runtime asset is selected from packages.amd_gpu_runtime. This point is
+# reached only for kernel 5.10.55 (kernel 4.4.x exits above).
 stage_amdgpu_package() {
   local manifest_key="$1" name_pattern="$2" out_json="$3"
   local asset_json asset_name asset_url asset_sha256 target
@@ -103,7 +100,6 @@ stage_amdgpu_package() {
 }
 
 runtime_staged=0
-top_staged=0
 
 if stage_amdgpu_package "amd_gpu_runtime" \
   '^syno-amdgpu-runtime-[0-9]+\.[0-9]+\.[0-9]+-7\.4-x86_64-kernel(5\.10\.55|4\.4\.x)\.spk$' \
@@ -111,17 +107,8 @@ if stage_amdgpu_package "amd_gpu_runtime" \
   runtime_staged=1
 fi
 
-# amdgpu_top(모니터링 유틸)은 런타임과 별개 패키지지만, 두 패키지를 모두
-# 설치 대상으로 명시한다. 하나라도 내려받지 못하면 비정상 빌드 결과를
-# 알아볼 수 있도록 호출자에 실패 상태를 전달한다.
-if stage_amdgpu_package "amdgpu_top" \
-  '^syno-amdgpu-top-[0-9]+\.[0-9]+\.[0-9]+-7\.4-x86_64-kernel(5\.10\.55|4\.4\.x)\.spk$' \
-  "amdgpu-top.json"; then
-  top_staged=1
-fi
-
-if [ "${runtime_staged}" -ne 1 ] || [ "${top_staged}" -ne 1 ]; then
-  echo "[amdgpu] staging incomplete (runtime=${runtime_staged}, top=${top_staged})" >&2
+if [ "${runtime_staged}" -ne 1 ]; then
+  echo "[amdgpu] runtime staging incomplete" >&2
   exit 1
 fi
 

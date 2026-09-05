@@ -6467,45 +6467,16 @@ NCEOF
       echo "Syno Smart Info SPK saved to /addons/${SSI_SPK}"
     fi
 
-    # Intel GPU Top is a userspace monitoring package. Stage the single
-    # published x86_64 SPK for every loader build, regardless of the DSM
-    # kernel family or whether an Intel display controller is detected.
-    INTEL_GPU_TOP_ASSET_JSON="$(jq -c '
-      .packages.intel_gpu_top.assets[]? | select(.name | endswith(".spk")) |
-      {name, url, sha256}
-    ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
-    INTEL_GPU_TOP_SPK="$(printf '%s' "${INTEL_GPU_TOP_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
-    INTEL_GPU_TOP_URL="$(printf '%s' "${INTEL_GPU_TOP_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
-    INTEL_GPU_TOP_SHA256="$(printf '%s' "${INTEL_GPU_TOP_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
-    if ! echo "${INTEL_GPU_TOP_SPK}" | grep -Eq '^syno-intel-gpu-top-[0-9]+\.[0-9]+\.[0-9]+-x86_64-kernel[^/]+\.spk$' || \
-        [ "${INTEL_GPU_TOP_URL##*/}" != "${INTEL_GPU_TOP_SPK}" ] || \
-        ! echo "${INTEL_GPU_TOP_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
-      echo "[!] Intel GPU Top latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${INTEL_GPU_TOP_URL}" \
-        -o "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}"; then
-      echo "[!] Intel GPU Top SPK download failed; addon will retry after DSM boots."
-      sudo rm -f "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}"
-    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}" 2>/dev/null | awk '{print $1}')" != \
-        "${INTEL_GPU_TOP_SHA256}" ]; then
-      echo "[!] Intel GPU Top SPK checksum mismatch; discarded."
-      sudo rm -f "${RAMDISK_PATH}/addons/${INTEL_GPU_TOP_SPK}"
-    else
-      printf '%s' "${INTEL_GPU_TOP_ASSET_JSON}" > "${RAMDISK_PATH}/addons/intel-gpu-top.json"
-      echo "Intel GPU Top SPK saved to /addons/${INTEL_GPU_TOP_SPK}"
-    fi
-
-    # If a supported AMD display controller is present, stage the matching
-    # runtime and amdgpu_top SPKs from the latest release.  Do not silently
-    # skip a missing helper: an old my.sh.gz used to make this condition false
-    # and produced an initrd with aeudev but no AMD payload to install.
+    # Intel GPU Top and AMDGPU Top are bundled and managed by MSHELL Manager,
+    # so neither SPK is staged into /addons or installed by aeudev. If a
+    # supported AMD display controller is present, stage only the AMD runtime.
     if [ ! -x "/home/tc/tools/install-amdgpu-addon.sh" ]; then
       echo "[amdgpu] staging helper is absent from my.sh.gz; AMD packages were not embedded"
     else
       /home/tc/tools/install-amdgpu-addon.sh "${ORIGIN_PLATFORM}" "${DSMVER}" "${KVER}" \
         "${RAMDISK_PATH}/addons" "${LATEST_PACKAGE_MANIFEST}" || echo "[amdgpu] package staging failed; continuing loader build"
-      if detect_amd_gpu && { [ ! -s "${RAMDISK_PATH}/addons/amdgpu-driver.json" ] || \
-          [ ! -s "${RAMDISK_PATH}/addons/amdgpu-top.json" ]; }; then
-        echo "[amdgpu] AMD GPU detected, but one or more verified AMD packages were not embedded"
+      if detect_amd_gpu && [ ! -s "${RAMDISK_PATH}/addons/amdgpu-driver.json" ]; then
+        echo "[amdgpu] AMD GPU detected, but the verified AMD runtime was not embedded"
       fi
     fi
 
