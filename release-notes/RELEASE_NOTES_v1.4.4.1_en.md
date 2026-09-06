@@ -17,3 +17,8 @@
 
 - Static IP and GitHub DNS or DoH changes report immediate application in the active loader session.
 - Addon, module profile, and device-management changes explicitly report when rebuilding the loader is required.
+
+## Language catalog reliability
+
+- Fixes language-catalog keys for the new save-result dialogs so Korean and other translated menus do not fall back to English.
+- The language build now rejects a bare `\n` escape in PO message bodies; catalog entries must use the established literal `\\n` form before MO compilation.
