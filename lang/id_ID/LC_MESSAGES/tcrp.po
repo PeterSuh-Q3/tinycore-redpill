@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "Log NetConsole (tidak perlu internet - log boot hingga panic dikirim secara real-time melalui LAN)"
 
 #: MSGID135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "Pengaturan Log Awal NetConsole\n\nStatus saat ini: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "Pengaturan Log Awal NetConsole\\n\\nStatus saat ini: %s"
 
 #: MSGID136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "Konfigurasi NetConsole telah dihapus."
 
 #: MSGID140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "Masukkan alamat IP PC yang akan menerima log (penerima)\n\n(Harus berada di LAN/switch yang sama - Internet/DHCP tidak diperlukan)\nContoh: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "Masukkan alamat IP PC yang akan menerima log (penerima)\\n\\n(Harus berada di LAN/switch yang sama - Internet/DHCP tidak diperlukan)\\nContoh: 192.168.1.100"
 
 #: MSGID141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "Tidak dapat mendeteksi antarmuka jaringan."
 
 #: MSGID143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "Tidak dapat menemukan alamat MAC penerima (%s) secara otomatis.\n\nPeriksa apakah terhubung ke switch/router yang sama, dan apakah firewall penerima tidak memblokir ping (ICMP).\n\nApakah Anda ingin melanjutkan dengan memasukkan alamat MAC secara manual?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "Tidak dapat menemukan alamat MAC penerima (%s) secara otomatis.\\n\\nPeriksa apakah terhubung ke switch/router yang sama, dan apakah firewall penerima tidak memblokir ping (ICMP).\\n\\nApakah Anda ingin melanjutkan dengan memasukkan alamat MAC secara manual?"
 
 #: MSGID144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "Masukkan alamat MAC penerima (contoh: aa:bb:cc:dd:ee:ff)"
 
 #: MSGID145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "Simpan konfigurasi ini?\n\n%s\n\nPastikan PC penerima sudah menunggu dengan perintah berikut:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "Simpan konfigurasi ini?\\n\\n%s\\n\\nPastikan PC penerima sudah menunggu dengan perintah berikut:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGID146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "Tersimpan.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku (silakan buka menu build)."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Tersimpan.\\n\\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku (silakan buka menu build)."
 
 #: MSGID147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "Tidak dapat mendeteksi antarmuka jaringan apa pun."
 
 #: MSGID151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "Masukkan pengaturan jaringan statis untuk %s\n\nContoh proxy: http://192.168.1.10:3128 (biarkan kosong kecuali jaringan Anda mengharuskan semua lalu lintas keluar melalui proxy)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Masukkan pengaturan jaringan statis untuk %s\\n\\nContoh proxy: http://192.168.1.10:3128 (biarkan kosong kecuali jaringan Anda mengharuskan semua lalu lintas keluar melalui proxy)"
 
 #: MSGID152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "Alamat gateway tidak valid. Silakan coba lagi."
 
 #: MSGID158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "Simpan konfigurasi IP statis ini?\n\nAntarmuka: %s\nAlamat IP: %s\nGateway: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "Simpan konfigurasi IP statis ini?\\n\\nAntarmuka: %s\\nAlamat IP: %s\\nGateway: %s\\nDNS: %s"
 
 #: MSGID159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Tersimpan.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Tersimpan.\\n\\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
 
 #: MSGID160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Dikembalikan ke DHCP.\n\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Dikembalikan ke DHCP.\\n\\n[!] Anda harus membangun ulang loader sekarang agar perubahan ini berlaku."
 
 #: MSGID161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "Kode negara %s terdeteksi. Ubah bahasa menu menjadi %s?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "Konfigurasi disimpan dan langsung diterapkan.\n\nTidak perlu membangun ulang loader."
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "Konfigurasi disimpan dan langsung diterapkan.\\n\\nTidak perlu membangun ulang loader."
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "Konfigurasi disimpan dan disinkronkan.\n\nTidak perlu membangun ulang loader.\nAkan diterapkan saat boot FRIEND ke DSM berikutnya."
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "Konfigurasi disimpan dan disinkronkan.\\n\\nTidak perlu membangun ulang loader.\\nAkan diterapkan saat boot FRIEND ke DSM berikutnya."
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "Konfigurasi disimpan.\n\nTidak perlu membangun ulang loader.\nAkan digunakan pada tindakan terkait berikutnya."
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "Konfigurasi disimpan.\\n\\nTidak perlu membangun ulang loader.\\nAkan digunakan pada tindakan terkait berikutnya."
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "Konfigurasi disimpan.\n\nBangun ulang loader agar perubahan ini disertakan pada boot berikutnya."
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "Konfigurasi disimpan.\\n\\nBangun ulang loader agar perubahan ini disertakan pada boot berikutnya."
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "Konfigurasi tidak disimpan"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "Konfigurasi sebelumnya telah dipulihkan.\n\nPerubahan yang ditolak:\n%s\n\nKesalahan validasi:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "Konfigurasi sebelumnya telah dipulihkan.\\n\\nPerubahan yang ditolak:\\n%s\\n\\nKesalahan validasi:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "Ketidakkonsistenan konfigurasi yang ada terdeteksi.\nNilai baru tidak disimpan."
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "Ketidakkonsistenan konfigurasi yang ada terdeteksi.\\nNilai baru tidak disimpan."

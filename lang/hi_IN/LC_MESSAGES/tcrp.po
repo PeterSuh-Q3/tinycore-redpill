@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "नेटकंसोल लॉग (इंटरनेट की आवश्यकता नहीं - LAN के माध्यम से बूट-से-पैनिक लॉग रीयल-टाइम में)"
 
 #: MSGIN135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "नेटकंसोल अर्ली लॉग सेटअप\n\nवर्तमान स्थिति: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "नेटकंसोल अर्ली लॉग सेटअप\\n\\nवर्तमान स्थिति: %s"
 
 #: MSGIN136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "नेटकंसोल कॉन्फ़िगरेशन हटा दिया गया।"
 
 #: MSGIN140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "उस PC (लिसनर) का IP पता दर्ज करें जो लॉग प्राप्त करेगा\n\n(समान LAN/स्विच पर होना चाहिए - इंटरनेट/DHCP आवश्यक नहीं है)\nउदाहरण: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "उस PC (लिसनर) का IP पता दर्ज करें जो लॉग प्राप्त करेगा\\n\\n(समान LAN/स्विच पर होना चाहिए - इंटरनेट/DHCP आवश्यक नहीं है)\\nउदाहरण: 192.168.1.100"
 
 #: MSGIN141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "नेटवर्क इंटरफ़ेस का पता नहीं चला।"
 
 #: MSGIN143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "लिसनर (%s) का MAC पता स्वचालित रूप से नहीं मिल सका।\n\nकृपया जांचें कि यह समान स्विच/राउटर से जुड़ा है, और लिसनर का फ़ायरवॉल ping (ICMP) को ब्लॉक नहीं कर रहा है।\n\nक्या आप MAC पता मैन्युअल रूप से दर्ज करके जारी रखना चाहते हैं?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "लिसनर (%s) का MAC पता स्वचालित रूप से नहीं मिल सका।\\n\\nकृपया जांचें कि यह समान स्विच/राउटर से जुड़ा है, और लिसनर का फ़ायरवॉल ping (ICMP) को ब्लॉक नहीं कर रहा है।\\n\\nक्या आप MAC पता मैन्युअल रूप से दर्ज करके जारी रखना चाहते हैं?"
 
 #: MSGIN144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "लिसनर का MAC पता दर्ज करें (उदाहरण: aa:bb:cc:dd:ee:ff)"
 
 #: MSGIN145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "यह कॉन्फ़िगरेशन सहेजें?\n\n%s\n\nसुनिश्चित करें कि लिसनर PC पहले से निम्न कमांड के साथ प्रतीक्षा कर रहा है:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "यह कॉन्फ़िगरेशन सहेजें?\\n\\n%s\\n\\nसुनिश्चित करें कि लिसनर PC पहले से निम्न कमांड के साथ प्रतीक्षा कर रहा है:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGIN146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "सहेजा गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा (कृपया बिल्ड मेनू पर जाएं)।"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "सहेजा गया।\\n\\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा (कृपया बिल्ड मेनू पर जाएं)।"
 
 #: MSGIN147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "कोई नेटवर्क इंटरफ़ेस नहीं मिला।"
 
 #: MSGIN151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "%s के लिए स्थिर नेटवर्क सेटिंग्स दर्ज करें\n\nप्रॉक्सी उदाहरण: http://192.168.1.10:3128 (खाली छोड़ दें जब तक आपके नेटवर्क को सभी आउटबाउंड ट्रैफ़िक को प्रॉक्सी से गुजरने की आवश्यकता न हो)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s के लिए स्थिर नेटवर्क सेटिंग्स दर्ज करें\\n\\nप्रॉक्सी उदाहरण: http://192.168.1.10:3128 (खाली छोड़ दें जब तक आपके नेटवर्क को सभी आउटबाउंड ट्रैफ़िक को प्रॉक्सी से गुजरने की आवश्यकता न हो)"
 
 #: MSGIN152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "मान्य गेटवे पता नहीं है। कृपया पुनः प्रयास करें।"
 
 #: MSGIN158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "यह स्थिर IP कॉन्फ़िगरेशन सहेजें?\n\nइंटरफ़ेस: %s\nIP पता: %s\nगेटवे: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "यह स्थिर IP कॉन्फ़िगरेशन सहेजें?\\n\\nइंटरफ़ेस: %s\\nIP पता: %s\\nगेटवे: %s\\nDNS: %s"
 
 #: MSGIN159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "सहेजा गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "सहेजा गया।\\n\\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
 
 #: MSGIN160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "DHCP पर वापस लौटाया गया।\n\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCP पर वापस लौटाया गया।\\n\\n[!] इसे प्रभावी बनाने के लिए आपको अभी लोडर को फिर से बनाना होगा।"
 
 #: MSGIN161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "देश कोड %s पाया गया। मेनू भाषा को %s में बदलें?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "कॉन्फ़िगरेशन सहेज कर तुरंत लागू कर दिया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।"
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "कॉन्फ़िगरेशन सहेज कर तुरंत लागू कर दिया गया।\\n\\nलोडर को फिर से बनाने की आवश्यकता नहीं है।"
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "कॉन्फ़िगरेशन सहेज कर समन्वयित किया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\nअगली FRIEND से DSM बूट पर इसे लागू किया जाएगा।"
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "कॉन्फ़िगरेशन सहेज कर समन्वयित किया गया।\\n\\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\\nअगली FRIEND से DSM बूट पर इसे लागू किया जाएगा।"
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\nअगली संबंधित कार्रवाई में इसका उपयोग होगा।"
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\\n\\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\\nअगली संबंधित कार्रवाई में इसका उपयोग होगा।"
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\n\nअगले बूट में बदलाव शामिल करने के लिए लोडर को फिर से बनाएँ।"
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\\n\\nअगले बूट में बदलाव शामिल करने के लिए लोडर को फिर से बनाएँ।"
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "कॉन्फ़िगरेशन सहेजा नहीं गया"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "पिछला कॉन्फ़िगरेशन पुनर्स्थापित कर दिया गया।\n\nअस्वीकृत परिवर्तन:\n%s\n\nसत्यापन त्रुटि:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "पिछला कॉन्फ़िगरेशन पुनर्स्थापित कर दिया गया।\\n\\nअस्वीकृत परिवर्तन:\\n%s\\n\\nसत्यापन त्रुटि:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "मौजूदा कॉन्फ़िगरेशन असंगति मिली।\nनया मान सहेजा नहीं गया।"
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "मौजूदा कॉन्फ़िगरेशन असंगति मिली।\\nनया मान सहेजा नहीं गया।"

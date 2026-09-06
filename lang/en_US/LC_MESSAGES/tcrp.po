@@ -753,29 +753,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "Country code %s detected. Change the menu language to %s?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "Configuration was not saved"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "Existing configuration inconsistency detected.\nNo new value was saved."
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "Existing configuration inconsistency detected.\\nNo new value was saved."

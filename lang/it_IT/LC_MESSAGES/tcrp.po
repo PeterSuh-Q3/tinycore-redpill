@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "Log NetConsole (Internet non necessario - log di avvio fino al panic trasmesso in tempo reale via LAN)"
 
 #: MSGIT135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "Configurazione log iniziale NetConsole\n\nStato attuale: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "Configurazione log iniziale NetConsole\\n\\nStato attuale: %s"
 
 #: MSGIT136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "Configurazione NetConsole rimossa."
 
 #: MSGIT140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "Inserisci l'indirizzo IP del PC che riceverà i log (ricevitore)\n\n(Deve trovarsi sulla stessa LAN/switch - Internet/DHCP non necessari)\nEsempio: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "Inserisci l'indirizzo IP del PC che riceverà i log (ricevitore)\\n\\n(Deve trovarsi sulla stessa LAN/switch - Internet/DHCP non necessari)\\nEsempio: 192.168.1.100"
 
 #: MSGIT141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "Impossibile rilevare un'interfaccia di rete."
 
 #: MSGIT143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "Impossibile trovare automaticamente l'indirizzo MAC del ricevitore (%s).\n\nVerifica che sia connesso allo stesso switch/router e che il firewall del ricevitore non blocchi il ping (ICMP).\n\nVuoi continuare inserendo manualmente l'indirizzo MAC?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "Impossibile trovare automaticamente l'indirizzo MAC del ricevitore (%s).\\n\\nVerifica che sia connesso allo stesso switch/router e che il firewall del ricevitore non blocchi il ping (ICMP).\\n\\nVuoi continuare inserendo manualmente l'indirizzo MAC?"
 
 #: MSGIT144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "Inserisci l'indirizzo MAC del ricevitore (esempio: aa:bb:cc:dd:ee:ff)"
 
 #: MSGIT145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "Salvare questa configurazione?\n\n%s\n\nAssicurati che il PC ricevitore sia già in attesa con il seguente comando:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "Salvare questa configurazione?\\n\\n%s\\n\\nAssicurati che il PC ricevitore sia già in attesa con il seguente comando:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGIT146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "Salvato.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto (vai al menu di compilazione)."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Salvato.\\n\\n[!] È necessario ricompilare subito il loader affinché abbia effetto (vai al menu di compilazione)."
 
 #: MSGIT147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "Impossibile rilevare alcuna interfaccia di rete."
 
 #: MSGIT151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "Inserisci le impostazioni di rete statiche per %s\n\nEsempio di proxy: http://192.168.1.10:3128 (lascia vuoto a meno che la tua rete non richieda che tutto il traffico in uscita passi attraverso un proxy)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Inserisci le impostazioni di rete statiche per %s\\n\\nEsempio di proxy: http://192.168.1.10:3128 (lascia vuoto a meno che la tua rete non richieda che tutto il traffico in uscita passi attraverso un proxy)"
 
 #: MSGIT152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "Indirizzo gateway non valido. Riprova."
 
 #: MSGIT158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "Salvare questa configurazione IP statica?\n\nInterfaccia: %s\nIndirizzo IP: %s\nGateway: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "Salvare questa configurazione IP statica?\\n\\nInterfaccia: %s\\nIndirizzo IP: %s\\nGateway: %s\\nDNS: %s"
 
 #: MSGIT159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Salvato.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Salvato.\\n\\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
 
 #: MSGIT160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Ripristinato DHCP.\n\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Ripristinato DHCP.\\n\\n[!] È necessario ricompilare subito il loader affinché abbia effetto."
 
 #: MSGIT161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "Rilevato il codice paese %s. Cambiare la lingua del menu in %s?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "La configurazione è stata salvata e applicata.\n\nNon è necessario ricompilare il loader."
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "La configurazione è stata salvata e applicata.\\n\\nNon è necessario ricompilare il loader."
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "La configurazione è stata salvata e sincronizzata.\n\nNon è necessario ricompilare il loader.\nVerrà applicata al prossimo avvio di DSM tramite FRIEND."
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "La configurazione è stata salvata e sincronizzata.\\n\\nNon è necessario ricompilare il loader.\\nVerrà applicata al prossimo avvio di DSM tramite FRIEND."
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "La configurazione è stata salvata.\n\nNon è necessario ricompilare il loader.\nVerrà usata nella prossima azione correlata."
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "La configurazione è stata salvata.\\n\\nNon è necessario ricompilare il loader.\\nVerrà usata nella prossima azione correlata."
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "La configurazione è stata salvata.\n\nRicompilare il loader per includere questa modifica al prossimo avvio."
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "La configurazione è stata salvata.\\n\\nRicompilare il loader per includere questa modifica al prossimo avvio."
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "La configurazione non è stata salvata"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "La configurazione precedente è stata ripristinata.\n\nModifiche rifiutate:\n%s\n\nErrore di convalida:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "La configurazione precedente è stata ripristinata.\\n\\nModifiche rifiutate:\\n%s\\n\\nErrore di convalida:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "È stata rilevata un’incoerenza nella configurazione esistente.\nIl nuovo valore non è stato salvato."
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "È stata rilevata un’incoerenza nella configurazione esistente.\\nIl nuovo valore non è stato salvato."

@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "NetConsole ምዝግብ (ኢንተርኔት አያስፈልግም - ከማስነሻ እስከ ብልሽት ያለው ምዝግብ በላን በቀጥታ ጊዜ ይተላለፋል)"
 
 #: MSGET135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "የNetConsole ቀደምት ምዝግብ ማዋቀሪያ\n\nወቅታዊ ሁኔታ: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "የNetConsole ቀደምት ምዝግብ ማዋቀሪያ\\n\\nወቅታዊ ሁኔታ: %s"
 
 #: MSGET136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "የNetConsole ማዋቀሪያ ተወግዷል።"
 
 #: MSGET140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "ምዝግቦችን የሚቀበለውን ኮምፒዩተር (ተቀባይ) IP አድራሻ ያስገቡ\n\n(በተመሳሳይ ላን/ስዊች ላይ መሆን አለበት - ኢንተርኔት/DHCP አያስፈልግም)\nምሳሌ: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "ምዝግቦችን የሚቀበለውን ኮምፒዩተር (ተቀባይ) IP አድራሻ ያስገቡ\\n\\n(በተመሳሳይ ላን/ስዊች ላይ መሆን አለበት - ኢንተርኔት/DHCP አያስፈልግም)\\nምሳሌ: 192.168.1.100"
 
 #: MSGET141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "የአውታረ መረብ በይነገጽ ማግኘት አልተቻለም።"
 
 #: MSGET143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "የተቀባዩን (%s) MAC አድራሻ በራስ-ሰር ማግኘት አልተቻለም።\n\nእባክዎ ተመሳሳይ ስዊች/ራውተር ላይ መገናኘቱን፣ እና የተቀባዩ ፋየርዎል ፒንግን (ICMP) እንደማያግድ ያረጋግጡ።\n\nMAC አድራሻውን በእጅ በማስገባት መቀጠል ይፈልጋሉ?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "የተቀባዩን (%s) MAC አድራሻ በራስ-ሰር ማግኘት አልተቻለም።\\n\\nእባክዎ ተመሳሳይ ስዊች/ራውተር ላይ መገናኘቱን፣ እና የተቀባዩ ፋየርዎል ፒንግን (ICMP) እንደማያግድ ያረጋግጡ።\\n\\nMAC አድራሻውን በእጅ በማስገባት መቀጠል ይፈልጋሉ?"
 
 #: MSGET144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "የተቀባዩን MAC አድራሻ ያስገቡ (ምሳሌ: aa:bb:cc:dd:ee:ff)"
 
 #: MSGET145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "ይህን ማዋቀሪያ ማስቀመጥ ይፈልጋሉ?\n\n%s\n\nየተቀባይ ኮምፒዩተር ከዚህ ትዕዛዝ ጋር አስቀድሞ በመጠባበቅ ላይ መሆኑን ያረጋግጡ:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "ይህን ማዋቀሪያ ማስቀመጥ ይፈልጋሉ?\\n\\n%s\\n\\nየተቀባይ ኮምፒዩተር ከዚህ ትዕዛዝ ጋር አስቀድሞ በመጠባበቅ ላይ መሆኑን ያረጋግጡ:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGET146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "ተቀምጧል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት (እባክዎ ወደ ግንባታ ምናሌ ይሂዱ)።"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "ተቀምጧል።\\n\\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት (እባክዎ ወደ ግንባታ ምናሌ ይሂዱ)።"
 
 #: MSGET147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "ምንም የአውታረ መረብ በይነገጽ ማግኘት አልተቻለም።"
 
 #: MSGET151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "ለ %s መደበኛ የአውታረ መረብ ቅንብሮችን ያስገቡ\n\nየፕሮክሲ ምሳሌ: http://192.168.1.10:3128 (አውታረ መረብዎ ሁሉም ወጪ ትራፊክ በፕሮክሲ በኩል እንዲያልፍ የማይፈልግ ከሆነ ባዶ ይተውት)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "ለ %s መደበኛ የአውታረ መረብ ቅንብሮችን ያስገቡ\\n\\nየፕሮክሲ ምሳሌ: http://192.168.1.10:3128 (አውታረ መረብዎ ሁሉም ወጪ ትራፊክ በፕሮክሲ በኩል እንዲያልፍ የማይፈልግ ከሆነ ባዶ ይተውት)"
 
 #: MSGET152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "ትክክለኛ የመግቢያ አድራሻ አይደለም። እባክዎ እንደገና ይሞክሩ።"
 
 #: MSGET158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "ይህን መደበኛ IP ውቅር ያስቀምጡ?\n\nበይነገጽ: %s\nየIP አድራሻ: %s\nመግቢያ: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "ይህን መደበኛ IP ውቅር ያስቀምጡ?\\n\\nበይነገጽ: %s\\nየIP አድራሻ: %s\\nመግቢያ: %s\\nDNS: %s"
 
 #: MSGET159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "ተቀምጧል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "ተቀምጧል።\\n\\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
 
 #: MSGET160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "ወደ DHCP ተመልሷል።\n\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "ወደ DHCP ተመልሷል።\\n\\n[!] ይህ ተግባራዊ እንዲሆን አሁን ጫኚውን እንደገና መገንባት አለብዎት።"
 
 #: MSGET161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "የአገር ኮድ %s ተገኝቷል። የምናሌ ቋንቋን ወደ %s ይቀይሩ?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "ውቅሩ ተቀምጦ ወዲያውኑ ተተግብሯል።\n\nሎደሩን እንደገና መገንባት አያስፈልግም።"
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "ውቅሩ ተቀምጦ ወዲያውኑ ተተግብሯል።\\n\\nሎደሩን እንደገና መገንባት አያስፈልግም።"
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "ውቅሩ ተቀምጦ ተመሳስሏል።\n\nሎደሩን እንደገና መገንባት አያስፈልግም።\nበሚቀጥለው FRIEND ወደ DSM ማስነሳት ጊዜ ይተገበራል።"
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "ውቅሩ ተቀምጦ ተመሳስሏል።\\n\\nሎደሩን እንደገና መገንባት አያስፈልግም።\\nበሚቀጥለው FRIEND ወደ DSM ማስነሳት ጊዜ ይተገበራል።"
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "ውቅሩ ተቀምጧል።\n\nሎደሩን እንደገና መገንባት አያስፈልግም።\nበሚቀጥለው ተዛማጅ ተግባር ይጠቀማል።"
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "ውቅሩ ተቀምጧል።\\n\\nሎደሩን እንደገና መገንባት አያስፈልግም።\\nበሚቀጥለው ተዛማጅ ተግባር ይጠቀማል።"
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "ውቅሩ ተቀምጧል።\n\nይህን ለውጥ በሚቀጥለው ማስነሳት ለማካተት ሎደሩን እንደገና ይገንቡ።"
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "ውቅሩ ተቀምጧል።\\n\\nይህን ለውጥ በሚቀጥለው ማስነሳት ለማካተት ሎደሩን እንደገና ይገንቡ።"
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "ውቅሩ አልተቀመጠም"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "የቀድሞው ውቅር ተመልሷል።\n\nውድቅ የተደረጉ ለውጦች:\n%s\n\nየማረጋገጫ ስህተት:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "የቀድሞው ውቅር ተመልሷል።\\n\\nውድቅ የተደረጉ ለውጦች:\\n%s\\n\\nየማረጋገጫ ስህተት:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "ያለ የውቅር አለመጣጣም ተገኝቷል።\nአዲሱ እሴት አልተቀመጠም።"
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "ያለ የውቅር አለመጣጣም ተገኝቷል።\\nአዲሱ እሴት አልተቀመጠም።"

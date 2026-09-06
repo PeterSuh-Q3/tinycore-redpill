@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "บันทึก NetConsole (ไม่ต้องใช้อินเทอร์เน็ต - ส่งบันทึกตั้งแต่บูตจนถึงแพนิกแบบเรียลไทม์ผ่าน LAN)"
 
 #: MSGTH135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "ตั้งค่าบันทึกเริ่มต้นของ NetConsole\n\nสถานะปัจจุบัน: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "ตั้งค่าบันทึกเริ่มต้นของ NetConsole\\n\\nสถานะปัจจุบัน: %s"
 
 #: MSGTH136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "ลบการตั้งค่า NetConsole แล้ว"
 
 #: MSGTH140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "ป้อนที่อยู่ IP ของเครื่องที่จะรับบันทึก (ผู้รับฟัง)\n\n(ต้องอยู่ใน LAN/สวิตช์เดียวกัน - ไม่ต้องใช้อินเทอร์เน็ต/DHCP)\nตัวอย่าง: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "ป้อนที่อยู่ IP ของเครื่องที่จะรับบันทึก (ผู้รับฟัง)\\n\\n(ต้องอยู่ใน LAN/สวิตช์เดียวกัน - ไม่ต้องใช้อินเทอร์เน็ต/DHCP)\\nตัวอย่าง: 192.168.1.100"
 
 #: MSGTH141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "ไม่พบอินเทอร์เฟซเครือข่าย"
 
 #: MSGTH143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "ไม่สามารถค้นหาที่อยู่ MAC ของผู้รับฟัง (%s) โดยอัตโนมัติ\n\nโปรดตรวจสอบว่าเชื่อมต่อกับสวิตช์/เราเตอร์เดียวกัน และไฟร์วอลล์ของผู้รับฟังไม่ได้บล็อก ping (ICMP)\n\nต้องการดำเนินการต่อโดยป้อนที่อยู่ MAC ด้วยตนเองหรือไม่?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "ไม่สามารถค้นหาที่อยู่ MAC ของผู้รับฟัง (%s) โดยอัตโนมัติ\\n\\nโปรดตรวจสอบว่าเชื่อมต่อกับสวิตช์/เราเตอร์เดียวกัน และไฟร์วอลล์ของผู้รับฟังไม่ได้บล็อก ping (ICMP)\\n\\nต้องการดำเนินการต่อโดยป้อนที่อยู่ MAC ด้วยตนเองหรือไม่?"
 
 #: MSGTH144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "ป้อนที่อยู่ MAC ของผู้รับฟัง (ตัวอย่าง: aa:bb:cc:dd:ee:ff)"
 
 #: MSGTH145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "บันทึกการตั้งค่านี้หรือไม่?\n\n%s\n\nตรวจสอบให้แน่ใจว่าเครื่องผู้รับฟังกำลังรอด้วยคำสั่งต่อไปนี้อยู่แล้ว:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "บันทึกการตั้งค่านี้หรือไม่?\\n\\n%s\\n\\nตรวจสอบให้แน่ใจว่าเครื่องผู้รับฟังกำลังรอด้วยคำสั่งต่อไปนี้อยู่แล้ว:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGTH146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "บันทึกแล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล (โปรดไปที่เมนูบิลด์)"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "บันทึกแล้ว\\n\\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล (โปรดไปที่เมนูบิลด์)"
 
 #: MSGTH147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "ตรวจไม่พบอินเทอร์เฟซเครือข่ายใดๆ"
 
 #: MSGTH151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "ป้อนการตั้งค่าเครือข่ายแบบคงที่สำหรับ %s\n\nตัวอย่างพร็อกซี: http://192.168.1.10:3128 (เว้นว่างไว้ เว้นแต่เครือข่ายของคุณกำหนดให้ทราฟฟิกขาออกทั้งหมดต้องผ่านพร็อกซี)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "ป้อนการตั้งค่าเครือข่ายแบบคงที่สำหรับ %s\\n\\nตัวอย่างพร็อกซี: http://192.168.1.10:3128 (เว้นว่างไว้ เว้นแต่เครือข่ายของคุณกำหนดให้ทราฟฟิกขาออกทั้งหมดต้องผ่านพร็อกซี)"
 
 #: MSGTH152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "ที่อยู่เกตเวย์ไม่ถูกต้อง โปรดลองอีกครั้ง"
 
 #: MSGTH158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "บันทึกการตั้งค่า IP แบบคงที่นี้หรือไม่?\n\nอินเทอร์เฟซ: %s\nที่อยู่ IP: %s\nเกตเวย์: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "บันทึกการตั้งค่า IP แบบคงที่นี้หรือไม่?\\n\\nอินเทอร์เฟซ: %s\\nที่อยู่ IP: %s\\nเกตเวย์: %s\\nDNS: %s"
 
 #: MSGTH159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "บันทึกแล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "บันทึกแล้ว\\n\\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
 
 #: MSGTH160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "กลับไปใช้ DHCP แล้ว\n\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "กลับไปใช้ DHCP แล้ว\\n\\n[!] คุณต้องรีบิลด์ตัวโหลดทันทีเพื่อให้มีผล"
 
 #: MSGTH161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "ตรวจพบรหัสประเทศ %s ต้องการเปลี่ยนภาษาของเมนูเป็น %s หรือไม่?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "บันทึกและใช้การตั้งค่าแล้วทันที\n\nไม่จำเป็นต้องสร้างตัวโหลดใหม่"
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "บันทึกและใช้การตั้งค่าแล้วทันที\\n\\nไม่จำเป็นต้องสร้างตัวโหลดใหม่"
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "บันทึกและซิงโครไนซ์การตั้งค่าแล้ว\n\nไม่จำเป็นต้องสร้างตัวโหลดใหม่\nจะมีผลเมื่อบูตจาก FRIEND ไป DSM ครั้งถัดไป"
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "บันทึกและซิงโครไนซ์การตั้งค่าแล้ว\\n\\nไม่จำเป็นต้องสร้างตัวโหลดใหม่\\nจะมีผลเมื่อบูตจาก FRIEND ไป DSM ครั้งถัดไป"
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "บันทึกการตั้งค่าแล้ว\n\nไม่จำเป็นต้องสร้างตัวโหลดใหม่\nจะใช้กับการทำงานที่เกี่ยวข้องครั้งถัดไป"
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "บันทึกการตั้งค่าแล้ว\\n\\nไม่จำเป็นต้องสร้างตัวโหลดใหม่\\nจะใช้กับการทำงานที่เกี่ยวข้องครั้งถัดไป"
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "บันทึกการตั้งค่าแล้ว\n\nสร้างตัวโหลดใหม่เพื่อรวมการเปลี่ยนแปลงนี้ในการบูตครั้งถัดไป"
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "บันทึกการตั้งค่าแล้ว\\n\\nสร้างตัวโหลดใหม่เพื่อรวมการเปลี่ยนแปลงนี้ในการบูตครั้งถัดไป"
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "ไม่ได้บันทึกการตั้งค่า"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "กู้คืนการตั้งค่าก่อนหน้าแล้ว\n\nการเปลี่ยนแปลงที่ถูกปฏิเสธ:\n%s\n\nข้อผิดพลาดการตรวจสอบ:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "กู้คืนการตั้งค่าก่อนหน้าแล้ว\\n\\nการเปลี่ยนแปลงที่ถูกปฏิเสธ:\\n%s\\n\\nข้อผิดพลาดการตรวจสอบ:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "ตรวจพบความไม่สอดคล้องของการตั้งค่าที่มีอยู่\nไม่ได้บันทึกค่าใหม่"
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "ตรวจพบความไม่สอดคล้องของการตั้งค่าที่มีอยู่\\nไม่ได้บันทึกค่าใหม่"

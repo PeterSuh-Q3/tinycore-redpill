@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "NetConsole günlüğü (İnternet gerekmez - önyükleme'den panic'e kadar gerçek zamanlı günlük LAN üzerinden gönderilir)"
 
 #: MSGTR135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "NetConsole Erken Günlük Ayarı\n\nMevcut durum: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "NetConsole Erken Günlük Ayarı\\n\\nMevcut durum: %s"
 
 #: MSGTR136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "NetConsole yapılandırması kaldırıldı."
 
 #: MSGTR140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "Günlükleri alacak bilgisayarın (dinleyici) IP adresini girin\n\n(Aynı LAN/switch üzerinde olmalıdır - İnternet/DHCP gerekmez)\nÖrnek: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "Günlükleri alacak bilgisayarın (dinleyici) IP adresini girin\\n\\n(Aynı LAN/switch üzerinde olmalıdır - İnternet/DHCP gerekmez)\\nÖrnek: 192.168.1.100"
 
 #: MSGTR141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "Bir ağ arayüzü tespit edilemedi."
 
 #: MSGTR143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "Dinleyicinin (%s) MAC adresi otomatik olarak bulunamadı.\n\nAynı switch/router'a bağlı olduğundan ve dinleyicinin güvenlik duvarının ping'i (ICMP) engellemediğinden emin olun.\n\nMAC adresini manuel olarak girerek devam etmek ister misiniz?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "Dinleyicinin (%s) MAC adresi otomatik olarak bulunamadı.\\n\\nAynı switch/router'a bağlı olduğundan ve dinleyicinin güvenlik duvarının ping'i (ICMP) engellemediğinden emin olun.\\n\\nMAC adresini manuel olarak girerek devam etmek ister misiniz?"
 
 #: MSGTR144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "Dinleyicinin MAC adresini girin (örnek: aa:bb:cc:dd:ee:ff)"
 
 #: MSGTR145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "Bu yapılandırma kaydedilsin mi?\n\n%s\n\nDinleyici bilgisayarın aşağıdaki komutla zaten beklemede olduğundan emin olun:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "Bu yapılandırma kaydedilsin mi?\\n\\n%s\\n\\nDinleyici bilgisayarın aşağıdaki komutla zaten beklemede olduğundan emin olun:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGTR146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "Kaydedildi.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir (lütfen build menüsüne gidin)."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Kaydedildi.\\n\\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir (lütfen build menüsüne gidin)."
 
 #: MSGTR147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "Herhangi bir ağ arayüzü algılanamadı."
 
 #: MSGTR151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "%s için statik ağ ayarlarını girin\n\nProxy örneği: http://192.168.1.10:3128 (ağınız tüm giden trafiğin bir proxy üzerinden geçmesini gerektirmiyorsa boş bırakın)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "%s için statik ağ ayarlarını girin\\n\\nProxy örneği: http://192.168.1.10:3128 (ağınız tüm giden trafiğin bir proxy üzerinden geçmesini gerektirmiyorsa boş bırakın)"
 
 #: MSGTR152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "Geçerli bir ağ geçidi adresi değil. Lütfen tekrar deneyin."
 
 #: MSGTR158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "Bu statik IP yapılandırması kaydedilsin mi?\n\nArayüz: %s\nIP Adresi: %s\nAğ Geçidi: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "Bu statik IP yapılandırması kaydedilsin mi?\\n\\nArayüz: %s\\nIP Adresi: %s\\nAğ Geçidi: %s\\nDNS: %s"
 
 #: MSGTR159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Kaydedildi.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Kaydedildi.\\n\\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
 
 #: MSGTR160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "DHCP'ye geri döndürüldü.\n\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "DHCP'ye geri döndürüldü.\\n\\n[!] Bunun etkili olması için yükleyiciyi şimdi yeniden derlemeniz gerekir."
 
 #: MSGTR161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "%s ülke kodu algılandı. Menü dili %s olarak değiştirilsin mi?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "Yapılandırma kaydedildi ve hemen uygulandı.\n\nYükleyicinin yeniden oluşturulması gerekmez."
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "Yapılandırma kaydedildi ve hemen uygulandı.\\n\\nYükleyicinin yeniden oluşturulması gerekmez."
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "Yapılandırma kaydedildi ve eşitlendi.\n\nYükleyicinin yeniden oluşturulması gerekmez.\nBir sonraki FRIEND üzerinden DSM önyüklemesinde uygulanacaktır."
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "Yapılandırma kaydedildi ve eşitlendi.\\n\\nYükleyicinin yeniden oluşturulması gerekmez.\\nBir sonraki FRIEND üzerinden DSM önyüklemesinde uygulanacaktır."
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "Yapılandırma kaydedildi.\n\nYükleyicinin yeniden oluşturulması gerekmez.\nBir sonraki ilgili işlemde kullanılacaktır."
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "Yapılandırma kaydedildi.\\n\\nYükleyicinin yeniden oluşturulması gerekmez.\\nBir sonraki ilgili işlemde kullanılacaktır."
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "Yapılandırma kaydedildi.\n\nBu değişikliği sonraki önyüklemeye dahil etmek için yükleyiciyi yeniden oluşturun."
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "Yapılandırma kaydedildi.\\n\\nBu değişikliği sonraki önyüklemeye dahil etmek için yükleyiciyi yeniden oluşturun."
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "Yapılandırma kaydedilmedi"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "Önceki yapılandırma geri yüklendi.\n\nReddedilen değişiklikler:\n%s\n\nDoğrulama hatası:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "Önceki yapılandırma geri yüklendi.\\n\\nReddedilen değişiklikler:\\n%s\\n\\nDoğrulama hatası:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "Mevcut yapılandırma tutarsızlığı algılandı.\nYeni değer kaydedilmedi."
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "Mevcut yapılandırma tutarsızlığı algılandı.\\nYeni değer kaydedilmedi."

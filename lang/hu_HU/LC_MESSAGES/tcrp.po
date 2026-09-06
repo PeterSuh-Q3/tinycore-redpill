@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "NetConsole napló (nincs szükség internetre - a rendszerindítástól a panicig valós idejű napló LAN-on keresztül)"
 
 #: MSGHU135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "NetConsole korai napló beállítása\n\nJelenlegi állapot: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "NetConsole korai napló beállítása\\n\\nJelenlegi állapot: %s"
 
 #: MSGHU136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "A NetConsole beállítás eltávolítva."
 
 #: MSGHU140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "Adja meg a naplókat fogadó számítógép (figyelő) IP-címét\n\n(Ugyanazon a LAN-on/switch-en kell lennie - internet/DHCP nem szükséges)\nPélda: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "Adja meg a naplókat fogadó számítógép (figyelő) IP-címét\\n\\n(Ugyanazon a LAN-on/switch-en kell lennie - internet/DHCP nem szükséges)\\nPélda: 192.168.1.100"
 
 #: MSGHU141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "Nem sikerült hálózati interfészt találni."
 
 #: MSGHU143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "Nem sikerült automatikusan megtalálni a figyelő (%s) MAC-címét.\n\nEllenőrizze, hogy ugyanahhoz a switch-hez/routerhez csatlakozik-e, és hogy a figyelő tűzfala nem blokkolja-e a pinget (ICMP).\n\nSzeretné manuálisan megadni a MAC-címet?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "Nem sikerült automatikusan megtalálni a figyelő (%s) MAC-címét.\\n\\nEllenőrizze, hogy ugyanahhoz a switch-hez/routerhez csatlakozik-e, és hogy a figyelő tűzfala nem blokkolja-e a pinget (ICMP).\\n\\nSzeretné manuálisan megadni a MAC-címet?"
 
 #: MSGHU144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "Adja meg a figyelő MAC-címét (példa: aa:bb:cc:dd:ee:ff)"
 
 #: MSGHU145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "Menti ezt a beállítást?\n\n%s\n\nGyőződjön meg róla, hogy a figyelő számítógép már várakozik a következő paranccsal:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "Menti ezt a beállítást?\\n\\n%s\\n\\nGyőződjön meg róla, hogy a figyelő számítógép már várakozik a következő paranccsal:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGHU146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "Mentve.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt (kérjük, lépjen a build menübe)."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "Mentve.\\n\\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt (kérjük, lépjen a build menübe)."
 
 #: MSGHU147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "Nem sikerült hálózati interfészt észlelni."
 
 #: MSGHU151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "Adja meg a statikus hálózati beállításokat ehhez: %s\n\nProxy példa: http://192.168.1.10:3128 (hagyja üresen, hacsak a hálózata nem követeli meg, hogy minden kimenő forgalom proxyn keresztül menjen)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "Adja meg a statikus hálózati beállításokat ehhez: %s\\n\\nProxy példa: http://192.168.1.10:3128 (hagyja üresen, hacsak a hálózata nem követeli meg, hogy minden kimenő forgalom proxyn keresztül menjen)"
 
 #: MSGHU152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "Érvénytelen átjárócím. Kérjük, próbálja újra."
 
 #: MSGHU158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "Menti ezt a statikus IP-konfigurációt?\n\nInterfész: %s\nIP-cím: %s\nÁtjáró: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "Menti ezt a statikus IP-konfigurációt?\\n\\nInterfész: %s\\nIP-cím: %s\\nÁtjáró: %s\\nDNS: %s"
 
 #: MSGHU159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Mentve.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Mentve.\\n\\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
 
 #: MSGHU160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "Visszaállítva DHCP-re.\n\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "Visszaállítva DHCP-re.\\n\\n[!] A módosítás érvénybe lépéséhez most újra kell építenie a betöltőt."
 
 #: MSGHU161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "A rendszer a következő országkódot észlelte: %s. Módosítja a menü nyelvét erre: %s?"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "A beállítás mentve és azonnal alkalmazva.\n\nA betöltő újraépítése nem szükséges."
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "A beállítás mentve és azonnal alkalmazva.\\n\\nA betöltő újraépítése nem szükséges."
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "A beállítás mentve és szinkronizálva.\n\nA betöltő újraépítése nem szükséges.\nA következő FRIEND-ről DSM-re indításkor lesz alkalmazva."
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "A beállítás mentve és szinkronizálva.\\n\\nA betöltő újraépítése nem szükséges.\\nA következő FRIEND-ről DSM-re indításkor lesz alkalmazva."
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "A beállítás mentve.\n\nA betöltő újraépítése nem szükséges.\nA következő kapcsolódó művelet során lesz használva."
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "A beállítás mentve.\\n\\nA betöltő újraépítése nem szükséges.\\nA következő kapcsolódó művelet során lesz használva."
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "A beállítás mentve.\n\nÉpítse újra a betöltőt, hogy a módosítás a következő indításkor érvényesüljön."
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "A beállítás mentve.\\n\\nÉpítse újra a betöltőt, hogy a módosítás a következő indításkor érvényesüljön."
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "A beállítás nem lett mentve"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "Az előző beállítás visszaállítva.\n\nElutasított módosítások:\n%s\n\nÉrvényesítési hiba:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "Az előző beállítás visszaállítva.\\n\\nElutasított módosítások:\\n%s\\n\\nÉrvényesítési hiba:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "Meglévő beállítási eltérés észlelve.\nAz új érték nem lett mentve."
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "Meglévő beállítási eltérés észlelve.\\nAz új érték nem lett mentve."

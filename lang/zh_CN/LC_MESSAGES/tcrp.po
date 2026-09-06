@@ -525,8 +525,8 @@ msgid "NetConsole log (no Internet needed - real-time boot-to-panic log over LAN
 msgstr "NetConsole日志 (无需互联网 - 通过局域网实时传输启动到崩溃的日志)"
 
 #: MSGCN135
-msgid "NetConsole Early Log Setup\n\nCurrent status: %s"
-msgstr "NetConsole早期日志设置\n\n当前状态: %s"
+msgid "NetConsole Early Log Setup\\n\\nCurrent status: %s"
+msgstr "NetConsole早期日志设置\\n\\n当前状态: %s"
 
 #: MSGCN136
 msgid "Not configured"
@@ -545,8 +545,8 @@ msgid "NetConsole configuration removed."
 msgstr "已删除NetConsole配置。"
 
 #: MSGCN140
-msgid "Enter the IP address of the PC that will receive the logs (listener).\n\n(Must be on the same LAN/switch - Internet/DHCP is not required)\nExample: 192.168.1.100"
-msgstr "请输入接收日志的电脑(监听端)的IP地址\n\n(必须与本机在同一局域网/交换机上 - 不需要互联网/DHCP)\n示例: 192.168.1.100"
+msgid "Enter the IP address of the PC that will receive the logs (listener).\\n\\n(Must be on the same LAN/switch - Internet/DHCP is not required)\\nExample: 192.168.1.100"
+msgstr "请输入接收日志的电脑(监听端)的IP地址\\n\\n(必须与本机在同一局域网/交换机上 - 不需要互联网/DHCP)\\n示例: 192.168.1.100"
 
 #: MSGCN141
 msgid "Not a valid IP address. Please try again."
@@ -557,20 +557,20 @@ msgid "Could not detect a network interface."
 msgstr "未能检测到网络接口。"
 
 #: MSGCN143
-msgid "Could not automatically find the MAC address of the listener (%s).\n\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\n\nDo you want to continue by entering the MAC address manually?"
-msgstr "未能自动找到监听端(%s)的MAC地址。\n\n请检查是否连接到同一交换机/路由器,以及监听端的防火墙是否阻止了ping(ICMP)。\n\n是否要手动输入MAC地址继续?"
+msgid "Could not automatically find the MAC address of the listener (%s).\\n\\nPlease check that it is connected to the same switch/router, and that the listener's firewall is not blocking ping (ICMP).\\n\\nDo you want to continue by entering the MAC address manually?"
+msgstr "未能自动找到监听端(%s)的MAC地址。\\n\\n请检查是否连接到同一交换机/路由器,以及监听端的防火墙是否阻止了ping(ICMP)。\\n\\n是否要手动输入MAC地址继续?"
 
 #: MSGCN144
 msgid "Enter the listener's MAC address (example: aa:bb:cc:dd:ee:ff)"
 msgstr "请输入监听端的MAC地址 (示例: aa:bb:cc:dd:ee:ff)"
 
 #: MSGCN145
-msgid "Save this configuration?\n\n%s\n\nMake sure the listener PC is already waiting with the following command:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
-msgstr "是否保存此配置?\n\n%s\n\n请确保监听端电脑已经用以下命令等待接收:\n\nmacOS/Linux: nc -lu -k %s\nWindows (ncat): ncat -lu %s"
+msgid "Save this configuration?\\n\\n%s\\n\\nMake sure the listener PC is already waiting with the following command:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
+msgstr "是否保存此配置?\\n\\n%s\\n\\n请确保监听端电脑已经用以下命令等待接收:\\n\\nmacOS/Linux: nc -lu -k %s\\nWindows (ncat): ncat -lu %s"
 
 #: MSGCN146
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
-msgstr "已保存。\n\n[!] 必须立即重新构建加载器才能生效 (请转到构建菜单)。"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect (please go to the build menu)."
+msgstr "已保存。\\n\\n[!] 必须立即重新构建加载器才能生效 (请转到构建菜单)。"
 
 #: MSGCN147
 msgid "Configure Static IP"
@@ -589,8 +589,8 @@ msgid "Could not detect any network interfaces."
 msgstr "未检测到任何网络接口。"
 
 #: MSGCN151
-msgid "Enter the static network settings for %s\n\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
-msgstr "请输入 %s 的静态网络设置\n\n代理示例: http://192.168.1.10:3128 (除非您的网络要求所有出站流量都必须经过代理,否则请留空)"
+msgid "Enter the static network settings for %s\\n\\nProxy example: http://192.168.1.10:3128 (leave blank unless your network requires all outbound traffic to go through a proxy)"
+msgstr "请输入 %s 的静态网络设置\\n\\n代理示例: http://192.168.1.10:3128 (除非您的网络要求所有出站流量都必须经过代理,否则请留空)"
 
 #: MSGCN152
 msgid "IP Address (CIDR)"
@@ -617,16 +617,16 @@ msgid "Not a valid gateway address. Please try again."
 msgstr "无效的网关地址。请重试。"
 
 #: MSGCN158
-msgid "Save this static IP configuration?\n\nInterface: %s\nIP Address: %s\nGateway: %s\nDNS: %s"
-msgstr "保存此静态IP配置?\n\n接口: %s\nIP地址: %s\n网关: %s\nDNS: %s"
+msgid "Save this static IP configuration?\\n\\nInterface: %s\\nIP Address: %s\\nGateway: %s\\nDNS: %s"
+msgstr "保存此静态IP配置?\\n\\n接口: %s\\nIP地址: %s\\n网关: %s\\nDNS: %s"
 
 #: MSGCN159
-msgid "Saved.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "已保存。\n\n[!] 必须立即重新构建加载器才能生效。"
+msgid "Saved.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "已保存。\\n\\n[!] 必须立即重新构建加载器才能生效。"
 
 #: MSGCN160
-msgid "Reverted to DHCP.\n\n[!] You must rebuild the loader now for this to take effect."
-msgstr "已恢复为DHCP。\n\n[!] 必须立即重新构建加载器才能生效。"
+msgid "Reverted to DHCP.\\n\\n[!] You must rebuild the loader now for this to take effect."
+msgstr "已恢复为DHCP。\\n\\n[!] 必须立即重新构建加载器才能生效。"
 
 #: MSGCN161
 msgid "Static IP Settings"
@@ -749,29 +749,29 @@ msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "检测到国家代码 %s。是否将菜单语言切换为 %s？"
 
 #: MSGZZ192
-msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
-msgstr "配置已保存并立即应用。\n\n无需重新构建引导器。"
+msgid "Configuration saved and applied now.\\n\\nNo loader rebuild is required."
+msgstr "配置已保存并立即应用。\\n\\n无需重新构建引导器。"
 
 #: MSGZZ193
-msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
-msgstr "配置已保存并同步。\n\n无需重新构建引导器。\n将在下次从 FRIEND 启动 DSM 时应用。"
+msgid "Configuration saved and synchronized.\\n\\nNo loader rebuild is required.\\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "配置已保存并同步。\\n\\n无需重新构建引导器。\\n将在下次从 FRIEND 启动 DSM 时应用。"
 
 #: MSGZZ194
-msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
-msgstr "配置已保存。\n\n无需重新构建引导器。\n将在下一次相关操作中使用。"
+msgid "Configuration saved.\\n\\nNo loader rebuild is required.\\nIt will be used by the next related action."
+msgstr "配置已保存。\\n\\n无需重新构建引导器。\\n将在下一次相关操作中使用。"
 
 #: MSGZZ195
-msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
-msgstr "配置已保存。\n\n要在下次启动中包含此更改，请重新构建引导器。"
+msgid "Configuration saved.\\n\\nRebuild the loader to include this change in the next boot."
+msgstr "配置已保存。\\n\\n要在下次启动中包含此更改，请重新构建引导器。"
 
 #: MSGZZ196
 msgid "Configuration was not saved"
 msgstr "配置未保存"
 
 #: MSGZZ197
-msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
-msgstr "已恢复之前的配置。\n\n被拒绝的更改:\n%s\n\n验证错误:\n%s"
+msgid "The previous configuration has been restored.\\n\\nRejected change(s):\\n%s\\n\\nValidation error:\\n%s"
+msgstr "已恢复之前的配置。\\n\\n被拒绝的更改:\\n%s\\n\\n验证错误:\\n%s"
 
 #: MSGZZ198
-msgid "Existing configuration inconsistency detected.\nNo new value was saved."
-msgstr "检测到现有配置不一致。\n新值未保存。"
+msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
+msgstr "检测到现有配置不一致。\\n新值未保存。"
