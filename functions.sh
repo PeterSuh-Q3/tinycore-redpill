@@ -3937,6 +3937,18 @@ function _cmdline_has_token() {
     return 1
 }
 
+# A trailing plus sign is part of several valid Synology model identifiers
+# (for example, syno_hw_version=DS3622xs+).  Reject only a plus sign outside
+# that model token; those are remnants of malformed string concatenation.
+function _cmdline_has_unsafe_plus() {
+    local line="$1" token
+    for token in ${line}; do
+        [[ "${token}" == syno_hw_version=* ]] && continue
+        [[ "${token}" == *"+"* ]] && return 0
+    done
+    return 1
+}
+
 # Check the persisted configuration before a build, or the composed CMD_LINE
 # immediately before the builder writes GRUB entries.  FRIEND's boot.sh builds
 # its kexec line independently at runtime and is intentionally out of scope.
@@ -3959,7 +3971,7 @@ function validate_loader_cmdline() {
         sata_line="$(jq -r '.general.sata_line // empty' "${userconfigfile}")"
 
         for line in "${usb_line}" "${sata_line}"; do
-            [[ "${line}" == *"+"* ]] && _cmdline_error "literal '+' found in a cmdline"
+            _cmdline_has_unsafe_plus "${line}" && _cmdline_error "literal '+' found outside syno_hw_version in a cmdline"
             for token in ${line}; do
                 [[ "${token}" == *: ]] && _cmdline_error "non-kernel token '${token}' found in a cmdline"
             done
@@ -4022,7 +4034,7 @@ function validate_loader_cmdline() {
         if [ "${BUS:-usb}" != "usb" ] && [ "${kmajor:-5}" -lt 5 ]; then
             for token in ${sata_line}; do _cmdline_has_token "${actual}" "${token}" || _cmdline_error "built CMD_LINE misses SATA token '${token}'"; done
         fi
-        [[ "${actual}" == *"+"* ]] && _cmdline_error "literal '+' found in built CMD_LINE"
+        _cmdline_has_unsafe_plus "${actual}" && _cmdline_error "literal '+' found outside syno_hw_version in built CMD_LINE"
         ;;
       *) echo "[cmdline-check] ERROR: unknown validation mode: ${mode}" >&2; return 2 ;;
     esac
