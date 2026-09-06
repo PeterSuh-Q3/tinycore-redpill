@@ -16,6 +16,18 @@
   long investigation or handoff.
 - For module-load failures, separately verify the requesting addon, declared
   dependencies, live `modules.dep`, and module files included in the loader.
+- Kernel-module pilots use the Ubuntu build host's root-owned
+  `/root/mshell-modules` checkout as the authoritative build worktree. Do not
+  use stale non-Git copies from ordinary user home directories as a source of
+  truth.
+- For a provider pilot, compile only from an exact matching DSM runtime
+  `.config` and `Module.symvers` plus the corresponding Synology GPL source.
+  Never resolve an `Unknown symbol` by copying a provider from another
+  platform, DSM release, or kernel family.
+- Treat a consumer `.ko` file as loadable only when all of its declared
+  provider modules are present and compatible. A `modules.dep` entry by itself
+  is not sufficient evidence because a partial pack can produce incomplete
+  dependency metadata.
 - Use `tools/prepare_release.py` for release preparation. Validate `.po`
   content before building `lang.tgz`; do not introduce literal `\\n\\n`
   sequences where gettext requires escaped multiline entries.
