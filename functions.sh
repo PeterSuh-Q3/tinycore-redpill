@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.3.9"
-builddate="2026.09.04"
+rploaderver="1.4.4.0"
+builddate="2026.09.06"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -973,6 +973,7 @@ function history() {
             Intel GPU Top, and AMDGPU packages now show progress consistently.
     1.4.3.9 Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
              and reliable locale selection after network readiness
+    1.4.4.0 Validated loader command line synchronization and build consistency checks
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1660,6 +1661,9 @@ EOF
 # Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
 # and reliable locale selection after network readiness
 
+# 2026.09.06 v1.4.4.0
+# Validated loader command line synchronization and build consistency checks
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2024,6 +2028,9 @@ function showlastupdate() {
 # 2026.09.04 v1.4.3.9
 # Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
 # and reliable locale selection after network readiness
+
+# 2026.09.06 v1.4.4.0
+# Validated loader command line synchronization and build consistency checks
 EOF
 }
 
@@ -3600,14 +3607,15 @@ echo
 
     macaddress2=$(echo $mac2 | sed -s 's/://g')
 
-    if [ $(cat user_config.json | grep "mac2" | wc -l) -gt 0 ]; then
-        bf_mac2="$(cat user_config.json | grep "mac2" | cut -d ':' -f 2 | cut -d '"' -f 2)"
-        cecho y "The Mac2 address : $bf_mac2 already exists. Change an existing value."
-        json="$(jq --arg var "$macaddress2" '.extra_cmdline.mac2 = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
-#        sed -i "/mac2/s/'$bf_mac2'/'$macaddress2'/g" user_config.json
-    else
-        sed -i "/\"extra_cmdline\": {/c\  \"extra_cmdline\": {\"mac2\": \"$macaddress2\",\"netif_num\": \"2\", "  user_config.json
+    # This legacy helper used direct jq/sed writes and therefore skipped
+    # sync_usb_line().  Use the shared writer so mac2/netif_num are mirrored
+    # into general.usb_line with the same de-duplication rules as menu_m.sh.
+    if [ "$(jq -r '.extra_cmdline.mac2 // empty' "${userconfigfile}" 2>/dev/null)" != "" ]; then
+        cecho y "The Mac2 address already exists. Change an existing value."
     fi
+    writeConfigKey "extra_cmdline" "mac2" "${macaddress2}"
+    writeConfigKey "extra_cmdline" "netif_num" "2"
+    sync_part_config
 
     echo "After changing user_config.json"      
     cat user_config.json
@@ -3878,6 +3886,153 @@ function strip_usb_line_key() {
 
     jq --arg new_line "${line}" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
         && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
+}
+
+# Update one user-managed loader command-line token without relying on sed.
+# USB and SATA lines stay as separate build inputs, but callers use this one
+# routine for usb, sata, or both.  An empty value removes the key.
+function set_loader_cmdline_option() {
+    local scope="$1" key="$2" value="${3:-}" field line token new_line
+    local -a tokens=()
+
+    case "${scope}" in usb|sata|both) ;; *)
+        echo "[cmdline-check] ERROR: invalid cmdline scope: ${scope}" >&2; return 2 ;; esac
+    if ! [[ "${key}" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+        echo "[cmdline-check] ERROR: invalid cmdline key: ${key}" >&2; return 2
+    fi
+    if [[ "${value}" =~ [[:space:]] ]]; then
+        echo "[cmdline-check] ERROR: cmdline values cannot contain whitespace: ${key}" >&2; return 2
+    fi
+
+    for field in $(case "${scope}" in usb) echo usb_line;; sata) echo sata_line;; both) echo "usb_line sata_line";; esac); do
+        line="$(jq -r --arg f "${field}" '.general[$f] // empty' "${userconfigfile}" 2>/dev/null)"
+        tokens=()
+        for token in ${line}; do
+            [[ "${token}" == "${key}="* ]] && continue
+            tokens+=("${token}")
+        done
+        [ -n "${value}" ] && tokens+=("${key}=${value}")
+        new_line="${tokens[*]}"
+        jq --arg f "${field}" --arg v "${new_line}" '.general[$f] = $v' "${userconfigfile}" > "${userconfigfile}.tmp" \
+            && cp "${userconfigfile}.tmp" "${userconfigfile}" && rm -f "${userconfigfile}.tmp" || return 1
+    done
+
+    sync_part_config
+    validate_loader_cmdline config
+}
+
+function _cmdline_key_count() {
+    local line="$1" key="$2" token count=0
+    for token in ${line}; do
+        [[ "${token}" == "${key}="* ]] && count=$((count + 1))
+    done
+    printf '%s' "${count}"
+}
+
+function _cmdline_has_token() {
+    local line="$1" wanted="$2" token
+    for token in ${line}; do
+        [ "${token}" = "${wanted}" ] && return 0
+    done
+    return 1
+}
+
+# Check the persisted configuration before a build, or the composed CMD_LINE
+# immediately before the builder writes GRUB entries.  FRIEND's boot.sh builds
+# its kexec line independently at runtime and is intentionally out of scope.
+# The checker reports rather than repairs: menu setters repair managed keys,
+# while manual custom options must never be silently discarded.
+function validate_loader_cmdline() {
+    local mode="${1:-config}" cfg="${2:-}" usb_line sata_line line key value count errors=0
+    local netif mac_count sata_map disk_map netconsole satadom i915mode actual cfg_file kmajor
+    local managed_keys="sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 netif_num vid pid SataPortMap DiskIdxMap sata_remap netconsole"
+
+    _cmdline_error() { echo "[cmdline-check] ERROR: $*" >&2; errors=$((errors + 1)); }
+
+    case "${mode}" in
+      config)
+        if ! jq empty "${userconfigfile}" >/dev/null 2>&1; then
+            _cmdline_error "user_config.json is not valid JSON"
+            return 1
+        fi
+        usb_line="$(jq -r '.general.usb_line // empty' "${userconfigfile}")"
+        sata_line="$(jq -r '.general.sata_line // empty' "${userconfigfile}")"
+
+        for line in "${usb_line}" "${sata_line}"; do
+            [[ "${line}" == *"+"* ]] && _cmdline_error "literal '+' found in a cmdline"
+            for token in ${line}; do
+                [[ "${token}" == *: ]] && _cmdline_error "non-kernel token '${token}' found in a cmdline"
+            done
+        done
+
+        # Every non-empty extra_cmdline entry is owned by usb_line and must be
+        # present exactly once with the same value.
+        while IFS=$'\t' read -r key value; do
+            [ -z "${value}" ] || [ "${value}" = "null" ] && continue
+            count=$(_cmdline_key_count "${usb_line}" "${key}")
+            [ "${count}" -eq 1 ] || _cmdline_error "extra_cmdline.${key} occurs ${count} times in general.usb_line"
+            _cmdline_has_token "${usb_line}" "${key}=${value}" || _cmdline_error "extra_cmdline.${key} value differs from general.usb_line"
+        done < <(jq -r '.extra_cmdline // {} | to_entries[] | "\(.key)\t\(.value)"' "${userconfigfile}")
+
+        # Detect stale tokens for keys MSHELL itself manages.  Unknown manual
+        # options are intentionally left alone.
+        for key in ${managed_keys}; do
+            if ! jq -e --arg k "${key}" '.extra_cmdline // {} | has($k)' "${userconfigfile}" >/dev/null 2>&1; then
+                count=$(_cmdline_key_count "${usb_line}" "${key}")
+                [ "${count}" -eq 0 ] || _cmdline_error "stale ${key}= token remains in general.usb_line"
+            fi
+        done
+
+        netif="$(jq -r '.extra_cmdline.netif_num // empty' "${userconfigfile}")"
+        mac_count="$(jq -r '[.extra_cmdline // {} | keys[]? | select(test("^mac[1-8]$"))] | length' "${userconfigfile}")"
+        if [ -n "${netif}" ] && [[ "${netif}" =~ ^[1-8]$ ]] && [ "${mac_count}" -ne "${netif}" ]; then
+            _cmdline_error "netif_num=${netif}, but ${mac_count} MAC address keys are configured"
+        fi
+
+        sata_map="$(jq -r '.extra_cmdline.SataPortMap // empty' "${userconfigfile}")"
+        disk_map="$(jq -r '.extra_cmdline.DiskIdxMap // empty' "${userconfigfile}")"
+        { [ -n "${sata_map}" ] && [ -z "${disk_map}" ]; } || { [ -z "${sata_map}" ] && [ -n "${disk_map}" ]; } && \
+            _cmdline_error "SataPortMap and DiskIdxMap must be set or cleared together"
+
+        netconsole="$(jq -r '.extra_cmdline.netconsole // empty' "${userconfigfile}")"
+        if [ -n "${netconsole}" ] && ! [[ "${netconsole}" =~ ^[0-9]+@[0-9.]+/[A-Za-z0-9_.:-]+,[0-9]+@[0-9.]+/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; then
+            _cmdline_error "netconsole has an invalid format"
+        fi
+
+        satadom="$(for token in ${sata_line}; do [[ "${token}" == synoboot_satadom=* ]] && echo "${token#*=}"; done | head -1)"
+        [ -z "${satadom}" ] || [[ "${satadom}" =~ ^[012]$ ]] || _cmdline_error "synoboot_satadom must be 0, 1, or 2"
+        [ "$(_cmdline_key_count "${sata_line}" synoboot_satadom)" -le 1 ] || _cmdline_error "synoboot_satadom is duplicated in general.sata_line"
+
+        i915mode="$(jq -r '.general.i915mode // "1"' "${userconfigfile}")"
+        if [ "${i915mode}" = "0" ]; then
+            [ "$(_cmdline_key_count "${usb_line}" i915.enable_psr)" -eq 1 ] || _cmdline_error "i915 PSR override is enabled but missing from usb_line"
+            [ -z "${sata_line}" ] || [ "$(_cmdline_key_count "${sata_line}" i915.enable_psr)" -eq 1 ] || _cmdline_error "i915 PSR override is enabled but missing from sata_line"
+        else
+            [ "$(_cmdline_key_count "${usb_line}" i915.enable_psr)" -eq 0 ] || _cmdline_error "disabled i915 PSR override remains in usb_line"
+            [ "$(_cmdline_key_count "${sata_line}" i915.enable_psr)" -eq 0 ] || _cmdline_error "disabled i915 PSR override remains in sata_line"
+        fi
+        ;;
+      built)
+        actual="${cfg}"
+        [ -n "${actual}" ] || { _cmdline_error "builder produced an empty CMD_LINE"; return 1; }
+        usb_line="$(jq -r '.general.usb_line // empty' "${userconfigfile}")"
+        sata_line="$(jq -r '.general.sata_line // empty' "${userconfigfile}")"
+        for token in ${usb_line}; do _cmdline_has_token "${actual}" "${token}" || _cmdline_error "built CMD_LINE misses USB token '${token}'"; done
+        kmajor="${KVER:-$(jq -r '.general.kver // empty' "${userconfigfile}")}"; kmajor="${kmajor%%.*}"
+        if [ "${BUS:-usb}" != "usb" ] && [ "${kmajor:-5}" -lt 5 ]; then
+            for token in ${sata_line}; do _cmdline_has_token "${actual}" "${token}" || _cmdline_error "built CMD_LINE misses SATA token '${token}'"; done
+        fi
+        [[ "${actual}" == *"+"* ]] && _cmdline_error "literal '+' found in built CMD_LINE"
+        ;;
+      *) echo "[cmdline-check] ERROR: unknown validation mode: ${mode}" >&2; return 2 ;;
+    esac
+
+    if [ "${errors}" -eq 0 ]; then
+        echo "[cmdline-check] ${mode}: PASS"
+        return 0
+    fi
+    echo "[cmdline-check] ${mode}: FAILED (${errors} issue(s))" >&2
+    return 1
 }
     
 function checkmachine() {
@@ -6110,6 +6265,20 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         msgwarning "Starting with kernel 5, the unused sata_line element is removed."
         json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
     fi    
+
+    # A failed cmdline check must abort the build.  The caller presents this
+    # file in a dialog, while cat keeps the same details in zlastbuild.log.
+    local CMDLINE_CHECK_LOG="/tmp/cmdline-check.log"
+    : > "${CMDLINE_CHECK_LOG}"
+    if ! validate_loader_cmdline config > "${CMDLINE_CHECK_LOG}" 2>&1; then
+        cat "${CMDLINE_CHECK_LOG}"
+        exit 99
+    fi
+    if ! validate_loader_cmdline built "${CMD_LINE}" >> "${CMDLINE_CHECK_LOG}" 2>&1; then
+        cat "${CMDLINE_CHECK_LOG}"
+        exit 99
+    fi
+    cat "${CMDLINE_CHECK_LOG}"
 
     sudo cp $userconfigfile /mnt/${loaderdisk}3/
 
@@ -8559,7 +8728,11 @@ function my() {
       cecho r "SN Gen/Mac Gen/Vid/Pid/SataPortMap detection skipped!!"
       if [ "${prevent_param}" = "N" ]; then
           cecho p "Remove Sataportmap,DiskIdxMap"
-          json="$(jq 'del(.extra_cmdline.SataPortMap, .extra_cmdline.DiskIdxMap)' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+          # Delete through the shared path so the corresponding stale tokens
+          # are removed from general.usb_line as well.
+          DeleteConfigKey "extra_cmdline" "SataPortMap"
+          DeleteConfigKey "extra_cmdline" "DiskIdxMap"
+          sync_part_config
       fi
       # menu_m.sh의 실제 빌드 메뉴는 항상 noconfig 인자를 붙여서 my()를 호출하므로
       # (menu_m.sh:1561/1563), 이 분기가 실사용자의 정상 빌드 경로다. satamap 실측

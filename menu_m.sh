@@ -508,8 +508,12 @@ function usbidentify() {
         vendorid="0x46f4"
         productid="0x0001"
         echo "Vendor ID : $vendorid Product ID : $productid"
-        json="$(jq --arg var "$productid" '.extra_cmdline.pid = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
-        json="$(jq --arg var "$vendorid" '.extra_cmdline.vid = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+        # Always use the shared extra_cmdline writer.  Besides changing the
+        # JSON value it synchronizes general.usb_line, which is the cmdline
+        # template consumed by the loader build.
+        writeConfigKey "extra_cmdline" "pid" "${productid}"
+        writeConfigKey "extra_cmdline" "vid" "${vendorid}"
+        sync_part_config
     else            
 
         lsusb -v 2>&1 | grep -B 33 -A 1 SCSI >/tmp/lsusb.out
@@ -528,8 +532,12 @@ function usbidentify() {
             if [ -n "$usbdevice" ] && [ -n "$vendorid" ] && [ -n "$productid" ]; then
                 echo "Found $usbdevice"
                 echo "Vendor ID : $vendorid Product ID : $productid"
-                json="$(jq --arg var "$productid" '.extra_cmdline.pid = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
-                json="$(jq --arg var "$vendorid" '.extra_cmdline.vid = $var' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+                # Keep extra_cmdline and general.usb_line in sync here too;
+                # the physical USB discovery path must behave exactly like
+                # the KVM/Proxmox path above.
+                writeConfigKey "extra_cmdline" "pid" "${productid}"
+                writeConfigKey "extra_cmdline" "vid" "${vendorid}"
+                sync_part_config
             else
                 echo "Sorry, no usb disk could be identified"
                 rm /tmp/lsusb.out
@@ -1195,6 +1203,7 @@ function netconsoleMenu() {
 
   if [ "${resp}" = "d" ]; then
     DeleteConfigKey "extra_cmdline" "netconsole"
+    validate_loader_cmdline config || true
     dialog --clear --backtitle "`backtitle`" --msgbox "${MSG139}" 0 0
     return
   fi
@@ -1253,6 +1262,7 @@ function netconsoleMenu() {
   [ $? -ne 0 ] && return
 
   writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
+  validate_loader_cmdline config || true
   dialog --clear --backtitle "`backtitle`" --msgbox "${MSG146}" 0 0
 }
 
@@ -1872,6 +1882,11 @@ function prevent() {
 ###############################################################################
 # Permits user edit the user config
 function editUserConfig() {
+  # A manual edit can add, replace, or remove arbitrary extra_cmdline keys.
+  # Keep the pre-edit key list so removed keys can also be removed from the
+  # mirrored general.usb_line rather than surviving as stale boot arguments.
+  local old_extra_keys new_extra_keys key
+  old_extra_keys="$(jq -r '.extra_cmdline // {} | keys[]?' "${userconfigfile}" 2>/dev/null)"
   while true; do
     dialog --backtitle "`backtitle`" --title "Edit with caution" \
       --editbox "${userconfigfile}" 0 0 2>"${TMP_PATH}/userconfig"
@@ -1891,6 +1906,18 @@ function editUserConfig() {
   done
 
   sync_part_config
+  # writeConfigKey() normally calls sync_usb_line(), but manual editing
+  # bypasses it.  First drop keys that disappeared, then mirror all remaining
+  # keys.  This makes manual editing obey the same safe cmdline contract as
+  # every menu-driven extra_cmdline update.
+  new_extra_keys=" $(jq -r '.extra_cmdline // {} | keys[]?' "${userconfigfile}" 2>/dev/null | tr '\n' ' ') "
+  while IFS= read -r key; do
+    [ -z "${key}" ] && continue
+    [[ "${new_extra_keys}" == *" ${key} "* ]] || strip_usb_line_key "${key}"
+  done <<< "${old_extra_keys}"
+  sync_usb_line
+  sync_part_config
+  validate_loader_cmdline config || true
 
   MODEL=$(readConfigKey "general" "model")
   SN=$(readConfigKey "extra_cmdline" "sn")
@@ -2036,6 +2063,8 @@ function checkUserConfig() {
 ###############################################################################
 # Where the magic happens!
 function make() {
+  local build_rc=0
+
 
   checkUserConfig 
   if [ $? -ne 0 ]; then
@@ -2052,12 +2081,26 @@ function make() {
 
   usbidentify
   clear
+  rm -f /tmp/cmdline-check.log
 
   if [ "${PREVENT_INIT}" = "OFF" ]; then
     my "${MODEL}"-"${BUILD}" noconfig "${1}" | tee "/home/tc/zlastbuild.log"
+    build_rc=${PIPESTATUS[0]}
   else
     my "${MODEL}"-"${BUILD}" noconfig "${1}" prevent_param | tee "/home/tc/zlastbuild.log"
-  fi 
+    build_rc=${PIPESTATUS[0]}
+  fi
+
+  # A pipeline normally exposes tee's exit status, which hid my() failures.
+  # Preserve my()'s code and present the dedicated consistency log in dialog.
+  if [ "${build_rc}" -ne 0 ]; then
+    if [ -s /tmp/cmdline-check.log ] && grep -qF '[cmdline-check]' /tmp/cmdline-check.log; then
+      dialog --clear --backtitle "`backtitle`" \
+        --title "Build Error: Cmdline Validation Failed" \
+        --textbox /tmp/cmdline-check.log 0 0
+    fi
+    return "${build_rc}"
+  fi
 
   if  [ -f /home/tc/custom-module/redpill.ko ]; then
     echo "Removing redpill.ko ..."
@@ -2576,34 +2619,29 @@ function packing_loader() {
 }
 
 function satadom_edit() {
-    # sed -i 는 구현에 따라 임시파일 생성 후 rename 방식을 쓸 수 있어
-    # 심볼릭 링크를 깨뜨릴 위험이 있다 - 출력을 임시파일로 받아 cp 로
-    # 타깃에 써서(심볼릭 링크를 따라가며) 링크를 유지한다.
-    sed "s/synoboot_satadom=[^ ]*/synoboot_satadom=${1}/g" /home/tc/user_config.json > "${TMP_PATH}/user_config.json.tmp" \
-    && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
-    && rm -f "${TMP_PATH}/user_config.json.tmp"
-    sync_part_config
+    # SATA DOM is a SATA-only boot option.  The shared token updater removes
+    # stale duplicates, preserves the config symlink, persists P3, and runs a
+    # configuration consistency check.
+    set_loader_cmdline_option sata "synoboot_satadom" "${1}"
     refresh_userconfig_hash
 }
 
 function i915_edit() {
 
   if [ "${I915MODE}" == "1" ]; then
-      jsonfile=$(jq '.general.usb_line += " i915.enable_psr=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json
-      jsonfile=$(jq '.general.sata_line += " i915.enable_psr=0 "' /home/tc/user_config.json) && echo $jsonfile | jq . > /home/tc/user_config.json    
       I915MODE="0"
+      writeConfigKey "general" "i915mode" "${I915MODE}"
+      # This option must apply whichever legacy USB/SATA boot path is used.
+      # The common updater de-duplicates it and validates the resulting lines.
+      set_loader_cmdline_option both "i915.enable_psr" "0"
       DISPLAYI915="Enable" 
   else
-      # sed -i 대신 임시파일 경유 cp: 위 satadom_edit() 과 동일한 이유로
-      # 심볼릭 링크(mshellSymlinkUserConfig() 적용시) 를 유지하기 위함.
-      sed "s/i915.enable_psr=0//g" /home/tc/user_config.json > "${TMP_PATH}/user_config.json.tmp" \
-          && cp "${TMP_PATH}/user_config.json.tmp" /home/tc/user_config.json \
-          && rm -f "${TMP_PATH}/user_config.json.tmp"
       I915MODE="1"
+      writeConfigKey "general" "i915mode" "${I915MODE}"
+      set_loader_cmdline_option both "i915.enable_psr" ""
       DISPLAYI915="Disable"
   fi
 
-  writeConfigKey "general" "i915mode" "${I915MODE}"
   sync_part_config
   refresh_userconfig_hash
 }
@@ -3064,6 +3102,7 @@ function remapsata() {
   
   #echo $remap
   writeConfigKey "extra_cmdline" "sata_remap" "${remap}"
+  validate_loader_cmdline config || true
 }
 
 function chk_diskcnt() {
