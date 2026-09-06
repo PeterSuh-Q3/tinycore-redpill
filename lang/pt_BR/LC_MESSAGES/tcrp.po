@@ -747,3 +747,31 @@ msgstr "O acesso ao GitHub não está disponível. Usar o modo de desvio DoH ago
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "Código de país %s detectado. Alterar o idioma do menu para %s?"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "A configuração foi salva e aplicada agora.\n\nNão é necessário reconstruir o carregador."
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "A configuração foi salva e sincronizada.\n\nNão é necessário reconstruir o carregador.\nEla será aplicada na próxima inicialização do DSM pelo FRIEND."
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "A configuração foi salva.\n\nNão é necessário reconstruir o carregador.\nEla será usada na próxima ação relacionada."
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "A configuração foi salva.\n\nReconstrua o carregador para incluir esta alteração na próxima inicialização."
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "A configuração não foi salva"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "A configuração anterior foi restaurada.\n\nAlterações rejeitadas:\n%s\n\nErro de validação:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "Foi detectada uma inconsistência na configuração existente.\nO novo valor não foi salvo."

@@ -599,6 +599,7 @@ function seleudev() {
   sudo rm -rf /home/tc/redpill-load/custom/extensions/ddsml
   sudo rm -rf /home/tc/redpill-load/custom/extensions/eudev
   writeConfigKey "general" "devmod" "${DMPM}"
+  notify_config_saved rebuild
 
 }
 
@@ -774,6 +775,7 @@ function selectldrmode() {
   #   all-modules    → tcrp-modules/main/all-modules/rpext-index.json
   #   custom-modules → tcrp-modules/main/custom-modules/rpext-index.json
   syncBundledExtsModule "${MDLNAME}"
+  notify_config_saved rebuild
 }
 
 # bundled-exts.json 의 *-modules 키를 ${1} 로 통일한다.
@@ -877,6 +879,9 @@ checkAndResetModuleName
 ###############################################################################
 # Shows available models to user choose one
 function modelMenu() {
+  # MODEL → Version → SN → MAC is the baseline loader-build wizard.  Do not
+  # emit save-result dialogs here even though model selection persists several
+  # related defaults; the following build step is mandatory by design.
 
   # Set the path for the models.json file
   MODELS_JSON="/home/tc/models.json"
@@ -1142,6 +1147,7 @@ function storagepanel() {
   BAYSIZE="`<${TMP_PATH}/resp`"
   writeConfigKey "general" "bay" "${BAYSIZE}"
   bay="${BAYSIZE}"
+  notify_config_saved deferred
   
 }
 
@@ -1163,6 +1169,74 @@ function cachepanel() {
 
   SSDBAY="${CACHESIZE}"
   writeConfigKey "general" "ssdbay" "${SSDBAY}"
+  notify_config_saved deferred
+}
+
+###############################################################################
+# User-visible configuration-save result handling.
+#
+# writeConfigKey() is also used during menu startup for internal bookkeeping,
+# so notifications deliberately live at completed user actions rather than in
+# the generic writer.  Command-line actions use a small transaction: retain a
+# pre-change snapshot, validate the synchronized config, and restore it if the
+# new value is invalid.  The failure dialog contains the old and rejected JSON
+# lines, allowing the user to see exactly what was rolled back.
+CONFIG_CHANGE_SNAPSHOT=""
+CONFIG_CHANGE_LABEL=""
+
+function config_change_begin() {
+  CONFIG_CHANGE_LABEL="$1"
+  CONFIG_CHANGE_SNAPSHOT="${TMP_PATH}/user_config.before.$$"
+  cp "${userconfigfile}" "${CONFIG_CHANGE_SNAPSHOT}" || {
+    CONFIG_CHANGE_SNAPSHOT=""
+    return 1
+  }
+}
+
+function notify_config_saved() {
+  local mode="$1" message
+  case "${mode}" in
+    now)      message="${MSGZZ192}" ;;
+    cmdline)  message="${MSGZZ193}" ;;
+    deferred) message="${MSGZZ194}" ;;
+    rebuild)  message="${MSGZZ195}" ;;
+    *) return 2 ;;
+  esac
+  dialog --clear --backtitle "`backtitle`" --msgbox "${message}" 0 0
+}
+
+function config_change_reject() {
+  local validation_log="${TMP_PATH}/cmdline-validation.$$"
+  local report="${TMP_PATH}/config-save-error.$$"
+  local changes errors
+
+  validate_loader_cmdline config >"${validation_log}" 2>&1
+  errors=$(cat "${validation_log}" 2>/dev/null)
+  changes=$(diff -u "${CONFIG_CHANGE_SNAPSHOT}" "${userconfigfile}" 2>/dev/null | \
+    sed -n '/^[-+][[:space:]]*"/p' | sed 's/^-/Previous: /; s/^+/Rejected: /')
+  [ -n "${changes}" ] || changes="${MSGZZ198}"
+
+  # cp follows the P3 user_config.json symbolic link, unlike mv/redirection.
+  cp "${CONFIG_CHANGE_SNAPSHOT}" "${userconfigfile}" && sync_part_config
+  {
+    printf '%s\n\n' "${MSGZZ196}"
+    printf "${MSGZZ197}\n" "${changes}" "${errors}"
+  } >"${report}"
+  dialog --clear --backtitle "`backtitle`" --title "${MSGZZ196}" --textbox "${report}" 0 0
+  rm -f "${validation_log}" "${report}" "${CONFIG_CHANGE_SNAPSHOT}"
+  CONFIG_CHANGE_SNAPSHOT=""
+  return 1
+}
+
+function config_change_finish() {
+  local mode="$1"
+  if [ "${mode}" = "cmdline" ] && ! validate_loader_cmdline config >/dev/null 2>&1; then
+    config_change_reject
+    return 1
+  fi
+  rm -f "${CONFIG_CHANGE_SNAPSHOT}"
+  CONFIG_CHANGE_SNAPSHOT=""
+  notify_config_saved "${mode}"
 }
 
 ###############################################################################
@@ -1202,8 +1276,9 @@ function netconsoleMenu() {
   [ -z "${resp}" ] && return
 
   if [ "${resp}" = "d" ]; then
+    config_change_begin "NetConsole" || return
     DeleteConfigKey "extra_cmdline" "netconsole"
-    validate_loader_cmdline config || true
+    config_change_finish cmdline || return
     dialog --clear --backtitle "`backtitle`" --msgbox "${MSG139}" 0 0
     return
   fi
@@ -1261,9 +1336,9 @@ function netconsoleMenu() {
     --yesno "$(printf "${MSG145}" "${netconsole_val}" "${target_port}" "${target_port}")" 0 0
   [ $? -ne 0 ] && return
 
+  config_change_begin "NetConsole" || return
   writeConfigKey "extra_cmdline" "netconsole" "${netconsole_val}"
-  validate_loader_cmdline config || true
-  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG146}" 0 0
+  config_change_finish cmdline || return
 }
 
 ###############################################################################
@@ -1373,7 +1448,7 @@ function staticIpMenu() {
   if [ "${STATIC_IP_CONFIGURED:-false}" = "true" ]; then
     if apply_static_ip_now; then
       STATIC_IP_APPLIED="true"
-      dialog --clear --backtitle "`backtitle`" --msgbox "${MSG185}" 0 0
+      notify_config_saved now
     else
       dialog --clear --backtitle "`backtitle`" --msgbox "${MSG186}" 0 0
     fi
@@ -1397,6 +1472,7 @@ function githubDnsModeMenu() {
       # here too.  Only MSHELL-tagged DoH host records are removed.
       sudo sed -i '/[[:space:]]# MSHELL DoH$/d' /etc/hosts 2>/dev/null
       sudo sed -i '/^[[:space:]]*nameserver[[:space:]]\+1\.1\.1\.1[[:space:]]\+# MSHELL DoH$/d' /etc/resolv.conf 2>/dev/null
+      notify_config_saved now
       ;;
     doh)
       writeConfigKey "github_access" "mode" "${choice}"
@@ -1416,6 +1492,7 @@ function githubDnsModeMenu() {
           printf '%s\t%s\t# MSHELL DoH\n' "${ip}" "${domain}" | sudo tee -a /etc/hosts >/dev/null
         fi
       done
+      notify_config_saved now
       ;;
   esac
 }
@@ -1447,6 +1524,7 @@ function staticIpDnsMenu() {
     json=$(jq --arg d "${newval}" '.netdns.ipdns = $d' "${cfg}")
   fi
   echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  STATIC_IP_CONFIGURED="true"
 }
 
 # 전역 프록시(HTTP_PROXY 등) 설정 - NIC과 무관하게 하나만 존재한다.
@@ -1474,6 +1552,7 @@ function staticIpProxyMenu() {
     json=$(jq --arg p "${newval}" '.netproxy.ipproxy = $p' "${cfg}")
   fi
   echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+  STATIC_IP_CONFIGURED="true"
 }
 
 # 아직 .ipsettings[]에 없는 실물 NIC 중 하나를 골라 새로 추가한다.
@@ -1657,7 +1736,6 @@ function staticIpDeleteEntry() {
   # IP가 그대로 붙어있고 DHCP 클라이언트도 안 뜬 채로 남는다(2026-08-29,
   # 실기에서 eth2~eth4 삭제 후 재현됨).
   revert_iface_to_dhcp "${iface}"
-  dialog --clear --backtitle "`backtitle`" --msgbox "${MSG160}" 0 0
 }
 
 # This branch is reached before the normal repository/model initialization.
@@ -1687,6 +1765,9 @@ fi
 ###############################################################################
 # Shows menu to user type one or generate randomly
 function serialMenu() {
+  # MODEL → Version → SN → MAC is the normal loader-build wizard.  Its
+  # writes are intentionally excluded from save-result dialogs; the user is
+  # expected to continue directly to the build step.
   eval "MSG30=\"\${MSG${tz}30}\""
   eval "MSG31=\"\${MSG${tz}31}\""  
   while true; do
@@ -1725,6 +1806,8 @@ function serialMenu() {
 ###############################################################################
 # Shows menu to generate randomly or to get realmac
 function macMenu() {
+  # See serialMenu(): MAC and netif_num writes belong to the baseline build
+  # wizard and must not show a separate save/rebuild dialog.
   eval "MSG32=\"\${MSG${tz}32}\""
   eval "MSG33=\"\${MSG${tz}33}\""
   eval "MSG34=\"\${MSG${tz}34}\""  
@@ -1875,8 +1958,7 @@ function prevent() {
         echo "SataPortMap/DiskIdxMap initialization protection: Disabled"
     fi
     writeConfigKey "general" "prevent_init" "${PREVENT_INIT}"
-    echo "press any key to continue..."
-    read answer
+    notify_config_saved deferred
 }
 
 ###############################################################################
@@ -1887,11 +1969,12 @@ function editUserConfig() {
   # mirrored general.usb_line rather than surviving as stale boot arguments.
   local old_extra_keys new_extra_keys key
   old_extra_keys="$(jq -r '.extra_cmdline // {} | keys[]?' "${userconfigfile}" 2>/dev/null)"
+  config_change_begin "Manual user_config.json edit" || return
   while true; do
     dialog --backtitle "`backtitle`" --title "Edit with caution" \
       --editbox "${userconfigfile}" 0 0 2>"${TMP_PATH}/userconfig"
     
-    [ $? -ne 0 ] && return
+    [ $? -ne 0 ] && { rm -f "${CONFIG_CHANGE_SNAPSHOT}"; CONFIG_CHANGE_SNAPSHOT=""; return; }
 
     # JSON format validation
     if jq . "${TMP_PATH}/userconfig" > /dev/null 2>&1; then
@@ -1917,7 +2000,7 @@ function editUserConfig() {
   done <<< "${old_extra_keys}"
   sync_usb_line
   sync_part_config
-  validate_loader_cmdline config || true
+  config_change_finish cmdline || return
 
   MODEL=$(readConfigKey "general" "model")
   SN=$(readConfigKey "extra_cmdline" "sn")
@@ -2177,6 +2260,7 @@ function langMenu() {
 
   tz="ZZ"
   load_zz
+  notify_config_saved now
   
   setSuggest $MODEL
   resetNvidiaIfUnsupported
@@ -2210,9 +2294,7 @@ function keymapMenu() {
   sed -i "/loadkmap/d" /opt/bootsync.sh
   echo "loadkmap < /usr/share/kmap/${LAYOUT}/${KEYMAP}.kmap &" >> /opt/bootsync.sh
   refresh_userconfig_hash
-  
-  echo
-  echo "Since the keymap has been changed,"
+  notify_config_saved deferred
   restart
 }
 
@@ -2589,6 +2671,7 @@ function nvidiaMenu() {
                   writeConfigKey "general" "nvidia_enabled" "${NVIDIA_ENABLED}" ;;
           exit)   return ;;
         esac
+        notify_config_saved rebuild
         break
       fi
       i=$((i+1))
@@ -2628,6 +2711,8 @@ function satadom_edit() {
 
 function i915_edit() {
 
+  config_change_begin "i915 PSR" || return
+
   if [ "${I915MODE}" == "1" ]; then
       I915MODE="0"
       writeConfigKey "general" "i915mode" "${I915MODE}"
@@ -2644,6 +2729,7 @@ function i915_edit() {
 
   sync_part_config
   refresh_userconfig_hash
+  config_change_finish cmdline || return
 }
 
 function defaultchange() {
@@ -2709,7 +2795,9 @@ function changesatadom() {
   [ $? -ne 0 ] && return
   resp="$(cat "${TMP_PATH}/resp" 2>/dev/null)"
   [ -z "${resp}" ] && return
+  config_change_begin "SATA DOM" || return
   satadom_edit "${resp}"
+  config_change_finish cmdline || return
   
   SATADOM="${resp}"
   if [ "${SATADOM}" = "0" ]; then
@@ -2783,11 +2871,13 @@ function additional() {
     a) 
       [ "${spoof}" = "Add" ] && add-addon "mac-spoof" || del-addon "mac-spoof"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("mac-spoof")') = true ] && spoof="Remove" || spoof="Add"
+      notify_config_saved rebuild
       default_resp="a"
       ;;
     y) 
       [ "${dbgutils}" = "Add" ] && add-addon "dbgutils" || del-addon "dbgutils"
       [ $(cat ~/redpill-load/bundled-exts.json | jq 'has("dbgutils")') = true ] && dbgutils="Remove" || dbgutils="Add"
+      notify_config_saved rebuild
       default_resp="y"
       ;;
     j) changesatadom; default_resp="j";;
@@ -2948,6 +3038,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       fi
       writeConfigKey "general" "nvmesystem" "${NVMES}"
       writeConfigKey "general" "devmod" "${DMPM}"
+      notify_config_saved rebuild
       NEXT="z" ;;
     h)
       # 메뉴 표시가 이미 (Enabled)/(Disabled)로 현재 상태를 보여주고 있으니,
@@ -2969,6 +3060,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
         VMTOOLS="false"
       fi
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
+      notify_config_saved rebuild
       NEXT="z" ;;
     z) return;;
     *) return;;
@@ -3101,8 +3193,9 @@ function remapsata() {
   done
   
   #echo $remap
+  config_change_begin "SATA Remap" || return
   writeConfigKey "extra_cmdline" "sata_remap" "${remap}"
-  validate_loader_cmdline config || true
+  config_change_finish cmdline
 }
 
 function chk_diskcnt() {
@@ -3431,8 +3524,7 @@ function showAutoUpdateMenu() {
     if [ ${EXIT_CODE} -ne 0 ]; then
       writeConfigKey "general" "tcbautoupd"    "${TCB}"
       writeConfigKey "general" "friendautoupd" "${FKC}"
-      dialog --infobox "${MSG114}" 3 25
-      sleep 1
+      notify_config_saved deferred
       refresh_userconfig_hash
       clear
       return 0

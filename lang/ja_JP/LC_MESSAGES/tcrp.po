@@ -747,3 +747,31 @@ msgstr "GitHub に接続できません。DoH バイパスモードを使用し�
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "国コード %s を検出しました。メニューの言語を %s に変更しますか？"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "設定を保存し、現在適用しました。\n\nローダーを再ビルドする必要はありません。"
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "設定を保存して同期しました。\n\nローダーを再ビルドする必要はありません。\n次回の FRIEND から DSM への起動時に適用されます。"
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "設定を保存しました。\n\nローダーを再ビルドする必要はありません。\n次の関連操作で使用されます。"
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "設定を保存しました。\n\n次回の起動にこの変更を含めるには、ローダーを再ビルドしてください。"
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "設定は保存されませんでした"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "以前の設定を復元しました。\n\n拒否された変更:\n%s\n\n検証エラー:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "既存の設定不整合を検出しました。\n新しい値は保存されませんでした。"

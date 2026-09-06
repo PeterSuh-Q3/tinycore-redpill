@@ -747,3 +747,31 @@ msgstr "GitHub पहुँच उपलब्ध नहीं है। क्�
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "देश कोड %s पाया गया। मेनू भाषा को %s में बदलें?"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "कॉन्फ़िगरेशन सहेज कर तुरंत लागू कर दिया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।"
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "कॉन्फ़िगरेशन सहेज कर समन्वयित किया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\nअगली FRIEND से DSM बूट पर इसे लागू किया जाएगा।"
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\n\nलोडर को फिर से बनाने की आवश्यकता नहीं है।\nअगली संबंधित कार्रवाई में इसका उपयोग होगा।"
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "कॉन्फ़िगरेशन सहेज दिया गया।\n\nअगले बूट में बदलाव शामिल करने के लिए लोडर को फिर से बनाएँ।"
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "कॉन्फ़िगरेशन सहेजा नहीं गया"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "पिछला कॉन्फ़िगरेशन पुनर्स्थापित कर दिया गया।\n\nअस्वीकृत परिवर्तन:\n%s\n\nसत्यापन त्रुटि:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "मौजूदा कॉन्फ़िगरेशन असंगति मिली।\nनया मान सहेजा नहीं गया।"

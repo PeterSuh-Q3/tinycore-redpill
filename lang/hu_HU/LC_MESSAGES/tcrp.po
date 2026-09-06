@@ -747,3 +747,31 @@ msgstr "A GitHub nem érhető el. Használja most a DoH megkerülési módot?"
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "A rendszer a következő országkódot észlelte: %s. Módosítja a menü nyelvét erre: %s?"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "A beállítás mentve és azonnal alkalmazva.\n\nA betöltő újraépítése nem szükséges."
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "A beállítás mentve és szinkronizálva.\n\nA betöltő újraépítése nem szükséges.\nA következő FRIEND-ről DSM-re indításkor lesz alkalmazva."
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "A beállítás mentve.\n\nA betöltő újraépítése nem szükséges.\nA következő kapcsolódó művelet során lesz használva."
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "A beállítás mentve.\n\nÉpítse újra a betöltőt, hogy a módosítás a következő indításkor érvényesüljön."
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "A beállítás nem lett mentve"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "Az előző beállítás visszaállítva.\n\nElutasított módosítások:\n%s\n\nÉrvényesítési hiba:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "Meglévő beállítási eltérés észlelve.\nAz új érték nem lett mentve."

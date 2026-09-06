@@ -751,3 +751,31 @@ msgstr "GitHub에 접속할 수 없습니다. 지금 DoH 우회 모드를 사용
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "국가 코드 %s가 감지되었습니다. 메뉴 언어를 %s로 변경하시겠습니까?"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "설정이 저장되어 현재 적용되었습니다.\n\n로더를 재빌드할 필요가 없습니다."
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "설정이 저장되고 동기화되었습니다.\n\n로더를 재빌드할 필요가 없습니다.\n다음 FRIEND에서 DSM으로 부팅할 때 적용됩니다."
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "설정이 저장되었습니다.\n\n로더를 재빌드할 필요가 없습니다.\n다음 관련 동작에서 사용됩니다."
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "설정이 저장되었습니다.\n\n다음 부팅에 이 변경을 포함하려면 로더를 재빌드하세요."
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "설정이 저장되지 않았습니다"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "이전 설정을 복원했습니다.\n\n거부된 변경:\n%s\n\n검증 오류:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "기존 설정의 불일치가 감지되었습니다.\n새 값은 저장되지 않았습니다."

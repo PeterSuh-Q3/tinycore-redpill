@@ -747,3 +747,31 @@ msgstr "无法访问 GitHub。现在使用 DoH 绕过模式吗？"
 #: MSGZZ191
 msgid "Country code %s detected. Change the menu language to %s?"
 msgstr "检测到国家代码 %s。是否将菜单语言切换为 %s？"
+
+#: MSGZZ192
+msgid "Configuration saved and applied now.\n\nNo loader rebuild is required."
+msgstr "配置已保存并立即应用。\n\n无需重新构建引导器。"
+
+#: MSGZZ193
+msgid "Configuration saved and synchronized.\n\nNo loader rebuild is required.\nIt will be applied on the next FRIEND to DSM boot."
+msgstr "配置已保存并同步。\n\n无需重新构建引导器。\n将在下次从 FRIEND 启动 DSM 时应用。"
+
+#: MSGZZ194
+msgid "Configuration saved.\n\nNo loader rebuild is required.\nIt will be used by the next related action."
+msgstr "配置已保存。\n\n无需重新构建引导器。\n将在下一次相关操作中使用。"
+
+#: MSGZZ195
+msgid "Configuration saved.\n\nRebuild the loader to include this change in the next boot."
+msgstr "配置已保存。\n\n要在下次启动中包含此更改，请重新构建引导器。"
+
+#: MSGZZ196
+msgid "Configuration was not saved"
+msgstr "配置未保存"
+
+#: MSGZZ197
+msgid "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s"
+msgstr "已恢复之前的配置。\n\n被拒绝的更改:\n%s\n\n验证错误:\n%s"
+
+#: MSGZZ198
+msgid "Existing configuration inconsistency detected.\nNo new value was saved."
+msgstr "检测到现有配置不一致。\n新值未保存。"

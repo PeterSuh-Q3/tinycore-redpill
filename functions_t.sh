@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.4.0"
+rploaderver="1.4.4.1"
 builddate="2026.09.06"
 redpillmake="prod"
 
@@ -974,6 +974,7 @@ function history() {
     1.4.3.9 Added optional DoH fallback for Alpine GitHub downloads unified SPK download progress
              and reliable locale selection after network readiness
     1.4.4.0 Validated loader command line synchronization and build consistency checks
+    1.4.4.1 Added configuration save guidance and safe command line rollback
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1664,6 +1665,9 @@ EOF
 # 2026.09.06 v1.4.4.0
 # Validated loader command line synchronization and build consistency checks
 
+# 2026.09.06 v1.4.4.1
+# Added configuration save guidance and safe command line rollback
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2031,6 +2035,9 @@ function showlastupdate() {
 
 # 2026.09.06 v1.4.4.0
 # Validated loader command line synchronization and build consistency checks
+
+# 2026.09.06 v1.4.4.1
+# Added configuration save guidance and safe command line rollback
 EOF
 }
 
