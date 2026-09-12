@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.4.1"
-builddate="2026.09.06"
+rploaderver="1.4.4.2"
+builddate="2026.09.12"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -975,6 +975,7 @@ function history() {
              and reliable locale selection after network readiness
     1.4.4.0 Validated loader command line synchronization and build consistency checks
     1.4.4.1 Added configuration save guidance and safe command line rollback
+    1.4.4.2 Added Denverton DVA7400 model guidance for NVIDIA RTX 2000-class deep-learning GPUs
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1668,6 +1669,9 @@ EOF
 # 2026.09.06 v1.4.4.1
 # Added configuration save guidance and safe command line rollback
 
+# 2026.09.12 v1.4.4.2
+# Added Denverton DVA7400 model guidance for NVIDIA RTX 2000-class deep-learning GPUs
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2038,6 +2042,9 @@ function showlastupdate() {
 
 # 2026.09.06 v1.4.4.1
 # Added configuration save guidance and safe command line rollback
+
+# 2026.09.12 v1.4.4.2
+# Added Denverton DVA7400 model guidance for NVIDIA RTX 2000-class deep-learning GPUs
 EOF
 }
 
