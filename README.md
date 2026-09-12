@@ -215,50 +215,38 @@ https://github.com/
 
 Create an account with Sign Up and then log in with Sign In.
 
-2. If you write an issue in this issue, the loader will be automatically built based on the model in the content you wrote.
+2. Open the repository's [Issues page](https://github.com/PeterSuh-Q3/tinycore-redpill/issues), select **New issue**, then choose **Custom loader build**. Submitting this form starts an automated loader build.
 
-https://github.com/PeterSuh-Q3/alpine-redpill/issues
+3. Enter the required fields.
 
-This is using the GitHub ACTIONS-COOL build bot.
+- **Model**: an exact supported model name, such as `DVA7400` or `SA6400`.
+- **DSM version**: the exact version in `X.Y.Z-build` form, such as `7.4.1-90080`.
+- **Output format**: choose `both`, `img`, or `vmdk`.
+- **MAC addresses**, **serial number**, and **language** are optional. Leave MAC/serial blank to have them generated automatically.
 
-![21e6b8bb01a0f49b976a6f175173a8b1](https://github.com/user-attachments/assets/f0385210-792f-4a82-b118-254926dbe0b3)
+![Custom loader build form: required fields](docs/assets/custom-loader-build-form-main.png)
 
-3. Use the **Custom loader build** issue form. It guides the required model, DSM version, and output format fields; the workflow rejects unsupported model/version combinations, malformed or duplicate MAC addresses, and unsafe serial values before starting a build. The issue is public, so do not enter a real serial number or MAC address unless you accept it being public.
+![Custom loader build form: optional fields](docs/assets/custom-loader-build-form-options.png)
 
-The JSON method below remains available for older links, but is validated with the same rules.
+The workflow validates the request before it starts the expensive build. Unsupported model/version combinations, malformed or duplicate MAC addresses, and invalid serial values are rejected with an explanation on the issue.
 
-The title of the issue (the word custom must be included in the title.)
+> **Privacy notice:** Issues in this public repository are public. Do not provide a real serial number or MAC address unless you accept that it will be visible to everyone.
 
-custom SA6400
+4. Select **Create**. The submitted issue shows the values that will be used for the build. The `custom` label is applied automatically.
 
-The content of the main text is
+![Submitted custom loader build request](docs/assets/custom-loader-build-submitted.png)
 
-{"model":"SA6400","version":"7.2.2-72806"}
+### Legacy JSON requests
 
-Or
+Existing integrations that submit JSON remain supported, but the Issue Form is recommended. Use a title beginning with `custom` and a JSON body, for example:
 
-If you have a full-size serial and Mac address, please enter it in the following format. (Mac addresses are supported up to 4, mac4 only.)
+```text
+Title: custom SA6400
 
-{"model":"SA6400","version":"7.2.2-72806","mac1":"112233445566","mac2":"77889900aabb","sn":"1111222233333"}
+{"model":"SA6400","version":"7.4.1-90080","format":"both"}
+```
 
-If the Mac address and serial are omitted, they will be randomly generated.
-
-You must write it in the form of a JSON body like this.
-
-You can change the model and version, but if you make even the slightest mistake in spelling, the build will not be done properly.
-
-![a09f1c3d82f63c2cf7dfd917c0b694b4](https://github.com/user-attachments/assets/64f09a2f-2c57-4e3a-bd19-5e3dbfae3fe9)
-
-![dc286e5ddbfb72f5fb42345de1c99ea3](https://github.com/user-attachments/assets/c53d2c1c-1329-42d1-bcd4-1d4f787a2d1f)
-
-![40931b574eb514bb95cc73b8b573a282](https://github.com/user-attachments/assets/c9a1fd02-16b6-47ff-8efb-82e9a61f5db0)
-
-
-4. Save the issue
-
-If you go to the Actions side, you will see an orange icon and the loader build will proceed.
-
-https://github.com/PeterSuh-Q3/alpine-redpill/actions
+5. Open the repository's [Actions page](https://github.com/PeterSuh-Q3/tinycore-redpill/actions) to follow the build.
 
 Workflow runs · PeterSuh-Q3/alpine-redpill
 github.com
