@@ -1,0 +1,66 @@
+name: Custom loader build
+description: Request a validated custom MSHELL loader build.
+title: "Custom loader build"
+labels: [custom]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Choose a supported model and enter an exact DSM version. Do not post a real serial number or MAC address in this public repository unless you accept that it will be public.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Use an exact supported model name, for example DVA7400 or SA6400.
+      placeholder: DVA7400
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: DSM version
+      description: Exact DSM version in X.Y.Z-build format.
+      placeholder: 7.4.1-90080
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Output format
+      options:
+        - both
+        - img
+        - vmdk
+    validations:
+      required: true
+  - type: input
+    id: mac1
+    attributes:
+      label: MAC address 1
+      description: Optional; exactly 12 hexadecimal characters, without separators.
+      placeholder: 001132A1B2C3
+  - type: input
+    id: mac2
+    attributes:
+      label: MAC address 2
+      description: Optional; exactly 12 hexadecimal characters, without separators.
+  - type: input
+    id: mac3
+    attributes:
+      label: MAC address 3
+      description: Optional; exactly 12 hexadecimal characters, without separators.
+  - type: input
+    id: mac4
+    attributes:
+      label: MAC address 4
+      description: Optional; exactly 12 hexadecimal characters, without separators.
+  - type: input
+    id: serial
+    attributes:
+      label: Serial number
+      description: Optional; letters and numbers only.
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Optional DSM language code, for example en_US or ko_KR.

@@ -223,7 +223,11 @@ This is using the GitHub ACTIONS-COOL build bot.
 
 ![21e6b8bb01a0f49b976a6f175173a8b1](https://github.com/user-attachments/assets/f0385210-792f-4a82-b118-254926dbe0b3)
 
-3. The title of the issue (the word custom must be included in the title.)
+3. Use the **Custom loader build** issue form. It guides the required model, DSM version, and output format fields; the workflow rejects unsupported model/version combinations, malformed or duplicate MAC addresses, and unsafe serial values before starting a build. The issue is public, so do not enter a real serial number or MAC address unless you accept it being public.
+
+The JSON method below remains available for older links, but is validated with the same rules.
+
+The title of the issue (the word custom must be included in the title.)
 
 custom SA6400
 

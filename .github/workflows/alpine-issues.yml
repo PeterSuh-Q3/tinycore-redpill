@@ -27,6 +27,7 @@ jobs:
           # -*- coding: utf-8 -*-
           import json
           import os
+          import re
 
           def set_env(name, value):
               with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
@@ -75,6 +76,22 @@ jobs:
                   format = jsonbody.get("format", "")
                   language = jsonbody.get("language", "")
 
+              elif re.search(r"^### Model\s*$", issuebody, re.MULTILINE):
+                  def form_value(label):
+                      match = re.search(rf"^### {re.escape(label)}\s*\n\n(.+?)(?=\n\n### |\Z)", issuebody, re.MULTILINE | re.DOTALL)
+                      return match.group(1).strip() if match else ""
+
+                  iscustom = "true"
+                  model = form_value("Model")
+                  version = form_value("DSM version")
+                  mac1 = form_value("MAC address 1")
+                  mac2 = form_value("MAC address 2")
+                  mac3 = form_value("MAC address 3")
+                  mac4 = form_value("MAC address 4")
+                  sn = form_value("Serial number")
+                  format = form_value("Output format")
+                  language = form_value("Language")
+
           except json.JSONDecodeError as e:
               json_error = "true"
               iscustom = "false"
@@ -87,6 +104,38 @@ jobs:
 
           except ValueError:
               pass
+
+          if iscustom == "true":
+              with open("models.json", encoding="utf-8") as f:
+                  platforms = json.load(f)
+              supported_models = {item for platform in platforms.values() for item in platform["models"]}
+              supported_majors = {
+                  major for platform in platforms.values() if model in platform["models"]
+                  for major in platform["productvers"]
+              }
+              errors = []
+              if model not in supported_models:
+                  errors.append(f"Unsupported model: {model or '(empty)'}")
+              if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+-[0-9]+", version or ""):
+                  errors.append("DSM version must use the form X.Y.Z-build, for example 7.4.1-90080.")
+              elif ".".join(version.split("-")[0].split(".")[:2]) not in supported_majors:
+                  errors.append(f"DSM {version.split('.')[0]}.{version.split('.')[1]} is not supported by {model}.")
+              if format not in ("", "img", "vmdk", "both"):
+                  errors.append("Output format must be img, vmdk, or both.")
+              for index, mac in enumerate((mac1, mac2, mac3, mac4, mac5, mac6, mac7, mac8), start=1):
+                  if mac and not re.fullmatch(r"[0-9A-Fa-f]{12}", mac):
+                      errors.append(f"MAC address {index} must contain exactly 12 hexadecimal characters.")
+              supplied_macs = [mac.lower() for mac in (mac1, mac2, mac3, mac4, mac5, mac6, mac7, mac8) if mac]
+              if len(supplied_macs) != len(set(supplied_macs)):
+                  errors.append("MAC addresses must not be duplicated.")
+              if sn and not re.fullmatch(r"[A-Za-z0-9]{1,32}", sn):
+                  errors.append("Serial number may contain only letters and numbers (maximum 32 characters).")
+              if language and not re.fullmatch(r"[A-Za-z_]{2,16}", language):
+                  errors.append("Language must contain only letters and underscores.")
+              if errors:
+                  json_error = "true"
+                  iscustom = "false"
+                  json_error_message = "\n".join(f"- {error}" for error in errors)
 
           if iscustom == "false" and json_error == "false":
               if issuebody.find("DMI") < 0 and issuebody.find("CPU") < 0 and issuebody.find("NIC") < 0:
@@ -137,7 +186,7 @@ jobs:
           <!-- workflow:json-error -->
           Hi @${{ github.event.issue.user.login }}.
 
-          Your submitted `custom` issue body contains invalid JSON.
+          Your custom loader request contains invalid input.
 
           ${{ env.JSON_ERROR_MESSAGE }}
           EOF
