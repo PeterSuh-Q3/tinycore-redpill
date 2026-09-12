@@ -121,6 +121,41 @@ build pilot before any module-pack publication.
   `Unknown symbol` failures. This is stricter than the former consumer-file
   existence check.
 
+### GPL source-closure pilot results
+
+- The 5.10.55 GPL tree can reconstruct the I801 closure from source:
+  `check_signature.ko` and `i2c-i801.ko` compiled with matching vermagic and
+  an explicit generated-symbol dependency. This remains a pilot until live
+  module-load validation proves that the DSM runtime accepts the provider.
+- Regmap core must **not** be rebuilt as an external module: its exports are
+  already supplied by the DSM kernel image. `regmap-i2c.ko`, `adm9240.ko`, and
+  `lm75.ko` compiled successfully as an external closure when they consume
+  that in-kernel core. `hwmon-vid` remains a required provider for `adm9240`.
+- The GPL source does not contain a source file for the pre-existing
+  `r8153_ecm.ko`; it contains `usbnet` and `cdc_ether` only. The old
+  `r8153_ecm.ko` is therefore not reproducible from this source baseline and
+  must not be promoted as a source-built closure.
+- `mmc_core`, `mmc_block`, `rtsx_pci`, and `rtsx_pci_sdmmc` compile from the
+  GPL tree with a complete declared chain. The Realtek SD host depends on
+  `rtsx_pci` and `mmc_core`.
+- The SDHCI PCI chain exposes a source/runtime configuration mismatch: the
+  GPL source expects the GLI `read_l` member while the matching runtime config
+  omits it. Although `iosf_mbi`, `sdhci-pci-data`, `cqhci`, and `sdhci` can be
+  compiled individually, a combined `sdhci-pci.ko` must not be shipped from
+  this mismatched GPL baseline.
+- The Type-C TCPM closure cannot safely be externalized from this baseline:
+  the runtime config has no `CONFIG_POWER_SUPPLY`, while TCPM needs the power
+  supply class. Compiling that class externally conflicts with the runtime
+  header stubs. Do not force its config or package Type-C consumers until a
+  matching source/runtime pair is available.
+- A full epyc7002 candidate pack was built on the authoritative host by
+  overlaying the 15 source-built pilot modules onto the existing 407-module
+  pack. Advisory `depmod -e` comparison introduced no new failed modules and
+  eliminated the existing `r8153_ecm`/`cdc_ncm` failure records. The candidate
+  archive is a host-local pilot artifact only; it has not been copied into a
+  tracked module directory, committed, or published. Live DSM load validation
+  remains mandatory before doing so.
+
 ### Hardware evidence from the diagnostic system
 
 - Intel Haswell SMBus controller is present, so the I801 host controller is
@@ -128,14 +163,45 @@ build pilot before any module-pack publication.
 - No USB Realtek NIC was observed. Unconditional `r8153_ecm` loading is not
   needed on this hardware.
 
+## Published module-closure build
+
+- `mshell-modules` commit `863ce57` publishes the 15-module closure for all
+  currently represented kernel families: 16 targets on `5.10.55+` and 30
+  targets on `4.4.302+`.
+- Every target was rebuilt from the corresponding compiler-image runtime
+  `.config` and `Module.symvers`, checked for the target vermagic, and checked
+  for the direct `mmc_block -> mmc_core`, `rtsx_pci_sdmmc ->
+  {rtsx_pci,mmc_core}`, and `sdhci-pltfm -> sdhci` provider relations.
+- The 4.4.302 build script initially looked for `mmc_block.ko` in the wrong
+  `drivers/mmc/core` directory. It now builds that target from
+  `drivers/mmc/card`; `rtsx_pci.ko` is sourced from `drivers/mfd` for this
+  kernel family. This was validated first on apollolake before the full run.
+- Build worktrees and candidate outputs remain untracked on the build host;
+  only the original module directories and the three source manifests were
+  committed. No release archive or workflow was triggered.
+
+## Debug-information-free module payload (uncommitted)
+
+- The 15 source-built closure modules were found to carry DWARF debug
+  information, which substantially inflated the 26.9.8 pack despite an
+  unchanged functional closure. On the authoritative build host,
+  `strip --strip-debug` was applied only to those 15 modules in all 46 target
+  directories (690 files). A recoverable pre-strip copy is retained outside
+  the Git worktree on that host.
+- Full post-strip validation found zero remaining `debug_info` sections, zero
+  vermagic mismatches, and zero failures in the `mmc_block -> mmc_core`,
+  `rtsx_pci_sdmmc -> rtsx_pci`, and `sdhci-pltfm -> sdhci` dependency checks.
+  This preserves module metadata while removing symbols used only for debug.
+- The tracked module files are modified on the build host but have not been
+  committed, pushed, packed, or released. A fresh release asset pack must be
+  generated only after an explicit publication request.
+
 ## Recommended next work
 
 1. Change `ddsml` to remove `r8153_ecm` from unconditional preload, then test
    a matching USB ECM device separately with a complete dependency build.
-2. Copy the pilot script to the Ubuntu build host and run it only after the
-   exact DSM runtime archive and Synology GPL source archive are identified.
-3. Test the resulting six-module closure on the target epyc7002 DSM 7.4
-   device before changing the published pack.
+2. Test the resulting closure on a target epyc7002 DSM 7.4 system before
+   enabling broader unconditional module loading.
 4. Keep or remove `i2c-i801.ko` according to the pilot result; do not ship its
    current unresolved version.
 5. Test a system with the relevant hardware and one without it; confirm no

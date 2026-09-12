@@ -2534,14 +2534,14 @@ function ensure_loader_partition_mounted() {
     sudo mkdir -p "${mount_point}"
 
     if mountpoint -q "${mount_point}"; then
-        _sync_tcrp_alias "${part}" "${mount_point}"
+        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
         return 0
     fi
 
     sudo mount "${dev}"
 
     if mountpoint -q "${mount_point}"; then
-        _sync_tcrp_alias "${part}" "${mount_point}"
+        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
         return 0
     fi
 
@@ -2573,7 +2573,12 @@ function _sync_tcrp_alias() {
         return 0
     fi
 
-    sudo ln -s "${mount_point}" /mnt/tcrp
+    # When /mnt/tcrp already points to a mount directory, plain `ln -s`
+    # follows that link and attempts to create <mount_point>/<basename>.
+    # Loader partition 3 is FAT/VFAT and cannot contain symlinks, so use
+    # -n to replace the alias itself rather than dereferencing it.
+    sudo ln -sfn "${mount_point}" /mnt/tcrp || return 1
+    [ "$(readlink /mnt/tcrp)" = "${mount_point}" ] || return 1
 }
 
 function get_alpine_os_device() {
