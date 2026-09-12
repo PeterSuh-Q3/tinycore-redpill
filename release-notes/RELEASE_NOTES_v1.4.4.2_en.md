@@ -3,7 +3,7 @@
 ## DVA7400 platform support
 
 - Adds DVA7400 to the supported model list and model suggestion menu.
-- Correctly maps DVA7400 to the V1000NK platform and kernel 5.10 family instead of Denverton and kernel 4.4.
+- Maps DVA7400 to the V1000NK platform and kernel 5.10 family.
 - CPU: AMD Ryzen 1780B.
 - AI acceleration: NVIDIA RTX 2000 Ada or RTX PRO 2000 Blackwell-class discrete GPU.
 - Capacity: up to 100 cameras and up to 40 concurrent real-time AI analysis tasks.
@@ -17,7 +17,3 @@
 - Makes the stable `/mnt/tcrp` loader-partition alias safe to refresh repeatedly.
 - Uses a non-dereferencing symbolic-link update so an existing `/mnt/tcrp` link is replaced directly rather than followed into the FAT loader partition.
 - Verifies the resulting alias target and propagates a failure to the caller when the alias cannot be maintained.
-
-## Consistency
-
-- Keeps the production and test-track functions files synchronized, including the corrected V1000NK platform history.
