@@ -79,7 +79,8 @@ jobs:
               elif re.search(r"^### Model\s*$", issuebody, re.MULTILINE):
                   def form_value(label):
                       match = re.search(rf"^### {re.escape(label)}\s*\n\n(.+?)(?=\n\n### |\Z)", issuebody, re.MULTILINE | re.DOTALL)
-                      return match.group(1).strip() if match else ""
+                      value = match.group(1).strip() if match else ""
+                      return "" if value == "_No response_" else value
 
                   iscustom = "true"
                   model = form_value("Model")
@@ -192,7 +193,7 @@ jobs:
           EOF
           )"
 
-      - name: Fail on invalid JSON
+      - name: Fail on invalid input
         if: env.json_error == 'true'
         run: |
           echo "Invalid JSON detected in issue body."
