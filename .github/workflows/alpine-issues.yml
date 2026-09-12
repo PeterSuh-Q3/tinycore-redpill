@@ -153,11 +153,29 @@ jobs:
         if: env.iscustom == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODEL_LABEL: ${{ env.model }}
         run: |
+          if [ -n "$MODEL_LABEL" ] && ! gh label list \
+            --repo "${{ github.repository }}" \
+            --search "$MODEL_LABEL" \
+            --limit 1000 \
+            --json name \
+            --jq '.[].name' | grep -Fxq "$MODEL_LABEL"; then
+            gh label create "$MODEL_LABEL" \
+              --repo "${{ github.repository }}" \
+              --color "0E8A16" \
+              --description "Custom loader build for $MODEL_LABEL"
+          fi
+
           gh issue edit ${{ github.event.issue.number }} \
             --repo ${{ github.repository }} \
-            --add-label "custom" \
-            --add-label "${{ env.model }}"
+            --add-label "custom"
+
+          if [ -n "$MODEL_LABEL" ]; then
+            gh issue edit ${{ github.event.issue.number }} \
+              --repo "${{ github.repository }}" \
+              --add-label "$MODEL_LABEL"
+          fi
 
       - name: build tinycore-redpill loader with lastest img
         id: build-loader
