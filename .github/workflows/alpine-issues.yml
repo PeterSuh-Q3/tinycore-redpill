@@ -59,7 +59,7 @@ jobs:
           language = ""
 
           try:
-              if issuetitle.lower().startswith("custom"):
+              if issuetitle.lower().startswith("custom") and not re.search(r"^### Model\s*$", issuebody, re.MULTILINE):
                   jsonbody = json.loads(issuebody)
                   iscustom = "true"
                   model = jsonbody.get("model", "")
