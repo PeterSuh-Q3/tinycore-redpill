@@ -1059,7 +1059,7 @@ function setSuggest() {
     DS2419+II)   platform="denverton";bay="TOWER_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}25}, \${MSG${tz}21}\"";;
     DVA3219)     platform="denverton";bay="TOWER_4_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}25}, \${MSG${tz}21}\"";;    
     DVA3221)     platform="denverton";bay="TOWER_4_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";; 
-    DVA7400)     platform="denverton";bay="RACK_12_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}199}, \${MSG${tz}21}\"";;
+    DVA7400)     platform="v1000nk(DT)";bay="RACK_12_Bay";mcpu="KERNEL 5.10";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}199}, \${MSG${tz}21}\"";;
     RS820+)      platform="denverton";bay="RACK_4_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     RS820RP+)    platform="denverton";bay="RACK_4_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}24}, \${MSG${tz}21}\"";;
     DS1618+)     platform="denverton";bay="TOWER_6_Bay";mcpu="KERNEL 4.4";eval "desc=\"[${MODEL}]:${platform},${bay},${mcpu}, \${MSG${tz}23}, \${MSG${tz}25}, \${MSG${tz}21}\"";;
