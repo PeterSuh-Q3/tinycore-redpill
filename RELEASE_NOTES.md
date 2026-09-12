@@ -1,5 +1,5 @@
-89138c0486b59dcd4bcb2523ea2427c7cdc33423
-9fdef0f21a5bee77fbae59b02211afbf4e9ab23e
-a8f15bbb908950c5e574e0ec44b196b5ce23639e
+79a72428e61c6b53bd97313a38ffae09fb50727b
+a56940fbb3783f5ccb752c39aa706c3dc18fd3c8
+6fd08cd7df97b7c83cca15b31b983201bf04621f
 
-    1.4.4.1 Added configuration save guidance and safe command line rollback
+    1.4.4.2 Added V1000NK DVA7400 model guidance for NVIDIA RTX 2000-class deep-learning GPUs
