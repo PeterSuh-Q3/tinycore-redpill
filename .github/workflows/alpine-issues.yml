@@ -193,20 +193,27 @@ jobs:
           sudo chmod +x /home/tc/writekey.sh
           ls -ltr /home/tc
 
-          TAG="$(curl --connect-timeout 5 -skL "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases/latest" | jq -r '.tag_name')"
+          RELEASE_JSON="$(curl --fail --silent --show-error --connect-timeout 5 --location "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases/latest")"
+          TAG="$(printf '%s' "$RELEASE_JSON" | jq -r '.tag_name')"
           if [ -z "${TAG}" ] || [ "${TAG}" = "null" ]; then
             echo "Failed to resolve latest release tag."
             exit 1
           fi
+          IMAGE_URL="$(printf '%s' "$RELEASE_JSON" | jq -r '.assets[] | select(.name | endswith(".m-shell.img.gz")) | .browser_download_url' | head -n 1)"
+          if [ -z "${IMAGE_URL}" ] || [ "${IMAGE_URL}" = "null" ]; then
+            echo "Failed to find an m-shell image asset in release ${TAG}."
+            exit 1
+          fi
           echo "TAG is ${TAG}"
-          curl -kfL# -o tinycore-redpill.${TAG}.m-shell.img.gz https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/tinycore-redpill.${TAG}.m-shell.img.gz
-          gunzip tinycore-redpill.${TAG}.m-shell.img.gz
+          echo "Downloading ${IMAGE_URL}"
+          curl --fail --location --show-error --retry 3 -o base-m-shell.img.gz "$IMAGE_URL"
+          gunzip base-m-shell.img.gz
           pwd
           ls -ltr
           echo "TAG=${TAG}" >> $GITHUB_OUTPUT
 
           LOOPX=$(sudo losetup -f)
-          sudo losetup -P ${LOOPX} tinycore-redpill.${TAG}.m-shell.img
+          sudo losetup -P ${LOOPX} base-m-shell.img
           sudo fdisk -l ${LOOPX}
 
           loaderdisk=$(echo ${LOOPX} | cut -c 6-12 )
