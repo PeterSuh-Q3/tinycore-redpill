@@ -6,6 +6,22 @@ mount -o remount,size=90% / 2>/dev/null || true
 /usr/local/sbin/rebuildfstab
 /usr/local/sbin/setup-disk-swap
 
+# The RTC on unattended appliances can be years behind.  Refresh it before
+# the first HTTPS operation: apk repositories and GitHub reject certificates
+# outside their validity period.  BusyBox ntpd is available from alpine-base,
+# so this does not depend on a package that has not been restored yet.
+# Keep the local console usable when the network is absent, but never run the
+# package restore with an invalid clock after a reachable network was found.
+sync_clock_before_https() {
+  local server year
+  for server in time.cloudflare.com time.google.com pool.ntp.org; do
+    timeout 15 busybox ntpd -n -q -p "${server}" >/tmp/mshell-ntp.log 2>&1 || true
+    year="$(date +%Y 2>/dev/null || echo 0)"
+    [ "${year}" -ge 2024 ] && return 0
+  done
+  return 1
+}
+
 ALP_DEV="$(blkid -L alpine 2>/dev/null)"
 if [ -n "${ALP_DEV}" ]; then
   SRC_MNT="$(mount | awk -v d="${ALP_DEV}" '$1 == d { print $3; exit }')"
@@ -22,6 +38,10 @@ if [ -n "${ALP_DEV}" ]; then
 fi
 
 [ -f /etc/apk/world ] || exit 0
+if ! sync_clock_before_https; then
+  echo "MSHELL: system clock synchronization failed; skipping HTTPS package restore." >&2
+  exit 0
+fi
 apk add --update $(cat /etc/apk/world) > /tmp/pkg-restore.log 2>&1
 
 # A disk-specific NVRAM entry avoids firmware selecting a co-installed
