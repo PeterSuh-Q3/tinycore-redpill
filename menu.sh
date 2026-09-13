@@ -822,9 +822,10 @@ if [ "${offline}" = "NO" ]; then
     # 같은 엉뚱한 파일명으로 저장할 수 있어 curl 버전에 기대지 않음).
     curl -skL# -o models.json "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/models.json?_cb=$(date +%s%N 2>/dev/null || date +%s)"
     if [ "$oldver" = "test" ]; then
-      # The ramdisk patch-family pilot is tested from its dedicated branch;
-      # normal builds continue to clone redpill-load master.
-      export RPLOAD_BRANCH="codex/ramdisk-patch-families-v2"
+      # The ramdisk patch-family changes are now promoted to redpill-load
+      # master; keep test mode on that branch even when an older pilot
+      # checkout is already present.
+      export RPLOAD_BRANCH="master"
       gitdownload
       cecho g "###############################  This is Test Mode  ############################"
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
