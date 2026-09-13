@@ -3736,15 +3736,13 @@ function _usb_line_managed_keys() {
     printf '%s' 'sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num SataPortMap DiskIdxMap'
 }
 
-# Remove obsolete copies of MSHELL-managed extra_cmdline keys from usb_line.
-# This repairs old configurations regardless of whether the stale key was
-# removed through DeleteConfigKey(), direct jq editing, or an older MSHELL.
-function prune_stale_usb_line_options() {
-    local line token key new_line current_extra_keys managed_keys changed=0
+# Filter an arbitrary USB cmdline value against the current extra_cmdline.
+# Build helpers can reconstruct USB_LINE after sync_usb_line() has run, so
+# sanitizing only the JSON field is not sufficient: stale managed tokens must
+# also be removed from the in-memory value immediately before it is used.
+function filter_stale_usb_line_options() {
+    local line="$1" token key current_extra_keys managed_keys
     local -a tokens=()
-
-    line="$(jq -r '.general.usb_line // empty' "${userconfigfile}" 2>/dev/null)"
-    [ -n "${line}" ] || return 0
 
     managed_keys=" $(_usb_line_managed_keys) "
     current_extra_keys=" $(jq -r '.extra_cmdline // {} | keys[]?' "${userconfigfile}" 2>/dev/null | tr '\n' ' ') "
@@ -3753,14 +3751,25 @@ function prune_stale_usb_line_options() {
         key="${token%%=*}"
         if [[ "${token}" == *=* ]] && [[ "${managed_keys}" == *" ${key} "* ]] && \
            [[ "${current_extra_keys}" != *" ${key} "* ]]; then
-            changed=1
             continue
         fi
         tokens+=("${token}")
     done
 
-    [ "${changed}" -eq 1 ] || return 0
-    new_line="${tokens[*]}"
+    printf '%s\n' "${tokens[*]}"
+}
+
+# Remove obsolete copies of MSHELL-managed extra_cmdline keys from usb_line.
+# This repairs old configurations regardless of whether the stale key was
+# removed through DeleteConfigKey(), direct jq editing, or an older MSHELL.
+function prune_stale_usb_line_options() {
+    local line new_line
+
+    line="$(jq -r '.general.usb_line // empty' "${userconfigfile}" 2>/dev/null)"
+    [ -n "${line}" ] || return 0
+
+    new_line="$(filter_stale_usb_line_options "${line}")"
+    [ "${new_line}" = "${line}" ] && return 0
     jq --arg new_line "${new_line}" '.general.usb_line = $new_line' "${userconfigfile}" > "${userconfigfile}.tmp" \
         && cp "${userconfigfile}.tmp" "${userconfigfile}" && rm -f "${userconfigfile}.tmp"
 }
@@ -3839,6 +3848,7 @@ function preserve_usb_line_options() {
     local skip_next="false"
 
     existing_line=$(jq -r '.general.usb_line // empty' "$userconfigfile" 2>/dev/null)
+    existing_line="$(filter_stale_usb_line_options "${existing_line}")"
     [ -z "${existing_line}" ] && {
         printf '%s\n' "${generated_line}"
         return
@@ -6268,6 +6278,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # /tmp/tempentry.txt only has generated defaults. Merge back options that
     # exist solely in general.usb_line before using and persisting CMD_LINE.
     USB_LINE="$(preserve_usb_line_options "${USB_LINE}")"
+    USB_LINE="$(filter_stale_usb_line_options "${USB_LINE}")"
 
     if [ "${BUS}" = "usb" ]; then
         CMD_LINE="${USB_LINE}"
@@ -6328,7 +6339,18 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     updateuserconfigfield "general" "zimghash" "$zimghash"
     rdhash=$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')
     updateuserconfigfield "general" "rdhash" "$rdhash"
-    
+
+    # Some legacy build helpers can rebuild USB_LINE after the first merge.
+    # Reconcile it once more at the persistence boundary, then rebuild
+    # CMD_LINE from the same clean input so config and generated cmdline stay
+    # identical for validation.
+    USB_LINE="$(filter_stale_usb_line_options "${USB_LINE}")"
+    if [ "${BUS}" = "usb" ] || [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -ge 5 ]; then
+        CMD_LINE="${USB_LINE}"
+    else
+        CMD_LINE="$(cmdline_append "${USB_LINE}" "${SATA_LINE}")"
+    fi
+
     msgwarning "Updated user_config with USB Command Line : $USB_LINE"
     json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
     if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
