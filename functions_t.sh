@@ -6489,6 +6489,41 @@ NCEOF
     # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
     # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
     sudo cat $rdtemp/linuxrc.syno
+    # DSM 7.4.1-90080 introduced a 120 x 5-second disk-ready retry before it
+    # attempts md0 assembly.  That protects an existing DSM installation whose
+    # SCSI disks arrive late, but wastes ten minutes on a genuinely blank first
+    # install disk: md0 cannot exist until the installer has created its system
+    # partitions.  Patch only the known call site, only from revision 90080 on,
+    # and skip it solely when every installable (non-loader) disk is unpartitioned.
+    # A disk with even one partition retains the vendor recovery wait.
+    if [ "${TARGET_REVISION:-0}" -ge 90080 ] && \
+       grep -Fq 'for _ in $(seq 1 120)' "$rdtemp/linuxrc.syno.impl" && \
+       grep -Fqx 'CheckAllDiskReady' "$rdtemp/linuxrc.syno.impl"; then
+        sudo sed -i '/^WaitForUsbEunitReady$/i \
+IsFreshInstallWithoutSystemPartitions()\
+{\
+\tlocal installable device partition\
+\t[ ! -d /sys/block/md0 ] || return 1\
+\tinstallable=$(/usr/syno/bin/synodiskport -installable_disk_list 2>/dev/null)\
+\t[ -n "$installable" ] || return 1\
+\tfor device in $installable; do\
+\t\t[ -d "/sys/block/$device" ] || return 1\
+\t\tfor partition in /sys/block/$device/$device*; do\
+\t\t\t[ -f "$partition/partition" ] && return 1\
+\t\tdone\
+\tdone\
+\treturn 0\
+}\
+' "$rdtemp/linuxrc.syno.impl"
+        sudo sed -i 's/^CheckAllDiskReady$/if IsFreshInstallWithoutSystemPartitions; then\
+\techo "Fresh install disks have no partitions; skip disk-ready recovery wait"\
+else\
+\tCheckAllDiskReady\
+fi/' "$rdtemp/linuxrc.syno.impl"
+        echo "[fresh-install] patched linuxrc.syno.impl disk-ready wait for revision ${TARGET_REVISION}"
+    else
+        echo "[fresh-install] linuxrc.syno.impl did not match the 7.4.1+ disk-ready wait signature; left unchanged"
+    fi
     if [ "${ORIGIN_PLATFORM}" = "broadwellntbap" ]; then
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
