@@ -459,7 +459,8 @@ function nic_link_kick() {
 }
 
 function gitclone() {
-    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    local branch="${RPLOAD_BRANCH:-master}"
+    git clone -b "${branch}" --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
 }
 
 # redpill-load의 확장(extension) 다운로드 함수 rpt_download_remote()는
@@ -488,7 +489,11 @@ function gitdownload() {
     if [ -d /home/tc/redpill-load ]; then
         echo "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
-        git pull
+        if [ -n "${RPLOAD_BRANCH:-}" ]; then
+            git fetch origin "${RPLOAD_BRANCH}" && git checkout -B "${RPLOAD_BRANCH}" "origin/${RPLOAD_BRANCH}"
+        else
+            git pull
+        fi
         if [ $? -ne 0 ]; then
            cd /home/tc
            rploader clean
@@ -813,6 +818,9 @@ if [ "${offline}" = "NO" ]; then
     # 같은 엉뚱한 파일명으로 저장할 수 있어 curl 버전에 기대지 않음).
     curl -skL# -o models.json "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/models.json?_cb=$(date +%s%N 2>/dev/null || date +%s)"
     if [ "$oldver" = "test" ]; then
+      # The ramdisk patch-family pilot is tested from its dedicated branch;
+      # normal builds continue to clone redpill-load master.
+      export RPLOAD_BRANCH="codex/ramdisk-patch-families-v2"
       gitdownload
       cecho g "###############################  This is Test Mode  ############################"
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
