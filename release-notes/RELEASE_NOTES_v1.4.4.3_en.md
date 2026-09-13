@@ -8,6 +8,9 @@
 
 ## Fresh-install ramdisk patch family migration
 
+> **<span style="color:#e11d48">⚠️ Most important: the 006 patch removes an unnecessary 10-minute wait during a fresh DSM installation.</span>**
+
+- Removes the unnecessary 10-minute first-install delay caused by 120 repeated 5-second disk-ready checks when no DSM system RAID can exist yet. This is the practical benefit of the 006 fresh-install disk-ready wait bypass.
 - Updates the 006 fresh-install disk-ready wait bypass to use two patch families that match the DSM `linuxrc.syno.impl` source layout.
 - DSM 7.0.1 through 7.2.2 use the legacy-family patch, while DSM 7.3.0 through 7.4.1 use the modern-family patch.
 - Retires the former DSM 7.4.1-only and 90080-plus-only patch paths. The two existing atomic patch-set names remain unchanged and now resolve to their corresponding family path.
