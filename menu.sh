@@ -490,7 +490,11 @@ function gitdownload() {
         echo "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
         if [ -n "${RPLOAD_BRANCH:-}" ]; then
-            git fetch origin "${RPLOAD_BRANCH}" && git checkout -B "${RPLOAD_BRANCH}" "origin/${RPLOAD_BRANCH}"
+            # A previous --single-branch master clone has a refspec that does
+            # not create origin/<test branch>. Fetch that ref explicitly
+            # before checking it out instead of relying on FETCH_HEAD.
+            git fetch origin "${RPLOAD_BRANCH}:refs/remotes/origin/${RPLOAD_BRANCH}" && \
+              git checkout -B "${RPLOAD_BRANCH}" "origin/${RPLOAD_BRANCH}"
         else
             git pull
         fi
