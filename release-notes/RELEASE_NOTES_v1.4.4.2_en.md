@@ -9,6 +9,7 @@
 - Capacity: up to 100 cameras and up to 40 concurrent real-time AI analysis tasks.
 - Designed for face and license-plate recognition, person and vehicle attribute or behavior analysis, intrusion and loitering detection, and natural-language video search.
 - When the official NVIDIA runtime libraries are installed, the NVIDIA page can report NVIDIA-SMI 580.126.09 with CUDA 13.0, as verified on the included reference system.
+- On compatible NVIDIA GPUs and supported applications, the official NVIDIA runtime libraries also enable hardware-accelerated video transcoding.
 
 ![DVA7400 NVIDIA runtime status](https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/docs/assets/DVA7400-nvidia-smi.png)
 

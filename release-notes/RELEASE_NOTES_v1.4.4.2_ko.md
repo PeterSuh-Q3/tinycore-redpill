@@ -9,6 +9,7 @@
 - 성능: 최대 100대 카메라와 실시간 AI 분석 작업 최대 40개.
 - 용도: 얼굴·번호판 인식, 사람·차량 속성 또는 행동 분석, 침입·배회 감지, 자연어 기반 영상 검색.
 - 정품 NVIDIA 런타임 라이브러리를 설치하면, 참고 시스템에서 확인된 것처럼 NVIDIA 페이지에 NVIDIA-SMI 580.126.09 및 CUDA 13.0이 표시될 수 있습니다.
+- 호환 NVIDIA GPU와 지원 애플리케이션에서는 정품 NVIDIA 런타임 라이브러리로 H/W 비디오 트랜스코딩도 사용할 수 있습니다.
 
 ![DVA7400 NVIDIA 런타임 상태](https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/docs/assets/DVA7400-nvidia-smi.png)
 

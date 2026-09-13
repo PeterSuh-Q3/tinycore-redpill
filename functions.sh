@@ -3729,7 +3729,48 @@ function cmdline_append() {
     printf '%s' "${acc}"
 }
 
+# These are the extra_cmdline keys owned by MSHELL in general.usb_line.
+# Do not add arbitrary user kernel options here: only these keys may be
+# removed automatically when their corresponding extra_cmdline entry is gone.
+function _usb_line_managed_keys() {
+    printf '%s' 'sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num SataPortMap DiskIdxMap'
+}
+
+# Remove obsolete copies of MSHELL-managed extra_cmdline keys from usb_line.
+# This repairs old configurations regardless of whether the stale key was
+# removed through DeleteConfigKey(), direct jq editing, or an older MSHELL.
+function prune_stale_usb_line_options() {
+    local line token key new_line current_extra_keys managed_keys changed=0
+    local -a tokens=()
+
+    line="$(jq -r '.general.usb_line // empty' "${userconfigfile}" 2>/dev/null)"
+    [ -n "${line}" ] || return 0
+
+    managed_keys=" $(_usb_line_managed_keys) "
+    current_extra_keys=" $(jq -r '.extra_cmdline // {} | keys[]?' "${userconfigfile}" 2>/dev/null | tr '\n' ' ') "
+
+    for token in ${line}; do
+        key="${token%%=*}"
+        if [[ "${token}" == *=* ]] && [[ "${managed_keys}" == *" ${key} "* ]] && \
+           [[ "${current_extra_keys}" != *" ${key} "* ]]; then
+            changed=1
+            continue
+        fi
+        tokens+=("${token}")
+    done
+
+    [ "${changed}" -eq 1 ] || return 0
+    new_line="${tokens[*]}"
+    jq --arg new_line "${new_line}" '.general.usb_line = $new_line' "${userconfigfile}" > "${userconfigfile}.tmp" \
+        && cp "${userconfigfile}.tmp" "${userconfigfile}" && rm -f "${userconfigfile}.tmp"
+}
+
 function sync_usb_line() {
+    # First self-heal stale MSHELL-owned tokens.  In particular, a DT loader
+    # may have old SataPortMap/DiskIdxMap values after those keys were removed
+    # from extra_cmdline; preserving them would make the build validation fail.
+    prune_stale_usb_line_options || return 1
+
     # 현재 usb_line 추출
     updated_usb_line=$(jq -r '.general.usb_line' "$userconfigfile")
 
@@ -3777,7 +3818,8 @@ function sync_usb_line() {
 # platform's default USB command line. Generated values win for a matching
 # key, while options known only to the existing user_config.json are retained.
 #
-# extra_cmdline-managed keys (sn/mac1-8/vid/pid/netif_num) are the one
+# extra_cmdline-managed keys (sn/mac1-8/vid/pid/netif_num/SataPortMap/
+# DiskIdxMap) are the one
 # exception: sync_usb_line() only ever adds/updates these into general.
 # usb_line, never removes them, so a key deleted from .extra_cmdline (e.g.
 # NIC count auto-detect dropping mac2) can leave an orphaned "mac2=..."
@@ -3792,7 +3834,7 @@ function sync_usb_line() {
 function preserve_usb_line_options() {
     local generated_line="$1"
     local existing_line token key generated_token found
-    local managed_keys=" sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 vid pid netif_num "
+    local managed_keys=" $(_usb_line_managed_keys) "
     local current_extra_keys
     local skip_next="false"
 
