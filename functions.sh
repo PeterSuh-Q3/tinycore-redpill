@@ -5430,7 +5430,9 @@ function ensure_alpine_sx_menu_focus() {
     # apkovl was copied to the boot partition during this boot, that in-memory
     # file can still have the old window order and would otherwise overwrite
     # the new one.  Keep the interactive menu immediately before wait so it is
-    # the last lxterminal Openbox maps and receives the initial focus.
+    # the last lxterminal Openbox maps.  Mapping order alone is not reliable
+    # on every bare-metal Xorg/Openbox combination, so also retain a bounded
+    # EWMH activation retry after all terminals have had time to map.
     is_alpine || return 0
 
     local sxrc="${HOME}/.config/sx/sxrc"
@@ -5443,10 +5445,23 @@ function ensure_alpine_sx_menu_focus() {
     tmp_sxrc=$(mktemp) || return 1
     awk -v menu_line="${menu_line}" '
         /title="TCRP-mshell Menu"/ { next }
-        /^# Open the interactive menu last so Openbox assigns it the initial focus\.$/ { next }
+        /^# Open the interactive menu last and force it active after all windows map\.$/ { next }
+        /^# xdotool activation retries are intentionally bounded to sx startup\.$/ { skip_focus = 1; next }
+        skip_focus && /^[[:space:]]*\)[[:space:]]*&[[:space:]]*$/ { skip_focus = 0; next }
+        skip_focus { next }
         /^[[:space:]]*wait[[:space:]]+"\$WM_PID"/ {
-            print "# Open the interactive menu last so Openbox assigns it the initial focus."
+            print "# Open the interactive menu last and force it active after all windows map."
             print menu_line
+            print "# xdotool activation retries are intentionally bounded to sx startup."
+            print "("
+            print "    for delay in 1 1 2 3 5; do"
+            print "        sleep \"${delay}\""
+            print "        for window_id in $(xdotool search --onlyvisible --name \"^TCRP-mshell Menu$\" 2>/dev/null); do"
+            print "            xdotool windowraise \"${window_id}\" >/dev/null 2>&1"
+            print "            xdotool windowactivate --sync \"${window_id}\" >/dev/null 2>&1 && exit 0"
+            print "        done"
+            print "    done"
+            print ") &"
         }
         { print }
     ' "${sxrc}" > "${tmp_sxrc}" || {
