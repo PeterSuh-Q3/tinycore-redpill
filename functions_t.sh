@@ -5392,6 +5392,39 @@ function backupxtcrp() {
 # 3. 용량 초과 시 /mnt/${tcrppart}/auxfiles/*.pat 파일 임의 1개 삭제
 # 4. 기존 sudo 권한 삭제 로직 참조
 # ============================================================================
+function ensure_alpine_autologin_persistence() {
+    # Alpine's /usr/local tree is outside the default apkovl selection on
+    # some older images.  Recreate and explicitly include this small helper
+    # before every lbu commit so inittab never points to a missing file.
+    is_alpine || return 0
+
+    local helper="/usr/local/sbin/mshell-autologin-tc"
+    local inittab_line='tty1::respawn:/sbin/getty -n -l /usr/local/sbin/mshell-autologin-tc 38400 tty1'
+
+    sudo mkdir -p /usr/local/sbin || return 1
+    sudo tee "${helper}" >/dev/null <<'EOF'
+#!/bin/sh
+# Wait for diskless Alpine package restoration before tc .profile starts sx.
+attempt=0
+while [ ! -x /usr/bin/sx ] && [ "${attempt}" -lt 180 ]; do
+  sleep 1
+  attempt=$((attempt + 1))
+done
+exec /bin/login -f tc
+EOF
+    sudo chmod 0755 "${helper}" || return 1
+
+    if sudo grep -q '^tty1::respawn:' /etc/inittab 2>/dev/null; then
+        sudo sed -i "\\|^tty1::respawn:|c\\${inittab_line}" /etc/inittab || return 1
+    else
+        printf '%s\n' "${inittab_line}" | sudo tee -a /etc/inittab >/dev/null || return 1
+    fi
+
+    # lbu include makes the non-/etc helper explicit, including on images
+    # whose previous apkovl was created before the helper existed.
+    sudo lbu include "${helper}" /etc/inittab || return 1
+}
+
 function backuploader() {
 
     # Define the path to the file
@@ -5549,6 +5582,7 @@ function backuploader() {
             # Alpine의 영속화는 lbu(apkovl)가 담당하므로 TinyCore 전용
             # mydata.tgz를 만들지 않는다.
             echo "${log_prefix} Alpine: persisting settings with lbu commit..."
+            ensure_alpine_autologin_persistence || return 1
             sudo lbu commit -d
             alpine_no_mydata=1
         else
@@ -5758,6 +5792,7 @@ function backuploader_old() {
             # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
             # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
             cecho y "Alpine: persisting settings with lbu commit (instead of mydata.tgz)..."
+            ensure_alpine_autologin_persistence || return 1
             sudo lbu commit -d
             backup_loader
         else
