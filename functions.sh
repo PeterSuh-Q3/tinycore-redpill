@@ -3397,10 +3397,10 @@ EOF
 }
 
 ###############################################################################
-# Fix SmallFixNumber of Bootentry
+# Sync DSM runtime version metadata for the boot-entry display
 function fixBootEntry() {
 
-echo -n "(Warning) Do you want to fix Bootentry Update version? [yY/nN] : "
+echo -n "(Warning) Do you want to sync Bootentry runtime version metadata? [yY/nN] : "
 readanswer
 if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
@@ -3420,17 +3420,42 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
   if [ -d "${TMP_PATH}/mdX/etc" ]; then
       . ${TMP_PATH}/mdX/etc/VERSION
       cat ${TMP_PATH}/mdX/etc/VERSION
-      updateuserconfigfield "general" "smallfixnumber" "${smallfixnumber}"
-      sudo sed -i "s/Update [0-9]/Update $smallfixnumber/g" "/mnt/${loaderdisk}1/boot/grub/grub.cfg"
-      grep menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg
+      runtime_version="${productversion}-${buildnumber}"
+      runtime_smallfixnumber="${smallfixnumber}"
+      payload_version="$(jq -r '.general.version // empty' "${userconfigfile}" 2>/dev/null)"
+      payload_smallfixnumber="$(jq -r '.general.smallfixnumber // empty' "${userconfigfile}" 2>/dev/null)"
+
+      # P2 payload metadata must remain the version extracted from rd.gz.
+      # A DSM small update can advance the runtime without changing rd.gz,
+      # so never overwrite general.smallfixnumber here.
+      if [ -z "${payload_version}" ]; then
+          echo "Payload version metadata is missing; no runtime metadata was written."
+      elif [ "${runtime_version}" != "${payload_version}" ]; then
+          echo "DSM runtime ${runtime_version} does not match loader payload ${payload_version}; no change made."
+      elif ! echo "${runtime_smallfixnumber}" | grep -Eq '^[0-9]+$'; then
+          echo "DSM runtime smallfixnumber is invalid; no change made."
+      else
+          runtime_tmp="${userconfigfile}.runtime.$$"
+          if jq --arg runtime_version "${runtime_version}" --arg runtime_smallfixnumber "${runtime_smallfixnumber}" \
+              '.general.runtime_version = $runtime_version | .general.runtime_smallfixnumber = $runtime_smallfixnumber' \
+              "${userconfigfile}" > "${runtime_tmp}" && jq empty "${runtime_tmp}" >/dev/null 2>&1; then
+              # cp follows the user_config symlink when present; mv would replace it.
+              cp -f "${runtime_tmp}" "${userconfigfile}"
+              echo "Payload Update U${payload_smallfixnumber:-unknown} preserved; runtime Update U${runtime_smallfixnumber} recorded."
+              echo "MSHELL Manager synchronizes the GRUB display from runtime metadata."
+          else
+              echo "Failed to write runtime version metadata."
+          fi
+          rm -f "${runtime_tmp}"
+      fi
       echo "press any key to continue..."
       read answer
   fi
 
   close_md0
   
-  MSG=$(printf "Bootentry Update version correction completed.")
-  dialog --title "Bootentry Update version correction" \
+  MSG=$(printf "Bootentry runtime version metadata synchronization completed.")
+  dialog --title "Bootentry runtime version synchronization" \
     --msgbox "${MSG}" 0 0
   return
   
