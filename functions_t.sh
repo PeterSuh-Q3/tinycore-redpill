@@ -5425,6 +5425,48 @@ EOF
     sudo lbu include "${helper}" /etc/inittab || return 1
 }
 
+function ensure_alpine_sx_menu_focus() {
+    # An lbu commit serializes the sxrc currently running in RAM.  If a newer
+    # apkovl was copied to the boot partition during this boot, that in-memory
+    # file can still have the old window order and would otherwise overwrite
+    # the new one.  Keep the interactive menu immediately before wait so it is
+    # the last lxterminal Openbox maps and receives the initial focus.
+    is_alpine || return 0
+
+    local sxrc="${HOME}/.config/sx/sxrc"
+    [ -f "${sxrc}" ] || return 0
+
+    local menu_line tmp_sxrc
+    menu_line=$(grep 'title="TCRP-mshell Menu"' "${sxrc}" | tail -n 1) || return 0
+    [ -n "${menu_line}" ] || return 0
+
+    tmp_sxrc=$(mktemp) || return 1
+    awk -v menu_line="${menu_line}" '
+        /title="TCRP-mshell Menu"/ { next }
+        /^# Open the interactive menu last so Openbox assigns it the initial focus\.$/ { next }
+        /^[[:space:]]*wait[[:space:]]+"\$WM_PID"/ {
+            print "# Open the interactive menu last so Openbox assigns it the initial focus."
+            print menu_line
+        }
+        { print }
+    ' "${sxrc}" > "${tmp_sxrc}" || {
+        rm -f "${tmp_sxrc}"
+        return 1
+    }
+
+    if ! cmp -s "${sxrc}" "${tmp_sxrc}"; then
+        sudo tee "${sxrc}" < "${tmp_sxrc}" >/dev/null || {
+            rm -f "${tmp_sxrc}"
+            return 1
+        }
+        sudo chmod 0755 "${sxrc}" || {
+            rm -f "${tmp_sxrc}"
+            return 1
+        }
+    fi
+    rm -f "${tmp_sxrc}"
+}
+
 function backuploader() {
 
     # Define the path to the file
@@ -5583,6 +5625,7 @@ function backuploader() {
             # mydata.tgz를 만들지 않는다.
             echo "${log_prefix} Alpine: persisting settings with lbu commit..."
             ensure_alpine_autologin_persistence || return 1
+            ensure_alpine_sx_menu_focus || return 1
             sudo lbu commit -d
             alpine_no_mydata=1
         else
@@ -5793,6 +5836,7 @@ function backuploader_old() {
             # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
             cecho y "Alpine: persisting settings with lbu commit (instead of mydata.tgz)..."
             ensure_alpine_autologin_persistence || return 1
+            ensure_alpine_sx_menu_focus || return 1
             sudo lbu commit -d
             backup_loader
         else
