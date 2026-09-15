@@ -45,11 +45,13 @@
 
 `RELEASE_NOTES.md` 루트 파일은 직접 편집하지 않는다. CI(`alpine-deploy.yml`)가 소비한다.
 
-1. `release-notes/RELEASE_NOTES_v{VERSION}_en.md`와 `_ko.md`를 작성한다.
-2. `functions.sh`와 `functions_t.sh`의 버전번호, builddate, history 함수, showlastupdate 함수, 두 함수 사이의 문서용 history 주석을 함께 갱신한다. 두 파일은 byte-identical 상태를 유지한다.
-3. 버전 히스토리 3곳의 요약에는 특수문자를 넣지 않는다. `showlastupdate()` 항목 사이에는 빈 줄 하나를 둔다.
-4. `.github/workflows/alpine-make.my.sh.gz.yml`을 `workflow_dispatch`로 실행해 `my.sh.gz`를 빌드한다. 이 파일은 빌드 즉시 사용자에게 배포되므로 미검증 상태에서 실행하지 않는다.
-5. GitHub Release를 생성하고 영문 릴리즈 노트 다음에 한글 릴리즈 노트를 이어 붙여 본문으로 사용한다.
+1. **직전 릴리즈 태그를 기준으로 전체 변경 이력을 조사한다.** 마지막 `my.sh.gz` 또는 오버레이 자동 생성 커밋을 기준점으로 삼지 않는다. 예를 들어 `git log --reverse --format='%h %ad %s' --date=short v{PREVIOUS}..HEAD`로 전수 확인한다.
+2. 조사한 커밋을 다음 세 범주로 분리한다: 사용자에게 영향을 주는 기능 수정, 문서 전용 변경, 워크플로우가 만든 자산 재생성. 기능 수정은 누락 없이 릴리즈 노트와 버전 히스토리의 근거로 사용하며, 자산 재생성은 독립 기능으로 기록하지 않는다.
+3. `release-notes/RELEASE_NOTES_v{VERSION}_en.md`와 `_ko.md`를 작성한다. 릴리즈 노트에는 2번에서 분류한 모든 사용자 영향 기능을 반영하고, 영문 본문 다음에 한글 본문을 배치할 수 있게 준비한다.
+4. `functions.sh`와 `functions_t.sh`의 버전번호, builddate, history 함수, showlastupdate 함수, 두 함수 사이의 문서용 history 주석을 함께 갱신한다. 두 파일은 byte-identical 상태를 유지한다.
+5. 버전 히스토리 3곳의 요약에는 특수문자를 넣지 않는다. `showlastupdate()` 항목 사이에는 빈 줄 하나를 둔다. 요약은 1~2번에서 검증한 기능 변경만 압축해 기록한다.
+6. `.github/workflows/alpine-make.my.sh.gz.yml`을 `workflow_dispatch`로 실행해 `my.sh.gz`를 빌드한다. 이 파일은 빌드 즉시 사용자에게 배포되므로 미검증 상태에서 실행하지 않는다.
+7. GitHub Release를 생성하고 영문 릴리즈 노트 다음에 한글 릴리즈 노트를 이어 붙여 본문으로 사용한다.
 
 커밋 및 푸시는 사용자가 명시적으로 요청한 경우에만 수행한다. 워크플로우 생성 커밋 때문에 원격이 앞서 있을 수 있으므로 push 전 `git fetch origin alpine-redpill` 후 rebase한다. `git reset --hard`로 사용자 변경을 버리지 않는다.
 
@@ -61,4 +63,3 @@
 4. `diskcompat` addon의 실기 검증을 수행한다.
 5. `45.9` IP 중복 의심 건은 `tcpdump` 기반 정밀 검증이 필요하다.
 6. ttyd 7681 리슨 장비와 IP 중복 의심의 관련성을 후속 확인한다.
-

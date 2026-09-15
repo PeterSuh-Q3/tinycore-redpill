@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.4.3"
-builddate="2026.09.14"
+rploaderver="1.4.4.4"
+builddate="2026.09.15"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -978,6 +978,7 @@ function history() {
     1.4.4.2 Added V1000NK DVA7400 model guidance for NVIDIA RTX 2000-class deep-learning GPUs
     1.4.4.3 Improved Alpine startup reliability with safe virtual disk mounting and clock
              synchronization
+    1.4.4.4 Improved Alpine boot session reliability and preserved loader payload version metadata
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1677,6 +1678,9 @@ EOF
 # 2026.09.14 v1.4.4.3
 # Improved Alpine startup reliability with safe virtual disk mounting and clock synchronization
 
+# 2026.09.15 v1.4.4.4
+# Improved Alpine boot session reliability and preserved loader payload version metadata
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2053,6 +2057,9 @@ function showlastupdate() {
 
 # 2026.09.14 v1.4.4.3
 # Improved Alpine startup reliability with safe virtual disk mounting and clock synchronization
+
+# 2026.09.15 v1.4.4.4
+# Improved Alpine boot session reliability and preserved loader payload version metadata
 EOF
 }
 
