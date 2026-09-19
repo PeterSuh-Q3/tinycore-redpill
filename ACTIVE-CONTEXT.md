@@ -215,6 +215,24 @@ build pilot before any module-pack publication.
   tokens. Its recipe checksum was updated and the full-DHCP case was verified
   on a DSM system.
 
+## DSM 7.4.1 initial-install md0 wait investigation
+
+- On a VMware DVA7400 first-install boot, `/var/log/linuxrc.syno.log` recorded
+  120 repetitions of `Wait 5 more second for disk becoming ready`, followed by
+  `No devices found for /dev/md0 assembly` and exit 12 to Junior mode. This is
+  a fixed 600-second wait for a system RAID that cannot exist until DSM has
+  been installed.
+- Six collected `linuxrc.syno.impl.*_90080` files from the Alpine test host
+  (DS918+ / apollolake, DS3622xs+ / broadwellnk, DS425+ / geminilakenk,
+  DVA3221 / denverton, DVA7400 / v1000nk, and SA6400 / epyc7002) have the same
+  28,190-byte SHA-256 `cff6db8c8a593136a6cf59d0869fee7dfa1aebc3f7fc57f968898f9d44ff5d6d`.
+- The shared script's `CheckAllDiskReady()` loops 120 times with `sleep 5`
+  when `/proc/sys/kernel/syno_disk_ready_check` remains `0`; it then calls
+  `assemble_system_raid.sh` and requires `/sys/block/md0/md/array_state`.
+  Thus a first-install fast path must be designed and tested as a DSM 7.4.1
+  cross-platform fix, not a DVA7400-only patch. Preserve the existing wait for
+  systems with an existing DSM system-partition candidate.
+
 ## Tools and cautions
 
 - TTYD client: `tools/ttyd-run.py`. Use it for terminal automation; browser
@@ -222,3 +240,45 @@ build pilot before any module-pack publication.
 - Do not store device credentials, private IP addresses, or tokens here.
 - Existing historical handoff: `docs/handoff-v1.4.3.4-after.md`. It describes
   an older release checkpoint and must not override the newer facts above.
+
+## Alpine responsive SX layout pilot (uncommitted, 2026-09-20)
+
+- A Docker-built `localhost.apkovl.tar.gz` test was installed to the fourth
+  loader partition of a physical Alpine target and then boot-verified.  The
+  overlay declares `xdotool` and `linux-firmware-intel`; obsolete split
+  firmware world entries (`linux-firmware-ice`, `linux-firmware-i40e`, and
+  `linux-firmware-ixgbe`) were removed because they prevent current APK world
+  restoration.
+- The new `sxrc` derives its 2x2 terminal rectangles from the live X display,
+  reserves the 30-pixel tint2 panel, uses a 60/40 top/bottom split, scales
+  `Monospace` from the 1280x960 / 10-point reference with an 8--16-point
+  bound, and uses xdotool after windows map for final move/resize and Menu
+  activation.  Fixed Openbox terminal geometry and the fixed 1280x960 Xorg
+  monitor preference were removed from the overlay.
+- On a 1920x1080 physical display after reboot, `xdotool` was present and the
+  four terminals had the expected layout: Menu upper-left, Monitor
+  upper-right, Build lower-left, Extra lower-right.  The Menu window was the
+  active window and the calculated font was 11 point.
+- `ensure_alpine_sx_menu_focus()` in both paired functions files now no-ops
+  for an sxrc marked `Responsive 2x2 terminal layout`; otherwise a later lbu
+  backup could rewrite the responsive launch/focus structure.
+- The Extra Terminal prompt now uses an uncontracted dynamic `$PWD` form,
+  displaying `tc:/home/tc$` rather than `tc:~$` and tracking later directory
+  changes.  The rebuilt overlay was installed to the same test loader's
+  fourth partition and the live Extra Terminal was restarted to verify it.
+
+## cpuinfo ACPI-temperature proxy validation (uncommitted, 2026-09-19)
+
+- The maintained source worktree is `/Volumes/DATA/GitHub/tcrp-addons`; use
+  its existing `cpuinfo` checkout rather than making a second clone.
+- `mshellscgiproxy` can safely expose `acpi_temp` separately from DSM's
+  `sys_temp`.  It reads only a kernel-published `acpitz` thermal zone and
+  omits the field when no such zone exists; it must not replace `sys_temp`.
+- A DSM 7.4 epyc7002 system used for validation has no thermal zones and only
+  `coretemp`, so it cannot produce a real ACPI value.  The nginx-to-SCGI path
+  was nevertheless proven with a temporary `acpi_temp=999` binary, then
+  replaced with the final dynamic binary.  The final nginx API response was
+  valid and intentionally omitted `acpi_temp` on that hardware.
+- Do not test this injection with `synowebapi --exec`: that command calls the
+  DSM API directly and bypasses nginx and `mshellscgiproxy`.  Test through an
+  authenticated `SYNO.Core.System.info` HTTP request instead.

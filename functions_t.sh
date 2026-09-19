@@ -5445,6 +5445,11 @@ function ensure_alpine_sx_menu_focus() {
     local sxrc="${HOME}/.config/sx/sxrc"
     [ -f "${sxrc}" ] || return 0
 
+    # The responsive layout owns both window placement and the final Menu
+    # activation itself.  Reordering its launch line here would separate it
+    # from that layout logic when a later lbu backup is made.
+    grep -q '^# Responsive 2x2 terminal layout\.' "${sxrc}" && return 0
+
     local menu_line tmp_sxrc
     menu_line=$(grep 'title="TCRP-mshell Menu"' "${sxrc}" | tail -n 1) || return 0
     [ -n "${menu_line}" ] || return 0
