@@ -9153,6 +9153,11 @@ function my() {
       [ "${BUS}" = "block" ] && exit 0
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
       echo "y"|rploader backup
+      backup_rc=$?
+      if [ "$backup_rc" -ne 0 ]; then
+          cecho r "Loader backup failed after build."
+          return "$backup_rc"
+      fi
   fi
   return $errorcode
 #[ "$FRKRNL" = "YES" ] && readanswer  

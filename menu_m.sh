@@ -2187,6 +2187,14 @@ function make() {
     return "${build_rc}"
   fi
 
+  # my() has already completed rploader backup for USB/NVMe builds.  Its
+  # user_config.json updates are therefore durable, so make them the new menu
+  # baseline and prevent restart() from performing the same backup again.
+  # Block-device builds intentionally skip that backup inside my().
+  if [ "${BUS}" != "block" ]; then
+    refresh_userconfig_hash
+  fi
+
   if  [ -f /home/tc/custom-module/redpill.ko ]; then
     echo "Removing redpill.ko ..."
     sudo rm -rf /home/tc/custom-module/redpill.ko
