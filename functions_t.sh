@@ -2309,6 +2309,14 @@ make_with_progress() {
     
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
+        # my() runs on the left side of the tee pipeline, so it cannot update
+        # this parent shell's baseline. A successful non-block build has also
+        # completed rploader backup; record its resulting configuration hash
+        # here so restart() does not repeat that same backup.
+        if [ "${BUS}" != "block" ]; then
+            refresh_userconfig_hash
+            log_backup_step "Build backup complete; configuration baseline refreshed"
+        fi
         log_success "Build completed successfully (Exit Code: $exit_code)"
 
         if  [ -f /home/tc/custom-module/redpill.ko ]; then
