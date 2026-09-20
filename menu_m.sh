@@ -285,6 +285,7 @@ SSDBAY=$(readConfigKey "general" "ssdbay")
 DMPM=$(readConfigKey "general" "devmod")
 NVMES=$(readConfigKey "general" "nvmesystem")
 VMTOOLS=$(readConfigKey "general" "vmtools")
+SANMANAGER_REPAIR=$(readConfigKey "general" "sanmanager-repair")
 LDRMODE=$(readConfigKey "general" "loadermode")
 MDLNAME=$(readConfigKey "general" "modulename")
 MLMETHOD=$(readConfigKey "general" "mlmethod")
@@ -355,6 +356,11 @@ fi
 if [ -z "${VMTOOLS}" ]; then
     VMTOOLS="false"
     writeConfigKey "general" "vmtools" "${VMTOOLS}"
+fi
+
+if [ -z "${SANMANAGER_REPAIR}" ]; then
+    SANMANAGER_REPAIR="false"
+    writeConfigKey "general" "sanmanager-repair" "${SANMANAGER_REPAIR}"
 fi
 
 # nvidiaMenu(최상위 g) 의 세 항목을 다른 설정들과 동일한 방식으로
@@ -2970,14 +2976,15 @@ function build-pre-option() {
   # a(selectldrmode), b(seleudev) 는 최상위 메뉴의 k/c 가 여기로 종속된
   # 것이다 - 문구(MSG06/MSG01)는 원래 최상위에서 쓰던 것을 그대로 재사용
   # (MSGID 변경 없음). 최초 진입 시 a(구 k)가 디폴트 인덱스로 선택된다.
-  # e 아래에 캐시 패널 크기(f)를 배치하고, 기존 NVMe/vmtools 항목은 g/h로 이동.
+  # e 아래에 캐시 패널 크기(f)를 배치하고, NVMe/vmtools/sanmanager-repair 항목은 g/h/i로 배치.
   default_resp="a"
 
   MSG64="vmtools(with qemu-guest-agent) addon"
+  MSG65="sanmanager repair (Use only when package issue occurs)"
 
   while true; do
     # vmtoolsaction/nvmeaction 은 최상위 Main loop 에서만 재계산되므로, 이
-    # 함수 자신의 while 루프 안에서 g)/h) 토글을 반복해도 그 값이 갱신되지
+    # 함수 자신의 while 루프 안에서 g)/h)/i) 토글을 반복해도 그 값이 갱신되지
     # 않아 화면에는 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서
     # 확인됐다(2026-08-27). 매 반복마다 bundled-exts.json을 직접 다시
     # 확인해 최신 상태를 보장한다.
@@ -2985,6 +2992,11 @@ function build-pre-option() {
       VMTOOLS="true"; vmtoolsaction="Enabled"
     else
       VMTOOLS="false"; vmtoolsaction="Disabled"
+    fi
+    if jq -e 'has("sanmanager-repair")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+      SANMANAGER_REPAIR="true"; sanmanagerrepairaction="Enabled"
+    else
+      SANMANAGER_REPAIR="false"; sanmanagerrepairaction="Disabled"
     fi
     if jq -e 'has("nvmesystem")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
       NVMES="true"; nvmeaction="Enabled"
@@ -3004,6 +3016,7 @@ function build-pre-option() {
     eval "echo \"f \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
     eval "echo \"g \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
     eval "echo \"h \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
+    echo "i \"${MSG65} (${sanmanagerrepairaction})\""                       >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3070,6 +3083,22 @@ Do you really want to continue enabling nvmesystem?" 0 0
         VMTOOLS="false"
       fi
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
+      notify_config_saved rebuild
+      NEXT="z" ;;
+    i)
+      # vmtools와 같이 현재 선택을 즉시 토글하고, 다음 빌드에서도 유지할
+      # 사용자 의도를 general.sanmanager-repair에 기록한다.
+      if [ "${SANMANAGER_REPAIR}" = "false" ]; then
+        del-addon "sanmanager-repair"
+        jsonfile=$(jq --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/sanmanager-repair/rpext-index.json" \
+          '. + {"sanmanager-repair": $url}' /home/tc/redpill-load/bundled-exts.json) \
+          && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
+        SANMANAGER_REPAIR="true"
+      else
+        del-addon "sanmanager-repair"
+        SANMANAGER_REPAIR="false"
+      fi
+      writeConfigKey "general" "sanmanager-repair" "${SANMANAGER_REPAIR}"
       notify_config_saved rebuild
       NEXT="z" ;;
     z) return;;
