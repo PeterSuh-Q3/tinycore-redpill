@@ -256,26 +256,6 @@ R8168_DETECTED="N"  # 한번만 체크하는 플래그
 function migrate_ipsettings_schema() {
     local cfg="$1" t json oldproxy olddns
     [ -f "${cfg}" ] || return 0
-    # user_config.json is normally a symlink to the loader partition.  A
-    # plain redirection/cp sequence can leave ${cfg}.tmp behind (and fail
-    # silently for non-root callers) when the VFAT target is root-owned.
-    # Stage outside /home/tc and copy through the link with sudo so the link
-    # is never replaced and temporary files cannot become persistent data.
-    local tmpfile=""
-    _write_migrated_config() {
-        local source="$1" target="$2" resolved
-        if [ -L "${target}" ]; then
-            # Never pass the symlink itself to cp -f: on the Alpine/VFAT
-            # combination this can replace the link with a root-owned file.
-            resolved=$(readlink -f "${target}" 2>/dev/null) || return 1
-            [ -n "${resolved}" ] || return 1
-            sudo cp -f "${source}" "${resolved}"
-        elif [ ! -w "${target}" ]; then
-            sudo cp -f "${source}" "${target}"
-        else
-            cp -f "${source}" "${target}"
-        fi
-    }
     t="$(jq -r '(.ipsettings // [] | type)' "${cfg}" 2>/dev/null)"
 
     if [ "${t}" = "object" ]; then
@@ -288,13 +268,9 @@ function migrate_ipsettings_schema() {
             end' "${cfg}")
         [ -n "${oldproxy}" ] && json=$(echo "${json}" | jq --arg p "${oldproxy}" '.netproxy.ipproxy = $p')
         [ -n "${olddns}" ] && json=$(echo "${json}" | jq --arg d "${olddns}" '.netdns.ipdns = $d')
-        tmpfile=$(mktemp /tmp/mshell-user-config.XXXXXX) || return 1
-        if echo "${json}" | jq . >"${tmpfile}" && _write_migrated_config "${tmpfile}" "${cfg}"; then :; else rm -f "${tmpfile}"; return 1; fi
-        rm -f "${tmpfile}"
+        echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
     elif [ "${t}" != "array" ]; then
-        tmpfile=$(mktemp /tmp/mshell-user-config.XXXXXX) || return 1
-        if jq '.ipsettings = []' "${cfg}" >"${tmpfile}" && _write_migrated_config "${tmpfile}" "${cfg}"; then :; else rm -f "${tmpfile}"; return 1; fi
-        rm -f "${tmpfile}"
+        jq '.ipsettings = []' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
     fi
 
     # 배열 원소에 아직 ipdns가 남아있으면(NIC별 DNS 입력을 받던 중간 스키마)
@@ -302,8 +278,7 @@ function migrate_ipsettings_schema() {
     # 하나도 없으면(과거 배열 스키마 실험판 등) 첫 항목을 primary로 승격하는
     # 안전망도 동일하게 유지 - "게이트웨이는 항상 정확히 1개" 불변식을 이
     # 함수를 거치기만 하면 항상 보장한다.
-    tmpfile=$(mktemp /tmp/mshell-user-config.XXXXXX) || return 1
-    if jq '
+    jq '
       (if ((.ipsettings|type)=="array") and (([.ipsettings[]? | select((.ipdns? // "") != "")] | length) > 0)
               and ((.netdns.ipdns // "") == "")
           then .netdns.ipdns = ([.ipsettings[] | select((.ipdns? // "") != "")][0].ipdns)
@@ -313,10 +288,14 @@ function migrate_ipsettings_schema() {
               and (([.ipsettings[] | select(.primary==true)] | length) == 0)
           then .ipsettings[0].primary = true
           else . end)
+      # netproxy/netdns는 값을 한 번도 저장한 적 없으면 키 자체가 아예
+      # 없어서, user_config.json을 직접 열어보면 ipsettings 옆에 대표
+      # DNS/프록시 설정이 어디 있는지 안 보인다는 혼란을 준다(실기 지적,
+      # 2026-08-29). ipsettings처럼 빈 스캐폴드를 항상 남겨 다른 블록들과
+      # 동일하게 보이도록 한다.
       | (if (.netproxy|type)!="object" then .netproxy = {"ipproxy": ""} else . end)
       | (if (.netdns|type)!="object" then .netdns = {"ipdns": ""} else . end)
-    ' "${cfg}" >"${tmpfile}" && _write_migrated_config "${tmpfile}" "${cfg}"; then :; else rm -f "${tmpfile}"; return 1; fi
-    rm -f "${tmpfile}"
+    ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
 }
 
 # Stop the DHCP client currently associated with one interface without
@@ -5530,91 +5509,6 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
-# Merge the repository's latest Alpine overlay without replacing a user's
-# persistent configuration.  The archive is staged first; only the explicit
-# system-file allowlist is copied into the running root, then lbu recreates the
-# persistent archive.  This function is intentionally independent of menu.sh
-# so it can be called after functions.sh is re-sourced by an update.
-function sync_alpine_apkovl_update() {
-    is_alpine || return 0
-
-    local part="/mnt/${tcrppart}"
-    local current="/mnt/tcrp/localhost.apkovl.tar.gz"
-    local stage="/dev/shm/mshell-apkovl-stage"
-    local incoming="/dev/shm/localhost.apkovl.tar.gz.new"
-    local backup="${current}.bak"
-    local source_archive="${incoming}"
-    local url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
-    local changed=0 path
-
-    command -v curl >/dev/null 2>&1 || return 0
-    mkdir -p "${stage}" || return 1
-    rm -rf "${stage:?}"/*
-    if [ -f "${current}" ]; then
-        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
-            echo "[APKVOL] Latest overlay download failed; keeping current archive."
-            return 0
-        }
-        tar -tzf "${incoming}" >/dev/null 2>&1 || {
-            echo "[APKVOL] Downloaded overlay is invalid; keeping current archive."
-            return 1
-        }
-        if cmp -s "${incoming}" "${current}"; then
-            rm -f "${incoming}"
-            return 0
-        fi
-        source_archive="${incoming}"
-        sudo cp -p "${current}" "${backup}"
-    else
-        echo "[APKVOL] No comparison archive found; downloading baseline to ${current}."
-        mkdir -p "$(dirname "${current}")" || return 1
-        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${current}" "${url}?_cb=$(date +%s)" || {
-            echo "[APKVOL] Initial overlay download failed; merge skipped."
-            return 0
-        }
-        tar -tzf "${current}" >/dev/null 2>&1 || {
-            echo "[APKVOL] Initial overlay is invalid; removing it."
-            sudo rm -f "${current}"
-            return 1
-        }
-        source_archive="${current}"
-    fi
-    tar -xzf "${source_archive}" -C "${stage}" || return 1
-
-    # Deliberately exclude user_config, credentials, network identity and
-    # user data.  These paths are never copied from the repository archive.
-    local allowlist=(
-        etc/apk/world etc/inittab etc/local.d
-        etc/profile etc/motd
-        home/tc/functions.sh home/tc/functions_t.sh
-        home/tc/menu.sh home/tc/menu_m.sh home/tc/i18n.h
-        home/tc/.config/sx/sxrc
-        usr/local/bin usr/local/sbin
-    )
-    for path in "${allowlist[@]}"; do
-        [ -e "${stage}/${path}" ] || continue
-        if [ -d "${stage}/${path}" ] && [ ! -L "${stage}/${path}" ]; then
-            sudo mkdir -p "/${path}" || return 1
-            sudo cp -a "${stage}/${path}/." "/${path}/" || return 1
-        else
-            sudo mkdir -p "$(dirname "/${path}")" || return 1
-            sudo cp -a "${stage}/${path}" "/${path}" || return 1
-        fi
-        changed=1
-    done
-    [ "${changed}" -eq 1 ] || { echo "[APKVOL] No approved files found; restoring archive."; [ -f "${backup}" ] && sudo cp -p "${backup}" "${current}"; return 1; }
-
-    ensure_alpine_autologin_persistence || return 1
-    sudo lbu commit -d || {
-        echo "[APKVOL] lbu commit failed; restoring previous archive."
-        [ -f "${backup}" ] && sudo cp -p "${backup}" "${current}"
-        return 1
-    }
-    echo "[APKVOL] Approved system files merged and persisted."
-    [ "${source_archive}" = "${incoming}" ] && rm -f "${incoming}"
-    return 0
-}
-
 function backuploader() {
 
     # Define the path to the file
@@ -5775,7 +5669,6 @@ function backuploader() {
             ensure_alpine_autologin_persistence || return 1
             ensure_alpine_sx_menu_focus || return 1
             sudo lbu commit -d
-            sync_alpine_apkovl_update || echo "${log_prefix} Alpine overlay merge skipped or rolled back."
             alpine_no_mydata=1
         else
             sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
