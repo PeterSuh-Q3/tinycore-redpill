@@ -2586,6 +2586,13 @@ function ensure_loader_partition_mounted() {
     sudo mkdir -p "${mount_point}"
 
     if mountpoint -q "${mount_point}"; then
+        # Alpine's media automounter can mount a VFAT loader partition as ro
+        # before MSHELL reaches it.  Existing-mount detection alone then
+        # falsely reports success while every user_config/persistence write
+        # fails.  This helper is used by write paths, so restore rw first.
+        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
+            sudo mount -o remount,rw "${mount_point}" || return 1
+        fi
         _sync_tcrp_alias "${part}" "${mount_point}" || return 1
         return 0
     fi
@@ -2593,6 +2600,9 @@ function ensure_loader_partition_mounted() {
     sudo mount "${dev}"
 
     if mountpoint -q "${mount_point}"; then
+        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
+            sudo mount -o remount,rw "${mount_point}" || return 1
+        fi
         _sync_tcrp_alias "${part}" "${mount_point}" || return 1
         return 0
     fi
