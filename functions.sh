@@ -5561,6 +5561,7 @@ function persist_alpine_apkovl_safely() {
     local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
+    local remote_hash local_hash
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
@@ -5574,22 +5575,31 @@ function persist_alpine_apkovl_safely() {
     lbu_conf_backup="${stage}/lbu.conf.before"
     url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
 
-    # P3 baseline is intentionally download-only.  It is never unpacked or
-    # copied into the running system.
-    if [ ! -f "${baseline}" ]; then
-        echo "[APKVOL] P3 baseline missing; downloading it first."
-        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
-            rm -rf "${stage}"
-            return 1
-        }
-        tar -tzf "${incoming}" >/dev/null 2>&1 || {
-            rm -rf "${stage}"
-            return 1
-        }
-        sudo cp -p "${incoming}" "${baseline}" || {
-            rm -rf "${stage}"
-            return 1
-        }
+    # P3 is the local baseline, but it must follow the current repository
+    # overlay. Download into staging first, then replace P3 only after the
+    # archive is valid and its hash differs. A failed remote check keeps the
+    # existing baseline so an offline boot is not blocked.
+    if curl -skL --fail --connect-timeout 15 --max-time 180 \
+        -o "${incoming}" "${url}?_cb=$(date +%s)" && \
+       tar -tzf "${incoming}" >/dev/null 2>&1; then
+        remote_hash="$(sha256sum "${incoming}" | awk '{print $1}')"
+        local_hash=""
+        [ -f "${baseline}" ] && local_hash="$(sha256sum "${baseline}" | awk '{print $1}')"
+        if [ "${remote_hash}" != "${local_hash}" ]; then
+            echo "[APKVOL] Repository overlay differs; updating P3 baseline."
+            if ! sudo cp -p "${incoming}" "${baseline}"; then
+                rm -rf "${stage}"
+                return 1
+            fi
+        else
+            echo "[APKVOL] Repository overlay matches P3 baseline."
+        fi
+    elif [ ! -f "${baseline}" ]; then
+        echo "[APKVOL] Repository overlay unavailable and P3 baseline is missing."
+        rm -rf "${stage}"
+        return 1
+    else
+        echo "[APKVOL] Repository overlay unavailable; keeping existing P3 baseline."
     fi
     tar -tzf "${baseline}" >/dev/null 2>&1 || { rm -rf "${stage}"; return 1; }
     cp -p "${baseline}" "${stage}/baseline.tar.gz" || { rm -rf "${stage}"; return 1; }
