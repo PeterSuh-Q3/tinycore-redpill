@@ -3487,7 +3487,13 @@ if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
               '.general.runtime_version = $runtime_version | .general.runtime_smallfixnumber = $runtime_smallfixnumber' \
               "${userconfigfile}" > "${runtime_tmp}" && jq empty "${runtime_tmp}" >/dev/null 2>&1; then
               # cp follows the user_config symlink when present; mv would replace it.
-              cp -f "${runtime_tmp}" "${userconfigfile}"
+              runtime_json="$(cat "${runtime_tmp}")"
+              write_user_config_json "${userconfigfile}" "${runtime_json}" || {
+                  rm -f "${runtime_tmp}"
+                  echo "Failed to persist runtime version metadata."
+                  return 1
+              }
+              rm -f "${runtime_tmp}"
               echo "Payload Update U${payload_smallfixnumber:-unknown} preserved; runtime Update U${runtime_smallfixnumber} recorded."
               echo "MSHELL Manager synchronizes the GRUB display from runtime metadata."
           else
@@ -3996,8 +4002,8 @@ function writeConfigKey() {
     value="$3"
 
     if [ -n "$1 " ] && [ -n "$2" ]; then
-        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile
+        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" "$userconfigfile") || return 1
+        write_user_config_json "$userconfigfile" "$jsonfile" || return 1
         sync_usb_line
     else
         echo "No values to update"
@@ -4013,8 +4019,8 @@ function DeleteConfigKey() {
     field="$2"
 
     if [ -n "$1 " ] && [ -n "$2" ]; then
-        jsonfile=$(jq "del(.$block.$field)" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile
+        jsonfile=$(jq "del(.$block.$field)" "$userconfigfile") || return 1
+        write_user_config_json "$userconfigfile" "$jsonfile" || return 1
 
         # sync_usb_line() 은 extra_cmdline 의 각 키를 general.usb_line 에
         # 추가/갱신만 하고 절대 제거하지 않는다 - 그래서 여기서
@@ -4490,8 +4496,8 @@ function setnetwork() {
         ipproxy="$(env | grep -i http | awk -F= '{print $2}' | uniq)"
 
         for field in ipset ipaddr ipgw ipdns ipproxy; do
-            jsonfile=$(jq ".ipsettings+={\"$field\":\"${!field}\"}" $userconfigfile)
-            echo $jsonfile | jq . >$userconfigfile
+            jsonfile=$(jq ".ipsettings+={\"$field\":\"${!field}\"}" "$userconfigfile") || return 1
+            write_user_config_json "$userconfigfile" "$jsonfile" || return 1
         done
 
     fi
@@ -5045,8 +5051,8 @@ function updateuserconfig() {
         echo "Result=${generalblock}, File does not contain general block, adding block"
 
         for field in model version smallfixnumber redpillmake zimghash rdhash usb_line sata_line; do
-            jsonfile=$(jq ".general+={\"$field\":\"\"}" $userconfigfile)
-            echo $jsonfile | jq . >$userconfigfile
+            jsonfile=$(jq ".general+={\"$field\":\"\"}" "$userconfigfile") || return 1
+            write_user_config_json "$userconfigfile" "$jsonfile" || return 1
         done
     fi
 
@@ -5058,8 +5064,8 @@ function updateuserconfigfield() {
     value="$3"
 
     if [ -n "$1 " ] && [ -n "$2" ]; then
-        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" $userconfigfile)
-        echo $jsonfile | jq . >$userconfigfile
+        jsonfile=$(jq ".$block+={\"$field\":\"$value\"}" "$userconfigfile") || return 1
+        write_user_config_json "$userconfigfile" "$jsonfile" || return 1
     else
         echo "No values to update specified"
     fi
@@ -6632,13 +6638,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     fi
 
     msgwarning "Updated user_config with USB Command Line : $USB_LINE"
-    json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+    json=$(jq --arg var "${USB_LINE}" '.general.usb_line = $var' "$userconfigfile") && write_user_config_json "$userconfigfile" "$json" || return 1
     if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
         msgwarning "Updated user_config with SATA Command Line : $SATA_LINE"
-        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' $userconfigfile) && echo -E "${json}" | jq . >$userconfigfile
+        json=$(jq --arg var "${SATA_LINE}" '.general.sata_line = $var' "$userconfigfile") && write_user_config_json "$userconfigfile" "$json" || return 1
     else
         msgwarning "Starting with kernel 5, the unused sata_line element is removed."
-        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && echo -E "${json}" | jq . > "$userconfigfile"
+        json=$(jq 'del(.general.sata_line)' "$userconfigfile") && write_user_config_json "$userconfigfile" "$json" || return 1
     fi    
 
     # A failed cmdline check must abort the build.  The caller presents this
@@ -7620,16 +7626,13 @@ function changeautoupdate {
     getloaderdisk
     tcrppart="${loaderdisk}3"
 
-    jsonfile=$(jq . "$userconfigfile")
-    
     echo -n "friendautoupd on User config file needs update, updating -> "
     if [ "$1" = "on" ]; then
         writeConfigKey "general" "friendautoupd" "true"
     else
         writeConfigKey "general" "friendautoupd" "false"
     fi
-    cp $userconfigfile /mnt/${tcrppart}/
-    echo $jsonfile | jq . >$userconfigfile && echo "Done" || echo "Failed"
+    cp -f "$userconfigfile" "/mnt/${tcrppart}/" && echo "Done" || echo "Failed"
     
     cat $userconfigfile | grep friendautoupd
 }
@@ -8743,7 +8746,7 @@ function prefillDefaultSataPortMap() {
     fi
 
     cecho p "Pre-filling generous default SataPortMap/DiskIdxMap for maxdisks=${maxdisks} (single-controller blanket: ${portchar}/00)"
-    json="$(jq --arg m "$portchar" '.extra_cmdline.SataPortMap = $m | .extra_cmdline.DiskIdxMap = "00"' user_config.json)" && echo -E "${json}" | jq . >user_config.json
+    json="$(jq --arg m "$portchar" '.extra_cmdline.SataPortMap = $m | .extra_cmdline.DiskIdxMap = "00"' user_config.json)" && write_user_config_json "${userconfigfile:-user_config.json}" "$json" || return 1
 
     # writeConfigKey()를 거치지 않고 jq로 직접 썼기 때문에, 그 함수가 항상 같이
     # 호출해 주는 sync_usb_line()이 자동으로 따라오지 않는다. 이걸 빼먹으면
