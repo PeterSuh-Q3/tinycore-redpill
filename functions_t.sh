@@ -5509,6 +5509,76 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
+# Merge the repository's latest Alpine overlay without replacing a user's
+# persistent configuration.  The archive is staged first; only the explicit
+# system-file allowlist is copied into the running root, then lbu recreates the
+# persistent archive.  This function is intentionally independent of menu.sh
+# so it can be called after functions.sh is re-sourced by an update.
+function sync_alpine_apkovl_update() {
+    is_alpine || return 0
+
+    local part="/mnt/${tcrppart}"
+    local current="${part}/localhost.apkovl.tar.gz"
+    local stage="/dev/shm/mshell-apkovl-stage"
+    local incoming="/dev/shm/localhost.apkovl.tar.gz.new"
+    local backup="${current}.bak"
+    local url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
+    local changed=0 path
+
+    command -v curl >/dev/null 2>&1 || return 0
+    [ -d "${part}" ] || return 0
+    mkdir -p "${stage}" || return 1
+    rm -f "${incoming}"
+    rm -rf "${stage:?}"/*
+    curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
+        echo "[APKVOL] Latest overlay download failed; keeping current archive."
+        return 0
+    }
+    tar -tzf "${incoming}" >/dev/null 2>&1 || {
+        echo "[APKVOL] Downloaded overlay is invalid; keeping current archive."
+        return 1
+    }
+    if [ -f "${current}" ] && cmp -s "${incoming}" "${current}"; then
+        rm -f "${incoming}"
+        return 0
+    fi
+    [ -f "${current}" ] && sudo cp -p "${current}" "${backup}"
+    tar -xzf "${incoming}" -C "${stage}" || return 1
+
+    # Deliberately exclude user_config, credentials, network identity and
+    # user data.  These paths are never copied from the repository archive.
+    local allowlist=(
+        etc/apk/world etc/inittab etc/local.d
+        etc/profile etc/motd
+        home/tc/functions.sh home/tc/functions_t.sh
+        home/tc/menu.sh home/tc/menu_m.sh home/tc/i18n.h
+        home/tc/.config/sx/sxrc
+        usr/local/bin usr/local/sbin
+    )
+    for path in "${allowlist[@]}"; do
+        [ -e "${stage}/${path}" ] || continue
+        if [ -d "${stage}/${path}" ] && [ ! -L "${stage}/${path}" ]; then
+            sudo mkdir -p "/${path}" || return 1
+            sudo cp -a "${stage}/${path}/." "/${path}/" || return 1
+        else
+            sudo mkdir -p "$(dirname "/${path}")" || return 1
+            sudo cp -a "${stage}/${path}" "/${path}" || return 1
+        fi
+        changed=1
+    done
+    [ "${changed}" -eq 1 ] || { echo "[APKVOL] No approved files found; restoring archive."; [ -f "${backup}" ] && sudo cp -p "${backup}" "${current}"; return 1; }
+
+    ensure_alpine_autologin_persistence || return 1
+    sudo lbu commit -d || {
+        echo "[APKVOL] lbu commit failed; restoring previous archive."
+        [ -f "${backup}" ] && sudo cp -p "${backup}" "${current}"
+        return 1
+    }
+    echo "[APKVOL] Approved system files merged and persisted."
+    rm -f "${incoming}"
+    return 0
+}
+
 function backuploader() {
 
     # Define the path to the file
@@ -5669,6 +5739,7 @@ function backuploader() {
             ensure_alpine_autologin_persistence || return 1
             ensure_alpine_sx_menu_focus || return 1
             sudo lbu commit -d
+            sync_alpine_apkovl_update || echo "${log_prefix} Alpine overlay merge skipped or rolled back."
             alpine_no_mydata=1
         else
             sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
