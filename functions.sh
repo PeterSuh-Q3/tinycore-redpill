@@ -253,6 +253,29 @@ R8168_DETECTED="N"  # 한번만 체크하는 플래그
 # .netdns.ipdns로 옮긴다. 몇 번을 호출해도 안전하도록 매 단계 멱등이며,
 # tcrpfriend의 boot.sh에도 동일한 로직이 별도 구현되어 있다(별개의
 # buildroot rootfs라 이 파일을 source할 수 없음).
+function write_user_config_json() {
+    local cfg="$1" json="$2" tmp target
+    [ -n "${cfg}" ] || return 1
+
+    tmp=$(mktemp /tmp/mshell-user-config.XXXXXX) || return 1
+    if ! printf '%s\n' "${json}" | jq . > "${tmp}"; then
+        rm -f "${tmp}"
+        return 1
+    fi
+    target="${cfg}"
+    if [ -L "${cfg}" ]; then
+        target=$(readlink -f "${cfg}" 2>/dev/null) || {
+            rm -f "${tmp}"
+            return 1
+        }
+    fi
+    if ! sudo cp -f "${tmp}" "${target}"; then
+        rm -f "${tmp}"
+        return 1
+    fi
+    rm -f "${tmp}"
+}
+
 function migrate_ipsettings_schema() {
     local cfg="$1" t json oldproxy olddns
     [ -f "${cfg}" ] || return 0
@@ -3825,8 +3848,9 @@ function prune_stale_usb_line_options() {
 
     new_line="$(filter_stale_usb_line_options "${line}")"
     [ "${new_line}" = "${line}" ] && return 0
-    jq --arg new_line "${new_line}" '.general.usb_line = $new_line' "${userconfigfile}" > "${userconfigfile}.tmp" \
-        && cp "${userconfigfile}.tmp" "${userconfigfile}" && rm -f "${userconfigfile}.tmp"
+    local json
+    json=$(jq --arg new_line "${new_line}" '.general.usb_line = $new_line' "${userconfigfile}") || return 1
+    write_user_config_json "${userconfigfile}" "${json}"
 }
 
 function sync_usb_line() {
@@ -3874,8 +3898,9 @@ function sync_usb_line() {
     # 때마다(=거의 모든 설정 저장마다) 심볼릭 링크가 끊기고 실기에서
     # 실제로 재현됨. cp 는 기본적으로 심볼릭 링크를 따라가 타깃 파일
     # 내용만 덮어쓰므로 링크 자체가 유지된다.
-    jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
-        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
+    local json
+    json=$(jq --arg new_line "$updated_usb_line" '.general.usb_line = $new_line' "$userconfigfile") || return 1
+    write_user_config_json "$userconfigfile" "${json}"
 }
 
 # Keep user-supplied kernel parameters when a loader build regenerates the
@@ -4010,8 +4035,9 @@ function strip_usb_line_key() {
     line="$(jq -r '.general.usb_line // ""' "$userconfigfile")"
     line="$(echo "${line}" | sed -E "s/(^| )${key}=[^ ]*/\1/g" | sed -E 's/ +/ /g; s/^ +//; s/ +$//')"
 
-    jq --arg new_line "${line}" '.general.usb_line = $new_line' "$userconfigfile" > "${userconfigfile}.tmp" \
-        && cp "${userconfigfile}.tmp" "$userconfigfile" && rm -f "${userconfigfile}.tmp"
+    local json
+    json=$(jq --arg new_line "${line}" '.general.usb_line = $new_line' "$userconfigfile") || return 1
+    write_user_config_json "$userconfigfile" "${json}"
 }
 
 # Update one user-managed loader command-line token without relying on sed.
@@ -4039,8 +4065,9 @@ function set_loader_cmdline_option() {
         done
         [ -n "${value}" ] && tokens+=("${key}=${value}")
         new_line="${tokens[*]}"
-        jq --arg f "${field}" --arg v "${new_line}" '.general[$f] = $v' "${userconfigfile}" > "${userconfigfile}.tmp" \
-            && cp "${userconfigfile}.tmp" "${userconfigfile}" && rm -f "${userconfigfile}.tmp" || return 1
+        local json
+        json=$(jq --arg f "${field}" --arg v "${new_line}" '.general[$f] = $v' "${userconfigfile}") || return 1
+        write_user_config_json "${userconfigfile}" "${json}" || return 1
     done
 
     sync_part_config
@@ -5509,6 +5536,103 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
+# Persist Alpine only through a transaction.  Repository apkovl content is
+# never unpacked into the live root: it is merely retained as the P3 baseline
+# when absent.  lbu writes a complete candidate archive under /tmp, where it
+# is validated before the active P4 archive is replaced.
+function persist_alpine_apkovl_safely() {
+    is_alpine || return 0
+
+    local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
+    local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
+
+    command -v curl >/dev/null 2>&1 || return 1
+    ensure_alpine_partition_mounted || return 1
+    [ -d /mnt/tcrp ] || return 1
+
+    stage=$(mktemp -d /tmp/mshell-apkovl.XXXXXX) || return 1
+    incoming="${stage}/baseline.download"
+    candidate="${stage}/$(hostname).apkovl.tar.gz"
+    active_backup="${stage}/active.before.tar.gz"
+    lbu_conf="/etc/lbu/lbu.conf"
+    lbu_conf_backup="${stage}/lbu.conf.before"
+    url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
+
+    # P3 baseline is intentionally download-only.  It is never unpacked or
+    # copied into the running system.
+    if [ ! -f "${baseline}" ]; then
+        echo "[APKVOL] P3 baseline missing; downloading it first."
+        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
+            rm -rf "${stage}"
+            return 1
+        }
+        tar -tzf "${incoming}" >/dev/null 2>&1 || {
+            rm -rf "${stage}"
+            return 1
+        }
+        sudo cp -p "${incoming}" "${baseline}" || {
+            rm -rf "${stage}"
+            return 1
+        }
+    fi
+    tar -tzf "${baseline}" >/dev/null 2>&1 || { rm -rf "${stage}"; return 1; }
+    cp -p "${baseline}" "${stage}/baseline.tar.gz" || { rm -rf "${stage}"; return 1; }
+
+    [ -f "${active}" ] && sudo cp -p "${active}" "${active_backup}" || true
+
+    # lbu.conf overrides inherited LBU_BACKUPDIR.  Redirect it only for the
+    # staging run and restore the live configuration immediately afterwards.
+    sudo cp -p "${lbu_conf}" "${lbu_conf_backup}" || { rm -rf "${stage}"; return 1; }
+    if ! sudo sed -i "s|^LBU_BACKUPDIR=.*|LBU_BACKUPDIR=${stage}|" "${lbu_conf}"; then
+        rm -rf "${stage}"
+        return 1
+    fi
+    if ! sudo lbu commit; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    sudo cp -p "${lbu_conf_backup}" "${lbu_conf}" || {
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    }
+
+    # The archive captured the temporary staging path.  Restore the regular
+    # P4 lbu.conf inside the candidate before activating it.
+    extract="${stage}/extract"
+    repacked="${stage}/candidate.repacked"
+    if ! mkdir -p "${extract}" || ! tar -xzf "${candidate}" -C "${extract}" \
+        || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
+        || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
+        || ! mv -f "${repacked}" "${candidate}"; then
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    tar -tzf "${candidate}" >/dev/null 2>&1 || {
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    }
+
+    # Copy within P4 and rename only after the candidate is known-good.
+    sudo cp -p "${candidate}" "${active}.new" || {
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    }
+    if ! sudo tar -tzf "${active}.new" >/dev/null 2>&1 || ! sudo mv -f "${active}.new" "${active}"; then
+        sudo rm -f "${active}.new"
+        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    rm -rf "${stage}"
+    echo "[APKVOL] Staged Alpine persistence verified and activated."
+}
 function backuploader() {
 
     # Define the path to the file
@@ -5665,10 +5789,10 @@ function backuploader() {
         if is_alpine; then
             # Alpine의 영속화는 lbu(apkovl)가 담당하므로 TinyCore 전용
             # mydata.tgz를 만들지 않는다.
-            echo "${log_prefix} Alpine: persisting settings with lbu commit..."
+            echo "${log_prefix} Alpine: staging and verifying apkovl persistence..."
             ensure_alpine_autologin_persistence || return 1
             ensure_alpine_sx_menu_focus || return 1
-            sudo lbu commit -d
+            persist_alpine_apkovl_safely || return 1
             alpine_no_mydata=1
         else
             sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
@@ -5876,10 +6000,10 @@ function backuploader_old() {
         if is_alpine; then
             # Alpine 이식: /opt/.filetool.lst(TC filetool.sh 전용)가 없어 mydata.tgz
             # 생성이 불필요. 실제 영속화는 lbu(apkovl)이므로 lbu commit으로 대체.
-            cecho y "Alpine: persisting settings with lbu commit (instead of mydata.tgz)..."
+            cecho y "Alpine: staging and verifying apkovl persistence (instead of mydata.tgz)..."
             ensure_alpine_autologin_persistence || return 1
             ensure_alpine_sx_menu_focus || return 1
-            sudo lbu commit -d
+            persist_alpine_apkovl_safely || return 1
             backup_loader
         else
             cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
