@@ -198,6 +198,37 @@ build pilot before any module-pack publication.
 
 ## Recommended next work
 
+## Loader rebuild finalization gap (2026-09-22)
+
+- On an Alpine MSHELL build system, loader P3 was mounted `rw`; this was not a
+  FAT read-only or write-permission failure.
+- The observed rebuild updated intermediate artifacts (`custom.gz`,
+  `zImage-dsm`, `rp-lkms.zip`, and `xtcrp.tgz`) but left `initrd-dsm` at an
+  earlier timestamp.  The embedded `exts/disks/disks.sh` in `initrd-dsm` had
+  the old SHA-256 `bd800a6b...`, while the newly generated `custom.gz` and
+  `xtcrp.tgz` contained the current SHA-256 `ce576bda...`.
+- This proves the extension collection/build-loader phase completed, but the
+  final `my()` ramdisk reassembly/write stage did not run to completion.
+  Do not treat a new `custom.gz` or `zImage-dsm` timestamp as proof that the
+  booted `initrd-dsm` was refreshed.
+- The captured build log identified the exact failure: in Alpine/`FRKRNL=NO`,
+  `functions.sh` redirected `sudo cpio` directly to
+  `/mnt/${loaderdisk}3/initrd-dsm`. Shell redirection happens before `sudo`,
+  as `tc`, so the root-owned vfat destination failed with `Permission denied`.
+  The same pattern also blocked `lastsession/extensions.list`,
+  `lastsession/user_config.json`, and the reduced PAT cache copy. The archive
+  was then left stale while the build continued with a success status.
+- The uncommitted repair stages archives and extension metadata in `/tmp`,
+  validates the archive, and uses `sudo dd ... conv=fsync` for P3 writes. It
+  also makes the relevant auxfiles and mini-PAT writes explicitly privileged
+  and returns build failure when archive validation or final publication fails.
+- `tcrpfriend` only invokes `patchramdisk` automatically when the P2 `rd.gz`
+  hash differs from `.general.rdhash`. A normal rebuild records the current
+  P2 hash, so Friend reports `Ramdisk OK` and will not repair a stale
+  `initrd-dsm` on its own. Any corrective change should make final ramdisk
+  packaging atomic and verify the resulting archive before recording build
+  completion.
+
 1. Change `ddsml` to remove `r8153_ecm` from unconditional preload, then test
    a matching USB ECM device separately with a complete dependency build.
 2. Test the resulting closure on a target epyc7002 DSM 7.4 system before

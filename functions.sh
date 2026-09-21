@@ -4662,12 +4662,26 @@ function savesession() {
 
     echo -n "Saving user session for future use. "
 
-    [ ! -d ${lastsessiondir} ] && sudo mkdir ${lastsessiondir}
+    [ ! -d "${lastsessiondir}" ] && sudo mkdir -p "${lastsessiondir}"
 
     echo -n "Saving current extensions "
 
     if [ "$FRKRNL" = "NO" ]; then
-        cat /home/tc/redpill-load/custom/extensions/*/*json | jq '.url' >${lastsessiondir}/extensions.list
+        # Partition 3 is mounted with root-owned vfat permissions.  Build the
+        # list in /tmp first, then let sudo perform the destination write.
+        # A shell redirect after a sudo command is still performed by tc.
+        _extensions_tmp="$(mktemp /tmp/mshell-extensions.XXXXXX)" || return 1
+        if ! cat /home/tc/redpill-load/custom/extensions/*/*json | jq '.url' > "${_extensions_tmp}"; then
+            rm -f "${_extensions_tmp}"
+            echo " -> FAILED"
+            return 1
+        fi
+        if ! sudo dd if="${_extensions_tmp}" of="${lastsessiondir}/extensions.list" conv=fsync status=none; then
+            rm -f "${_extensions_tmp}"
+            echo " -> FAILED"
+            return 1
+        fi
+        rm -f "${_extensions_tmp}"
     else
         echo
     fi
@@ -4676,7 +4690,10 @@ function savesession() {
 
     echo -n "Saving current user_config.json "
 
-    $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp /home/tc/user_config.json "${lastsessiondir}/user_config.json"
+    if ! sudo dd if=/home/tc/user_config.json of="${lastsessiondir}/user_config.json" conv=fsync status=none; then
+        echo " -> FAILED"
+        return 1
+    fi
     [ -f ${lastsessiondir}/user_config.json ] && echo " -> OK !"
 
 }
@@ -4686,7 +4703,7 @@ function copyextractor() {
     local_cache="/mnt/${tcrppart}/auxfiles"
 
     echo "making directory ${local_cache}"
-    [ ! -d ${local_cache} ] && mkdir ${local_cache}
+    [ ! -d "${local_cache}" ] && sudo mkdir -p "${local_cache}"
 
     echo "making directory ${local_cache}/extractor"
     [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
@@ -4771,15 +4788,15 @@ st "extractor" "Extraction tools" "Extraction Tools downloaded"
         cpio -idm <rd 2>&1 || echo "extract rd"
         mkdir extract
 
-        mkdir /mnt/${tcrppart}/auxfiles && cd /mnt/${tcrppart}/auxfiles
+        sudo mkdir -p "/mnt/${tcrppart}/auxfiles" && cd "/mnt/${tcrppart}/auxfiles"
 
         echo "Copying required files to local cache folder for future use"
 
-        mkdir /mnt/${tcrppart}/auxfiles/extractor
+        sudo mkdir -p "/mnt/${tcrppart}/auxfiles/extractor"
 
         for file in usr/lib/libcurl.so.4 usr/lib/libmbedcrypto.so.5 usr/lib/libmbedtls.so.13 usr/lib/libmbedx509.so.1 usr/lib/libmsgpackc.so.2 usr/lib/libsodium.so usr/lib/libsynocodesign-ng-virtual-junior-wins.so.7 usr/syno/bin/scemd; do
             echo "Copying $file to /mnt/${tcrppart}/auxfiles"
-            cp $file /mnt/${tcrppart}/auxfiles/extractor
+            sudo cp "$file" "/mnt/${tcrppart}/auxfiles/extractor"
         done
 
     fi
@@ -4989,7 +5006,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
             exit 99
         fi
 
-        [ -n $pat_url ] && curl -kL# ${pat_url} -o "/${local_cache}/${SYNOMODEL}.pat"
+        [ -n "$pat_url" ] && sudo curl -kL# "$pat_url" -o "${local_cache}/${SYNOMODEL}.pat"
         patfile="/${local_cache}/${SYNOMODEL}.pat"
         if [ -f ${patfile} ]; then
             testarchive ${patfile}
@@ -7098,34 +7115,42 @@ NCEOF
         sudo rm -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz"
     fi
 
-    # Reassembly ramdisk ( no compress, use cpio raw type )
+    # Build and validate the archive in /tmp before replacing P3's initrd-dsm.
+    # P3 is usually vfat mounted with root-owned emulated permissions: a `sudo
+    # cpio ... > /mnt/...` redirect is still opened by tc and silently leaves
+    # the old initrd in place.  Stage first, then use sudo for the final write.
+    INITRD_TMP="$(mktemp /tmp/initrd-dsm.XXXXXX)" || { echo "ERROR: cannot create temporary initrd"; return 99; }
     if [ "$RD_COMPRESSED" = "false" ]; then
-        if [ "$FRKRNL" = "NO" ]; then
-            #if [ "${MDLNAME}" == "custom-modules" ]; then
-            #    if [ "$(which zstd)_" == "_" ]; then  
-            #        echo "zstd does not exist, install from tinycore"
-            #        tce-load -iw zstd 
-            #    fi            
-            #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
-            #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null            
-            #else
-                echo "Ramdisk in not compressed, use cpio raw"            
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /mnt/${loaderdisk}3/initrd-dsm) >/dev/null
-            #fi
-        else
-            #if [ "$(which zstd)_" == "_" ]; then  
-                echo "Ramdisk in not compressed, use cpio raw"                    
-                (cd $rdtemp && sudo find . | sudo cpio -o -H newc -R root:root > /tmp/initrd-dsm)
-            #else
-            #    echo "Ramdisk in not compressed, use bsdcpio + zstd -T0 -19"
-            #    (cd $rdtemp && sudo find . | sudo bsdcpio -o -H newc -R root:root | zstd -c -T0 -19 > /tmp/initrd-dsm)
-            #fi
-            sudo dd if=/tmp/initrd-dsm of=/mnt/${loaderdisk}3/initrd-dsm conv=fsync status=progress            
+        echo "Ramdisk is not compressed; creating raw cpio archive"
+        if ! (cd "$rdtemp" && sudo find . -print | sudo cpio -o -H newc -R root:root > "$INITRD_TMP"); then
+            rm -f "$INITRD_TMP"
+            echo "ERROR: initrd archive creation failed"
+            return 99
+        fi
+        if ! cpio -it < "$INITRD_TMP" >/dev/null 2>&1; then
+            rm -f "$INITRD_TMP"
+            echo "ERROR: generated initrd archive validation failed"
+            return 99
         fi
     else
-        echo "Ramdisk in compressed, use xz(lzma) "
-        (cd "$rdtemp" && $( [ "$FRKRNL" = "NO" ] && echo sudo ) find . | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma >"/mnt/${loaderdisk}3/initrd-dsm") >/dev/null
+        echo "Ramdisk is compressed; creating xz/lzma archive"
+        if ! (cd "$rdtemp" && sudo find . -print | sudo cpio -o -H newc -R root:root | xz -9 --format=lzma > "$INITRD_TMP"); then
+            rm -f "$INITRD_TMP"
+            echo "ERROR: compressed initrd archive creation failed"
+            return 99
+        fi
+        if ! xz -t "$INITRD_TMP"; then
+            rm -f "$INITRD_TMP"
+            echo "ERROR: generated compressed initrd validation failed"
+            return 99
+        fi
     fi
+    if ! sudo dd if="$INITRD_TMP" of="/mnt/${loaderdisk}3/initrd-dsm" conv=fsync status=progress; then
+        rm -f "$INITRD_TMP"
+        echo "ERROR: failed to publish initrd-dsm to loader partition"
+        return 99
+    fi
+    rm -f "$INITRD_TMP"
     
     if [ "$WITHFRIEND" = "YES" ]; then
         msgnormal "Setting default boot entry to TCRP Friend"
@@ -7255,13 +7280,13 @@ st "gen grub     " "Gen GRUB entries" "Finished Gen GRUB entries : ${MODEL}"
                     if tar -xf "${patfile}" -C "${MINIPAT_INNER}" ${MINIPAT_RESOLVED} 2>/dev/null \
                        && tar -cf "${MINIPAT_TMPDIR}/$(basename ${patfile})" -C "${MINIPAT_INNER}" . 2>/dev/null; then
                         echo "[minipat] Reduced $(basename ${patfile}) to 5 essential files (zImage/rd.gz/GRUB_VER/grub_cksum.syno/VERSION)"
-                        $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf "${MINIPAT_TMPDIR}/$(basename ${patfile})" ${local_cache}
+                        sudo cp -vf "${MINIPAT_TMPDIR}/$(basename ${patfile})" "${local_cache}"
                     else
                         echo "[minipat] selective repack failed - keeping original pat as-is"
                         MINIPAT_OK=0
                     fi
                 fi
-                [ "${MINIPAT_OK}" -eq 0 ] && $( [ "$FRKRNL" != "NO" ] && echo sudo ) cp -vf ${patfile} ${local_cache}
+                [ "${MINIPAT_OK}" -eq 0 ] && sudo cp -vf "${patfile}" "${local_cache}"
                 rm -rf "${MINIPAT_TMPDIR}"
                 $( [ "$FRKRNL" != "NO" ] && echo sudo ) rm -vf /home/tc/redpill-load/cache/*.pat
             fi
@@ -7659,7 +7684,7 @@ function changeautoupdate {
     else
         writeConfigKey "general" "friendautoupd" "false"
     fi
-    cp -f "$userconfigfile" "/mnt/${tcrppart}/" && echo "Done" || echo "Failed"
+    sudo dd if="$userconfigfile" of="/mnt/${tcrppart}/user_config.json" conv=fsync status=none && echo "Done" || echo "Failed"
     
     cat $userconfigfile | grep friendautoupd
 }
@@ -7701,8 +7726,8 @@ function upgrademan() {
     FRIENDVERSION="$(grep VERSION chksum | awk -F= '{print $2}')"
     BZIMAGESHA256="$(grep bzImage-friend chksum | awk '{print $1}')"
     INITRDSHA256="$(grep initrd-friend chksum | awk '{print $1}')"
-    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && cp -f bzImage-friend /mnt/${tcrppart}/ && msgnormal "bzImage OK! \n"
-    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && cp -f initrd-friend /mnt/${tcrppart}/ && msgnormal "initrd-friend OK! \n"
+    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && sudo cp -f bzImage-friend /mnt/${tcrppart}/ && msgnormal "bzImage OK! \n"
+    [ "$(sha256sum bzImage-friend | awk '{print $1}')" = "$BZIMAGESHA256" ] && [ "$(sha256sum initrd-friend | awk '{print $1}')" = "$INITRDSHA256" ] && sudo cp -f initrd-friend /mnt/${tcrppart}/ && msgnormal "initrd-friend OK! \n"
     echo -e "$(msgnormal "TCRP FRIEND HAS BEEN UPDATED!!!")"
     changeautoupdate "off"
 
@@ -8908,7 +8933,7 @@ function my() {
   
   if [ ! -d "/mnt/${tcrppart}/auxfiles" ]; then
       cecho g "making directory  /mnt/${tcrppart}/auxfiles"  
-      mkdir -p /mnt/${tcrppart}/auxfiles 
+      sudo mkdir -p /mnt/${tcrppart}/auxfiles
   fi
   if [ ! -h /home/tc/custom-module ]; then
       cecho y "making link /home/tc/custom-module"  
