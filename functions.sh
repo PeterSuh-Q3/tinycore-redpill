@@ -291,9 +291,10 @@ function migrate_ipsettings_schema() {
             end' "${cfg}")
         [ -n "${oldproxy}" ] && json=$(echo "${json}" | jq --arg p "${oldproxy}" '.netproxy.ipproxy = $p')
         [ -n "${olddns}" ] && json=$(echo "${json}" | jq --arg d "${olddns}" '.netdns.ipdns = $d')
-        echo "${json}" | jq . >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+        write_user_config_json "${cfg}" "${json}" || return 1
     elif [ "${t}" != "array" ]; then
-        jq '.ipsettings = []' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+        json=$(jq '.ipsettings = []' "${cfg}") || return 1
+        write_user_config_json "${cfg}" "${json}" || return 1
     fi
 
     # 배열 원소에 아직 ipdns가 남아있으면(NIC별 DNS 입력을 받던 중간 스키마)
@@ -301,7 +302,7 @@ function migrate_ipsettings_schema() {
     # 하나도 없으면(과거 배열 스키마 실험판 등) 첫 항목을 primary로 승격하는
     # 안전망도 동일하게 유지 - "게이트웨이는 항상 정확히 1개" 불변식을 이
     # 함수를 거치기만 하면 항상 보장한다.
-    jq '
+    json=$(jq '
       (if ((.ipsettings|type)=="array") and (([.ipsettings[]? | select((.ipdns? // "") != "")] | length) > 0)
               and ((.netdns.ipdns // "") == "")
           then .netdns.ipdns = ([.ipsettings[] | select((.ipdns? // "") != "")][0].ipdns)
@@ -318,7 +319,8 @@ function migrate_ipsettings_schema() {
       # 동일하게 보이도록 한다.
       | (if (.netproxy|type)!="object" then .netproxy = {"ipproxy": ""} else . end)
       | (if (.netdns|type)!="object" then .netdns = {"ipdns": ""} else . end)
-    ' "${cfg}" >"${cfg}.tmp" && cp "${cfg}.tmp" "${cfg}" && rm -f "${cfg}.tmp"
+    ' "${cfg}") || return 1
+    write_user_config_json "${cfg}" "${json}"
 }
 
 # Stop the DHCP client currently associated with one interface without
