@@ -5518,32 +5518,47 @@ function sync_alpine_apkovl_update() {
     is_alpine || return 0
 
     local part="/mnt/${tcrppart}"
-    local current="${part}/localhost.apkovl.tar.gz"
+    local current="/mnt/tcrp/localhost.apkovl.tar.gz"
     local stage="/dev/shm/mshell-apkovl-stage"
     local incoming="/dev/shm/localhost.apkovl.tar.gz.new"
     local backup="${current}.bak"
+    local source_archive="${incoming}"
     local url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
     local changed=0 path
 
     command -v curl >/dev/null 2>&1 || return 0
-    [ -d "${part}" ] || return 0
     mkdir -p "${stage}" || return 1
-    rm -f "${incoming}"
     rm -rf "${stage:?}"/*
-    curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
-        echo "[APKVOL] Latest overlay download failed; keeping current archive."
-        return 0
-    }
-    tar -tzf "${incoming}" >/dev/null 2>&1 || {
-        echo "[APKVOL] Downloaded overlay is invalid; keeping current archive."
-        return 1
-    }
-    if [ -f "${current}" ] && cmp -s "${incoming}" "${current}"; then
-        rm -f "${incoming}"
-        return 0
+    if [ -f "${current}" ]; then
+        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${incoming}" "${url}?_cb=$(date +%s)" || {
+            echo "[APKVOL] Latest overlay download failed; keeping current archive."
+            return 0
+        }
+        tar -tzf "${incoming}" >/dev/null 2>&1 || {
+            echo "[APKVOL] Downloaded overlay is invalid; keeping current archive."
+            return 1
+        }
+        if cmp -s "${incoming}" "${current}"; then
+            rm -f "${incoming}"
+            return 0
+        fi
+        source_archive="${incoming}"
+        sudo cp -p "${current}" "${backup}"
+    else
+        echo "[APKVOL] No comparison archive found; downloading baseline to ${current}."
+        mkdir -p "$(dirname "${current}")" || return 1
+        curl -skL --fail --connect-timeout 15 --max-time 180 -o "${current}" "${url}?_cb=$(date +%s)" || {
+            echo "[APKVOL] Initial overlay download failed; merge skipped."
+            return 0
+        }
+        tar -tzf "${current}" >/dev/null 2>&1 || {
+            echo "[APKVOL] Initial overlay is invalid; removing it."
+            sudo rm -f "${current}"
+            return 1
+        }
+        source_archive="${current}"
     fi
-    [ -f "${current}" ] && sudo cp -p "${current}" "${backup}"
-    tar -xzf "${incoming}" -C "${stage}" || return 1
+    tar -xzf "${source_archive}" -C "${stage}" || return 1
 
     # Deliberately exclude user_config, credentials, network identity and
     # user data.  These paths are never copied from the repository archive.
@@ -5575,7 +5590,7 @@ function sync_alpine_apkovl_update() {
         return 1
     }
     echo "[APKVOL] Approved system files merged and persisted."
-    rm -f "${incoming}"
+    [ "${source_archive}" = "${incoming}" ] && rm -f "${incoming}"
     return 0
 }
 
