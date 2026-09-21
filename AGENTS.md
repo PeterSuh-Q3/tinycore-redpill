@@ -10,10 +10,12 @@
   `tcrp-modules`, and `redpill-load` as separate worktrees.
 - Do not commit, push, publish a release, or trigger a workflow unless the
   user explicitly requests that action.
-- Prefer direct evidence from the affected image or device over inference. For
-  DSM or TinyCore TTYD access, use `tools/ttyd-run.py`; record confirmed facts,
-  source ownership, and unfinished validation in `ACTIVE-CONTEXT.md` before a
-  long investigation or handoff.
+- Prefer direct evidence from the affected image or device over inference.
+  Use SSH as the default method for device inspection, testing, and file
+  transfer. Use `tools/ttyd-run.py` only when the user explicitly requests
+  TTYD access or SSH is unavailable; record confirmed facts, source ownership,
+  and unfinished validation in `ACTIVE-CONTEXT.md` before a long investigation
+  or handoff.
 - For module-load failures, separately verify the requesting addon, declared
   dependencies, live `modules.dep`, and module files included in the loader.
 - Kernel-module pilots use the Ubuntu build host's root-owned
