@@ -349,26 +349,11 @@
             }
         ]
     },
-    "epyc7003ntb": {
-        "productvers": {
-            "7.4": "7.4-5.10.55"
-        },
-        "models": [
-            "PAS7700"
-        ],
-        "add_extensions": [
-            {
-                "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/powersched/rpext-index.json",
-                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/storagepanel/rpext-index.json"
-            }
-        ]
-    },
     "epyc7003": {
         "productvers": {
             "7.4": "7.4-5.10.55"
         },
         "models": [
-            "RS11626xs+",            
             "FS6420"
         ],
         "add_extensions": [
