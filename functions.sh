@@ -256,13 +256,23 @@ R8168_DETECTED="N"  # 한번만 체크하는 플래그
 function write_user_config_json() {
     local cfg="$1" json="$2" tmp target
     [ -n "${cfg}" ] || return 1
+
     tmp=$(mktemp /tmp/mshell-user-config.XXXXXX) || return 1
-    if ! printf '%s\n' "${json}" | jq . > "${tmp}"; then rm -f "${tmp}"; return 1; fi
+    if ! printf '%s\n' "${json}" | jq . > "${tmp}"; then
+        rm -f "${tmp}"
+        return 1
+    fi
     target="${cfg}"
     if [ -L "${cfg}" ]; then
-        target=$(readlink -f "${cfg}" 2>/dev/null) || { rm -f "${tmp}"; return 1; }
+        target=$(readlink -f "${cfg}" 2>/dev/null) || {
+            rm -f "${tmp}"
+            return 1
+        }
     fi
-    if ! sudo cp -f "${tmp}" "${target}"; then rm -f "${tmp}"; return 1; fi
+    if ! sudo cp -f "${tmp}" "${target}"; then
+        rm -f "${tmp}"
+        return 1
+    fi
     rm -f "${tmp}"
 }
 
@@ -5575,14 +5585,17 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
+# Persist Alpine only through a transaction.  Repository apkovl content is
+# never unpacked into the live root: it is merely retained as the P3 baseline
+# when absent.  lbu writes a complete candidate archive under /tmp, where it
+# is validated before the active P4 archive is replaced.
 function persist_alpine_apkovl_safely() {
     is_alpine || return 0
 
     local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
-    local stage incoming candidate active_backup lbu_conf lbu_conf_backup extract repacked
+    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
     local remote_hash local_hash
-    local url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
@@ -5594,6 +5607,7 @@ function persist_alpine_apkovl_safely() {
     active_backup="${stage}/active.before.tar.gz"
     lbu_conf="/etc/lbu/lbu.conf"
     lbu_conf_backup="${stage}/lbu.conf.before"
+    url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
 
     # P3 is the local baseline, but it must follow the current repository
     # overlay. Download into staging first, then replace P3 only after the
@@ -5626,6 +5640,8 @@ function persist_alpine_apkovl_safely() {
 
     [ -f "${active}" ] && sudo cp -p "${active}" "${active_backup}" || true
 
+    # lbu.conf overrides inherited LBU_BACKUPDIR.  Redirect it only for the
+    # staging run and restore the live configuration immediately afterwards.
     sudo cp -p "${lbu_conf}" "${lbu_conf_backup}" || { rm -rf "${stage}"; return 1; }
     if ! sudo sed -i "s|^LBU_BACKUPDIR=.*|LBU_BACKUPDIR=${stage}|" "${lbu_conf}"; then
         rm -rf "${stage}"
@@ -5642,6 +5658,9 @@ function persist_alpine_apkovl_safely() {
         rm -rf "${stage}"
         return 1
     }
+
+    # The archive captured the temporary staging path.  Restore the regular
+    # P4 lbu.conf inside the candidate before activating it.
     extract="${stage}/extract"
     repacked="${stage}/candidate.repacked"
     if ! mkdir -p "${extract}" || ! tar -xzf "${candidate}" -C "${extract}" \
@@ -5658,6 +5677,7 @@ function persist_alpine_apkovl_safely() {
         return 1
     }
 
+    # Copy within P4 and rename only after the candidate is known-good.
     sudo cp -p "${candidate}" "${active}.new" || {
         [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
         rm -rf "${stage}"
@@ -5672,7 +5692,6 @@ function persist_alpine_apkovl_safely() {
     rm -rf "${stage}"
     echo "[APKVOL] Staged Alpine persistence verified and activated."
 }
-
 function backuploader() {
 
     # Define the path to the file
@@ -7005,7 +7024,7 @@ NCEOF
     MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
-    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^mshellmanager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
+    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^MshellManager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
         ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
       echo "[!] MSHELL Manager latest release metadata is missing or invalid; skipped."
