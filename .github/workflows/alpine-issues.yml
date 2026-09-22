@@ -381,7 +381,8 @@ jobs:
           cd ${path}/
           ls -ltr ${path}/
 
-          if [ -z "${{ env.format }}" ]; then
+          if [ -z "${{ env.format }}" ] || [ "${{ env.format }}" = "both" ]; then
+            # produce both img and vmdk
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img.gz
             qemu-img convert -f raw -O vmdk tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.img tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk
             gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
@@ -395,7 +396,6 @@ jobs:
               gzip -c tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk > /opt/output/tinycore-redpill.${TAG}-${{ env.model }}-${{ env.version }}.m-shell.vmdk.gz
             fi
           fi
-
           ls -ltr /opt/output
 
       - name: Upload to Artifact
