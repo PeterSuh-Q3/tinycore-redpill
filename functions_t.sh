@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.4.6"
-builddate="2026.09.21"
+rploaderver="1.4.4.7"
+builddate="2026.09.22"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -996,6 +996,7 @@ function history() {
     1.4.4.4 Improved Alpine boot session reliability and preserved loader payload version metadata
     1.4.4.5 Responsive Alpine desktop reliability and optional SAN Manager repair
     1.4.4.6 Safe Alpine persistence and user config writes with consistent image overlay packaging
+    1.4.4.7 Reliable Alpine overlay and loader partition writes
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1704,6 +1705,9 @@ EOF
 # 2026.09.21 v1.4.4.6
 # Safe Alpine persistence and user config writes with consistent image overlay packaging
 
+# 2026.09.22 v1.4.4.7
+# Reliable Alpine overlay and loader partition writes
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2089,6 +2093,9 @@ function showlastupdate() {
 
 # 2026.09.21 v1.4.4.6
 # Safe Alpine persistence and user config writes with consistent image overlay packaging
+
+# 2026.09.22 v1.4.4.7
+# Reliable Alpine overlay and loader partition writes
 EOF
 }
 
