@@ -7005,7 +7005,7 @@ NCEOF
     MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
-    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^MshellManager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
+    if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^mshellmanager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
         ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
       echo "[!] MSHELL Manager latest release metadata is missing or invalid; skipped."
