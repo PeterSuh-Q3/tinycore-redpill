@@ -492,11 +492,7 @@ function backtitle() {
     [[ -n "${!varname}" && "${!varname}" != "null" ]] && BACKTITLE+=" ${!varname}"
   done
   
-  # 키맵(qwerty/us) 대신 저장소 패널 크기를 표시한다. bay 는 이미 전역
-  # 변수로 관리되고 있다 - 모델 선택 시 모델별 기본값이 설정되고
-  # (modelMenu 의 case 문), storagepanel() 에서 사용자가 바꾸면
-  # user_config.json 의 general.bay 에 저장되며, 메인 루프가 매 반복
-  # readConfigKey 로 다시 읽어들인다(box 152 실기 확인: "bay": "RACK_12_Bay").
+  # 모델에 지정된 저장소 패널 크기를 표시한다.
   [ -n "${bay}" ] && BACKTITLE+=" (${bay})" || BACKTITLE+=" (no panel size)"
   echo ${BACKTITLE}
 }
@@ -1145,27 +1141,6 @@ function setSuggest() {
   
   result="${desc}"
   echo "${platform} : ${bay} : ${mcpu}"
-}
-
-# Set Storage Panel Size
-function storagepanel() {
-
-  BAYSIZE="${bay}"
-  dialog --backtitle "`backtitle`" --default-item "${BAYSIZE}" --no-items \
-    --menu "Choose a Panel Size" 0 0 $(dlgmenuheight 13) "TOWER_1_Bay" "TOWER_2_Bay" "TOWER_4_Bay" "TOWER_4_Bay_J" \
-        "TOWER_4_Bay_S" "TOWER_5_Bay" "TOWER_6_Bay" "TOWER_8_Bay" "TOWER_12_Bay" \
-        "RACK_2_Bay" "RACK_4_Bay" "RACK_8_Bay" "RACK_10_Bay" \
-                "RACK_12_Bay" "RACK_12_Bay_2" "RACK_16_Bay" "RACK_20_Bay" "RACK_24_Bay" "RACK_60_Bay" \
-    2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return 
-
-  BAYSIZE="`<${TMP_PATH}/resp`"
-  writeConfigKey "general" "bay" "${BAYSIZE}"
-  bay="${BAYSIZE}"
-  notify_config_saved deferred
-  
 }
 
 # Set Cache Panel Size. Values mirror ChangePanelSize's #X#.png template names.
@@ -2985,7 +2960,7 @@ function build-pre-option() {
   # a(selectldrmode), b(seleudev) 는 최상위 메뉴의 k/c 가 여기로 종속된
   # 것이다 - 문구(MSG06/MSG01)는 원래 최상위에서 쓰던 것을 그대로 재사용
   # (MSGID 변경 없음). 최초 진입 시 a(구 k)가 디폴트 인덱스로 선택된다.
-  # e 아래에 캐시 패널 크기(f)를 배치하고, NVMe/vmtools/sanmanager-repair 항목은 g/h/i로 배치.
+  # 캐시 패널 크기는 e, NVMe/vmtools/sanmanager-repair 항목은 f/g/h에 배치.
   default_resp="a"
 
   MSG64="vmtools(with qemu-guest-agent) addon"
@@ -2993,7 +2968,7 @@ function build-pre-option() {
 
   while true; do
     # vmtoolsaction/nvmeaction 은 최상위 Main loop 에서만 재계산되므로, 이
-    # 함수 자신의 while 루프 안에서 g)/h)/i) 토글을 반복해도 그 값이 갱신되지
+    # 함수 자신의 while 루프 안에서 f)/g)/h) 토글을 반복해도 그 값이 갱신되지
     # 않아 화면에는 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서
     # 확인됐다(2026-08-27). 매 반복마다 bundled-exts.json을 직접 다시
     # 확인해 최신 상태를 보장한다.
@@ -3021,11 +2996,10 @@ function build-pre-option() {
     if ! echo "${platform}" | grep -q "(DT)"; then
       eval "echo \"d \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
     fi
-    eval "echo \"e \\\"\${MSG${tz}41} (${bay})\\\"\""                           >> "${TMP_PATH}/menud"
-    eval "echo \"f \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
-    eval "echo \"g \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
-    eval "echo \"h \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
-    echo "i \"${MSG65} (${sanmanagerrepairaction})\""                       >> "${TMP_PATH}/menud"
+    eval "echo \"e \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
+    eval "echo \"f \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
+    eval "echo \"g \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
+    echo "h \"${MSG65} (${sanmanagerrepairaction})\""                       >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3038,10 +3012,9 @@ function build-pre-option() {
     b) seleudev      ;    NEXT="z" ;;
     c) dtsmapping    ;    NEXT="z" ;;
     d) remapsata     ;    NEXT="z" ;;
-    e) storagepanel;      NEXT="z" ;;
-    f) cachepanel;        NEXT="z" ;;
-    g)
-      # h)(vmtools)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
+    e) cachepanel;        NEXT="z" ;;
+    f)
+      # g)(vmtools)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
       # 프롬프트는 여기선 건너뛴다(위험 경고 dialog가 이미 실질적인 확인
       # 역할을 하므로 이중 확인은 불필요, menu.sh test에서 이 프롬프트 때문에
       # 토글이 막히는 문제도 vmtools에서 실기로 확인됨). bundled-exts.json을
@@ -3072,7 +3045,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "devmod" "${DMPM}"
       notify_config_saved rebuild
       NEXT="z" ;;
-    h)
+    g)
       # 메뉴 표시가 이미 (Enabled)/(Disabled)로 현재 상태를 보여주고 있으니,
       # "추가하시겠습니까? [yY/nN]" 확인 질문 없이 그 자리에서 바로 토글한다
       # (add-addon()의 대화형 확인은 여기선 생략 - menu.sh test에서 이 프롬프트
@@ -3094,7 +3067,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
       notify_config_saved rebuild
       NEXT="z" ;;
-    i)
+    h)
       # vmtools와 같이 현재 선택을 즉시 토글하고, 다음 빌드에서도 유지할
       # 사용자 의도를 general.sanmanager-repair에 기록한다.
       if [ "${SANMANAGER_REPAIR}" = "false" ]; then
