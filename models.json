@@ -389,9 +389,18 @@
         },
         "models": [
             "DS925+",
+            "DS925neo+",
             "DS1525+",
+            "DS1525neo+",
             "DS1825+",
-            "DVA7400"
+            "DS1825neo+",
+            "DVA7400",
+            "RS1226+",
+            "RS1226RP+",
+            "RS2423RP+II",
+            "RS2825RP+",
+            "RS826+",
+            "RS826RP+"
         ],
         "add_extensions": [
             {
@@ -407,7 +416,8 @@
             "7.4": "7.4-5.10.55"
         },
         "models": [
-            "DS725+"
+            "DS725+",
+            "DS725neo+"
         ],
         "add_extensions": [
             {
@@ -424,7 +434,8 @@
         },
         "models": [
             "DS425+",
-            "DS225+"
+            "DS225+",
+            "FS200T"
         ],
         "add_extensions": [
             {
