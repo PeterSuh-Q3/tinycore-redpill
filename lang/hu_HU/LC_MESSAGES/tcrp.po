@@ -775,3 +775,19 @@ msgstr "Az előző beállítás visszaállítva.\\n\\nElutasított módosításo
 #: MSGZZ198
 msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
 msgstr "Meglévő beállítási eltérés észlelve.\\nAz új érték nem lett mentve."
+
+#: MSGZZ200
+msgid "Improve fan sensor detection (relax ACPI resource checks): %s"
+msgstr "Ventilátorérzékelők felismerésének javítása (ACPI-erőforrás-ellenőrzés enyhítése): %s"
+
+#: MSGZZ201
+msgid "Enabled"
+msgstr "Bekapcsolva"
+
+#: MSGZZ202
+msgid "Disabled"
+msgstr "Kikapcsolva"
+
+#: MSGZZ203
+msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+msgstr "Ez hozzáadja az acpi_enforce_resources=lax paramétert a DSM kernel parancssorához. Rendszerszinten enyhíti az ACPI-erőforrások ellenőrzését, ami egyes gépeken instabilitást vagy váratlan újraindulást okozhat. Csak akkor kapcsolja be, ha egy érzékelő-illesztőprogram, például az it87, ACPI-erőforrásütközés miatt nem töltődik be. Folytatja?"

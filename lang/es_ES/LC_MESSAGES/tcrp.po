@@ -775,3 +775,19 @@ msgstr "Se restauró la configuración anterior.\\n\\nCambios rechazados:\\n%s\\
 #: MSGZZ198
 msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
 msgstr "Se detectó una incoherencia en la configuración existente.\\nNo se guardó el nuevo valor."
+
+#: MSGZZ200
+msgid "Improve fan sensor detection (relax ACPI resource checks): %s"
+msgstr "Mejorar la detección del sensor del ventilador (relajar la comprobación de recursos ACPI): %s"
+
+#: MSGZZ201
+msgid "Enabled"
+msgstr "Activado"
+
+#: MSGZZ202
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: MSGZZ203
+msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+msgstr "Esto añade acpi_enforce_resources=lax a la línea de comandos del kernel de DSM. Relaja la comprobación de recursos ACPI en todo el sistema y puede causar inestabilidad o reinicios inesperados en algunos equipos. Actívelo solo si un controlador de sensores como it87 no se carga debido a un conflicto de recursos ACPI. ¿Continuar?"

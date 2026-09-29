@@ -779,3 +779,19 @@ msgstr "이전 설정을 복원했습니다.\\n\\n거부된 변경:\\n%s\\n\\n�
 #: MSGZZ198
 msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
 msgstr "기존 설정의 불일치가 감지되었습니다.\\n새 값은 저장되지 않았습니다."
+
+#: MSGZZ200
+msgid "Improve fan sensor detection (relax ACPI resource checks): %s"
+msgstr "팬 센서 인식 개선 (ACPI 제한 완화): %s"
+
+#: MSGZZ201
+msgid "Enabled"
+msgstr "켜짐"
+
+#: MSGZZ202
+msgid "Disabled"
+msgstr "꺼짐"
+
+#: MSGZZ203
+msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+msgstr "DSM 커널 명령줄에 acpi_enforce_resources=lax를 추가합니다. ACPI 자원 검사를 시스템 전체에서 완화하므로 일부 장비에서 불안정하거나 예기치 않게 재부팅될 수 있습니다. it87 같은 센서 드라이버가 ACPI 자원 충돌 때문에 로드되지 않을 때만 켜십시오. 계속하시겠습니까?"

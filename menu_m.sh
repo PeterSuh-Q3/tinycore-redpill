@@ -2839,6 +2839,7 @@ function additional() {
   eval "MSG123=\"\${MSG${tz}123}\""
   eval "MSG88=\"\${MSG${tz}88}\""
   eval "MSG87=\"\${MSG${tz}87}\""
+  local acpi_sensor_status acpi_sensor_enabled acpi_sensor_value
 
   default_resp="l"
 
@@ -2851,6 +2852,14 @@ function additional() {
     eval "echo \"y \\\"${dbgutils} ${MSG121}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"$(printf "${MSG122}" "${DOMKIND}") \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"$(printf "${MSG123}" "${DISPLAYI915}") \\\"\"" >> "${TMP_PATH}/menua"
+    if jq -e '(.general.usb_line // "" | split(" ") | index("acpi_enforce_resources=lax")) != null or (.general.sata_line // "" | split(" ") | index("acpi_enforce_resources=lax")) != null' "${userconfigfile}" >/dev/null 2>&1; then
+      acpi_sensor_enabled="true"
+      acpi_sensor_status="${MSGZZ201}"
+    else
+      acpi_sensor_enabled="false"
+      acpi_sensor_status="${MSGZZ202}"
+    fi
+    echo "v \"$(printf "${MSGZZ200}" "${acpi_sensor_status}")\"" >> "${TMP_PATH}/menua"
     eval "echo \"b \\\"${MSG51}: ${PREVENT_STATUS}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
@@ -2885,6 +2894,21 @@ function additional() {
       #[ "$MACHINE" = "VIRTUAL" ] && echo "VIRTUAL Machine is not supported..." && read answer && continue
       i915_edit
       default_resp="z"
+      ;;
+    v)
+      if [ "${acpi_sensor_enabled}" = "false" ]; then
+        dialog --clear --backtitle "`backtitle`" --colors --title "ACPI" --yesno "${MSGZZ203}" 0 0 || continue
+        acpi_sensor_value="lax"
+      else
+        acpi_sensor_value=""
+      fi
+      config_change_begin "ACPI sensor resource checks" || return
+      if ! set_loader_cmdline_option both "acpi_enforce_resources" "${acpi_sensor_value}"; then
+        config_change_reject
+        continue
+      fi
+      config_change_finish cmdline || continue
+      default_resp="v"
       ;;
     b) prevent; default_resp="b";;
     d) viewerrorlog; default_resp="d";;

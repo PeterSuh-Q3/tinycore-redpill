@@ -775,3 +775,19 @@ msgstr "已還原先前的設定。\\n\\n被拒絕的變更:\\n%s\\n\\n驗證錯
 #: MSGZZ198
 msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
 msgstr "偵測到既有設定不一致。\\n未儲存新值。"
+
+#: MSGZZ200
+msgid "Improve fan sensor detection (relax ACPI resource checks): %s"
+msgstr "改善風扇感測器辨識（放寬 ACPI 資源檢查）：%s"
+
+#: MSGZZ201
+msgid "Enabled"
+msgstr "已啟用"
+
+#: MSGZZ202
+msgid "Disabled"
+msgstr "已停用"
+
+#: MSGZZ203
+msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+msgstr "這會將 acpi_enforce_resources=lax 加入 DSM 核心命令列。它會在整個系統範圍放寬 ACPI 資源檢查，在某些硬體上可能造成系統不穩定或意外重新啟動。僅在 it87 等感測器驅動程式因 ACPI 資源衝突而無法載入時啟用。是否繼續？"

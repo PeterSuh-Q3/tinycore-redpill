@@ -194,5 +194,9 @@ MSGZZ195=$(gettext "tcrp" "Configuration saved.\n\nRebuild the loader to include
 MSGZZ196=$(gettext "tcrp" "Configuration was not saved")
 MSGZZ197=$(gettext "tcrp" "The previous configuration has been restored.\n\nRejected change(s):\n%s\n\nValidation error:\n%s")
 MSGZZ198=$(gettext "tcrp" "Existing configuration inconsistency detected.\nNo new value was saved.")
+MSGZZ200=$(gettext "tcrp" "Improve fan sensor detection (relax ACPI resource checks): %s")
+MSGZZ201=$(gettext "tcrp" "Enabled")
+MSGZZ202=$(gettext "tcrp" "Disabled")
+MSGZZ203=$(gettext "tcrp" "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?")
 MSGZZ186=$(gettext "tcrp" "Could not apply static IP settings to the running kernel. They will still take effect on next boot.")
 }

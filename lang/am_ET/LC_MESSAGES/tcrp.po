@@ -775,3 +775,19 @@ msgstr "የቀድሞው ውቅር ተመልሷል።\\n\\nውድቅ የተደረ
 #: MSGZZ198
 msgid "Existing configuration inconsistency detected.\\nNo new value was saved."
 msgstr "ያለ የውቅር አለመጣጣም ተገኝቷል።\\nአዲሱ እሴት አልተቀመጠም።"
+
+#: MSGZZ200
+msgid "Improve fan sensor detection (relax ACPI resource checks): %s"
+msgstr "የአድናቂ ዳሳሽ ማወቅን አሻሽል (የACPI ሀብት ምርመራን አሳልል): %s"
+
+#: MSGZZ201
+msgid "Enabled"
+msgstr "ነቅቷል"
+
+#: MSGZZ202
+msgid "Disabled"
+msgstr "ጠፍቷል"
+
+#: MSGZZ203
+msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+msgstr "ይህ acpi_enforce_resources=lax ወደ DSM ከርነል የትእዛዝ መስመር ይጨምራል። የACPI ሀብት ምርመራን በስርዓቱ ሁሉ ያሳልላል እና በአንዳንድ ሃርድዌር ላይ አለመረጋጋት ወይም ያልተጠበቀ ዳግም መነሳት ሊያስከትል ይችላል። እንደ it87 ያለ ዳሳሽ ነጂ በACPI ሀብት ግጭት ምክንያት ሲጫን ካልተሳካ ብቻ ያንቁት። ይቀጥሉ?"
