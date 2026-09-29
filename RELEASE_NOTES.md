@@ -2,4 +2,4 @@
 af052d3ed0196475ec83935aea5d0661032fbefd
 b844294a636a5eda9677128174678772d2204abc
 
-    1.4.4.7 Reliable Alpine overlay and loader partition writes
+    1.4.4.8 Add optional ACPI fan sensor support expand model choices and simplify build options
