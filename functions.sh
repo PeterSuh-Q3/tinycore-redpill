@@ -4113,6 +4113,44 @@ function set_loader_cmdline_option() {
     validate_loader_cmdline config
 }
 
+# Persist the ACPI sensor option as an explicit setting.  Existing loaders
+# without the flag inherit their current cmdline once; afterwards the flag is
+# authoritative, including during unattended rebuilds.
+function reconcile_acpi_sensor_config() {
+    local requested="${1:-}" enabled json current
+    [ -f "${userconfigfile}" ] || return 1
+    current=$(jq -r 'if (.general | has("acpi_sensor_enabled")) then .general.acpi_sensor_enabled else "unset" end' "${userconfigfile}") || return 1
+    if [ -n "${requested}" ]; then
+        enabled="${requested}"
+    elif [ "${current}" = "true" ] || [ "${current}" = "false" ]; then
+        enabled="${current}"
+    else
+        enabled=$(jq -r 'if ([.general.usb_line // "", .general.sata_line // ""] | any(split(" ") | index("acpi_enforce_resources=lax") != null)) then "true" else "false" end' "${userconfigfile}") || return 1
+    fi
+    [ "${enabled}" = "true" ] || [ "${enabled}" = "false" ] || return 2
+    json=$(jq --argjson enabled "${enabled}" '
+        .general.acpi_sensor_enabled = $enabled
+        | .general.usb_line = ((.general.usb_line // "" | split(" ") | map(select(. != "" and (startswith("acpi_enforce_resources=") | not)))) + (if $enabled then ["acpi_enforce_resources=lax"] else [] end) | join(" "))
+        | if (.general | has("sata_line")) then
+            .general.sata_line = ((.general.sata_line // "" | split(" ") | map(select(. != "" and (startswith("acpi_enforce_resources=") | not)))) + (if $enabled then ["acpi_enforce_resources=lax"] else [] end) | join(" "))
+          else . end
+    ' "${userconfigfile}") || return 1
+    [ "${json}" = "$(jq . "${userconfigfile}")" ] && return 0
+    write_user_config_json "${userconfigfile}" "${json}" || return 1
+    sync_part_config
+}
+
+function apply_acpi_sensor_option_to_line() {
+    local line="$1" enabled="$2" token
+    local -a tokens=()
+    for token in ${line}; do
+        [[ "${token}" == acpi_enforce_resources=* ]] && continue
+        tokens+=("${token}")
+    done
+    [ "${enabled}" = "true" ] && tokens+=("acpi_enforce_resources=lax")
+    printf '%s\n' "${tokens[*]}"
+}
+
 function _cmdline_key_count() {
     local line="$1" key="$2" token count=0
     for token in ${line}; do
@@ -4148,7 +4186,7 @@ function _cmdline_has_unsafe_plus() {
 # while manual custom options must never be silently discarded.
 function validate_loader_cmdline() {
     local mode="${1:-config}" cfg="${2:-}" usb_line sata_line line key value count errors=0
-    local netif mac_count sata_map disk_map netconsole satadom i915mode actual cfg_file kmajor
+    local netif mac_count sata_map disk_map netconsole satadom i915mode acpi_sensor_enabled actual cfg_file kmajor
     local managed_keys="sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 netif_num vid pid SataPortMap DiskIdxMap sata_remap netconsole"
 
     _cmdline_error() { echo "[cmdline-check] ERROR: $*" >&2; errors=$((errors + 1)); }
@@ -4161,6 +4199,21 @@ function validate_loader_cmdline() {
         fi
         usb_line="$(jq -r '.general.usb_line // empty' "${userconfigfile}")"
         sata_line="$(jq -r '.general.sata_line // empty' "${userconfigfile}")"
+
+        acpi_sensor_enabled=$(jq -r 'if (.general | has("acpi_sensor_enabled")) then .general.acpi_sensor_enabled else "unset" end' "${userconfigfile}")
+        if [ "${acpi_sensor_enabled}" = "true" ]; then
+            [ "$(_cmdline_key_count "${usb_line}" acpi_enforce_resources)" -eq 1 ] && \
+                _cmdline_has_token "${usb_line}" "acpi_enforce_resources=lax" || \
+                _cmdline_error "enabled ACPI sensor option is missing or incorrect in general.usb_line"
+            [ -z "${sata_line}" ] || { [ "$(_cmdline_key_count "${sata_line}" acpi_enforce_resources)" -eq 1 ] && \
+                _cmdline_has_token "${sata_line}" "acpi_enforce_resources=lax"; } || \
+                _cmdline_error "enabled ACPI sensor option is missing or incorrect in general.sata_line"
+        elif [ "${acpi_sensor_enabled}" = "false" ]; then
+            [ "$(_cmdline_key_count "${usb_line}" acpi_enforce_resources)" -eq 0 ] || \
+                _cmdline_error "disabled ACPI sensor option remains in general.usb_line"
+            [ "$(_cmdline_key_count "${sata_line}" acpi_enforce_resources)" -eq 0 ] || \
+                _cmdline_error "disabled ACPI sensor option remains in general.sata_line"
+        fi
 
         for line in "${usb_line}" "${sata_line}"; do
             _cmdline_has_unsafe_plus "${line}" && _cmdline_error "literal '+' found outside syno_hw_version in a cmdline"
@@ -6565,6 +6618,10 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       fi  
     fi
 
+    # The persisted flag is authoritative for automatic rebuilds.  Migrate
+    # older cmdline-only settings once, then restore the option to the fresh
+    # generated command line before it is written to GRUB and user_config.
+    reconcile_acpi_sensor_config || return 1
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
     if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
         SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
@@ -6572,6 +6629,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ -n "$SATA_DOM" ]; then
             SATA_LINE="$(cmdline_append "" "synoboot_satadom=${SATA_DOM}")"
         fi
+    fi
+
+    local acpi_sensor_enabled
+    acpi_sensor_enabled=$(jq -r '.general.acpi_sensor_enabled' "${userconfigfile}") || return 1
+    USB_LINE="$(apply_acpi_sensor_option_to_line "${USB_LINE}" "${acpi_sensor_enabled}")"
+    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
+        SATA_LINE="$(apply_acpi_sensor_option_to_line "${SATA_LINE}" "${acpi_sensor_enabled}")"
     fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then

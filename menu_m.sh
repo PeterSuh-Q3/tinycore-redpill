@@ -2839,7 +2839,7 @@ function additional() {
   eval "MSG123=\"\${MSG${tz}123}\""
   eval "MSG88=\"\${MSG${tz}88}\""
   eval "MSG87=\"\${MSG${tz}87}\""
-  local acpi_sensor_status acpi_sensor_enabled acpi_sensor_value
+  local acpi_sensor_status acpi_sensor_enabled
 
   default_resp="l"
 
@@ -2852,7 +2852,8 @@ function additional() {
     eval "echo \"y \\\"${dbgutils} ${MSG121}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"j \\\"$(printf "${MSG122}" "${DOMKIND}") \\\"\"" >> "${TMP_PATH}/menua"
     [ "${platform}" = "geminilake(DT)" ]||[ "${platform}" = "apollolake" ] && eval "echo \"z \\\"$(printf "${MSG123}" "${DISPLAYI915}") \\\"\"" >> "${TMP_PATH}/menua"
-    if jq -e '(.general.usb_line // "" | split(" ") | index("acpi_enforce_resources=lax")) != null or (.general.sata_line // "" | split(" ") | index("acpi_enforce_resources=lax")) != null' "${userconfigfile}" >/dev/null 2>&1; then
+    reconcile_acpi_sensor_config || return
+    if jq -e '.general.acpi_sensor_enabled == true' "${userconfigfile}" >/dev/null 2>&1; then
       acpi_sensor_enabled="true"
       acpi_sensor_status="${MSGZZ201}"
     else
@@ -2898,12 +2899,12 @@ function additional() {
     v)
       if [ "${acpi_sensor_enabled}" = "false" ]; then
         dialog --clear --backtitle "`backtitle`" --colors --title "ACPI" --yesno "${MSGZZ203}" 0 0 || continue
-        acpi_sensor_value="lax"
+        acpi_sensor_enabled="true"
       else
-        acpi_sensor_value=""
+        acpi_sensor_enabled="false"
       fi
       config_change_begin "ACPI sensor resource checks" || return
-      if ! set_loader_cmdline_option both "acpi_enforce_resources" "${acpi_sensor_value}"; then
+      if ! reconcile_acpi_sensor_config "${acpi_sensor_enabled}" || ! validate_loader_cmdline config; then
         config_change_reject
         continue
       fi
