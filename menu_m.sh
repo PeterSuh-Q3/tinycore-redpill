@@ -3535,12 +3535,15 @@ function select_and_run_menu_dynamic() {
         # Run in this terminal synchronously: do not create a second window,
         # but keep this menu process alive so it can return when the selected
         # historical menu exits (including an error exit).
-        MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}"
-        local previous_menu_status=$?
-        clear
+        local previous_menu_log previous_menu_status
+        previous_menu_log=$(mktemp "/tmp/mshell-previous-release-${selected_tag}.log.XXXXXX") || return 1
+        printf '[previous-release] tag=%s started=%s\n' "${selected_tag}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee -a "${previous_menu_log}"
+        MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}" 2>&1 | tee -a "${previous_menu_log}"
+        previous_menu_status=${PIPESTATUS[0]}
+        printf '[previous-release] exit=%s finished=%s log=%s\n' "${previous_menu_status}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "${previous_menu_log}" | tee -a "${previous_menu_log}"
         if [ "${previous_menu_status}" -ne 0 ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
-                "The selected release menu exited with status ${previous_menu_status}. Check the terminal output for the cause." 7 78
+                "The selected release menu exited with status ${previous_menu_status}.\nDiagnostic log: ${previous_menu_log}" 8 78
         fi
         return 0
     done
