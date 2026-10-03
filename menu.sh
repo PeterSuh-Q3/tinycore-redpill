@@ -640,6 +640,18 @@ function extract_old_shell() {
   # Keep the historical session's writable RAM config intact until its
   # parent menu validates the build and reconciles P3.
   sed -i 's/^\([[:space:]]*\)mshellSymlinkUserConfig[[:space:]]*$/\1[ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" != "true" ] \&\& mshellSymlinkUserConfig/' /home/tc/functions.sh
+  # Keep the historical redpill-load checkout's extension list pinned too.
+  # Older functions either downloaded master over that file or downloaded it
+  # into /tmp before merging user addons. Both paths would mix new addons
+  # (such as beep) with a historical tcrp-addons checkout that lacks them.
+  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /tmp/default-bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts_t.json /tmp/default-bundled-exts.json@' /home/tc/functions.sh
+  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /tmp/default-bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts.json /tmp/default-bundled-exts.json@' /home/tc/functions.sh
+  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /home/tc/redpill-load/bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts_t.json /home/tc/redpill-load/bundled-exts.json@' /home/tc/functions.sh
+  sed -i '\@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json@d' /home/tc/functions.sh
+  if grep -q 'redpill-load/master/bundled-exts' /home/tc/functions.sh; then
+    echo '[!] Historical bundled-exts source could not be pinned safely.'
+    return 1
+  fi
   # The historical build function reports its final result in a small status
   # file. This avoids piping an interactive dialog through tee or script.
   sed -i '/log_success "Build completed successfully (Exit Code: \$exit_code)"/a\
