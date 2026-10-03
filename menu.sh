@@ -526,6 +526,25 @@ function mmc_modprobe() {
   fi
 }
 
+PREVIOUS_RELEASE_MIN_TAG="v1.2.7.7"
+
+function is_supported_previous_release_tag() {
+  local tag="${1:-}" version floor_part version_part floor_value i
+  [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
+  version="${tag#v}"
+  floor_part="${PREVIOUS_RELEASE_MIN_TAG#v}"
+  local -a version_parts floor_parts
+  IFS='.' read -r -a version_parts <<< "${version}"
+  IFS='.' read -r -a floor_parts <<< "${floor_part}"
+  for ((i=0; i<4; i++)); do
+    version_part=$((10#${version_parts[$i]}))
+    floor_value=$((10#${floor_parts[$i]}))
+    if [ "${version_part}" -gt "${floor_value}" ]; then return 0; fi
+    if [ "${version_part}" -lt "${floor_value}" ]; then return 1; fi
+  done
+  return 0
+}
+
 function extract_old_shell() {
 
   local TAG="${1}"
@@ -534,8 +553,8 @@ function extract_old_shell() {
   local DEST="/home/tc"
   local FILES=("menu_m.sh" "functions.sh" "i18n.h" "my.sh.gz")
 
-  if [ -z "$TAG" ]; then
-    echo "Usage: fetch_tcredpill <tag>  (예: fetch_tcredpill v1.2.8.0)"
+  if ! is_supported_previous_release_tag "${TAG}"; then
+    echo "[!] Unsupported previous MSHELL release tag: ${TAG} (minimum: ${PREVIOUS_RELEASE_MIN_TAG})"
     return 1
   fi
 
@@ -554,7 +573,8 @@ function extract_old_shell() {
   echo ""
 
   echo "[+] Downloading ${FILENAME} ..."
-  curl -kL --retry 3 --retry-delay 2 -o "${TMP_ZIP}" "${URL}"
+  curl -kfL --connect-timeout 10 --max-time 300 --retry 3 --retry-delay 2 \
+    -o "${TMP_ZIP}" "${URL}"
 
   if [ $? -ne 0 ] || [ ! -s "${TMP_ZIP}" ]; then
     echo "[!] Download failed or file is empty: ${URL}"
@@ -570,12 +590,35 @@ function extract_old_shell() {
     return 1
   fi
 
+  for f in "${FILES[@]}"; do
+    if [ ! -s "${EXTRACT_DIR}/${f}" ]; then
+      echo "[!] Required file missing from ${TAG}: ${f}"
+      rm -f "${TMP_ZIP}"
+      rm -rf "${EXTRACT_DIR}"
+      return 1
+    fi
+  done
+  if ! bash -n "${EXTRACT_DIR}/menu_m.sh" || ! bash -n "${EXTRACT_DIR}/functions.sh"; then
+    echo "[!] Shell syntax validation failed for ${TAG}."
+    rm -f "${TMP_ZIP}"
+    rm -rf "${EXTRACT_DIR}"
+    return 1
+  fi
+
   echo "[+] Copying files to ${DEST} ..."
   for f in "${FILES[@]}"; do
     if [ -f "${EXTRACT_DIR}/${f}" ]; then
-      cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"
+      if ! cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"; then
+        echo "[!] Failed to install ${f} from ${TAG}."
+        rm -f "${TMP_ZIP}"
+        rm -rf "${EXTRACT_DIR}"
+        return 1
+      fi
     else
       echo "[!] Not found: ${f}"
+      rm -f "${TMP_ZIP}"
+      rm -rf "${EXTRACT_DIR}"
+      return 1
     fi
   done
   chmod +x "${DEST}"/*.sh 2>/dev/null
@@ -598,10 +641,28 @@ function get_dep_hashes() {
   local TAG="${1}"
   local REPO="PeterSuh-Q3/tinycore-redpill"
   local API_URL="https://api.github.com/repos/${REPO}/releases/tags/${TAG}"
+  local RELEASE_JSON RELEASE_TAG
+
+  if ! is_supported_previous_release_tag "${TAG}"; then
+    echo "[!] Refusing unsupported previous release tag: ${TAG}"
+    return 1
+  fi
+
+  # The release record is also the source of the three dependency pins. Fail
+  # closed if GitHub is unavailable or the returned release does not match TAG.
+  RELEASE_JSON=$(curl -kfsSL --connect-timeout 10 --max-time 30 --retry 2 "${API_URL}") || {
+    echo "[!] Could not retrieve release metadata for ${TAG}."
+    return 1
+  }
+  RELEASE_TAG=$(printf '%s' "${RELEASE_JSON}" | jq -r '.tag_name // empty' 2>/dev/null)
+  if [ "${RELEASE_TAG}" != "${TAG}" ]; then
+    echo "[!] GitHub release metadata did not match requested tag ${TAG}."
+    return 1
+  fi
 
   # 릴리즈 노트 body 가져오기
   local BODY
-  BODY=$(curl -skL "${API_URL}" | jq -r '.body')
+  BODY=$(printf '%s' "${RELEASE_JSON}" | jq -r '.body // empty' 2>/dev/null)
 
   if [ -z "${BODY}" ] || [ "${BODY}" = "null" ]; then
     echo "[!] Release notes not found for tag: ${TAG}"
@@ -620,8 +681,10 @@ function get_dep_hashes() {
   local LOAD_HASH
   LOAD_HASH=$(echo "${BODY}" | sed -n '3p' | tr -d '[:space:]')
 
-  if [ -z "${ADDONS_HASH}" ] || [ -z "${MODULES_HASH}" ] || [ -z "${LOAD_HASH}" ]; then
-    echo "[!] Hash values are empty. Check release notes format."
+  if [[ ! "${ADDONS_HASH}" =~ ^[0-9a-fA-F]{40}$ ]] || \
+     [[ ! "${MODULES_HASH}" =~ ^[0-9a-fA-F]{40}$ ]] || \
+     [[ ! "${LOAD_HASH}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    echo "[!] Release notes for ${TAG} do not start with three full 40-character dependency hashes."
     return 1
   fi
 
@@ -847,16 +910,18 @@ if [ "${offline}" = "NO" ]; then
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
     else
       cecho g "###############################  This is for version ${oldver} ############################"
-      extract_old_shell "$oldver"
-      if [ $? -ne 0 ]; then
-        echo "[!] extract_old_shell failed. Falling back to ${UPDATE_BRANCH} functions.sh ..."
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/burnloader.sh" "/home/tc/burnloader.sh" "burnloader()"
-        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/i18n.h" "/home/tc/i18n.h" "function load_zz"
+      if ! is_supported_previous_release_tag "${oldver}"; then
+        echo "[!] Unsupported previous release tag: ${oldver} (minimum: ${PREVIOUS_RELEASE_MIN_TAG})"
+        exit 1
       fi
-
-      get_dep_hashes "$oldver"
+      if ! get_dep_hashes "${oldver}"; then
+        echo "[!] Cannot safely rebuild ${oldver}; release metadata validation failed."
+        exit 1
+      fi
+      if ! extract_old_shell "${oldver}"; then
+        echo "[!] Cannot safely rebuild ${oldver}; tagged shell files could not be verified."
+        exit 1
+      fi
 
       echo "addons  : ${addons_hash}"
       echo "modules : ${modules_hash}"
