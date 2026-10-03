@@ -631,8 +631,11 @@ function extract_old_shell() {
   for f in "${FILES[@]}"; do
     ls -lh "${DEST}/${f}" 2>/dev/null
   done
-  # 함수 호출부 주석 처리 (실제 함수명: addon_gitdown)
-  sed -i 's/^\(\s*\)addon_gitdown\b/\1# addon_gitdown  # disabled/' /home/tc/menu_m.sh
+  # The repositories were already cloned at their pinned hashes above.
+  # Leave a successful command in place: older menu_m.sh versions inspect
+  # "$?" immediately after addon_gitdown and otherwise mistake the preceding
+  # config check's exit status for a failed download (exit 99).
+  sed -i 's/^\([[:space:]]*\)addon_gitdown[[:space:]]*$/\1true # addon_gitdown already handled by menu.sh/' /home/tc/menu_m.sh
   sed -i 's/offline="YES"/offline="NO"/g' /home/tc/functions.sh
  
 }
