@@ -636,6 +636,10 @@ function extract_old_shell() {
   # "$?" immediately after addon_gitdown and otherwise mistake the preceding
   # config check's exit status for a failed download (exit 99).
   sed -i 's/^\([[:space:]]*\)addon_gitdown[[:space:]]*$/\1true # addon_gitdown already handled by menu.sh/' /home/tc/menu_m.sh
+  # Older functions.sh versions may restore the P3 symlink at source time.
+  # Keep the historical session's writable RAM config intact until its
+  # parent menu validates the build and reconciles P3.
+  sed -i 's/^\([[:space:]]*\)mshellSymlinkUserConfig[[:space:]]*$/\1[ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" != "true" ] \&\& mshellSymlinkUserConfig/' /home/tc/functions.sh
   sed -i 's/offline="YES"/offline="NO"/g' /home/tc/functions.sh
  
 }

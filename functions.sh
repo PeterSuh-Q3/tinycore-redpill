@@ -62,6 +62,9 @@ is_alpine() {
 # ensure_loader_partition_mounted() 로 직접 마운트를 보장해야 한다
 # (umask=000 라 uid= 를 따로 안 줘도 tc 가 바로 쓸 수 있다).
 mshellSymlinkUserConfig() {
+  # Historical release menus use a writable RAM copy and reconcile it with
+  # P3 only after a verified build. Do not recreate the P3 symlink mid-session.
+  [ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" = "true" ] && return 0
   # set -u trips on ${loaderdisk} itself (not just a downstream use of
   # an empty value) if the variable has never been assigned at all in
   # this shell - the :- form is required here, plain [ -z "${var}" ]

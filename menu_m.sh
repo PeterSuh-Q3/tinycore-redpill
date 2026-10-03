@@ -3423,6 +3423,50 @@ function load_previous_release_catalog() {
     [ "${#PREVIOUS_RELEASE_TAGS[@]}" -gt 0 ]
 }
 
+# A historical functions.sh may write user_config.json directly, so it must
+# not write through the modern P3 symlink. Keep P3 unchanged until a build
+# success marker is observed, then copy the validated RAM configuration back.
+function previous_release_stage_config() {
+    local config="/home/tc/user_config.json" p3="/mnt/tcrp/user_config.json"
+    local staged
+    [ -f "${p3}" ] && [ -f "${config}" ] || return 1
+    [ "$(readlink -f "${config}")" = "$(readlink -f "${p3}")" ] || return 1
+    PREVIOUS_RELEASE_LINK_TARGET="$(readlink "${config}")"
+    [ -n "${PREVIOUS_RELEASE_LINK_TARGET}" ] || return 1
+    PREVIOUS_RELEASE_CONFIG_BACKUP=$(mktemp /tmp/mshell-previous-config.XXXXXX) || return 1
+    cp "${p3}" "${PREVIOUS_RELEASE_CONFIG_BACKUP}" || return 1
+    staged=$(mktemp /home/tc/.mshell-previous-config.XXXXXX) || return 1
+    if ! cp "${p3}" "${staged}" || ! jq -e . "${staged}" >/dev/null 2>&1; then
+        rm -f "${staged}"
+        return 1
+    fi
+    if ! chmod 600 "${staged}" || ! mv -f "${staged}" "${config}"; then
+        rm -f "${staged}"
+        return 1
+    fi
+}
+
+function previous_release_publish_config() {
+    local source="$1" target="/mnt/tcrp/user_config.json" staged
+    staged="/mnt/tcrp/.mshell-previous-config.$$"
+    jq -e . "${source}" >/dev/null 2>&1 || return 1
+    if ! sudo cp -f "${source}" "${staged}"; then
+        sudo rm -f "${staged}"
+        return 1
+    fi
+    if ! sudo cmp -s "${source}" "${staged}"; then
+        sudo rm -f "${staged}"
+        return 1
+    fi
+    sudo mv -f "${staged}" "${target}"
+}
+
+function previous_release_restore_link() {
+    local config="/home/tc/user_config.json" staged="/home/tc/.mshell-previous-link.$$"
+    ln -s "${PREVIOUS_RELEASE_LINK_TARGET}" "${staged}" || return 1
+    mv -f "${staged}" "${config}"
+}
+
 function select_and_run_menu_dynamic() {
     local MEM_MB MIN_MB TITLE RANGE_PROMPT TAG_PROMPT MSG_CANCEL MSG_RUN MSG_LOADING MSG_LOAD_FAILED
     MEM_MB=$(awk '/MemTotal/ {printf "%.0f", $2 / 1000}' /proc/meminfo)
@@ -3535,15 +3579,56 @@ function select_and_run_menu_dynamic() {
         # Run in this terminal synchronously: do not create a second window,
         # but keep this menu process alive so it can return when the selected
         # historical menu exits (including an error exit).
-        local previous_menu_log previous_menu_status
+        local previous_menu_log previous_menu_status last_build_result config_result
         previous_menu_log=$(mktemp "/tmp/mshell-previous-release-${selected_tag}.log.XXXXXX") || return 1
+        PREVIOUS_RELEASE_LINK_TARGET=""
+        PREVIOUS_RELEASE_CONFIG_BACKUP=""
+        if ! previous_release_stage_config; then
+            [ -n "${PREVIOUS_RELEASE_CONFIG_BACKUP}" ] && rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "Could not prepare a writable historical user_config.json. P3 was not changed." 7 78
+            return 1
+        fi
         printf '[previous-release] tag=%s started=%s\n' "${selected_tag}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee -a "${previous_menu_log}"
         MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}" 2>&1 | tee -a "${previous_menu_log}"
         previous_menu_status=${PIPESTATUS[0]}
+        last_build_result=$(grep -aE 'Build completed successfully \(Exit Code: 0\)|Build failed with exit code:' "${previous_menu_log}" | tail -n 1)
+        config_result="No successful build recorded; P3 configuration retained."
+        if [ -L /home/tc/user_config.json ]; then
+            config_result="Historical menu unexpectedly restored the config symlink; P3 will be rolled back."
+            previous_menu_status=1
+        elif [[ "${last_build_result}" == *"Build completed successfully (Exit Code: 0)"* ]] && \
+             [ -s /mnt/tcrp/zImage-dsm ] && [ -s /mnt/tcrp/initrd-dsm ]; then
+            if previous_release_publish_config /home/tc/user_config.json; then
+                config_result="Verified build complete; configuration copied to P3."
+            else
+                config_result="Configuration copy to P3 failed; restoring the original P3 configuration."
+                previous_menu_status=1
+            fi
+        elif ! cmp -s "${PREVIOUS_RELEASE_CONFIG_BACKUP}" /home/tc/user_config.json; then
+            config_result="No successful build recorded; unsaved historical config changes were discarded."
+            previous_menu_status=1
+        fi
+        if [ "${config_result}" != "Verified build complete; configuration copied to P3." ] && \
+           ! cmp -s "${PREVIOUS_RELEASE_CONFIG_BACKUP}" /mnt/tcrp/user_config.json; then
+            if ! previous_release_publish_config "${PREVIOUS_RELEASE_CONFIG_BACKUP}"; then
+                config_result="ERROR: Could not restore the original P3 configuration."
+                previous_menu_status=1
+            fi
+        fi
+        if ! previous_release_restore_link; then
+            config_result="ERROR: Could not restore the /home/tc/user_config.json symlink."
+            previous_menu_status=1
+        fi
+        rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
+        printf '[previous-release] config=%s\n' "${config_result}" | tee -a "${previous_menu_log}"
         printf '[previous-release] exit=%s finished=%s log=%s\n' "${previous_menu_status}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "${previous_menu_log}" | tee -a "${previous_menu_log}"
         if [ "${previous_menu_status}" -ne 0 ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
                 "The selected release menu exited with status ${previous_menu_status}.\nDiagnostic log: ${previous_menu_log}" 8 78
+        elif [ "${config_result}" = "Verified build complete; configuration copied to P3." ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "Historical build completed. user_config.json was saved to P3." 7 70
         fi
         return 0
     done
