@@ -640,6 +640,12 @@ function extract_old_shell() {
   # Keep the historical session's writable RAM config intact until its
   # parent menu validates the build and reconciles P3.
   sed -i 's/^\([[:space:]]*\)mshellSymlinkUserConfig[[:space:]]*$/\1[ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" != "true" ] \&\& mshellSymlinkUserConfig/' /home/tc/functions.sh
+  # The historical build function reports its final result in a small status
+  # file. This avoids piping an interactive dialog through tee or script.
+  sed -i '/log_success "Build completed successfully (Exit Code: \$exit_code)"/a\
+        [ -z "${MSHELL_PREVIOUS_BUILD_STATUS_FILE:-}" ] || printf "success\\n" > "${MSHELL_PREVIOUS_BUILD_STATUS_FILE}"' /home/tc/functions.sh
+  sed -i '/log_error "Build failed with exit code: \$exit_code"/a\
+        [ -z "${MSHELL_PREVIOUS_BUILD_STATUS_FILE:-}" ] || printf "failure\\n" > "${MSHELL_PREVIOUS_BUILD_STATUS_FILE}"' /home/tc/functions.sh
   sed -i 's/offline="YES"/offline="NO"/g' /home/tc/functions.sh
  
 }

@@ -3579,34 +3579,26 @@ function select_and_run_menu_dynamic() {
         # Run in this terminal synchronously: do not create a second window,
         # but keep this menu process alive so it can return when the selected
         # historical menu exits (including an error exit).
-        local previous_menu_log previous_menu_status last_build_result config_result
-        previous_menu_log=$(mktemp "/tmp/mshell-previous-release-${selected_tag}.log.XXXXXX") || return 1
+        local previous_build_status_file previous_menu_status last_build_result config_result
+        previous_build_status_file=$(mktemp /tmp/mshell-previous-build.XXXXXX) || return 1
         PREVIOUS_RELEASE_LINK_TARGET=""
         PREVIOUS_RELEASE_CONFIG_BACKUP=""
         if ! previous_release_stage_config; then
             [ -n "${PREVIOUS_RELEASE_CONFIG_BACKUP}" ] && rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
+            rm -f "${previous_build_status_file}"
             dialog --clear --backtitle "$(backtitle)" --msgbox \
                 "Could not prepare a writable historical user_config.json. P3 was not changed." 7 78
             return 1
         fi
-        printf '[previous-release] tag=%s started=%s\n' "${selected_tag}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee -a "${previous_menu_log}"
-        # dialog needs a real terminal on stdout as well as stdin. A tee
-        # pipeline makes its stdout a pipe and leaves the visible menu unable
-        # to accept keys. util-linux script records a child PTY instead.
-        if command -v script >/dev/null 2>&1; then
-            MSHELL_PREVIOUS_RELEASE_SESSION=true script -qef -a "${previous_menu_log}" -- /home/tc/menu.sh "${selected_tag}"
-            previous_menu_status=$?
-        else
-            printf '[previous-release] script unavailable; interactive output not recorded\n' | tee -a "${previous_menu_log}"
-            MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}"
-            previous_menu_status=$?
-        fi
-        last_build_result=$(grep -aE 'Build completed successfully \(Exit Code: 0\)|Build failed with exit code:' "${previous_menu_log}" | tail -n 1)
+        MSHELL_PREVIOUS_RELEASE_SESSION=true MSHELL_PREVIOUS_BUILD_STATUS_FILE="${previous_build_status_file}" \
+            /home/tc/menu.sh "${selected_tag}"
+        previous_menu_status=$?
+        last_build_result=$(cat "${previous_build_status_file}" 2>/dev/null)
         config_result="No successful build recorded; P3 configuration retained."
         if [ -L /home/tc/user_config.json ]; then
             config_result="Historical menu unexpectedly restored the config symlink; P3 will be rolled back."
             previous_menu_status=1
-        elif [[ "${last_build_result}" == *"Build completed successfully (Exit Code: 0)"* ]] && \
+        elif [ "${last_build_result}" = "success" ] && \
              [ -s /mnt/tcrp/zImage-dsm ] && [ -s /mnt/tcrp/initrd-dsm ]; then
             if previous_release_publish_config /home/tc/user_config.json; then
                 config_result="Verified build complete; configuration copied to P3."
@@ -3630,11 +3622,11 @@ function select_and_run_menu_dynamic() {
             previous_menu_status=1
         fi
         rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
-        printf '[previous-release] config=%s\n' "${config_result}" | tee -a "${previous_menu_log}"
-        printf '[previous-release] exit=%s finished=%s log=%s\n' "${previous_menu_status}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "${previous_menu_log}" | tee -a "${previous_menu_log}"
+        rm -f "${previous_build_status_file}"
+        printf '[previous-release] config=%s exit=%s\n' "${config_result}" "${previous_menu_status}"
         if [ "${previous_menu_status}" -ne 0 ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
-                "The selected release menu exited with status ${previous_menu_status}.\nDiagnostic log: ${previous_menu_log}" 8 78
+                "The selected release menu exited with status ${previous_menu_status}.\n${config_result}" 8 78
         elif [ "${config_result}" = "Verified build complete; configuration copied to P3." ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
                 "Historical build completed. user_config.json was saved to P3." 7 70
