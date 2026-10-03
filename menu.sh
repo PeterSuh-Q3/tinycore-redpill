@@ -980,5 +980,9 @@ fi
 
 chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
+menu_status=$?
 [ -d /dev/shm/tcrp-modules/ ] && rm -rf /dev/shm/tcrp-modules/
+if [ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" = "true" ]; then
+  exit "${menu_status}"
+fi
 exit 0

@@ -3532,11 +3532,17 @@ function select_and_run_menu_dynamic() {
         fi
 
         echo ">>> ${selected_tag}  ${MSG_RUN}"
-        # Switching releases must replace this menu process. Starting another
-        # terminal asynchronously returns here immediately, causing the
-        # current-version parent menu to reappear while the selected release
-        # runs in a separate window (or its launch failure goes unnoticed).
-        exec /home/tc/menu.sh "${selected_tag}"
+        # Run in this terminal synchronously: do not create a second window,
+        # but keep this menu process alive so it can return when the selected
+        # historical menu exits (including an error exit).
+        MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}"
+        local previous_menu_status=$?
+        clear
+        if [ "${previous_menu_status}" -ne 0 ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "The selected release menu exited with status ${previous_menu_status}. Check the terminal output for the cause." 7 78
+        fi
+        return 0
     done
 }
 
