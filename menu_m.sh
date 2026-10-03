@@ -3532,14 +3532,11 @@ function select_and_run_menu_dynamic() {
         fi
 
         echo ">>> ${selected_tag}  ${MSG_RUN}"
-        if is_alpine; then
-            lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" \
-                --command="/home/tc/menu.sh ${selected_tag}"
-            return 0
-        fi
-        urxvt -geometry 78x32+10+0 -fg orange -title "TCRP-mshell urxvt Menu" \
-            -e /home/tc/menu.sh "${selected_tag}"
-        return $?
+        # Switching releases must replace this menu process. Starting another
+        # terminal asynchronously returns here immediately, causing the
+        # current-version parent menu to reappear while the selected release
+        # runs in a separate window (or its launch failure goes unnoticed).
+        exec /home/tc/menu.sh "${selected_tag}"
     done
 }
 
