@@ -3590,8 +3590,17 @@ function select_and_run_menu_dynamic() {
             return 1
         fi
         printf '[previous-release] tag=%s started=%s\n' "${selected_tag}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee -a "${previous_menu_log}"
-        MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}" 2>&1 | tee -a "${previous_menu_log}"
-        previous_menu_status=${PIPESTATUS[0]}
+        # dialog needs a real terminal on stdout as well as stdin. A tee
+        # pipeline makes its stdout a pipe and leaves the visible menu unable
+        # to accept keys. util-linux script records a child PTY instead.
+        if command -v script >/dev/null 2>&1; then
+            MSHELL_PREVIOUS_RELEASE_SESSION=true script -qef -a "${previous_menu_log}" -- /home/tc/menu.sh "${selected_tag}"
+            previous_menu_status=$?
+        else
+            printf '[previous-release] script unavailable; interactive output not recorded\n' | tee -a "${previous_menu_log}"
+            MSHELL_PREVIOUS_RELEASE_SESSION=true /home/tc/menu.sh "${selected_tag}"
+            previous_menu_status=$?
+        fi
         last_build_result=$(grep -aE 'Build completed successfully \(Exit Code: 0\)|Build failed with exit code:' "${previous_menu_log}" | tail -n 1)
         config_result="No successful build recorded; P3 configuration retained."
         if [ -L /home/tc/user_config.json ]; then
