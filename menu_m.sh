@@ -3395,6 +3395,7 @@ function load_previous_release_catalog() {
           | select(.draft == false and .prerelease == false)
           | select((.tag_name // "") | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))
           | select(version(.tag_name) >= $minimum)
+          | select(.tag_name != "v1.2.9.4" and .tag_name != "v1.2.9.5" and .tag_name != "v1.2.9.6")
           | . as $release
           | (($release.body // "") | split("\n")
               | map(gsub("\\r"; "")

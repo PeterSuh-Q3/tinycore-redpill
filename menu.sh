@@ -531,6 +531,9 @@ PREVIOUS_RELEASE_MIN_TAG="v1.2.7.7"
 function is_supported_previous_release_tag() {
   local tag="${1:-}" version floor_part version_part floor_value i
   [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
+  case "${tag}" in
+    v1.2.9.4|v1.2.9.5|v1.2.9.6) return 1 ;;
+  esac
   version="${tag#v}"
   floor_part="${PREVIOUS_RELEASE_MIN_TAG#v}"
   local -a version_parts floor_parts
@@ -976,6 +979,20 @@ if [ "${offline}" = "NO" ]; then
       cd /home/tc/redpill-load
       git fetch origin "${load_hash}"
       git checkout "${load_hash}"
+      # Historical file.sh treats every tcrp-modules URL as a local Git file,
+      # including GitHub release assets. Only raw source URLs may be copied
+      # from the pinned checkout; release/download URLs must use curl.
+      historical_file_sh="/home/tc/redpill-load/include/file.sh"
+      if [ ! -f "${historical_file_sh}" ] ||
+         ! grep -q 'grep tcrp-modules' "${historical_file_sh}"; then
+        echo "[!] Cannot safely patch the historical module download handler."
+        exit 1
+      fi
+      sed -i 's@grep tcrp-modules@grep -E "^https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/(main|master)/"@' "${historical_file_sh}"
+      if ! bash -n "${historical_file_sh}" || grep -q 'grep tcrp-modules' "${historical_file_sh}"; then
+        echo "[!] Historical module download handler validation failed."
+        exit 1
+      fi
   
       df -h /dev/shm
       cd /home/tc
