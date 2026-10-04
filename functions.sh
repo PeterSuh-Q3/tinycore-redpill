@@ -5608,20 +5608,55 @@ function persist_alpine_apkovl_safely() {
 
     local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
-    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
-    local remote_hash local_hash
+    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight
+    local remote_hash local_hash path owner
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
     [ -d /mnt/tcrp ] || return 1
 
+    # Never serialize a live system whose privileged files have lost root
+    # ownership. A syntactically valid apkovl can otherwise make sudo unusable
+    # after the next boot.
+    for path in /etc/passwd /etc/group /etc/shadow /etc/sudoers.d/tc /etc/lbu/lbu.conf; do
+        owner=$(sudo stat -c '%u' "${path}" 2>/dev/null) || {
+            echo "[APKVOL] Cannot verify ownership of ${path}; persistence cancelled." >&2
+            return 1
+        }
+        if [ "${owner}" != 0 ]; then
+            echo "[APKVOL] ${path} is not root-owned; persistence cancelled." >&2
+            return 1
+        fi
+    done
+
     stage=$(mktemp -d /tmp/mshell-apkovl.XXXXXX) || return 1
     incoming="${stage}/baseline.download"
     candidate="${stage}/$(hostname).apkovl.tar.gz"
     active_backup="${stage}/active.before.tar.gz"
+    preflight="${stage}/active.inspect"
     lbu_conf="/etc/lbu/lbu.conf"
     lbu_conf_backup="${stage}/lbu.conf.before"
     url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
+
+    # A prior malformed P4 backup must not be silently replaced. Inspect its
+    # archived ownership before any new persistence or baseline write begins.
+    if [ -e "${active}" ]; then
+        if ! sudo mkdir -p "${preflight}" \
+            || ! sudo tar -xzf "${active}" -C "${preflight}"; then
+            echo "[APKVOL] Cannot inspect the existing P4 archive; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        for path in . etc/passwd etc/group etc/shadow etc/sudoers.d/tc etc/lbu/lbu.conf; do
+            owner=$(sudo stat -c '%u' "${preflight}/${path}" 2>/dev/null) || owner=""
+            if [ "${owner}" != 0 ]; then
+                echo "[APKVOL] Existing P4 archive has invalid ownership for ${path}; persistence cancelled." >&2
+                sudo rm -rf -- "${stage}"
+                return 1
+            fi
+        done
+        sudo rm -rf -- "${preflight}" || { sudo rm -rf -- "${stage}"; return 1; }
+    fi
 
     # P3 is the local baseline, but it must follow the current repository
     # overlay. Download into staging first, then replace P3 only after the
@@ -5677,33 +5712,47 @@ function persist_alpine_apkovl_safely() {
     # P4 lbu.conf inside the candidate before activating it.
     extract="${stage}/extract"
     repacked="${stage}/candidate.repacked"
-    if ! mkdir -p "${extract}" || ! tar -xzf "${candidate}" -C "${extract}" \
+    if ! sudo mkdir -p "${extract}" \
+        || ! sudo chown root:root "${extract}" \
+        || ! sudo chmod 0700 "${extract}" \
+        || ! sudo tar -xzf "${candidate}" -C "${extract}" \
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
         || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
-        || ! mv -f "${repacked}" "${candidate}"; then
+        || ! sudo mv -f "${repacked}" "${candidate}"; then
         [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
-        rm -rf "${stage}"
+        sudo rm -rf -- "${stage}"
         return 1
     fi
+    # Root extraction must preserve the original tar owners. Refuse to
+    # activate an archive if any privileged member became tc-owned.
+    for path in . etc/passwd etc/group etc/shadow etc/sudoers.d/tc etc/lbu/lbu.conf; do
+        owner=$(sudo stat -c '%u' "${extract}/${path}" 2>/dev/null) || owner=""
+        if [ "${owner}" != 0 ]; then
+            echo "[APKVOL] Candidate has invalid ownership for ${path}; persistence cancelled." >&2
+            [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+    done
     tar -tzf "${candidate}" >/dev/null 2>&1 || {
         [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
-        rm -rf "${stage}"
+        sudo rm -rf -- "${stage}"
         return 1
     }
 
     # Copy within P4 and rename only after the candidate is known-good.
     sudo cp -p "${candidate}" "${active}.new" || {
         [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
-        rm -rf "${stage}"
+        sudo rm -rf -- "${stage}"
         return 1
     }
     if ! sudo tar -tzf "${active}.new" >/dev/null 2>&1 || ! sudo mv -f "${active}.new" "${active}"; then
         sudo rm -f "${active}.new"
         [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
-        rm -rf "${stage}"
+        sudo rm -rf -- "${stage}"
         return 1
     fi
-    rm -rf "${stage}"
+    sudo rm -rf -- "${stage}"
     echo "[APKVOL] Staged Alpine persistence verified and activated."
 }
 function backuploader() {
