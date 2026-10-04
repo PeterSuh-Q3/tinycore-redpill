@@ -1,5 +1,7 @@
 # alpine-redpill v1.4.4.9
 
+Improved previous-version selection and build.
+
 ## Previous release selection
 
 - Replaced the hard-coded previous-version list with a live catalog of stable GitHub releases.
