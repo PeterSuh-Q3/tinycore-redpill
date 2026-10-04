@@ -71,32 +71,10 @@ function resolve_github_doh_ipv4() {
       command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1
 }
 
-# This runs before functions.sh is sourced. Only verify the existing P3
-# mapping here; the normal mount/permission repair remains in functions.sh.
-function early_doh_config_path() {
-    local dev mounted_dev mount_point cfg
-    dev=$(sudo /sbin/blkid -t UUID=6234-C863 -o device 2>/dev/null | head -n 1)
-    [ -n "${dev}" ] || return 1
-    mount_point="/mnt/${dev##*/}"
-    # The stable alias may not exist until functions.sh is sourced. If it
-    # already exists, reject a stale or non-symlink mapping.
-    if [ -e /mnt/tcrp ] || [ -L /mnt/tcrp ]; then
-        [ -L /mnt/tcrp ] && [ "$(readlink /mnt/tcrp)" = "${mount_point}" ] || return 1
-    fi
-    mountpoint -q "${mount_point}" || return 1
-    mounted_dev=$(findmnt -no SOURCE --target "${mount_point}" 2>/dev/null) || return 1
-    [ "$(readlink -f "${mounted_dev}" 2>/dev/null)" = "$(readlink -f "${dev}" 2>/dev/null)" ] || return 1
-    cfg="${mount_point}/user_config.json"
-    [ -f "${cfg}" ] && command jq -e 'type == "object"' "${cfg}" >/dev/null 2>&1 || return 1
-    printf '%s\n' "${cfg}"
-}
-
 function bootstrap_github_access() {
     local cfg mode fallback_dns domain ip
-    if ! cfg=$(early_doh_config_path); then
-        echo "[WARN] DoH bootstrap skipped: loader P3 configuration path is not verified." >&2
-        return 1
-    fi
+    cfg="/mnt/tcrp/user_config.json"
+    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
     mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
     if [ "${mode}" != "doh" ]; then
         cleanup_mshell_doh_overrides
@@ -170,28 +148,17 @@ function offer_detected_locale_early() {
 }
 
 function offer_doh_fallback() {
-    local cfg mode answer msg mount_opts
+    local cfg="/mnt/tcrp/user_config.json" mode answer msg
     [ -e /tmp/mshell-doh-prompted ] && return 1
-    if ! cfg=$(early_doh_config_path); then
-        echo "[WARN] DoH selection skipped: loader P3 configuration path is not verified." >&2
-        return 1
-    fi
-    mount_opts=$(findmnt -no OPTIONS --target "${cfg}" 2>/dev/null) || return 1
-    if ! printf '%s\n' "${mount_opts}" | tr ',' '\n' | grep -qx rw; then
-        echo "[WARN] DoH selection skipped: loader P3 is read-only." >&2
-        return 1
-    fi
     : > /tmp/mshell-doh-prompted
+    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
     mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
     [ "${mode}" = "standard" ] || return 1
     msg="GitHub access is unavailable. Use DoH bypass mode (for China) now?"
     case "${LANG:-}" in zh_CN*|zh_SG*) msg="GitHub访问不稳定。现在启用DoH绕过模式（中国用户）吗？" ;; esac
     command dialog --clear --yesno "${msg}" 0 0 2>/dev/null || return 1
     command jq '.github_access.mode = "doh"' "${cfg}" > /tmp/mshell-user-config.json.$$ 2>/dev/null || return 1
-    if ! sudo cp /tmp/mshell-user-config.json.$$ "${cfg}" 2>/dev/null; then
-        rm -f /tmp/mshell-user-config.json.$$
-        return 1
-    fi
+    sudo cp /tmp/mshell-user-config.json.$$ "${cfg}" 2>/dev/null || return 1
     rm -f /tmp/mshell-user-config.json.$$
     bootstrap_github_access
     return 0
@@ -273,6 +240,12 @@ if [ ! -s /home/tc/functions.sh ] || ! grep -q 'rploaderver=' /home/tc/functions
     safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
 fi
 . /home/tc/functions.sh
+# Existing images may still carry a boot-discoverable comparison archive on P3.
+# Rename it before the next reboot; failure leaves the original file intact.
+if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
+   ! migrate_p3_apkovl_baseline; then
+    echo "[WARN] P3 comparison overlay was not migrated. Check P3 mount state before rebooting." >&2
+fi
 #####################################################################################################
 if grep -q 'arpl' ~/.profile; then
   sed -i '/arpl/d' ~/.profile
@@ -559,28 +532,6 @@ function mmc_modprobe() {
   fi
 }
 
-PREVIOUS_RELEASE_MIN_TAG="v1.2.7.7"
-
-function is_supported_previous_release_tag() {
-  local tag="${1:-}" version floor_part version_part floor_value i
-  [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
-  case "${tag}" in
-    v1.2.9.4|v1.2.9.5|v1.2.9.6) return 1 ;;
-  esac
-  version="${tag#v}"
-  floor_part="${PREVIOUS_RELEASE_MIN_TAG#v}"
-  local -a version_parts floor_parts
-  IFS='.' read -r -a version_parts <<< "${version}"
-  IFS='.' read -r -a floor_parts <<< "${floor_part}"
-  for ((i=0; i<4; i++)); do
-    version_part=$((10#${version_parts[$i]}))
-    floor_value=$((10#${floor_parts[$i]}))
-    if [ "${version_part}" -gt "${floor_value}" ]; then return 0; fi
-    if [ "${version_part}" -lt "${floor_value}" ]; then return 1; fi
-  done
-  return 0
-}
-
 function extract_old_shell() {
 
   local TAG="${1}"
@@ -589,8 +540,8 @@ function extract_old_shell() {
   local DEST="/home/tc"
   local FILES=("menu_m.sh" "functions.sh" "i18n.h" "my.sh.gz")
 
-  if ! is_supported_previous_release_tag "${TAG}"; then
-    echo "[!] Unsupported previous MSHELL release tag: ${TAG} (minimum: ${PREVIOUS_RELEASE_MIN_TAG})"
+  if [ -z "$TAG" ]; then
+    echo "Usage: fetch_tcredpill <tag>  (예: fetch_tcredpill v1.2.8.0)"
     return 1
   fi
 
@@ -609,8 +560,7 @@ function extract_old_shell() {
   echo ""
 
   echo "[+] Downloading ${FILENAME} ..."
-  curl -kfL --connect-timeout 10 --max-time 300 --retry 3 --retry-delay 2 \
-    -o "${TMP_ZIP}" "${URL}"
+  curl -kL --retry 3 --retry-delay 2 -o "${TMP_ZIP}" "${URL}"
 
   if [ $? -ne 0 ] || [ ! -s "${TMP_ZIP}" ]; then
     echo "[!] Download failed or file is empty: ${URL}"
@@ -626,35 +576,12 @@ function extract_old_shell() {
     return 1
   fi
 
-  for f in "${FILES[@]}"; do
-    if [ ! -s "${EXTRACT_DIR}/${f}" ]; then
-      echo "[!] Required file missing from ${TAG}: ${f}"
-      rm -f "${TMP_ZIP}"
-      rm -rf "${EXTRACT_DIR}"
-      return 1
-    fi
-  done
-  if ! bash -n "${EXTRACT_DIR}/menu_m.sh" || ! bash -n "${EXTRACT_DIR}/functions.sh"; then
-    echo "[!] Shell syntax validation failed for ${TAG}."
-    rm -f "${TMP_ZIP}"
-    rm -rf "${EXTRACT_DIR}"
-    return 1
-  fi
-
   echo "[+] Copying files to ${DEST} ..."
   for f in "${FILES[@]}"; do
     if [ -f "${EXTRACT_DIR}/${f}" ]; then
-      if ! cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"; then
-        echo "[!] Failed to install ${f} from ${TAG}."
-        rm -f "${TMP_ZIP}"
-        rm -rf "${EXTRACT_DIR}"
-        return 1
-      fi
+      cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"
     else
       echo "[!] Not found: ${f}"
-      rm -f "${TMP_ZIP}"
-      rm -rf "${EXTRACT_DIR}"
-      return 1
     fi
   done
   chmod +x "${DEST}"/*.sh 2>/dev/null
@@ -667,33 +594,8 @@ function extract_old_shell() {
   for f in "${FILES[@]}"; do
     ls -lh "${DEST}/${f}" 2>/dev/null
   done
-  # The repositories were already cloned at their pinned hashes above.
-  # Leave a successful command in place: older menu_m.sh versions inspect
-  # "$?" immediately after addon_gitdown and otherwise mistake the preceding
-  # config check's exit status for a failed download (exit 99).
-  sed -i 's/^\([[:space:]]*\)addon_gitdown[[:space:]]*$/\1true # addon_gitdown already handled by menu.sh/' /home/tc/menu_m.sh
-  # Older functions.sh versions may restore the P3 symlink at source time.
-  # Keep the historical session's writable RAM config intact until its
-  # parent menu validates the build and reconciles P3.
-  sed -i 's/^\([[:space:]]*\)mshellSymlinkUserConfig[[:space:]]*$/\1[ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" != "true" ] \&\& mshellSymlinkUserConfig/' /home/tc/functions.sh
-  # Keep the historical redpill-load checkout's extension list pinned too.
-  # Older functions either downloaded master over that file or downloaded it
-  # into /tmp before merging user addons. Both paths would mix new addons
-  # (such as beep) with a historical tcrp-addons checkout that lacks them.
-  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /tmp/default-bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts_t.json /tmp/default-bundled-exts.json@' /home/tc/functions.sh
-  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /tmp/default-bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts.json /tmp/default-bundled-exts.json@' /home/tc/functions.sh
-  sed -i 's@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts_t.json -o /home/tc/redpill-load/bundled-exts.json@cp -f /home/tc/redpill-load/bundled-exts_t.json /home/tc/redpill-load/bundled-exts.json@' /home/tc/functions.sh
-  sed -i '\@curl -skL# https://raw.githubusercontent.com/PeterSuh-Q3/redpill-load/master/bundled-exts.json -o /home/tc/redpill-load/bundled-exts.json@d' /home/tc/functions.sh
-  if grep -q 'redpill-load/master/bundled-exts' /home/tc/functions.sh; then
-    echo '[!] Historical bundled-exts source could not be pinned safely.'
-    return 1
-  fi
-  # The historical build function reports its final result in a small status
-  # file. This avoids piping an interactive dialog through tee or script.
-  sed -i '/log_success "Build completed successfully (Exit Code: \$exit_code)"/a\
-        [ -z "${MSHELL_PREVIOUS_BUILD_STATUS_FILE:-}" ] || printf "success\\n" > "${MSHELL_PREVIOUS_BUILD_STATUS_FILE}"' /home/tc/functions.sh
-  sed -i '/log_error "Build failed with exit code: \$exit_code"/a\
-        [ -z "${MSHELL_PREVIOUS_BUILD_STATUS_FILE:-}" ] || printf "failure\\n" > "${MSHELL_PREVIOUS_BUILD_STATUS_FILE}"' /home/tc/functions.sh
+  # 함수 호출부 주석 처리 (실제 함수명: addon_gitdown)
+  sed -i 's/^\(\s*\)addon_gitdown\b/\1# addon_gitdown  # disabled/' /home/tc/menu_m.sh
   sed -i 's/offline="YES"/offline="NO"/g' /home/tc/functions.sh
  
 }
@@ -702,28 +604,10 @@ function get_dep_hashes() {
   local TAG="${1}"
   local REPO="PeterSuh-Q3/tinycore-redpill"
   local API_URL="https://api.github.com/repos/${REPO}/releases/tags/${TAG}"
-  local RELEASE_JSON RELEASE_TAG
-
-  if ! is_supported_previous_release_tag "${TAG}"; then
-    echo "[!] Refusing unsupported previous release tag: ${TAG}"
-    return 1
-  fi
-
-  # The release record is also the source of the three dependency pins. Fail
-  # closed if GitHub is unavailable or the returned release does not match TAG.
-  RELEASE_JSON=$(curl -kfsSL --connect-timeout 10 --max-time 30 --retry 2 "${API_URL}") || {
-    echo "[!] Could not retrieve release metadata for ${TAG}."
-    return 1
-  }
-  RELEASE_TAG=$(printf '%s' "${RELEASE_JSON}" | jq -r '.tag_name // empty' 2>/dev/null)
-  if [ "${RELEASE_TAG}" != "${TAG}" ]; then
-    echo "[!] GitHub release metadata did not match requested tag ${TAG}."
-    return 1
-  fi
 
   # 릴리즈 노트 body 가져오기
   local BODY
-  BODY=$(printf '%s' "${RELEASE_JSON}" | jq -r '.body // empty' 2>/dev/null)
+  BODY=$(curl -skL "${API_URL}" | jq -r '.body')
 
   if [ -z "${BODY}" ] || [ "${BODY}" = "null" ]; then
     echo "[!] Release notes not found for tag: ${TAG}"
@@ -742,10 +626,8 @@ function get_dep_hashes() {
   local LOAD_HASH
   LOAD_HASH=$(echo "${BODY}" | sed -n '3p' | tr -d '[:space:]')
 
-  if [[ ! "${ADDONS_HASH}" =~ ^[0-9a-fA-F]{40}$ ]] || \
-     [[ ! "${MODULES_HASH}" =~ ^[0-9a-fA-F]{40}$ ]] || \
-     [[ ! "${LOAD_HASH}" =~ ^[0-9a-fA-F]{40}$ ]]; then
-    echo "[!] Release notes for ${TAG} do not start with three full 40-character dependency hashes."
+  if [ -z "${ADDONS_HASH}" ] || [ -z "${MODULES_HASH}" ] || [ -z "${LOAD_HASH}" ]; then
+    echo "[!] Hash values are empty. Check release notes format."
     return 1
   fi
 
@@ -971,18 +853,16 @@ if [ "${offline}" = "NO" ]; then
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
     else
       cecho g "###############################  This is for version ${oldver} ############################"
-      if ! is_supported_previous_release_tag "${oldver}"; then
-        echo "[!] Unsupported previous release tag: ${oldver} (minimum: ${PREVIOUS_RELEASE_MIN_TAG})"
-        exit 1
+      extract_old_shell "$oldver"
+      if [ $? -ne 0 ]; then
+        echo "[!] extract_old_shell failed. Falling back to ${UPDATE_BRANCH} functions.sh ..."
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/burnloader.sh" "/home/tc/burnloader.sh" "burnloader()"
+        safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/i18n.h" "/home/tc/i18n.h" "function load_zz"
       fi
-      if ! get_dep_hashes "${oldver}"; then
-        echo "[!] Cannot safely rebuild ${oldver}; release metadata validation failed."
-        exit 1
-      fi
-      if ! extract_old_shell "${oldver}"; then
-        echo "[!] Cannot safely rebuild ${oldver}; tagged shell files could not be verified."
-        exit 1
-      fi
+
+      get_dep_hashes "$oldver"
 
       echo "addons  : ${addons_hash}"
       echo "modules : ${modules_hash}"
@@ -1012,20 +892,6 @@ if [ "${offline}" = "NO" ]; then
       cd /home/tc/redpill-load
       git fetch origin "${load_hash}"
       git checkout "${load_hash}"
-      # Historical file.sh treats every tcrp-modules URL as a local Git file,
-      # including GitHub release assets. Only raw source URLs may be copied
-      # from the pinned checkout; release/download URLs must use curl.
-      historical_file_sh="/home/tc/redpill-load/include/file.sh"
-      if [ ! -f "${historical_file_sh}" ] ||
-         ! grep -q 'grep tcrp-modules' "${historical_file_sh}"; then
-        echo "[!] Cannot safely patch the historical module download handler."
-        exit 1
-      fi
-      sed -i 's@grep tcrp-modules@grep -E "^https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/(main|master)/"@' "${historical_file_sh}"
-      if ! bash -n "${historical_file_sh}" || grep -q 'grep tcrp-modules' "${historical_file_sh}"; then
-        echo "[!] Historical module download handler validation failed."
-        exit 1
-      fi
   
       df -h /dev/shm
       cd /home/tc
@@ -1038,6 +904,10 @@ if [ "${offline}" = "NO" ]; then
     # 재소싱 전 파일 존재 확인
     if [ -f /home/tc/functions.sh ]; then
       . /home/tc/functions.sh
+      if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
+         ! migrate_p3_apkovl_baseline; then
+        echo "[WARN] P3 comparison overlay was not migrated. Check P3 mount state before rebooting." >&2
+      fi
     else
       echo "[!] functions.sh not found, cannot source."
       exit 1
@@ -1055,9 +925,5 @@ fi
 
 chmod +x /home/tc/menu_m.sh
 /home/tc/menu_m.sh
-menu_status=$?
 [ -d /dev/shm/tcrp-modules/ ] && rm -rf /dev/shm/tcrp-modules/
-if [ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" = "true" ]; then
-  exit "${menu_status}"
-fi
 exit 0

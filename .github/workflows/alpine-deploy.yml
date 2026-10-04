@@ -21,14 +21,23 @@ jobs:
           #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
           #TAG="${LATESTURL##*/}"
 
-          PREV_TAG=$(curl -s https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases | jq -r '[.[] | select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))][1].tag_name')
+          # The newest release may be the one being built, and a withdrawn
+          # release may remain published without downloadable assets.
+          PREV_TAG=$(curl -fsSL 'https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases?per_page=100' |
+            jq -r --arg current "${GITHUB_REF_NAME}" '[.[] |
+              select(.tag_name != $current) |
+              select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")) |
+              . as $release |
+              select(any(.assets[]?; .name == ("alpine-redpill." + $release.tag_name + ".m-shell.img.gz")))
+            ][0].tag_name // empty')
+          [ -n "${PREV_TAG}" ] || { echo 'No usable previous loader image release found.' >&2; exit 1; }
           TAG="${PREV_TAG}"
 
           echo "TAG is ${TAG}"
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
 
-          curl -kLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/alpine-redpill.${TAG}.m-shell.img.gz
+          curl -kfLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/alpine-redpill.${TAG}.m-shell.img.gz
           gunzip alpine-redpill.${TAG}.m-shell.img.gz
           pwd
           ls -ltr
@@ -143,12 +152,11 @@ jobs:
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
 
           ## 3rd partition: reserved only, left empty (no TC content copy) ##
-          ## Keep the current workspace Alpine overlay on p3 as well.  This is
-          ## intentional: newly generated images must carry the exact overlay
-          ## used by this build, even before the Alpine partition is mounted.
+          ## P3 keeps only a comparison baseline. It must not match Alpine's
+          ## *.apkovl.tar.gz boot-autodiscovery pattern; P4 is the active overlay.
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.tar.gz
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
           sudo umount /mnt/tarp3
 
           ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##
@@ -225,7 +233,7 @@ jobs:
           ## used by this build, even before the Alpine partition is mounted.
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.tar.gz
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
           sudo umount /mnt/tarp3
 
           ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##

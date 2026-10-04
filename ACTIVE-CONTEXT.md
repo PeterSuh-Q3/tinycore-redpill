@@ -1,6 +1,6 @@
 # Active Context
 
-Last updated: 2026-09-07
+Last updated: 2026-10-04
 
 This is a compact, evidence-based handoff for the active MSHELL work. It is
 not a credential store. Read it together with `AGENTS.md`.
@@ -271,6 +271,28 @@ build pilot before any module-pack publication.
 - Do not store device credentials, private IP addresses, or tokens here.
 - Existing historical handoff: `docs/handoff-v1.4.3.4-after.md`. It describes
   an older release checkpoint and must not override the newer facts above.
+
+## Alpine P3/P4 overlay recovery (2026-10-04)
+
+- v1.4.4.9 was withdrawn for P3/P4 persistence instability. Its eight GitHub
+  release assets were deleted; the release and tag remain with a warning.
+- A live boot log showed `Loading user settings from /media/sdb3/localhost.apkovl.tar.gz: ok`.
+  Alpine's initramfs unpacked P3's comparison file before MSHELL scripts ran,
+  while `lbu` wrote the active persistence archive to P4.
+- The v1.4.5.0 working tree restores loader scripts and bundled binary archives
+  from v1.4.4.8. Its P3 baseline is now named
+  `localhost.apkovl.baseline.tar.gz`, which does not match Alpine's
+  `*.apkovl.tar.gz` boot discovery. P4 keeps `localhost.apkovl.tar.gz`.
+- The menu and backup path migrate an existing P3 `localhost.apkovl.tar.gz`
+  by validating the archive and renaming it before the next reboot. The
+  manual P3 recovery tool performs the same migration after restoring the
+  writable mount. A failed migration does not remove the old file.
+- The image-build workflow now selects a previous release only when its base
+  image asset exists. With v1.4.4.9 assets removed, this resolves to v1.4.4.8.
+- Remaining validation: boot a newly built image and an upgraded existing
+  installation, then confirm the `Loading user settings` line names P4.
+  Commit and push were requested; workflow execution and release publication
+  remain separate steps requiring explicit authorization.
 
 ## Alpine responsive SX layout pilot (uncommitted, 2026-09-20)
 

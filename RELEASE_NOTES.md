@@ -1,5 +1,5 @@
-12f6d231867da1e308f9c059ea6fb95066ec4271
-89d6a084467420d924f6e9f867ee004c55f6f980
+4cfa0169b9195722436b40d83c96521db745b88b
+af052d3ed0196475ec83935aea5d0661032fbefd
 b844294a636a5eda9677128174678772d2204abc
 
-    1.4.4.9 Dynamic previous release menu with verified release metadata
+    1.4.4.8 Add optional ACPI fan sensor support expand model choices and simplify build options

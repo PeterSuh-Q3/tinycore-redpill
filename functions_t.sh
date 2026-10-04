@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.4.9"
-builddate="2026.10.03"
+rploaderver="1.4.5.0"
+builddate="2026.10.04"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -62,9 +62,6 @@ is_alpine() {
 # ensure_loader_partition_mounted() 로 직접 마운트를 보장해야 한다
 # (umask=000 라 uid= 를 따로 안 줘도 tc 가 바로 쓸 수 있다).
 mshellSymlinkUserConfig() {
-  # Historical release menus use a writable RAM copy and reconcile it with
-  # P3 only after a verified build. Do not recreate the P3 symlink mid-session.
-  [ "${MSHELL_PREVIOUS_RELEASE_SESSION:-false}" = "true" ] && return 0
   # set -u trips on ${loaderdisk} itself (not just a downstream use of
   # an empty value) if the variable has never been assigned at all in
   # this shell - the :- form is required here, plain [ -z "${var}" ]
@@ -95,21 +92,11 @@ mshellSymlinkUserConfig() {
   # (Confirmed the hard way: with the early return placed before this
   # call, a device that was symlinked before /mnt/tcrp existed would
   # never create it - functions.sh sourcing kept short-circuiting here.)
-  if ! ensure_loader_partition_mounted "3"; then
-    echo "[ERROR] Loader partition 3 is not mounted with writable tc permissions." >&2
-    return 1
-  fi
+  ensure_loader_partition_mounted "3" || return 0
+
+  [ -L /home/tc/user_config.json ] && return 0
 
   local part_cfg="/mnt/tcrp/user_config.json"
-
-  if [ -L /home/tc/user_config.json ]; then
-    if [ "$(readlink -f /home/tc/user_config.json 2>/dev/null)" = "$(readlink -f "${part_cfg}" 2>/dev/null)" ] &&
-       [ -f "${part_cfg}" ] && [ -w "${part_cfg}" ]; then
-      return 0
-    fi
-    echo "[ERROR] user_config.json symlink target is invalid or not writable." >&2
-    return 1
-  fi
 
   if [ ! -f "${part_cfg}" ]; then
     # First run against this partition (or an image predating this
@@ -1021,7 +1008,8 @@ function history() {
     1.4.4.6 Safe Alpine persistence and user config writes with consistent image overlay packaging
     1.4.4.7 Reliable Alpine overlay and loader partition writes
     1.4.4.8 Add optional ACPI fan sensor support expand model choices and simplify build options
-    1.4.4.9 Dynamic previous release menu with verified release metadata
+    1.4.5.0 Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot
+             persistence
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1736,8 +1724,8 @@ EOF
 # 2026.09.29 v1.4.4.8
 # Add optional ACPI fan sensor support expand model choices and simplify build options
 
-# 2026.10.03 v1.4.4.9
-# Dynamic previous release menu with verified release metadata
+# 2026.10.04 v1.4.5.0
+# Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot persistence
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2131,8 +2119,8 @@ function showlastupdate() {
 # 2026.09.29 v1.4.4.8
 # Add optional ACPI fan sensor support expand model choices and simplify build options
 
-# 2026.10.03 v1.4.4.9
-# Dynamic previous release menu with verified release metadata
+# 2026.10.04 v1.4.5.0
+# Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot persistence
 EOF
 }
 
@@ -2621,56 +2609,37 @@ function getloaderdisk() {
 function ensure_loader_partition_mounted() {
 
     local part="$1"
-    local dev mount_point mounted_dev options fs_type
+    local dev="/dev/${loaderdisk}${part}"
+    local mount_point="/mnt/${loaderdisk}${part}"
 
-    [ -z "${loaderdisk:-}" ] && getloaderdisk >/dev/null 2>&1
-    [ -z "${loaderdisk:-}" ] && return 1
-    dev="/dev/${loaderdisk}${part}"
-    mount_point="/mnt/${loaderdisk}${part}"
+    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
+    [ -z "${loaderdisk}" ] && return 1
 
     sudo mkdir -p "${mount_point}"
 
-    if ! mountpoint -q "${mount_point}"; then
-        sudo mount "${dev}" || return 1
-    fi
-
-    mountpoint -q "${mount_point}" || return 1
-    mounted_dev=$(findmnt -no SOURCE --target "${mount_point}" 2>/dev/null) || return 1
-    if [ "$(readlink -f "${mounted_dev}" 2>/dev/null)" != "$(readlink -f "${dev}" 2>/dev/null)" ]; then
-        echo "[ERROR] ${mount_point} does not contain ${dev}." >&2
-        return 1
-    fi
-
-    options=$(findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null) || return 1
-    if [ "${part}" = "3" ]; then
-        fs_type=$(findmnt -no FSTYPE --target "${mount_point}" 2>/dev/null) || return 1
-        [ "${fs_type}" = "vfat" ] || return 1
-        # An early VFAT mount can be rw but still use the default 0022 mask.
-        # In that state root can write P3 while tc cannot follow its config
-        # symlink. VFAT does not update fmask/dmask on remount, even when
-        # mount exits successfully, so a clean unmount and mount is required.
-        if ! printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'fmask=0000' ||
-           ! printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'dmask=0000'; then
-            sudo umount "${mount_point}" || return 1
-            if ! sudo mount -t vfat -o rw,umask=000 "${dev}" "${mount_point}"; then
-                sudo mount "${dev}" >/dev/null 2>&1
-                return 1
-            fi
-        elif printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'ro'; then
+    if mountpoint -q "${mount_point}"; then
+        # Alpine's media automounter can mount a VFAT loader partition as ro
+        # before MSHELL reaches it.  Existing-mount detection alone then
+        # falsely reports success while every user_config/persistence write
+        # fails.  This helper is used by write paths, so restore rw first.
+        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
             sudo mount -o remount,rw "${mount_point}" || return 1
         fi
-        options=$(findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null) || return 1
-        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'rw' || return 1
-        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'fmask=0000' || return 1
-        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'dmask=0000' || return 1
-        [ -w "${mount_point}" ] || return 1
-        [ ! -f "${mount_point}/user_config.json" ] || [ -w "${mount_point}/user_config.json" ] || return 1
-    elif printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'ro'; then
-        sudo mount -o remount,rw "${mount_point}" || return 1
+        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
+        return 0
     fi
 
-    _sync_tcrp_alias "${part}" "${mount_point}" || return 1
-    [ "${part}" != "3" ] || [ "$(readlink /mnt/tcrp 2>/dev/null)" = "${mount_point}" ]
+    sudo mount "${dev}"
+
+    if mountpoint -q "${mount_point}"; then
+        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
+            sudo mount -o remount,rw "${mount_point}" || return 1
+        fi
+        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
+        return 0
+    fi
+
+    return 1
 }
 
 # FRIEND(tcrpfriend) 는 자체 buildroot 커널이 부팅 과정을 전부 제어해서
@@ -2695,8 +2664,7 @@ function _sync_tcrp_alias() {
         sudo rm -f /mnt/tcrp
     elif [ -e /mnt/tcrp ]; then
         # 심볼릭 링크가 아닌 다른 무언가가 이미 있으면 건드리지 않는다.
-        echo "[ERROR] /mnt/tcrp is not a symlink to ${mount_point}." >&2
-        return 1
+        return 0
     fi
 
     # When /mnt/tcrp already points to a mount directory, plain `ln -s`
@@ -4153,44 +4121,6 @@ function set_loader_cmdline_option() {
     validate_loader_cmdline config
 }
 
-# Persist the ACPI sensor option as an explicit setting.  Existing loaders
-# without the flag inherit their current cmdline once; afterwards the flag is
-# authoritative, including during unattended rebuilds.
-function reconcile_acpi_sensor_config() {
-    local requested="${1:-}" enabled json current
-    [ -f "${userconfigfile}" ] || return 1
-    current=$(jq -r 'if (.general | has("acpi_sensor_enabled")) then .general.acpi_sensor_enabled else "unset" end' "${userconfigfile}") || return 1
-    if [ -n "${requested}" ]; then
-        enabled="${requested}"
-    elif [ "${current}" = "true" ] || [ "${current}" = "false" ]; then
-        enabled="${current}"
-    else
-        enabled=$(jq -r 'if ([.general.usb_line // "", .general.sata_line // ""] | any(split(" ") | index("acpi_enforce_resources=lax") != null)) then "true" else "false" end' "${userconfigfile}") || return 1
-    fi
-    [ "${enabled}" = "true" ] || [ "${enabled}" = "false" ] || return 2
-    json=$(jq --argjson enabled "${enabled}" '
-        .general.acpi_sensor_enabled = $enabled
-        | .general.usb_line = ((.general.usb_line // "" | split(" ") | map(select(. != "" and (startswith("acpi_enforce_resources=") | not)))) + (if $enabled then ["acpi_enforce_resources=lax"] else [] end) | join(" "))
-        | if (.general | has("sata_line")) then
-            .general.sata_line = ((.general.sata_line // "" | split(" ") | map(select(. != "" and (startswith("acpi_enforce_resources=") | not)))) + (if $enabled then ["acpi_enforce_resources=lax"] else [] end) | join(" "))
-          else . end
-    ' "${userconfigfile}") || return 1
-    [ "${json}" = "$(jq . "${userconfigfile}")" ] && return 0
-    write_user_config_json "${userconfigfile}" "${json}" || return 1
-    sync_part_config
-}
-
-function apply_acpi_sensor_option_to_line() {
-    local line="$1" enabled="$2" token
-    local -a tokens=()
-    for token in ${line}; do
-        [[ "${token}" == acpi_enforce_resources=* ]] && continue
-        tokens+=("${token}")
-    done
-    [ "${enabled}" = "true" ] && tokens+=("acpi_enforce_resources=lax")
-    printf '%s\n' "${tokens[*]}"
-}
-
 function _cmdline_key_count() {
     local line="$1" key="$2" token count=0
     for token in ${line}; do
@@ -4226,7 +4156,7 @@ function _cmdline_has_unsafe_plus() {
 # while manual custom options must never be silently discarded.
 function validate_loader_cmdline() {
     local mode="${1:-config}" cfg="${2:-}" usb_line sata_line line key value count errors=0
-    local netif mac_count sata_map disk_map netconsole satadom i915mode acpi_sensor_enabled actual cfg_file kmajor
+    local netif mac_count sata_map disk_map netconsole satadom i915mode actual cfg_file kmajor
     local managed_keys="sn mac1 mac2 mac3 mac4 mac5 mac6 mac7 mac8 netif_num vid pid SataPortMap DiskIdxMap sata_remap netconsole"
 
     _cmdline_error() { echo "[cmdline-check] ERROR: $*" >&2; errors=$((errors + 1)); }
@@ -4239,21 +4169,6 @@ function validate_loader_cmdline() {
         fi
         usb_line="$(jq -r '.general.usb_line // empty' "${userconfigfile}")"
         sata_line="$(jq -r '.general.sata_line // empty' "${userconfigfile}")"
-
-        acpi_sensor_enabled=$(jq -r 'if (.general | has("acpi_sensor_enabled")) then .general.acpi_sensor_enabled else "unset" end' "${userconfigfile}")
-        if [ "${acpi_sensor_enabled}" = "true" ]; then
-            [ "$(_cmdline_key_count "${usb_line}" acpi_enforce_resources)" -eq 1 ] && \
-                _cmdline_has_token "${usb_line}" "acpi_enforce_resources=lax" || \
-                _cmdline_error "enabled ACPI sensor option is missing or incorrect in general.usb_line"
-            [ -z "${sata_line}" ] || { [ "$(_cmdline_key_count "${sata_line}" acpi_enforce_resources)" -eq 1 ] && \
-                _cmdline_has_token "${sata_line}" "acpi_enforce_resources=lax"; } || \
-                _cmdline_error "enabled ACPI sensor option is missing or incorrect in general.sata_line"
-        elif [ "${acpi_sensor_enabled}" = "false" ]; then
-            [ "$(_cmdline_key_count "${usb_line}" acpi_enforce_resources)" -eq 0 ] || \
-                _cmdline_error "disabled ACPI sensor option remains in general.usb_line"
-            [ "$(_cmdline_key_count "${sata_line}" acpi_enforce_resources)" -eq 0 ] || \
-                _cmdline_error "disabled ACPI sensor option remains in general.sata_line"
-        fi
 
         for line in "${usb_line}" "${sata_line}"; do
             _cmdline_has_unsafe_plus "${line}" && _cmdline_error "literal '+' found outside syno_hw_version in a cmdline"
@@ -4720,19 +4635,11 @@ function monitor() {
 
     getBus "${loaderdisk}" 
 
+    ensure_loader_partitions_mounted
+
     HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
-        # SX starts Monitor and Menu concurrently. Monitor must never mount
-        # loader partitions; wait for Menu to complete their initialization.
-        if ! mountpoint -q "/mnt/${loaderdisk}1" ||
-           ! mountpoint -q "/mnt/${loaderdisk}2" ||
-           ! mountpoint -q "/mnt/${loaderdisk}3"; then
-            clear
-            echo "Waiting for the loader partitions to be mounted by MSHELL Menu..."
-            sleep 2
-            continue
-        fi
         clear
         echo -e "-------------------------------System Information----------------------------"
         echo -e "Hostname:\t\t"$(hostname) 
@@ -5693,20 +5600,57 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
-# Persist Alpine only through a transaction.  Repository apkovl content is
-# never unpacked into the live root: it is merely retained as the P3 baseline
-# when absent.  lbu writes a complete candidate archive under /tmp, where it
-# is validated before the active P4 archive is replaced.
+# P3 holds a comparison copy, not a boot overlay. Alpine autodetects files
+# ending in .apkovl.tar.gz, so migrate the former P3 filename before reboot.
+function migrate_p3_apkovl_baseline() {
+    is_alpine || return 0
+    local dir="${1:-/mnt/tcrp}"
+    local legacy="${dir}/localhost.apkovl.tar.gz"
+    local baseline="${dir}/localhost.apkovl.baseline.tar.gz"
+    local withdrawn="${dir}/localhost.apkovl.withdrawn.tar.gz"
+
+    if [ "${dir}" = /mnt/tcrp ]; then
+        ensure_loader_partition_mounted 3 || return 1
+        [ -L /mnt/tcrp ] && mountpoint -q "$(readlink -f /mnt/tcrp)" || return 1
+    fi
+    [ -f "${legacy}" ] || return 0
+    tar -tzf "${legacy}" >/dev/null 2>&1 || {
+        echo "[APKVOL] Invalid legacy P3 overlay; leaving it untouched: ${legacy}" >&2
+        return 1
+    }
+    if [ -e "${baseline}" ]; then
+        tar -tzf "${baseline}" >/dev/null 2>&1 || {
+            echo "[APKVOL] Invalid P3 baseline; leaving the legacy overlay untouched." >&2
+            return 1
+        }
+        [ ! -e "${withdrawn}" ] || {
+            echo "[APKVOL] Legacy backup already exists; refusing to overwrite it: ${withdrawn}" >&2
+            return 1
+        }
+        sudo mv "${legacy}" "${withdrawn}" || return 1
+        echo "[APKVOL] Preserved the former P3 boot overlay as ${withdrawn}."
+    else
+        sudo mv "${legacy}" "${baseline}" || return 1
+        echo "[APKVOL] Migrated the former P3 boot overlay to comparison baseline."
+    fi
+    [ ! -e "${legacy}" ]
+}
+
+# Persist Alpine only through a transaction. Repository apkovl content is
+# never unpacked into the live root: it is retained on P3 under a name that
+# Alpine will not autodetect. lbu writes a complete candidate archive under
+# /tmp, which is validated before the active P4 archive is replaced.
 function persist_alpine_apkovl_safely() {
     is_alpine || return 0
 
-    local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
+    local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
     local remote_hash local_hash
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
+    migrate_p3_apkovl_baseline || return 1
     [ -d /mnt/tcrp ] || return 1
 
     stage=$(mktemp -d /tmp/mshell-apkovl.XXXXXX) || return 1
@@ -6666,10 +6610,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
       fi  
     fi
 
-    # The persisted flag is authoritative for automatic rebuilds.  Migrate
-    # older cmdline-only settings once, then restore the option to the fresh
-    # generated command line before it is written to GRUB and user_config.
-    reconcile_acpi_sensor_config || return 1
     USB_LINE="$(grep -A 5 "USB," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
     if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
         SATA_LINE="$(grep -A 5 "SATA," /tmp/tempentry.txt | grep linux | cut -c 16-999)"
@@ -6677,13 +6617,6 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         if [ -n "$SATA_DOM" ]; then
             SATA_LINE="$(cmdline_append "" "synoboot_satadom=${SATA_DOM}")"
         fi
-    fi
-
-    local acpi_sensor_enabled
-    acpi_sensor_enabled=$(jq -r '.general.acpi_sensor_enabled' "${userconfigfile}") || return 1
-    USB_LINE="$(apply_acpi_sensor_option_to_line "${USB_LINE}" "${acpi_sensor_enabled}")"
-    if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
-        SATA_LINE="$(apply_acpi_sensor_option_to_line "${SATA_LINE}" "${acpi_sensor_enabled}")"
     fi
 
     if echo "apollolake geminilake purley" | grep -wq "${ORIGIN_PLATFORM}"; then
@@ -9538,4 +9471,4 @@ EOF
 # 호출하면(테스트 트랙에서 과거 자기 정의 바로 다음 줄에 호출을 뒀다가
 # 이 증상으로 깨진 적이 있다) "command not found"로 즉시 죽는다 -
 # 실기에서 정확히 이 증상으로 재현/확인됨.
-[ "${MSHELL_MONITOR_READ_ONLY:-0}" = "1" ] || mshellSymlinkUserConfig
+mshellSymlinkUserConfig

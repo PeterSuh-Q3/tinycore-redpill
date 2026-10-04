@@ -130,6 +130,33 @@ verify_recovered_state() {
     }
 }
 
+migrate_legacy_p3_overlay() {
+    legacy="$point/localhost.apkovl.tar.gz"
+    baseline="$point/localhost.apkovl.baseline.tar.gz"
+    withdrawn="$point/localhost.apkovl.withdrawn.tar.gz"
+    [ -f "$legacy" ] || return 0
+    tar -tzf "$legacy" >/dev/null 2>&1 || {
+        echo "Invalid legacy P3 overlay; leaving it untouched: $legacy" >&2
+        return 1
+    }
+    if [ -e "$baseline" ]; then
+        tar -tzf "$baseline" >/dev/null 2>&1 || {
+            echo "Invalid P3 baseline; leaving $legacy untouched." >&2
+            return 1
+        }
+        [ ! -e "$withdrawn" ] || {
+            echo "Refusing to overwrite the existing legacy backup: $withdrawn" >&2
+            return 1
+        }
+        mv "$legacy" "$withdrawn" || return 1
+        echo "Preserved the former P3 boot overlay at $withdrawn"
+    else
+        mv "$legacy" "$baseline" || return 1
+        echo "Migrated the former P3 boot overlay to $baseline"
+    fi
+    [ ! -e "$legacy" ]
+}
+
 persist_recovered_state() {
     command -v lbu >/dev/null 2>&1 || { echo 'lbu is unavailable; persistence skipped.' >&2; return 1; }
     command -v tar >/dev/null 2>&1 || { echo 'tar is unavailable; persistence skipped.' >&2; return 1; }
@@ -211,6 +238,7 @@ persist_recovered_state() {
 finish_recovery() {
     verify_recovered_state || return 1
     echo 'P3 mount, alias, user_config.json link, ownership, and write access verified.'
+    migrate_legacy_p3_overlay || return 1
     persist_recovered_state
 }
 

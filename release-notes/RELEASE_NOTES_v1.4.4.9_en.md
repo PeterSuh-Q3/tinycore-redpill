@@ -1,5 +1,7 @@
 # alpine-redpill v1.4.4.9
 
+> **Withdrawn — do not use.** P3/P4 Alpine persistence partition instability was found after release. All v1.4.4.9 downloadable assets have been removed. Use v1.4.4.8 until a corrected version is available.
+
 Improved previous-version selection and build.
 
 ## Previous release selection
