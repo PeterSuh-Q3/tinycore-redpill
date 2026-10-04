@@ -9,4 +9,10 @@
 - **Prevent competing startup processes from mounting the same loader partition twice.** The Menu and Monitor can start together. Their shared mount operation now serializes the check and mount, so the second process reuses the mount made by the first. On the test system, P1–P3 each had one mount after reboot, and the configuration remained writable.
 - **Recover affected installations deliberately.** A manual P3 recovery script is available for systems already left with duplicate or incorrect mounts. It checks the target before changing it; this release does not silently repair an existing damaged filesystem.
 
+If your loader already has an incorrect P3 mount, run this from its Alpine shell. The command applies the recovery and writes a verified Alpine persistence backup:
+
+```sh
+curl -fsSL 'https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/tools/recover-alpine-p3.sh' | sudo sh -s -- --apply
+```
+
 The image workflow also skips withdrawn releases without downloadable images, allowing the next image to be based on the last usable release. A loader image or backup made with v1.4.4.9 should not be reused as the basis for this release.
