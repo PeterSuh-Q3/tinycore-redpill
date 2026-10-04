@@ -5609,7 +5609,7 @@ function persist_alpine_apkovl_safely() {
     local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight
-    local remote_hash local_hash path owner
+    local remote_hash local_hash baseline_next path owner
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
@@ -5670,7 +5670,15 @@ function persist_alpine_apkovl_safely() {
         [ -f "${baseline}" ] && local_hash="$(sha256sum "${baseline}" | awk '{print $1}')"
         if [ "${remote_hash}" != "${local_hash}" ]; then
             echo "[APKVOL] Repository overlay differs; updating P3 baseline."
-            if ! sudo cp -p "${incoming}" "${baseline}"; then
+            # P3 is VFAT: cp -p attempts chown and can fail after copying the
+            # data. Stage on P3, verify bytes, then rename without preserving
+            # POSIX ownership that the filesystem cannot represent.
+            baseline_next="${baseline}.new.$$"
+            if ! sudo cp "${incoming}" "${baseline_next}" \
+                || [ "$(sha256sum "${baseline_next}" 2>/dev/null | awk '{print $1}')" != "${remote_hash}" ] \
+                || ! sudo mv -f "${baseline_next}" "${baseline}"; then
+                sudo rm -f "${baseline_next}"
+                echo "[APKVOL] Failed to verify or activate the P3 baseline." >&2
                 rm -rf "${stage}"
                 return 1
             fi
@@ -5685,7 +5693,6 @@ function persist_alpine_apkovl_safely() {
         echo "[APKVOL] Repository overlay unavailable; keeping existing P3 baseline."
     fi
     tar -tzf "${baseline}" >/dev/null 2>&1 || { rm -rf "${stage}"; return 1; }
-    cp -p "${baseline}" "${stage}/baseline.tar.gz" || { rm -rf "${stage}"; return 1; }
 
     [ -f "${active}" ] && sudo cp -p "${active}" "${active_backup}" || true
 
@@ -5698,12 +5705,12 @@ function persist_alpine_apkovl_safely() {
     fi
     if ! sudo lbu commit; then
         sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         rm -rf "${stage}"
         return 1
     fi
     sudo cp -p "${lbu_conf_backup}" "${lbu_conf}" || {
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         rm -rf "${stage}"
         return 1
     }
@@ -5719,7 +5726,7 @@ function persist_alpine_apkovl_safely() {
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
         || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
         || ! sudo mv -f "${repacked}" "${candidate}"; then
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         sudo rm -rf -- "${stage}"
         return 1
     fi
@@ -5729,26 +5736,26 @@ function persist_alpine_apkovl_safely() {
         owner=$(sudo stat -c '%u' "${extract}/${path}" 2>/dev/null) || owner=""
         if [ "${owner}" != 0 ]; then
             echo "[APKVOL] Candidate has invalid ownership for ${path}; persistence cancelled." >&2
-            [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+            [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
             sudo rm -rf -- "${stage}"
             return 1
         fi
     done
     tar -tzf "${candidate}" >/dev/null 2>&1 || {
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         sudo rm -rf -- "${stage}"
         return 1
     }
 
     # Copy within P4 and rename only after the candidate is known-good.
-    sudo cp -p "${candidate}" "${active}.new" || {
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+    sudo cp "${candidate}" "${active}.new" || {
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         sudo rm -rf -- "${stage}"
         return 1
     }
     if ! sudo tar -tzf "${active}.new" >/dev/null 2>&1 || ! sudo mv -f "${active}.new" "${active}"; then
         sudo rm -f "${active}.new"
-        [ -f "${active_backup}" ] && sudo cp -p "${active_backup}" "${active}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         sudo rm -rf -- "${stage}"
         return 1
     fi
