@@ -134,22 +134,78 @@ persist_recovered_state() {
     command -v lbu >/dev/null 2>&1 || { echo 'lbu is unavailable; persistence skipped.' >&2; return 1; }
     command -v tar >/dev/null 2>&1 || { echo 'tar is unavailable; persistence skipped.' >&2; return 1; }
 
-    # Ensure the restored link is part of the apkovl, then commit and verify
-    # the generated archive before reporting recovery as complete.
+    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    old_archive=$(mktemp /tmp/mshell-p3-apkovl-before.XXXXXX) || return 1
+    old_hash=""
+    if [ -s "$archive" ]; then
+        tar -tzf "$archive" >/dev/null 2>&1 || {
+            rm -f "$old_archive"
+            echo "Existing persistence archive is invalid; refusing to replace it: $archive" >&2
+            return 1
+        }
+        cp -p "$archive" "$old_archive" || {
+            rm -f "$old_archive"
+            echo 'Could not preserve the existing persistence archive; backup cancelled.' >&2
+            return 1
+        }
+        old_hash=$(sha256sum "$old_archive" | awk '{print $1}')
+    fi
+
+    echo '[PERSIST] Including the recovered user_config.json link in Alpine persistence...'
     lbu include /home/tc/user_config.json || {
+        rm -f "$old_archive"
         echo 'Could not include the recovered config link in Alpine persistence.' >&2; return 1;
     }
-    lbu commit || { echo 'Alpine persistence backup failed.' >&2; return 1; }
+    pending_before=$(lbu status 2>&1) || {
+        rm -f "$old_archive"
+        echo 'Could not read pending Alpine persistence changes.' >&2; return 1;
+    }
+    pending_count=$(printf '%s\n' "$pending_before" | grep -Ec '^[AUD] ' || true)
 
-    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    echo '[PERSIST] Writing apkovl backup to /mnt/alpine...'
+    if ! lbu commit; then
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
+        echo '[PERSIST] FAILED: lbu commit returned an error; previous archive restored when available.' >&2
+        return 1
+    fi
+
     [ -s "$archive" ] && tar -tzf "$archive" >/dev/null 2>&1 || {
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
         echo "Persistence archive is missing or invalid: $archive" >&2; return 1;
     }
     if ! tar -tzf "$archive" | grep -Eq '(^|/)home/tc/user_config\.json$'; then
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
         echo 'The verified persistence archive does not contain the recovered config link.' >&2
         return 1
     fi
-    echo "Alpine persistence backup verified: $archive"
+    if ! tar -tvzf "$archive" | grep -Fq 'home/tc/user_config.json -> /mnt/tcrp/user_config.json'; then
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
+        echo 'The archive does not contain the expected user_config.json symlink target.' >&2
+        return 1
+    fi
+
+    new_hash=$(sha256sum "$archive" | awk '{print $1}')
+    pending_after=$(lbu status 2>&1) || {
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
+        echo 'Could not verify whether persistence changes remain after commit.' >&2; return 1;
+    }
+    remaining_count=$(printf '%s\n' "$pending_after" | grep -Ec '^[AUD] ' || true)
+    if [ "$remaining_count" -ne 0 ] || { [ "$pending_count" -ne 0 ] && [ "$new_hash" = "$old_hash" ]; }; then
+        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
+        rm -f "$old_archive"
+        echo "[PERSIST] FAILED: archive was not refreshed cleanly (pending changes: $remaining_count)." >&2
+        return 1
+    fi
+
+    rm -f "$old_archive"
+    echo "[PERSIST] SUCCESS: backup written and verified at $archive"
+    echo "[PERSIST] SHA-256: $new_hash"
+    [ "$pending_count" -eq 0 ] && echo '[PERSIST] No pending changes; the existing archive was already current.'
 }
 
 finish_recovery() {
