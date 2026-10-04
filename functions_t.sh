@@ -2606,13 +2606,27 @@ function getloaderdisk() {
 }
 
 function ensure_loader_partition_mounted() {
-
     local part="$1"
-    local dev="/dev/${loaderdisk}${part}"
-    local mount_point="/mnt/${loaderdisk}${part}"
+    local dev mount_point lock_file
 
-    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
-    [ -z "${loaderdisk}" ] && return 1
+    [ -z "${loaderdisk:-}" ] && getloaderdisk >/dev/null 2>&1
+    [ -z "${loaderdisk:-}" ] && return 1
+    dev="/dev/${loaderdisk}${part}"
+    mount_point="/mnt/${loaderdisk}${part}"
+    lock_file="/run/mshell-loader-p${part}.lock"
+    # The manual P3 recovery tool uses this same lock while draining mounts.
+    [ "${part}" = "3" ] && lock_file=/run/mshell-p3-recovery.lock
+
+    # SX starts Monitor and Menu concurrently. Serialize the check and mount,
+    # then re-check *inside* the lock; an outside mountpoint test can race.
+    # Use a subshell so the descriptor is always closed on every return path.
+    (
+    sudo touch "${lock_file}" && sudo chmod 0666 "${lock_file}" || exit 1
+    exec 9>>"${lock_file}" || exit 1
+    flock -x -w 30 9 || {
+        echo "[ERROR] Timed out waiting for ${mount_point} mount lock." >&2
+        exit 1
+    }
 
     sudo mkdir -p "${mount_point}"
 
@@ -2628,7 +2642,7 @@ function ensure_loader_partition_mounted() {
         return 0
     fi
 
-    sudo mount "${dev}"
+    sudo mount "${dev}" || return 1
 
     if mountpoint -q "${mount_point}"; then
         if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
@@ -2639,6 +2653,7 @@ function ensure_loader_partition_mounted() {
     fi
 
     return 1
+    )
 }
 
 # FRIEND(tcrpfriend) 는 자체 buildroot 커널이 부팅 과정을 전부 제어해서
