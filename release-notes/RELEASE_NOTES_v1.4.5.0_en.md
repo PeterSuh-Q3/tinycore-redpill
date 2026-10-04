@@ -1,9 +1,8 @@
 # alpine-redpill v1.4.5.0
 
-This recovery release restores the loader scripts and bundled archives to the v1.4.4.8 baseline. v1.4.4.9 has been withdrawn because of P3/P4 Alpine persistence instability.
+v1.4.4.9 was withdrawn because of Alpine persistence instability on P3/P4. v1.4.5.0 restores the v1.4.4.8 loader behavior and P3/P4 persistence-file layout.
 
-- P3 now stores the repository overlay only as `localhost.apkovl.baseline.tar.gz` for comparison. Its name is deliberately excluded from Alpine's `*.apkovl.tar.gz` boot discovery.
-- P4 retains the active `localhost.apkovl.tar.gz` used for Alpine boot and `lbu` persistence.
-- Image builds skip withdrawn releases without a base image; v1.4.5.0 can use the v1.4.4.8 image as its base.
-- On existing installations, the former P3 overlay is validated and renamed before the next reboot. If a comparison baseline already exists, the former file is preserved as `localhost.apkovl.withdrawn.tar.gz`. A failed migration leaves the old file untouched and reports a warning.
-- No loader rebuild is required to rename an existing P3 file, but the P3 mount must be writable. Verify the next boot log selects the P4 overlay before considering migration complete.
+- P3 `localhost.apkovl.tar.gz` handling and naming remain as in v1.4.4.8.
+- No rename to `localhost.apkovl.baseline.tar.gz` or automatic migration of existing files is included.
+- Changes to P4 persistence ownership are deferred until the `lbu commit` behavior and resulting archive metadata are sufficiently validated.
+- The image workflow skips withdrawn releases without assets and uses the v1.4.4.8 image as its base.

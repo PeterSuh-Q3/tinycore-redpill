@@ -279,20 +279,16 @@ build pilot before any module-pack publication.
 - A live boot log showed `Loading user settings from /media/sdb3/localhost.apkovl.tar.gz: ok`.
   Alpine's initramfs unpacked P3's comparison file before MSHELL scripts ran,
   while `lbu` wrote the active persistence archive to P4.
-- The v1.4.5.0 working tree restores loader scripts and bundled binary archives
-  from v1.4.4.8. Its P3 baseline is now named
-  `localhost.apkovl.baseline.tar.gz`, which does not match Alpine's
-  `*.apkovl.tar.gz` boot discovery. P4 keeps `localhost.apkovl.tar.gz`.
-- The menu and backup path migrate an existing P3 `localhost.apkovl.tar.gz`
-  by validating the archive and renaming it before the next reboot. The
-  manual P3 recovery tool performs the same migration after restoring the
-  writable mount. A failed migration does not remove the old file.
+- v1.4.5.0 restores the v1.4.4.8 loader scripts and P3/P4 overlay filename
+  behavior. P3 archive migration has been withdrawn pending validation.
+- The manual P3 recovery tool repairs mounts and configuration links without
+  renaming the overlay. Its persistence step still requires root and uses
+  `lbu commit`; runtime ownership must be checked before future changes.
 - The image-build workflow now selects a previous release only when its base
   image asset exists. With v1.4.4.9 assets removed, this resolves to v1.4.4.8.
-- Remaining validation: boot a newly built image and an upgraded existing
-  installation, then confirm the `Loading user settings` line names P4.
-  Commit and push were requested; workflow execution and release publication
-  remain separate steps requiring explicit authorization.
+- A live P4 archive was observed with `tc:staff` owners on privileged `/etc`
+  files, while the v1.4.4.8 repository archive has root ownership for them.
+  The first ownership mutation has not been identified; defer that fix.
 
 ## Alpine responsive SX layout pilot (uncommitted, 2026-09-20)
 

@@ -240,12 +240,6 @@ if [ ! -s /home/tc/functions.sh ] || ! grep -q 'rploaderver=' /home/tc/functions
     safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions.sh" "/home/tc/functions.sh" "rploaderver="
 fi
 . /home/tc/functions.sh
-# Existing images may still carry a boot-discoverable comparison archive on P3.
-# Rename it before the next reboot; failure leaves the original file intact.
-if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
-   ! migrate_p3_apkovl_baseline; then
-    echo "[WARN] P3 comparison overlay was not migrated. Check P3 mount state before rebooting." >&2
-fi
 #####################################################################################################
 if grep -q 'arpl' ~/.profile; then
   sed -i '/arpl/d' ~/.profile
@@ -904,10 +898,6 @@ if [ "${offline}" = "NO" ]; then
     # 재소싱 전 파일 존재 확인
     if [ -f /home/tc/functions.sh ]; then
       . /home/tc/functions.sh
-      if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
-         ! migrate_p3_apkovl_baseline; then
-        echo "[WARN] P3 comparison overlay was not migrated. Check P3 mount state before rebooting." >&2
-      fi
     else
       echo "[!] functions.sh not found, cannot source."
       exit 1

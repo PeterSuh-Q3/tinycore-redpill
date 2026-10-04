@@ -1008,8 +1008,7 @@ function history() {
     1.4.4.6 Safe Alpine persistence and user config writes with consistent image overlay packaging
     1.4.4.7 Reliable Alpine overlay and loader partition writes
     1.4.4.8 Add optional ACPI fan sensor support expand model choices and simplify build options
-    1.4.5.0 Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot
-             persistence
+    1.4.5.0 Restore the stable v1 4 4 8 loader baseline
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1725,7 +1724,7 @@ EOF
 # Add optional ACPI fan sensor support expand model choices and simplify build options
 
 # 2026.10.04 v1.4.5.0
-# Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot persistence
+# Restore the stable v1 4 4 8 loader baseline
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2120,7 +2119,7 @@ function showlastupdate() {
 # Add optional ACPI fan sensor support expand model choices and simplify build options
 
 # 2026.10.04 v1.4.5.0
-# Restore stable Alpine loader behavior and separate P3 overlay baseline from P4 boot persistence
+# Restore the stable v1 4 4 8 loader baseline
 EOF
 }
 
@@ -5600,57 +5599,20 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
-# P3 holds a comparison copy, not a boot overlay. Alpine autodetects files
-# ending in .apkovl.tar.gz, so migrate the former P3 filename before reboot.
-function migrate_p3_apkovl_baseline() {
-    is_alpine || return 0
-    local dir="${1:-/mnt/tcrp}"
-    local legacy="${dir}/localhost.apkovl.tar.gz"
-    local baseline="${dir}/localhost.apkovl.baseline.tar.gz"
-    local withdrawn="${dir}/localhost.apkovl.withdrawn.tar.gz"
-
-    if [ "${dir}" = /mnt/tcrp ]; then
-        ensure_loader_partition_mounted 3 || return 1
-        [ -L /mnt/tcrp ] && mountpoint -q "$(readlink -f /mnt/tcrp)" || return 1
-    fi
-    [ -f "${legacy}" ] || return 0
-    tar -tzf "${legacy}" >/dev/null 2>&1 || {
-        echo "[APKVOL] Invalid legacy P3 overlay; leaving it untouched: ${legacy}" >&2
-        return 1
-    }
-    if [ -e "${baseline}" ]; then
-        tar -tzf "${baseline}" >/dev/null 2>&1 || {
-            echo "[APKVOL] Invalid P3 baseline; leaving the legacy overlay untouched." >&2
-            return 1
-        }
-        [ ! -e "${withdrawn}" ] || {
-            echo "[APKVOL] Legacy backup already exists; refusing to overwrite it: ${withdrawn}" >&2
-            return 1
-        }
-        sudo mv "${legacy}" "${withdrawn}" || return 1
-        echo "[APKVOL] Preserved the former P3 boot overlay as ${withdrawn}."
-    else
-        sudo mv "${legacy}" "${baseline}" || return 1
-        echo "[APKVOL] Migrated the former P3 boot overlay to comparison baseline."
-    fi
-    [ ! -e "${legacy}" ]
-}
-
-# Persist Alpine only through a transaction. Repository apkovl content is
-# never unpacked into the live root: it is retained on P3 under a name that
-# Alpine will not autodetect. lbu writes a complete candidate archive under
-# /tmp, which is validated before the active P4 archive is replaced.
+# Persist Alpine only through a transaction.  Repository apkovl content is
+# never unpacked into the live root: it is merely retained as the P3 baseline
+# when absent.  lbu writes a complete candidate archive under /tmp, where it
+# is validated before the active P4 archive is replaced.
 function persist_alpine_apkovl_safely() {
     is_alpine || return 0
 
-    local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
+    local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked
     local remote_hash local_hash
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
-    migrate_p3_apkovl_baseline || return 1
     [ -d /mnt/tcrp ] || return 1
 
     stage=$(mktemp -d /tmp/mshell-apkovl.XXXXXX) || return 1
