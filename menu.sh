@@ -659,6 +659,13 @@ getBus "${loaderdisk}"
 
 tcrppart="${loaderdisk}3"
 
+# Existing P3 images may carry a boot-discoverable comparison archive.
+# Rename it before the next reboot; leave the file intact on failure.
+if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
+   ! migrate_p3_apkovl_baseline; then
+    echo "[WARN] P3 comparison overlay was not renamed. Check P3 before rebooting." >&2
+fi
+
 TCB=$(readConfigKey "general" "tcbautoupd")
 if [ -z "${TCB}" ]; then
     TCB="true"
@@ -898,6 +905,10 @@ if [ "${offline}" = "NO" ]; then
     # 재소싱 전 파일 존재 확인
     if [ -f /home/tc/functions.sh ]; then
       . /home/tc/functions.sh
+      if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
+         ! migrate_p3_apkovl_baseline; then
+        echo "[WARN] P3 comparison overlay was not renamed. Check P3 before rebooting." >&2
+      fi
     else
       echo "[!] functions.sh not found, cannot source."
       exit 1

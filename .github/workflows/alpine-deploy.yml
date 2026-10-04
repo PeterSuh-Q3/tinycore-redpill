@@ -152,10 +152,10 @@ jobs:
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
 
           ## 3rd partition: reserved only, left empty (no TC content copy) ##
-          ## Keep the v1.4.4.8 P3 overlay name and behavior unchanged.
+          ## P3 is only a comparison baseline; P4 alone has a boot overlay.
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.tar.gz
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
           sudo umount /mnt/tarp3
 
           ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##
@@ -227,10 +227,10 @@ jobs:
           sudo dd if="${LOOPX}p2" of="${LOOPZ}p2"
 
           ## 3rd partition: reserved only, left empty (no TC content copy) ##
-          ## Keep the v1.4.4.8 P3 overlay name and behavior unchanged.
+          ## P3 is only a comparison baseline; P4 alone has a boot overlay.
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
-          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.tar.gz
+          sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
           sudo umount /mnt/tarp3
 
           ## 4th partition: populate with Alpine boot media from the "alpine" release tag ##

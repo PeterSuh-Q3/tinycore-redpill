@@ -5599,20 +5599,56 @@ function ensure_alpine_sx_menu_focus() {
     rm -f "${tmp_sxrc}"
 }
 
-# Persist Alpine only through a transaction.  Repository apkovl content is
-# never unpacked into the live root: it is merely retained as the P3 baseline
-# when absent.  lbu writes a complete candidate archive under /tmp, where it
-# is validated before the active P4 archive is replaced.
+# P3 holds a comparison copy, not a boot overlay. Keep its name outside
+# Alpine's *.apkovl.tar.gz boot-autodiscovery pattern.
+function migrate_p3_apkovl_baseline() {
+    is_alpine || return 0
+
+    local dir="${1:-/mnt/tcrp}"
+    local legacy="${dir}/localhost.apkovl.tar.gz"
+    local baseline="${dir}/localhost.apkovl.baseline.tar.gz"
+    local withdrawn
+
+    if [ "${dir}" = /mnt/tcrp ]; then
+        [ -n "${loaderdisk:-}" ] || getloaderdisk >/dev/null 2>&1 || return 1
+        ensure_loader_partition_mounted 3 || return 1
+        [ -L /mnt/tcrp ] && mountpoint -q "$(readlink -f /mnt/tcrp)" || return 1
+    fi
+    [ -f "${legacy}" ] || return 0
+    tar -tzf "${legacy}" >/dev/null 2>&1 || {
+        echo "[APKVOL] Invalid legacy P3 overlay; leaving it untouched: ${legacy}" >&2
+        return 1
+    }
+    if [ -e "${baseline}" ]; then
+        tar -tzf "${baseline}" >/dev/null 2>&1 || {
+            echo "[APKVOL] Invalid P3 baseline; leaving the legacy file untouched." >&2
+            return 1
+        }
+        withdrawn="${dir}/localhost.apkovl.withdrawn.$(date +%Y%m%d%H%M%S).$$.tar.gz"
+        [ ! -e "${withdrawn}" ] || return 1
+        sudo mv "${legacy}" "${withdrawn}" || return 1
+        echo "[APKVOL] Preserved the former P3 overlay as ${withdrawn}."
+    else
+        sudo mv "${legacy}" "${baseline}" || return 1
+        echo "[APKVOL] Renamed the P3 comparison overlay to ${baseline}."
+    fi
+    [ ! -e "${legacy}" ]
+}
+
+# Persist Alpine only through a transaction. The P3 baseline is never
+# unpacked into the live root; P4 alone holds the boot-discoverable overlay.
+# lbu writes a candidate under /tmp, validated before P4 is replaced.
 function persist_alpine_apkovl_safely() {
     is_alpine || return 0
 
-    local baseline="/mnt/tcrp/localhost.apkovl.tar.gz"
+    local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight
     local remote_hash local_hash baseline_next path owner
 
     command -v curl >/dev/null 2>&1 || return 1
     ensure_alpine_partition_mounted || return 1
+    migrate_p3_apkovl_baseline || return 1
     [ -d /mnt/tcrp ] || return 1
 
     # Never serialize a live system whose privileged files have lost root
@@ -5724,6 +5760,8 @@ function persist_alpine_apkovl_safely() {
         || ! sudo chmod 0700 "${extract}" \
         || ! sudo tar -xzf "${candidate}" -C "${extract}" \
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
+        || ! sudo chown root:root "${extract}" \
+        || ! sudo chmod 0755 "${extract}" \
         || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
         || ! sudo mv -f "${repacked}" "${candidate}"; then
         [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
@@ -5746,6 +5784,19 @@ function persist_alpine_apkovl_safely() {
         sudo rm -rf -- "${stage}"
         return 1
     }
+    if ! tar -tvzf "${candidate}" | awk '
+        $NF == "./" {
+            found = 1
+            root_owner = ($2 == "root/root" || $2 == "0/0" || ($2 == "0" && $3 == "root" && $4 == "root"))
+            if ($1 != "drwxr-xr-x" || !root_owner) bad = 1
+        }
+        END { exit (!found || bad) }
+    '; then
+        echo "[APKVOL] Candidate root directory is not root:root mode 0755; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
 
     # Copy within P4 and rename only after the candidate is known-good.
     sudo cp "${candidate}" "${active}.new" || {

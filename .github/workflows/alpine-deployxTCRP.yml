@@ -134,6 +134,10 @@ jobs:
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
           cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
+          if [ -f /mnt/tarp3/localhost.apkovl.tar.gz ]; then
+            test ! -e /mnt/tarp3/localhost.apkovl.baseline.tar.gz
+            sudo mv /mnt/tarp3/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
+          fi
           ls -ltr /mnt/tarp3
           
           ## add tinycore packages
@@ -215,6 +219,10 @@ jobs:
           sudo mkdir -p /mnt/tarp3
           sudo mount ${LOOPZ}p3 /mnt/tarp3
           cd /mnt/p3 && sudo find . | sudo cpio -pdm "/mnt/tarp3"
+          if [ -f /mnt/tarp3/localhost.apkovl.tar.gz ]; then
+            test ! -e /mnt/tarp3/localhost.apkovl.baseline.tar.gz
+            sudo mv /mnt/tarp3/localhost.apkovl.tar.gz /mnt/tarp3/localhost.apkovl.baseline.tar.gz
+          fi
           ls -ltr /mnt/tarp3
           
           ## add tinycore packages
