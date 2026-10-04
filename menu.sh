@@ -71,10 +71,32 @@ function resolve_github_doh_ipv4() {
       command jq -r '.Answer[]? | select(.type == 1) | .data' 2>/dev/null | head -n 1
 }
 
+# This runs before functions.sh is sourced. Only verify the existing P3
+# mapping here; the normal mount/permission repair remains in functions.sh.
+function early_doh_config_path() {
+    local dev mounted_dev mount_point cfg
+    dev=$(sudo /sbin/blkid -t UUID=6234-C863 -o device 2>/dev/null | head -n 1)
+    [ -n "${dev}" ] || return 1
+    mount_point="/mnt/${dev##*/}"
+    # The stable alias may not exist until functions.sh is sourced. If it
+    # already exists, reject a stale or non-symlink mapping.
+    if [ -e /mnt/tcrp ] || [ -L /mnt/tcrp ]; then
+        [ -L /mnt/tcrp ] && [ "$(readlink /mnt/tcrp)" = "${mount_point}" ] || return 1
+    fi
+    mountpoint -q "${mount_point}" || return 1
+    mounted_dev=$(findmnt -no SOURCE --target "${mount_point}" 2>/dev/null) || return 1
+    [ "$(readlink -f "${mounted_dev}" 2>/dev/null)" = "$(readlink -f "${dev}" 2>/dev/null)" ] || return 1
+    cfg="${mount_point}/user_config.json"
+    [ -f "${cfg}" ] && command jq -e 'type == "object"' "${cfg}" >/dev/null 2>&1 || return 1
+    printf '%s\n' "${cfg}"
+}
+
 function bootstrap_github_access() {
     local cfg mode fallback_dns domain ip
-    cfg="/mnt/tcrp/user_config.json"
-    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
+    if ! cfg=$(early_doh_config_path); then
+        echo "[WARN] DoH bootstrap skipped: loader P3 configuration path is not verified." >&2
+        return 1
+    fi
     mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
     if [ "${mode}" != "doh" ]; then
         cleanup_mshell_doh_overrides
@@ -148,17 +170,28 @@ function offer_detected_locale_early() {
 }
 
 function offer_doh_fallback() {
-    local cfg="/mnt/tcrp/user_config.json" mode answer msg
+    local cfg mode answer msg mount_opts
     [ -e /tmp/mshell-doh-prompted ] && return 1
+    if ! cfg=$(early_doh_config_path); then
+        echo "[WARN] DoH selection skipped: loader P3 configuration path is not verified." >&2
+        return 1
+    fi
+    mount_opts=$(findmnt -no OPTIONS --target "${cfg}" 2>/dev/null) || return 1
+    if ! printf '%s\n' "${mount_opts}" | tr ',' '\n' | grep -qx rw; then
+        echo "[WARN] DoH selection skipped: loader P3 is read-only." >&2
+        return 1
+    fi
     : > /tmp/mshell-doh-prompted
-    [ -f "${cfg}" ] || cfg="/home/tc/user_config.json"
     mode=$(command jq -r '.github_access.mode // "standard"' "${cfg}" 2>/dev/null || echo standard)
     [ "${mode}" = "standard" ] || return 1
     msg="GitHub access is unavailable. Use DoH bypass mode (for China) now?"
     case "${LANG:-}" in zh_CN*|zh_SG*) msg="GitHub访问不稳定。现在启用DoH绕过模式（中国用户）吗？" ;; esac
     command dialog --clear --yesno "${msg}" 0 0 2>/dev/null || return 1
     command jq '.github_access.mode = "doh"' "${cfg}" > /tmp/mshell-user-config.json.$$ 2>/dev/null || return 1
-    sudo cp /tmp/mshell-user-config.json.$$ "${cfg}" 2>/dev/null || return 1
+    if ! sudo cp /tmp/mshell-user-config.json.$$ "${cfg}" 2>/dev/null; then
+        rm -f /tmp/mshell-user-config.json.$$
+        return 1
+    fi
     rm -f /tmp/mshell-user-config.json.$$
     bootstrap_github_access
     return 0
