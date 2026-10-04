@@ -95,11 +95,21 @@ mshellSymlinkUserConfig() {
   # (Confirmed the hard way: with the early return placed before this
   # call, a device that was symlinked before /mnt/tcrp existed would
   # never create it - functions.sh sourcing kept short-circuiting here.)
-  ensure_loader_partition_mounted "3" || return 0
-
-  [ -L /home/tc/user_config.json ] && return 0
+  if ! ensure_loader_partition_mounted "3"; then
+    echo "[ERROR] Loader partition 3 is not mounted with writable tc permissions." >&2
+    return 1
+  fi
 
   local part_cfg="/mnt/tcrp/user_config.json"
+
+  if [ -L /home/tc/user_config.json ]; then
+    if [ "$(readlink -f /home/tc/user_config.json 2>/dev/null)" = "$(readlink -f "${part_cfg}" 2>/dev/null)" ] &&
+       [ -f "${part_cfg}" ] && [ -w "${part_cfg}" ]; then
+      return 0
+    fi
+    echo "[ERROR] user_config.json symlink target is invalid or not writable." >&2
+    return 1
+  fi
 
   if [ ! -f "${part_cfg}" ]; then
     # First run against this partition (or an image predating this
@@ -2611,37 +2621,56 @@ function getloaderdisk() {
 function ensure_loader_partition_mounted() {
 
     local part="$1"
-    local dev="/dev/${loaderdisk}${part}"
-    local mount_point="/mnt/${loaderdisk}${part}"
+    local dev mount_point mounted_dev options fs_type
 
-    [ -z "${loaderdisk}" ] && getloaderdisk >/dev/null 2>&1
-    [ -z "${loaderdisk}" ] && return 1
+    [ -z "${loaderdisk:-}" ] && getloaderdisk >/dev/null 2>&1
+    [ -z "${loaderdisk:-}" ] && return 1
+    dev="/dev/${loaderdisk}${part}"
+    mount_point="/mnt/${loaderdisk}${part}"
 
     sudo mkdir -p "${mount_point}"
 
-    if mountpoint -q "${mount_point}"; then
-        # Alpine's media automounter can mount a VFAT loader partition as ro
-        # before MSHELL reaches it.  Existing-mount detection alone then
-        # falsely reports success while every user_config/persistence write
-        # fails.  This helper is used by write paths, so restore rw first.
-        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
-            sudo mount -o remount,rw "${mount_point}" || return 1
-        fi
-        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
-        return 0
+    if ! mountpoint -q "${mount_point}"; then
+        sudo mount "${dev}" || return 1
     fi
 
-    sudo mount "${dev}"
-
-    if mountpoint -q "${mount_point}"; then
-        if findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null | tr ',' '\n' | grep -qx 'ro'; then
-            sudo mount -o remount,rw "${mount_point}" || return 1
-        fi
-        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
-        return 0
+    mountpoint -q "${mount_point}" || return 1
+    mounted_dev=$(findmnt -no SOURCE --target "${mount_point}" 2>/dev/null) || return 1
+    if [ "$(readlink -f "${mounted_dev}" 2>/dev/null)" != "$(readlink -f "${dev}" 2>/dev/null)" ]; then
+        echo "[ERROR] ${mount_point} does not contain ${dev}." >&2
+        return 1
     fi
 
-    return 1
+    options=$(findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null) || return 1
+    if [ "${part}" = "3" ]; then
+        fs_type=$(findmnt -no FSTYPE --target "${mount_point}" 2>/dev/null) || return 1
+        [ "${fs_type}" = "vfat" ] || return 1
+        # An early VFAT mount can be rw but still use the default 0022 mask.
+        # In that state root can write P3 while tc cannot follow its config
+        # symlink. VFAT does not update fmask/dmask on remount, even when
+        # mount exits successfully, so a clean unmount and mount is required.
+        if ! printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'fmask=0000' ||
+           ! printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'dmask=0000'; then
+            sudo umount "${mount_point}" || return 1
+            if ! sudo mount -t vfat -o rw,umask=000 "${dev}" "${mount_point}"; then
+                sudo mount "${dev}" >/dev/null 2>&1
+                return 1
+            fi
+        elif printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'ro'; then
+            sudo mount -o remount,rw "${mount_point}" || return 1
+        fi
+        options=$(findmnt -no OPTIONS --target "${mount_point}" 2>/dev/null) || return 1
+        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'rw' || return 1
+        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'fmask=0000' || return 1
+        printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'dmask=0000' || return 1
+        [ -w "${mount_point}" ] || return 1
+        [ ! -f "${mount_point}/user_config.json" ] || [ -w "${mount_point}/user_config.json" ] || return 1
+    elif printf '%s\n' "${options}" | tr ',' '\n' | grep -qx 'ro'; then
+        sudo mount -o remount,rw "${mount_point}" || return 1
+    fi
+
+    _sync_tcrp_alias "${part}" "${mount_point}" || return 1
+    [ "${part}" != "3" ] || [ "$(readlink /mnt/tcrp 2>/dev/null)" = "${mount_point}" ]
 }
 
 # FRIEND(tcrpfriend) 는 자체 buildroot 커널이 부팅 과정을 전부 제어해서
@@ -2666,7 +2695,8 @@ function _sync_tcrp_alias() {
         sudo rm -f /mnt/tcrp
     elif [ -e /mnt/tcrp ]; then
         # 심볼릭 링크가 아닌 다른 무언가가 이미 있으면 건드리지 않는다.
-        return 0
+        echo "[ERROR] /mnt/tcrp is not a symlink to ${mount_point}." >&2
+        return 1
     fi
 
     # When /mnt/tcrp already points to a mount directory, plain `ln -s`
