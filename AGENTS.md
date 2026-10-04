@@ -34,6 +34,16 @@
   content before building `lang.tgz`; do not introduce literal `\\n\\n`
   sequences where gettext requires escaped multiline entries.
 
+## Release-note writing
+
+- Lead with **why** a change was needed: the user-visible problem, its impact,
+  and the situation in which users encounter it. Then explain the resulting
+  benefit or behavior. Describe implementation details only when they help
+  users understand or act on the change.
+- Do not turn commit history into a feature-by-feature changelog. Prioritize
+  what users need to know, including any action, limitation, or compatibility
+  implication, over a list of files or internal mechanisms changed.
+
 ## `my.sh.gz` distribution policy
 
 - Keep `my.sh.gz` tracked in the branch and available at its existing raw GitHub URL.
