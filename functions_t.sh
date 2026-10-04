@@ -2630,20 +2630,6 @@ function ensure_loader_partition_mounted() {
 
     sudo mkdir -p "${mount_point}"
 
-    if [ "${part}" = "3" ] && [ -x /usr/local/sbin/ensure-loader-p3 ]; then
-        sudo /usr/local/sbin/ensure-loader-p3 || return 1
-        _sync_tcrp_alias "${part}" "${mount_point}" || return 1
-        [ "$(readlink /mnt/tcrp 2>/dev/null)" = "${mount_point}" ]
-        return $?
-    fi
-
-    # Images predating the shared helper must not stack another mount on an
-    # already multiply-mounted P3. They need the updated Alpine overlay.
-    if [ "${part}" = "3" ] && [ "$(findmnt -rn -S "${dev}" -o TARGET 2>/dev/null | wc -l | tr -d ' ')" -gt 1 ]; then
-        echo "[ERROR] P3 has multiple mounts; install the updated Alpine overlay before retrying." >&2
-        return 1
-    fi
-
     if ! mountpoint -q "${mount_point}"; then
         sudo mount "${dev}" || return 1
     fi

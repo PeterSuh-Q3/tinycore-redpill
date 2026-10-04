@@ -4,11 +4,7 @@ mount -o remount,size=90% / 2>/dev/null || true
 
 /usr/local/sbin/rebuildnetifaces
 /usr/local/sbin/rebuildfstab
-if /usr/local/sbin/ensure-loader-p3; then
-  /usr/local/sbin/setup-disk-swap
-else
-  echo 'MSHELL: loader P3 is not writable; skipping P3 disk swap.' >&2
-fi
+/usr/local/sbin/setup-disk-swap
 
 # The RTC on unattended appliances can be years behind.  Refresh it before
 # the first HTTPS operation: apk repositories and GitHub reject certificates
