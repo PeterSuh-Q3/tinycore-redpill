@@ -4720,11 +4720,19 @@ function monitor() {
 
     getBus "${loaderdisk}" 
 
-    ensure_loader_partitions_mounted
-
     HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
+        # SX starts Monitor and Menu concurrently. Monitor must never mount
+        # loader partitions; wait for Menu to complete their initialization.
+        if ! mountpoint -q "/mnt/${loaderdisk}1" ||
+           ! mountpoint -q "/mnt/${loaderdisk}2" ||
+           ! mountpoint -q "/mnt/${loaderdisk}3"; then
+            clear
+            echo "Waiting for the loader partitions to be mounted by MSHELL Menu..."
+            sleep 2
+            continue
+        fi
         clear
         echo -e "-------------------------------System Information----------------------------"
         echo -e "Hostname:\t\t"$(hostname) 
@@ -9530,4 +9538,4 @@ EOF
 # 호출하면(테스트 트랙에서 과거 자기 정의 바로 다음 줄에 호출을 뒀다가
 # 이 증상으로 깨진 적이 있다) "command not found"로 즉시 죽는다 -
 # 실기에서 정확히 이 증상으로 재현/확인됨.
-mshellSymlinkUserConfig
+[ "${MSHELL_MONITOR_READ_ONLY:-0}" = "1" ] || mshellSymlinkUserConfig
