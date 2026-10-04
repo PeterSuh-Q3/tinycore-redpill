@@ -96,11 +96,74 @@ restore_home_config_link() {
     echo "Restored tc-owned symlink: $home -> $config"
 }
 
+verify_recovered_state() {
+    config=/mnt/tcrp/user_config.json
+    home=/home/tc/user_config.json
+
+    [ "$(mounts | wc -l | tr -d ' ')" -eq 1 ] || {
+        echo 'P3 must have exactly one active mount before persistence.' >&2; return 1;
+    }
+    [ "$(mounts)" = "$point" ] || {
+        echo "P3 is not mounted at the expected path: $point" >&2; return 1;
+    }
+    opts=$(options)
+    case ",$opts," in *,rw,*fmask=0000,*dmask=0000,*) ;; *)
+        echo "P3 mount options are not writable and permissive: $opts" >&2; return 1 ;;
+    esac
+    [ "$(readlink /mnt/tcrp 2>/dev/null)" = "$point" ] || {
+        echo '/mnt/tcrp does not point to the recovered P3 mount.' >&2; return 1;
+    }
+    [ -L "$home" ] && [ "$(readlink "$home")" = "$config" ] || {
+        echo '/home/tc/user_config.json is not the expected P3 symlink.' >&2; return 1;
+    }
+    [ "$(stat -c '%U:%G' "$home")" = 'tc:staff' ] || {
+        echo 'The user_config.json symlink is not owned by tc:staff.' >&2; return 1;
+    }
+    jq -e 'type == "object"' "$config" >/dev/null 2>&1 || {
+        echo 'The P3 user_config.json is missing or invalid.' >&2; return 1;
+    }
+    sudo -u tc test -w "$home" || {
+        echo 'tc cannot write user_config.json through the recovered symlink.' >&2; return 1;
+    }
+    [ "$(blockdev --getro "$dev")" = 0 ] || {
+        echo 'The P3 block device became read-only.' >&2; return 1;
+    }
+}
+
+persist_recovered_state() {
+    command -v lbu >/dev/null 2>&1 || { echo 'lbu is unavailable; persistence skipped.' >&2; return 1; }
+    command -v tar >/dev/null 2>&1 || { echo 'tar is unavailable; persistence skipped.' >&2; return 1; }
+
+    # Ensure the restored link is part of the apkovl, then commit and verify
+    # the generated archive before reporting recovery as complete.
+    lbu include /home/tc/user_config.json || {
+        echo 'Could not include the recovered config link in Alpine persistence.' >&2; return 1;
+    }
+    lbu commit || { echo 'Alpine persistence backup failed.' >&2; return 1; }
+
+    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    [ -s "$archive" ] && tar -tzf "$archive" >/dev/null 2>&1 || {
+        echo "Persistence archive is missing or invalid: $archive" >&2; return 1;
+    }
+    if ! tar -tzf "$archive" | grep -Eq '(^|/)home/tc/user_config\.json$'; then
+        echo 'The verified persistence archive does not contain the recovered config link.' >&2
+        return 1
+    fi
+    echo "Alpine persistence backup verified: $archive"
+}
+
+finish_recovery() {
+    verify_recovered_state || return 1
+    echo 'P3 mount, alias, user_config.json link, ownership, and write access verified.'
+    persist_recovered_state
+}
+
 if [ "$(mounts | wc -l | tr -d ' ')" -eq 1 ] && [ "$(mounts)" = "$point" ]; then
     opts=$(options)
     case ",$opts," in *,rw,*fmask=0000,*dmask=0000,*)
         ln -sfn "$point" /mnt/tcrp
         restore_home_config_link
+        finish_recovery
         echo 'P3 already has the required single writable mount.'
         exit 0
         ;;
@@ -134,5 +197,6 @@ case ",$opts," in *,dmask=0000,*) ;; *) echo 'dmask is not 0000.' >&2; exit 1 ;;
 ln -sfn "$point" /mnt/tcrp
 [ "$(readlink /mnt/tcrp)" = "$point" ] || exit 1
 restore_home_config_link
+finish_recovery
 echo "P3 recovered at $point (rw,fmask=0000,dmask=0000)."
-echo 'Recheck the menu and persistence before rebooting.'
+echo 'Recovery and persistence completed; recheck the menu before rebooting.'
