@@ -2919,7 +2919,7 @@ function additional() {
     i) packing_loader; default_resp="i";;
     k) keymapMenu; default_resp="k";;
     q) showAutoUpdateMenu; default_resp="q";;
-    w) select_and_run_menu; default_resp="w";;
+    w) select_and_run_menu_dynamic; default_resp="w";;
     *) return;;
     esac
     
@@ -3345,111 +3345,294 @@ function chk_shr_ex()
   [ $(/sbin/blkid | grep "1234-5678" | wc -l) -eq 1 ] && SHR_EX_TEXT=" (Existence)" || SHR_EX_TEXT=""
 }
 
-select_and_run_menu() {
+PREVIOUS_RELEASE_MIN_TAG="v1.2.7.7"
+PREVIOUS_RELEASE_PAGE_SIZE=20
 
-    local MEM_MB
-    MEM_MB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", $2 / 1000}')
+# Return stable MSHELL releases whose notes carry the three pinned dependency
+# revisions required by menu.sh. v1.2.7.7 is the inclusive floor: it is the
+# first release whose notes contain those hashes.
+function load_previous_release_catalog() {
+    local work_dir releases_file page_file merged_file catalog_file page page_count minimum
+    PREVIOUS_RELEASE_TAGS=()
+    PREVIOUS_RELEASE_SUMMARIES=()
+    minimum="$(printf '%s' "${PREVIOUS_RELEASE_MIN_TAG#v}" | awk -F. '{printf "[%d,%d,%d,%d]",$1,$2,$3,$4}')"
+    work_dir=$(mktemp -d "${TMPDIR:-/tmp}/mshell-previous-releases.XXXXXX") || return 1
+    releases_file="${work_dir}/releases.json"
+    printf '[]\n' > "${releases_file}"
 
-    # 6094 >= 6GB 판단
-    local MIN_MB=6094
+    page=1
+    while [ "${page}" -le 100 ]; do
+        page_file="${work_dir}/page-${page}.json"
+        if ! curl -kfsSL --connect-timeout 8 --max-time 30 --retry 2 \
+            "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases?per_page=100&page=${page}" \
+            -o "${page_file}" || ! jq -e 'type == "array"' "${page_file}" >/dev/null 2>&1; then
+            echo "[!] Could not retrieve a valid GitHub releases page (${page})."
+            rm -rf "${work_dir}"
+            return 1
+        fi
 
-    # ucode 기반 언어 설정 먼저 해서 메시지 분기에 사용
-    if [ "${ucode}" = "ko_KR" ]; then
-        local LANG_KR=true
-    else
-        local LANG_KR=false
+        page_count=$(jq 'length' "${page_file}") || {
+            rm -rf "${work_dir}"
+            return 1
+        }
+        [ "${page_count}" -gt 0 ] || break
+
+        merged_file="${work_dir}/merged.json"
+        if ! jq -s '.[0] + .[1]' "${releases_file}" "${page_file}" > "${merged_file}"; then
+            rm -rf "${work_dir}"
+            return 1
+        fi
+        mv -f "${merged_file}" "${releases_file}"
+        [ "${page_count}" -eq 100 ] || break
+        page=$((page + 1))
+    done
+
+    catalog_file="${work_dir}/catalog.tsv"
+    if ! jq -r --argjson minimum "${minimum}" '
+        def version($tag): ($tag | ltrimstr("v") | split(".") | map(tonumber));
+        [ .[]
+          | select(.draft == false and .prerelease == false)
+          | select((.tag_name // "") | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))
+          | select(version(.tag_name) >= $minimum)
+          | select(.tag_name != "v1.2.9.4" and .tag_name != "v1.2.9.5" and .tag_name != "v1.2.9.6" and .tag_name != "v1.4.4.9")
+          | . as $release
+          | (($release.body // "") | split("\n")
+              | map(gsub("\\r"; "")
+                   | gsub("^[[:space:]]+"; "")
+                   | gsub("[[:space:]]+$"; ""))) as $lines
+          | select(($lines[0:3] | length) == 3)
+          | select(all($lines[0:3][]; test("^[0-9a-fA-F]{40}$")))
+          | {tag: $release.tag_name,
+             summary: (([$lines[3:][] | select(length > 0)][0]) // "No release summary")}
+        ]
+        | sort_by(version(.tag)) | reverse | .[]
+        | [.tag, (.summary | gsub("[\\t\\r]"; " ") | .[0:160])]
+        | @tsv
+    ' "${releases_file}" > "${catalog_file}"; then
+        rm -rf "${work_dir}"
+        return 1
     fi
 
-    if [ "$MEM_MB" -lt "$MIN_MB" ]; then
+    while IFS=$'\t' read -r release_tag release_summary; do
+        [ -n "${release_tag}" ] || continue
+        PREVIOUS_RELEASE_TAGS+=("${release_tag}")
+        PREVIOUS_RELEASE_SUMMARIES+=("${release_summary:-No release summary}")
+    done < "${catalog_file}"
+
+    rm -rf "${work_dir}"
+    [ "${#PREVIOUS_RELEASE_TAGS[@]}" -gt 0 ]
+}
+
+# A historical functions.sh may write user_config.json directly, so it must
+# not write through the modern P3 symlink. Keep P3 unchanged until a build
+# success marker is observed, then copy the validated RAM configuration back.
+function previous_release_stage_config() {
+    local config="/home/tc/user_config.json" p3="/mnt/tcrp/user_config.json"
+    local staged
+    [ -f "${p3}" ] && [ -f "${config}" ] || return 1
+    [ "$(readlink -f "${config}")" = "$(readlink -f "${p3}")" ] || return 1
+    PREVIOUS_RELEASE_LINK_TARGET="$(readlink "${config}")"
+    [ -n "${PREVIOUS_RELEASE_LINK_TARGET}" ] || return 1
+    PREVIOUS_RELEASE_CONFIG_BACKUP=$(mktemp /tmp/mshell-previous-config.XXXXXX) || return 1
+    cp "${p3}" "${PREVIOUS_RELEASE_CONFIG_BACKUP}" || return 1
+    staged=$(mktemp /home/tc/.mshell-previous-config.XXXXXX) || return 1
+    if ! cp "${p3}" "${staged}" || ! jq -e . "${staged}" >/dev/null 2>&1; then
+        rm -f "${staged}"
+        return 1
+    fi
+    if ! chmod 600 "${staged}" || ! mv -f "${staged}" "${config}"; then
+        rm -f "${staged}"
+        return 1
+    fi
+}
+
+function previous_release_publish_config() {
+    local source="$1" target="/mnt/tcrp/user_config.json" staged
+    staged="/mnt/tcrp/.mshell-previous-config.$$"
+    jq -e . "${source}" >/dev/null 2>&1 || return 1
+    if ! sudo cp -f "${source}" "${staged}"; then
+        sudo rm -f "${staged}"
+        return 1
+    fi
+    if ! sudo cmp -s "${source}" "${staged}"; then
+        sudo rm -f "${staged}"
+        return 1
+    fi
+    sudo mv -f "${staged}" "${target}"
+}
+
+function previous_release_restore_link() {
+    local config="/home/tc/user_config.json" staged="/home/tc/.mshell-previous-link.$$"
+    ln -s "${PREVIOUS_RELEASE_LINK_TARGET}" "${staged}" || return 1
+    mv -f "${staged}" "${config}"
+}
+
+function select_and_run_menu_dynamic() {
+    local MEM_MB MIN_MB TITLE RANGE_PROMPT TAG_PROMPT MSG_CANCEL MSG_RUN MSG_LOADING MSG_LOAD_FAILED
+    MEM_MB=$(awk '/MemTotal/ {printf "%.0f", $2 / 1000}' /proc/meminfo)
+    MIN_MB=6094
+
+    if [ "${ucode}" = "ko_KR" ]; then
+        TITLE="TCRP 이전 릴리즈 선택"
+        RANGE_PROMPT="릴리즈 버전 구간을 선택하세요:"
+        TAG_PROMPT="실행할 태그를 선택하세요:"
+        MSG_CANCEL="취소되었습니다."
+        MSG_RUN="이전 릴리즈 실행 중..."
+        MSG_LOADING="${PREVIOUS_RELEASE_MIN_TAG} 이후의 안정 릴리즈를 불러오는 중..."
+        MSG_LOAD_FAILED="GitHub에서 대상 릴리즈 목록을 가져오지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도하세요."
+    else
+        TITLE="TCRP Previous Release"
+        RANGE_PROMPT="Select a release version range:"
+        TAG_PROMPT="Select a release tag to run:"
+        MSG_CANCEL="Cancelled."
+        MSG_RUN="Running previous release..."
+        MSG_LOADING="Loading stable releases from ${PREVIOUS_RELEASE_MIN_TAG}..."
+        MSG_LOAD_FAILED="Could not load eligible release tags from GitHub. Check network access and try again."
+    fi
+
+    if [ "${MEM_MB}" -lt "${MIN_MB}" ]; then
         eval "MSG125=\"\${MSG${tz}125}\""
         eval "MSG126=\"\${MSG${tz}126}\""
-        # 다른 하위메뉴들과 동일하게 dialog 팝업으로 안내한다(기존에는
-        # echo + read 로 콘솔에 찍혀, dialog 화면 위에 겹쳐 보이거나
-        # 메뉴로 돌아오면서 지워져 못 보고 지나치기 쉬웠다).
-        dialog --clear --backtitle "`backtitle`" --colors \
-            --msgbox "\Z1${MSG125}\Zn\n\n$(printf "${MSG126}" "${MEM_MB}")" 9 70
+        dialog --clear --backtitle "$(backtitle)" --colors \
+            --msgbox "\\Z1${MSG125}\\Zn\\n\\n$(printf "${MSG126}" "${MEM_MB}")" 9 70
         clear
         return
     fi
 
-    # TAG / DATE / DESC_EN / DESC_KR
-    local TAGS=(
-        "v1.2.9.2" "2026-05-01" "Supports Insyde BIOS-based models in lkm"                            "lkm에서 Insyde BIOS 기반 모델 지원"
-        "v1.2.9.1" "2026-04-19" "Correct display of HBA disk firmware version in Disk Manager"        "디스크 관리자 HBA 디스크 펌웨어 버전 정상 표시"
-        "v1.2.9.0" "2026-04-14" "HBA controller support begins on geminilake, r1000, v1000"           "Geminilake, R1000, V1000 HBA 컨트롤러 지원 시작"
-        "v1.2.8.9" "2026-04-12" "Separating and stabilizing lkm by platform and DSM ver"              "플랫폼 및 DSM 버전에 따른 lkm 분리 및 안정화"
-        "v1.2.8.8" "2026-04-03" "Fixed missing firmware inclusion in PML method"                      "PML 메서드에서 펌웨어 포함이 누락된 문제를 수정"
-        "v1.2.8.7" "2026.03.28" "Change loading method for the last Junior Grub boot entry"           "비활성화된 Junior Grub 부팅 항목의 로딩 방식을 변경"
-        "v1.2.8.6" "2026-03-25" "Added menu to block automatic updates for TCB / FKC"                 "TCB/FKC 자동 업데이트를 차단하는 메뉴를 추가"
-        "v1.2.8.5" "2026-03-24" "Added menu to revert to previous version build"                      "이전 버전으로 되돌리는 메뉴를 추가"
-        "v1.2.8.4" "2026-03-20" "Supports two distinct menus for IML / PML module loading"            "IML / PML 두 가지 모듈 로딩 메뉴 지원"
-        "v1.2.8.3" "2026-03-19" "Added user DTS file mapping feature"                                 "사용자 DTS 파일 매핑 기능 추가"
-        "v1.2.8.2" "2026-03-19" "Switch all-modules loading from dynamic to static (like RR/ARC)"     "all-modules 로딩 방식 dynamic→static 전환"
-        "v1.2.8.0" "2026-03-15" "Discontinued Jot, standardized to Direct-Boot"                       "Jot 용어 폐기, Direct-Boot으로 표준화"
-        "v1.2.7.9" "2026-03-10" "Switch initrd-dsm compression from zstd to xz(lzma2)"                "initrd-dsm 압축 방식 zstd→xz(lzma2) 변경"
-        "v1.2.7.8" "2026-03-08" "Support RS18016xs+ (bromolow DSM 7.3.x) and Traditional Chinese"     "RS18016xs+ (bromolow DSM 7.3.x) 및 번체중국어 지원"
-        "v1.2.7.7" "2026-03-06" "Use static firmware and module loading for custom modules"           "custom modules 사용 시 static 펌웨어/모듈 로딩"
-    )
-
-    # 컬럼 수 (tag / date / desc_en / desc_kr)
-    local COLS=4
-    local MENU_ITEMS=()
-    local i=1
-
-    for (( j=0; j<${#TAGS[@]}; j+=COLS )); do
-        local tag="${TAGS[$j]}"
-        local date="${TAGS[$j+1]}"
-        local desc_en="${TAGS[$j+2]}"
-        local desc_kr="${TAGS[$j+3]}"
-
-        if [ "${LANG_KR}" = true ]; then
-            local label="[${date}] ${desc_kr}"
-        else
-            local label="[${date}] ${desc_en}"
-        fi
-
-        MENU_ITEMS+=("$i" "${tag}  ${label}")
-        (( i++ ))
-    done
-
-    # 타이틀/프롬프트 언어 분기
-    if [ "${LANG_KR}" = true ]; then
-        local TITLE="TCRP 릴리즈 태그 선택"
-        local PROMPT="실행할 릴리즈 태그를 선택하세요:"
-        local MSG_CANCEL="취소되었습니다."
-        local MSG_RUN="menu.sh 실행 중..."
-    else
-        local TITLE="TCRP Release Tag Selection"
-        local PROMPT="Select a release tag to run:"
-        local MSG_CANCEL="Cancelled."
-        local MSG_RUN="Running menu.sh ..."
-    fi
-
-    local CHOICE
-    CHOICE=$(dialog --clear \
-        --title "${TITLE}" \
-        --menu "${PROMPT}" 28 90 20 \
-        "${MENU_ITEMS[@]}" \
-        2>&1 >/dev/tty)
-
-    local EXIT_CODE=$?
-    clear
-
-    if [ $EXIT_CODE -ne 0 ] || [ -z "$CHOICE" ]; then
-        echo "${MSG_CANCEL}"
+    dialog --clear --backtitle "$(backtitle)" --infobox \
+        "${MSG_LOADING}" 5 70
+    if ! load_previous_release_catalog; then
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+            "${MSG_LOAD_FAILED}" 7 70
         return 1
     fi
 
-    local IDX=$(( (CHOICE - 1) * COLS ))
-    local SELECTED_TAG="${TAGS[$IDX]}"
+    local screen_rows screen_cols page_size list_height box_height menu_width
+    screen_rows=$(tput lines 2>/dev/null); screen_rows=${screen_rows:-32}
+    screen_cols=$(tput cols 2>/dev/null); screen_cols=${screen_cols:-90}
+    # Keep a two-row margin so dialog borders/title fit even on 24-row consoles.
+    page_size=$((screen_rows - 10))
+    [ "${page_size}" -gt "${PREVIOUS_RELEASE_PAGE_SIZE}" ] && page_size="${PREVIOUS_RELEASE_PAGE_SIZE}"
+    [ "${page_size}" -lt 1 ] && page_size=1
+    list_height="${page_size}"
+    box_height=$((list_height + 8))
+    menu_width="${screen_cols}"
+    [ "${menu_width}" -gt 110 ] && menu_width=110
+    [ "${menu_width}" -lt 40 ] && menu_width=40
 
-    echo ">>> ${SELECTED_TAG}  ${MSG_RUN}"
-    if is_alpine; then
-        # X11 유지 + lxterminal 로 urxvt 대체
-        lxterminal --geometry=78x32+10+0 --title="TCRP-mshell Menu" --command="/home/tc/menu.sh ${SELECTED_TAG}"
+    local group_starts=() group_ends=() group_items=()
+    local start end idx group_no newest oldest release_count choice dialog_status selected_tag
+    start=0
+    group_no=1
+    while [ "${start}" -lt "${#PREVIOUS_RELEASE_TAGS[@]}" ]; do
+        end=$((start + page_size))
+        [ "${end}" -gt "${#PREVIOUS_RELEASE_TAGS[@]}" ] && end="${#PREVIOUS_RELEASE_TAGS[@]}"
+        newest="${PREVIOUS_RELEASE_TAGS[$start]}"
+        oldest="${PREVIOUS_RELEASE_TAGS[$((end - 1))]}"
+        release_count=$((end - start))
+        group_starts+=("${start}")
+        group_ends+=("${end}")
+        group_items+=("${group_no}" "${newest} – ${oldest} (${release_count})")
+        start="${end}"
+        group_no=$((group_no + 1))
+    done
+
+    while true; do
+        choice=$(dialog --clear --backtitle "$(backtitle)" --title "${TITLE}" \
+            --menu "${RANGE_PROMPT}" "${box_height}" "${menu_width}" "${list_height}" \
+            "${group_items[@]}" 2>&1 >/dev/tty)
+        dialog_status=$?
+        clear
+        if [ "${dialog_status}" -ne 0 ] || [ -z "${choice}" ]; then
+            echo "${MSG_CANCEL}"
+            return 1
+        fi
+
+        local group_index=$((choice - 1))
+        if [ "${group_index}" -lt 0 ] || [ "${group_index}" -ge "${#group_starts[@]}" ]; then
+            continue
+        fi
+
+        start="${group_starts[$group_index]}"
+        end="${group_ends[$group_index]}"
+        local tag_items=()
+        for ((idx=start; idx<end; idx++)); do
+            local summary="${PREVIOUS_RELEASE_SUMMARIES[$idx]}"
+            local summary_limit=$((menu_width - 24))
+            [ "${summary_limit}" -lt 16 ] && summary_limit=16
+            if [ "${#summary}" -gt "${summary_limit}" ]; then
+                summary="${summary:0:$((summary_limit - 3))}..."
+            fi
+            tag_items+=("${PREVIOUS_RELEASE_TAGS[$idx]}" "${summary}")
+        done
+
+        selected_tag=$(dialog --clear --backtitle "$(backtitle)" --title "${TITLE}" \
+            --menu "${TAG_PROMPT}" "${box_height}" "${menu_width}" "${list_height}" \
+            "${tag_items[@]}" 2>&1 >/dev/tty)
+        dialog_status=$?
+        clear
+        if [ "${dialog_status}" -ne 0 ] || [ -z "${selected_tag}" ]; then
+            continue
+        fi
+
+        echo ">>> ${selected_tag}  ${MSG_RUN}"
+        # Run in this terminal synchronously: do not create a second window,
+        # but keep this menu process alive so it can return when the selected
+        # historical menu exits (including an error exit).
+        local previous_build_status_file previous_menu_status last_build_result config_result
+        previous_build_status_file=$(mktemp /tmp/mshell-previous-build.XXXXXX) || return 1
+        PREVIOUS_RELEASE_LINK_TARGET=""
+        PREVIOUS_RELEASE_CONFIG_BACKUP=""
+        if ! previous_release_stage_config; then
+            [ -n "${PREVIOUS_RELEASE_CONFIG_BACKUP}" ] && rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
+            rm -f "${previous_build_status_file}"
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "Could not prepare a writable historical user_config.json. P3 was not changed." 7 78
+            return 1
+        fi
+        MSHELL_PREVIOUS_RELEASE_SESSION=true MSHELL_PREVIOUS_BUILD_STATUS_FILE="${previous_build_status_file}" \
+            /home/tc/menu.sh "${selected_tag}"
+        previous_menu_status=$?
+        last_build_result=$(cat "${previous_build_status_file}" 2>/dev/null)
+        config_result="No successful build recorded; P3 configuration retained."
+        if [ -L /home/tc/user_config.json ]; then
+            config_result="Historical menu unexpectedly restored the config symlink; P3 will be rolled back."
+            previous_menu_status=1
+        elif [ "${last_build_result}" = "success" ] && \
+             [ -s /mnt/tcrp/zImage-dsm ] && [ -s /mnt/tcrp/initrd-dsm ]; then
+            if previous_release_publish_config /home/tc/user_config.json; then
+                config_result="Verified build complete; configuration copied to P3."
+            else
+                config_result="Configuration copy to P3 failed; restoring the original P3 configuration."
+                previous_menu_status=1
+            fi
+        elif ! cmp -s "${PREVIOUS_RELEASE_CONFIG_BACKUP}" /home/tc/user_config.json; then
+            config_result="No successful build recorded; unsaved historical config changes were discarded."
+            previous_menu_status=1
+        fi
+        if [ "${config_result}" != "Verified build complete; configuration copied to P3." ] && \
+           ! cmp -s "${PREVIOUS_RELEASE_CONFIG_BACKUP}" /mnt/tcrp/user_config.json; then
+            if ! previous_release_publish_config "${PREVIOUS_RELEASE_CONFIG_BACKUP}"; then
+                config_result="ERROR: Could not restore the original P3 configuration."
+                previous_menu_status=1
+            fi
+        fi
+        if ! previous_release_restore_link; then
+            config_result="ERROR: Could not restore the /home/tc/user_config.json symlink."
+            previous_menu_status=1
+        fi
+        rm -f "${PREVIOUS_RELEASE_CONFIG_BACKUP}"
+        rm -f "${previous_build_status_file}"
+        printf '[previous-release] config=%s exit=%s\n' "${config_result}" "${previous_menu_status}"
+        if [ "${previous_menu_status}" -ne 0 ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "The selected release menu exited with status ${previous_menu_status}.\n${config_result}" 8 78
+        elif [ "${config_result}" = "Verified build complete; configuration copied to P3." ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+                "Historical build completed. user_config.json was saved to P3." 7 70
+        fi
         return 0
-    fi
-    urxvt -geometry 78x32+10+0 -fg orange -title \"TCRP-mshell urxvt Menu\" -e /home/tc/menu.sh "${SELECTED_TAG}"
+    done
 }
 
 function addon_gitdown()

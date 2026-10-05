@@ -12,7 +12,7 @@ index 4d7c752883cbc12ea92fe2d6db80cc7a187f622a..10d31ef1827a9f176637bda8d1cfb950
 +  local tag="${1:-}" version floor_part version_part floor_value i
 +  [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
 +  case "${tag}" in
-+    v1.2.9.4|v1.2.9.5|v1.2.9.6) return 1 ;;
++    v1.2.9.4|v1.2.9.5|v1.2.9.6|v1.4.4.9) return 1 ;;
 +  esac
 +  version="${tag#v}"
 +  floor_part="${PREVIOUS_RELEASE_MIN_TAG#v}"
@@ -295,7 +295,7 @@ index cc9489b213ad1c96f55afccc70ba99c3e1ab0926..30de4451cc7cbc767414e98269c58cda
 +          | select(.draft == false and .prerelease == false)
 +          | select((.tag_name // "") | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"))
 +          | select(version(.tag_name) >= $minimum)
-+          | select(.tag_name != "v1.2.9.4" and .tag_name != "v1.2.9.5" and .tag_name != "v1.2.9.6")
++          | select(.tag_name != "v1.2.9.4" and .tag_name != "v1.2.9.5" and .tag_name != "v1.2.9.6" and .tag_name != "v1.4.4.9")
 +          | . as $release
 +          | (($release.body // "") | split("\n")
 +              | map(gsub("\\r"; "")

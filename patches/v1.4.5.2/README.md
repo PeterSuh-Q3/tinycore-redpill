@@ -9,6 +9,8 @@ v1.4.5.1 code line without replacing its P3/P4 recovery or ACPI behavior.
   `8ab1d8739c2ad1bc5e3732979c8a8ad50fd13168`.
 - The patch changes only `menu.sh` and `menu_m.sh`: release/tag validation,
   historical shell and dependency pin loading, and the dynamic release picker.
+- v1.4.4.9 is explicitly excluded from both direct tag validation and the
+  release picker because that release is withdrawn for P3/P4 instability.
 - ACPI menu changes are deliberately excluded. Current `functions.sh` and
   `functions_t.sh` are also left untouched; the historical-session safeguards
   are inserted into the downloaded legacy files by the patched `menu.sh`.
