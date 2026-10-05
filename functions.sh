@@ -5835,7 +5835,33 @@ function persist_alpine_apkovl_safely() {
     sudo rm -rf -- "${stage}"
     echo "[APKVOL] Staged Alpine persistence verified and activated."
 }
+function ensure_alpine_partition_recovery_before_backup() {
+    is_alpine || return 0
+
+    local recovery_helper="/home/tc/tools/recover-alpine-p3.sh"
+    if [ ! -r "${recovery_helper}" ] ||
+       ! grep -q 'p3_state_ok()' "${recovery_helper}" 2>/dev/null ||
+       ! grep -q -- '--ensure' "${recovery_helper}" 2>/dev/null ||
+       ! sh -n "${recovery_helper}" 2>/dev/null; then
+        echo "[RECOVERY] Valid P3/P4 recovery helper is unavailable at ${recovery_helper}; refusing persistence backup." >&2
+        return 1
+    fi
+
+    echo "[RECOVERY] Verifying P3/P4 before persistence backup..."
+    if ! sudo sh "${recovery_helper}" --ensure; then
+        echo "[RECOVERY] P3/P4 verification or repair failed; persistence backup is cancelled." >&2
+        return 1
+    fi
+}
+
 function backuploader() {
+
+    # getlatestmshell() may update my.sh.gz while an older menu.sh process is
+    # still running. That process cannot execute the newly extracted menu.sh,
+    # but it re-sources the new functions.sh and immediately calls
+    # `rploader backup`. Guard here so first-run post-update backups cannot
+    # persist a damaged P3/P4 state before the updated menu's startup check.
+    ensure_alpine_partition_recovery_before_backup || return 1
 
     # Define the path to the file
     local FILE_PATH="/opt/.filetool.lst"
