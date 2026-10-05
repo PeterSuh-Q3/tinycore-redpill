@@ -158,10 +158,34 @@ persist_recovered_state() {
         echo 'Could not include the recovered config link in Alpine persistence.' >&2
         return 1
     }
-    repair_p4_archive
+    persist_p4_archive
 }
 
-repair_p4_archive() {
+archive_privileged_owners_ok() {
+    tar -tvzf "$1" 2>/dev/null | awk '
+        {
+            name = $NF
+            sub(/^\.\//, "", name)
+            if (name == "etc/passwd" || name == "etc/group" ||
+                name == "etc/shadow" || name == "etc/sudoers.d/" ||
+                name == "etc/sudoers.d/tc" || name == "etc/lbu/lbu.conf") {
+                split($2, owner, "/")
+                if (owner[1] != "root" && owner[1] != "0") bad = 1
+                if (name == "etc/sudoers.d/tc" &&
+                    $1 != "-r--------" && $1 != "-r--r-----") bad = 1
+                found[name] = 1
+            }
+        }
+        END {
+            if (bad) exit 1
+            if (!found["etc/passwd"] || !found["etc/group"] ||
+                !found["etc/shadow"] || !found["etc/sudoers.d/"] ||
+                !found["etc/sudoers.d/tc"] || !found["etc/lbu/lbu.conf"]) exit 1
+        }
+    '
+}
+
+persist_p4_archive() {
     if ! command -v lbu >/dev/null 2>&1 || ! command -v tar >/dev/null 2>&1; then
         echo 'lbu or tar is unavailable; P4 recovery cancelled.' >&2; return 1;
     fi
@@ -198,6 +222,16 @@ repair_p4_archive() {
         cp "$archive" "$previous" || return 1
         cmp -s "$archive" "$previous" || return 1
         had_previous=1
+        if tar -tzf "$previous" >/dev/null 2>&1 &&
+           archive_privileged_owners_ok "$previous" &&
+           tar -tvzf "$previous" 2>/dev/null |
+               grep -Fq 'home/tc/user_config.json -> /mnt/tcrp/user_config.json'; then
+            echo '[PERSIST] Existing P4 archive is valid; saving the recovered P3 state.'
+        else
+            echo '[PERSIST] Existing P4 archive is invalid or has unsafe ownership; rebuilding it from the live system.'
+        fi
+    else
+        echo '[PERSIST] P4 archive is missing; creating it from the live system.'
     fi
 
     echo '[PERSIST] Packaging the current root-owned Alpine state outside P4...'
@@ -212,11 +246,14 @@ repair_p4_archive() {
             echo "New P4 archive has invalid ownership: $protected" >&2; return 1;
         }
     done
-    [ "$(stat -c '%a' "$inspect/etc/sudoers.d/tc")" = 440 ] &&
-        [ -L "$inspect/home/tc/user_config.json" ] &&
-        [ "$(readlink "$inspect/home/tc/user_config.json")" = /mnt/tcrp/user_config.json ] || {
+    sudoers_mode=$(stat -c '%a' "$inspect/etc/sudoers.d/tc") || return 1
+    case "$sudoers_mode" in 400|440) ;; *)
+        echo 'New P4 archive has unsafe sudoers permissions.' >&2; return 1 ;;
+    esac
+    if [ ! -L "$inspect/home/tc/user_config.json" ] ||
+       [ "$(readlink "$inspect/home/tc/user_config.json")" != /mnt/tcrp/user_config.json ]; then
         echo 'New P4 archive has unsafe sudoers permissions or lacks the config link.' >&2; return 1;
-    }
+    fi
     echo '[PERSIST] New archive ownership and config link verified.'
 
     # Neither temporary file has Alpine's *.apkovl.tar.gz boot-discovery name.

@@ -309,6 +309,12 @@ build pilot before any module-pack publication.
   `etc/shadow`; `lbu status` showed no pending changes. The P3 repository
   comparison baseline hash did not change, and no temporary recovery files
   remained. The system has not been reboot-validated after this repair.
+- The script now explicitly audits the existing P4 archive after P3 recovery.
+  A healthy archive proceeds to a fresh persistence backup; an archive with
+  invalid privileged ownership proceeds to repair from the current root-owned
+  Alpine state. Both paths stage and verify the replacement before activation.
+  A second diagnostic clone with an invalid P4 archive was inspected read-only
+  and left untouched so its original remains available for repeatable tests.
 
 ## Alpine responsive SX layout pilot (uncommitted, 2026-09-20)
 
