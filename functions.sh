@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.1"
-builddate="2026.10.05"
+rploaderver="1.4.5.2"
+builddate="2026.10.06"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1010,6 +1010,7 @@ function history() {
     1.4.4.8 Add optional ACPI fan sensor support expand model choices and simplify build options
     1.4.5.0 Restore the stable v1 4 4 8 loader baseline
     1.4.5.1 Automatic P3 P4 persistence recovery with ownership validation
+    1.4.5.2 Restore previous release rebuild and protect Alpine persistence backups
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1730,6 +1731,9 @@ EOF
 # 2026.10.05 v1.4.5.1
 # Automatic P3 P4 persistence recovery with ownership validation
 
+# 2026.10.06 v1.4.5.2
+# Restore previous release rebuild and protect Alpine persistence backups
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2127,6 +2131,9 @@ function showlastupdate() {
 
 # 2026.10.05 v1.4.5.1
 # Automatic P3 P4 persistence recovery with ownership validation
+
+# 2026.10.06 v1.4.5.2
+# Restore previous release rebuild and protect Alpine persistence backups
 EOF
 }
 
