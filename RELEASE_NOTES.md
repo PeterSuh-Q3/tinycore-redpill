@@ -2,4 +2,4 @@
 89d6a084467420d924f6e9f867ee004c55f6f980
 b844294a636a5eda9677128174678772d2204abc
 
-    1.4.5.0 Restore the stable v1 4 4 8 loader baseline
+    1.4.5.1 Automatic P3 P4 persistence recovery with ownership validation
