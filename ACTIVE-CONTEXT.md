@@ -4,10 +4,11 @@ Last updated: 2026-10-04
 
 ## Emergency P3/P4 persistence recovery work (2026-10-05)
 
-- The current branch is preparing loader version `1.4.5.1` to address P3
-  mount/config-link and P4 apkovl ownership corruption reported after the
-  `1.4.4.6` line. This work is local and has not been committed, pushed, or
-  released.
+- Loader version `1.4.5.1` addresses P3 mount/config-link and P4 apkovl
+  ownership corruption reported after the `1.4.4.6` line. The implementation
+  was committed as `400a6817`, pushed, and released. The successful my.sh
+  workflow generated commit `3f3df590`; the release image workflow completed
+  successfully and uploaded all eight image/VMDK assets.
 - `tools/recover-alpine-p3.sh` now has `--ensure`: it checks P3 mount options,
   `/mnt/tcrp`, the tc config symlink/write access, and the P4 archive's protected
   owners, sudoers mode, and expected config symlink. It skips all writes if
@@ -21,12 +22,14 @@ Last updated: 2026-10-04
   `my.sh.gz` and the generated localhost apkovl at `/home/tc/tools/`.
 - The supported manual command is now the idempotent `--ensure` form:
   `curl -fsSL 'https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/tools/recover-alpine-p3.sh' | sudo sh -s -- --ensure`.
-- Static validation currently passes (`bash -n`, `sh -n`, ShellCheck for the
-  POSIX recovery script, paired `functions.sh`/`functions_t.sh`, and
-  `git diff --check`). No repair has been run on a physical loader during this
-  change. `/Users/yousuk/tinycore-redpill/localhost.apkovl.tar.gz` currently
-  contains a regular tc config file rather than the expected link in its
-  archived tree; it was inspected only and not modified/repacked.
+- Static validation passed (`bash -n`, `sh -n`, ShellCheck for the POSIX
+  recovery script, paired `functions.sh`/`functions_t.sh`, YAML parse, and
+  `git diff --check`). The privilege-audit parser was tested against the
+  generated overlay's root/root and root/shadow entries. No repair has been
+  run on a physical loader during this change. The generated release apkovl
+  includes the recovery helper at `/home/tc/tools/recover-alpine-p3.sh` and
+  retains root ownership for the protected `/etc` files. A physical boot-time
+  `--ensure` pilot remains unverified.
 
 ## Previous module investigation scope
 
