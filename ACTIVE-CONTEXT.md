@@ -290,6 +290,26 @@ build pilot before any module-pack publication.
   files, while the v1.4.4.8 repository archive has root ownership for them.
   The first ownership mutation has not been identified; defer that fix.
 
+### Manual P4 archive repair validation (2026-10-05)
+
+- A diagnostic Alpine system had a writable P4 mount but an existing active
+  apkovl containing `tc:staff` ownership for `etc/sudoers.d/tc`, `etc/passwd`,
+  and `etc/shadow`. The live versions of those files were correctly owned by
+  root, and `sudo` was functional.
+- `tools/recover-alpine-p3.sh --apply` now repairs P3 first and then packages
+  the live root-owned state under a private `/tmp` directory, verifies
+  privileged owners, the configuration symlink, and the archive, then stages
+  a non-boot-discoverable temporary file on P4 before activating it. The
+  former P4 archive is kept only in `/tmp` for rollback and removed after
+  success.
+- A full `--apply` run subsequently succeeded: P3 was left with exactly one
+  `rw,fmask=0000,dmask=0000` mount, `tc` could write the configuration through
+  `/mnt/tcrp`, and P4 was rebuilt and verified. The resulting archive had
+  `root:root` for `etc/passwd` and `etc/sudoers.d/tc`, and `root:shadow` for
+  `etc/shadow`; `lbu status` showed no pending changes. The P3 repository
+  comparison baseline hash did not change, and no temporary recovery files
+  remained. The system has not been reboot-validated after this repair.
+
 ## Alpine responsive SX layout pilot (uncommitted, 2026-09-20)
 
 - A Docker-built `localhost.apkovl.tar.gz` test was installed to the fourth

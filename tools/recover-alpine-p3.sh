@@ -1,6 +1,6 @@
 #!/bin/sh
-# Manual recovery for a multiply mounted Alpine loader P3. Not a boot hook.
-# Usage: sudo sh recover-alpine-p3.sh [--apply]
+# Manual recovery for Alpine loader P3 and its P4 persistence archive. Not a boot hook.
+# Usage: sudo sh recover-alpine-p3.sh [--check|--apply]
 set -eu
 
 mode=${1:---check}
@@ -59,9 +59,9 @@ fi
 restore_home_config_link() {
     config=/mnt/tcrp/user_config.json
     home=/home/tc/user_config.json
-    [ -f "$config" ] && jq -e 'type == "object"' "$config" >/dev/null 2>&1 || {
+    if [ ! -f "$config" ] || ! jq -e 'type == "object"' "$config" >/dev/null 2>&1; then
         echo "P3 user_config.json is missing or invalid: $config" >&2; return 1;
-    }
+    fi
     sudo -u tc test -w "$config" || { echo 'tc cannot write the P3 configuration.' >&2; return 1; }
 
     if [ -L "$home" ] && [ "$(readlink "$home")" = "$config" ]; then
@@ -153,81 +153,101 @@ migrate_legacy_p3_overlay() {
 }
 
 persist_recovered_state() {
-    command -v lbu >/dev/null 2>&1 || { echo 'lbu is unavailable; persistence skipped.' >&2; return 1; }
-    command -v tar >/dev/null 2>&1 || { echo 'tar is unavailable; persistence skipped.' >&2; return 1; }
-
-    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
-    old_archive=$(mktemp /tmp/mshell-p3-apkovl-before.XXXXXX) || return 1
-    old_hash=""
-    if [ -s "$archive" ]; then
-        tar -tzf "$archive" >/dev/null 2>&1 || {
-            rm -f "$old_archive"
-            echo "Existing persistence archive is invalid; refusing to replace it: $archive" >&2
-            return 1
-        }
-        cp -p "$archive" "$old_archive" || {
-            rm -f "$old_archive"
-            echo 'Could not preserve the existing persistence archive; backup cancelled.' >&2
-            return 1
-        }
-        old_hash=$(sha256sum "$old_archive" | awk '{print $1}')
-    fi
-
     echo '[PERSIST] Including the recovered user_config.json link in Alpine persistence...'
     lbu include /home/tc/user_config.json || {
-        rm -f "$old_archive"
-        echo 'Could not include the recovered config link in Alpine persistence.' >&2; return 1;
-    }
-    pending_before=$(lbu status 2>&1) || {
-        rm -f "$old_archive"
-        echo 'Could not read pending Alpine persistence changes.' >&2; return 1;
-    }
-    pending_count=$(printf '%s\n' "$pending_before" | grep -Ec '^[AUD] ' || true)
-
-    echo '[PERSIST] Writing apkovl backup to /mnt/alpine...'
-    if ! lbu commit; then
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo '[PERSIST] FAILED: lbu commit returned an error; previous archive restored when available.' >&2
+        echo 'Could not include the recovered config link in Alpine persistence.' >&2
         return 1
+    }
+    repair_p4_archive
+}
+
+repair_p4_archive() {
+    if ! command -v lbu >/dev/null 2>&1 || ! command -v tar >/dev/null 2>&1; then
+        echo 'lbu or tar is unavailable; P4 recovery cancelled.' >&2; return 1;
+    fi
+    p4dev="${dev%3}4"
+    [ "$p4dev" != "$dev" ] && [ -b "$p4dev" ] &&
+        [ "$(blkid -s TYPE -o value "$p4dev" 2>/dev/null)" = vfat ] || {
+        echo 'Expected VFAT loader P4 device was not found.' >&2; return 1;
+    }
+    p4mm=$(cat "/sys/class/block/${p4dev##*/}/dev" 2>/dev/null) || return 1
+    awk -v mm="$p4mm" '$3 == mm && $5 == "/mnt/alpine" && $6 ~ /(^|,)rw(,|$)/ && / - vfat / {found=1} END {exit !found}' /proc/self/mountinfo &&
+        [ "$(blockdev --getro "$p4dev")" = 0 ] && [ -w /mnt/alpine ] || {
+        echo 'P4 is not mounted read-write at /mnt/alpine.' >&2; return 1;
+    }
+    for protected in /etc/passwd /etc/group /etc/shadow /etc/sudoers.d /etc/sudoers.d/tc /etc/lbu/lbu.conf; do
+        [ "$(stat -c '%u' "$protected" 2>/dev/null)" = 0 ] || {
+            echo "Live protected path is not root-owned: $protected" >&2; return 1;
+        }
+    done
+
+    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    if [ -e "$archive" ] && { [ ! -f "$archive" ] || [ -L "$archive" ]; }; then
+        echo "Refusing a non-regular P4 archive: $archive" >&2; return 1;
+    fi
+    pending="/mnt/alpine/.mshell-p4-recovery.$$.tmp"
+    [ ! -e "$pending" ] || { echo "Temporary P4 path already exists: $pending" >&2; return 1; }
+    stage=$(mktemp -d /tmp/mshell-p4-recovery.XXXXXX) || return 1
+    trap 'rm -f -- "$pending"; rm -rf -- "$stage"' 0
+    trap 'exit 1' 1 2 15
+    previous="$stage/previous.tar.gz"
+    candidate="$stage/candidate.tar.gz"
+    inspect="$stage/inspect"
+    had_previous=0
+    if [ -e "$archive" ]; then
+        cp "$archive" "$previous" || return 1
+        cmp -s "$archive" "$previous" || return 1
+        had_previous=1
     fi
 
-    [ -s "$archive" ] && tar -tzf "$archive" >/dev/null 2>&1 || {
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo "Persistence archive is missing or invalid: $archive" >&2; return 1;
+    echo '[PERSIST] Packaging the current root-owned Alpine state outside P4...'
+    lbu package "$candidate" || return 1
+    if [ ! -s "$candidate" ] || ! tar -tzf "$candidate" >/dev/null 2>&1; then
+        echo 'New P4 archive is empty or invalid.' >&2; return 1;
+    fi
+    mkdir "$inspect" || return 1
+    tar -xzf "$candidate" -C "$inspect" || return 1
+    for protected in etc/passwd etc/group etc/shadow etc/sudoers.d etc/sudoers.d/tc etc/lbu/lbu.conf; do
+        [ "$(stat -c '%u' "$inspect/$protected" 2>/dev/null)" = 0 ] || {
+            echo "New P4 archive has invalid ownership: $protected" >&2; return 1;
+        }
+    done
+    [ "$(stat -c '%a' "$inspect/etc/sudoers.d/tc")" = 440 ] &&
+        [ -L "$inspect/home/tc/user_config.json" ] &&
+        [ "$(readlink "$inspect/home/tc/user_config.json")" = /mnt/tcrp/user_config.json ] || {
+        echo 'New P4 archive has unsafe sudoers permissions or lacks the config link.' >&2; return 1;
     }
-    if ! tar -tzf "$archive" | grep -Eq '(^|/)home/tc/user_config\.json$'; then
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo 'The verified persistence archive does not contain the recovered config link.' >&2
-        return 1
-    fi
-    if ! tar -tvzf "$archive" | grep -Fq 'home/tc/user_config.json -> /mnt/tcrp/user_config.json'; then
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo 'The archive does not contain the expected user_config.json symlink target.' >&2
-        return 1
-    fi
+    echo '[PERSIST] New archive ownership and config link verified.'
 
+    # Neither temporary file has Alpine's *.apkovl.tar.gz boot-discovery name.
+    # Keep the former P4 archive only in /tmp for rollback; delete it on success.
+    if ! cp "$candidate" "$pending" || ! cmp -s "$candidate" "$pending" ||
+       ! mv -f "$pending" "$archive"; then
+        echo 'Could not activate the verified P4 archive; previous archive left in place.' >&2
+        return 1
+    fi
+    if ! sync || ! cmp -s "$candidate" "$archive" ||
+       ! tar -tzf "$archive" >/dev/null 2>&1; then
+        echo 'P4 verification failed after activation; restoring the previous archive.' >&2
+        if [ "$had_previous" -eq 1 ]; then
+            if ! cp "$previous" "$pending" || ! mv -f "$pending" "$archive" || ! sync; then
+                rm -f -- "$pending"
+                trap - 0 1 2 15
+                echo "URGENT: automatic P4 rollback failed. Previous archive is preserved at $previous" >&2
+                return 1
+            fi
+        else
+            rm -f "$archive" || return 1
+        fi
+        return 1
+    fi
     new_hash=$(sha256sum "$archive" | awk '{print $1}')
-    pending_after=$(lbu status 2>&1) || {
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo 'Could not verify whether persistence changes remain after commit.' >&2; return 1;
-    }
-    remaining_count=$(printf '%s\n' "$pending_after" | grep -Ec '^[AUD] ' || true)
-    if [ "$remaining_count" -ne 0 ] || { [ "$pending_count" -ne 0 ] && [ "$new_hash" = "$old_hash" ]; }; then
-        [ -z "$old_hash" ] || cp -p "$old_archive" "$archive"
-        rm -f "$old_archive"
-        echo "[PERSIST] FAILED: archive was not refreshed cleanly (pending changes: $remaining_count)." >&2
-        return 1
-    fi
-
-    rm -f "$old_archive"
-    echo "[PERSIST] SUCCESS: backup written and verified at $archive"
+    rm -f -- "$pending"
+    rm -rf -- "$stage"
+    trap - 0 1 2 15
+    echo "[PERSIST] SUCCESS: repaired P4 archive at $archive"
     echo "[PERSIST] SHA-256: $new_hash"
-    [ "$pending_count" -eq 0 ] && echo '[PERSIST] No pending changes; the existing archive was already current.'
+    echo '[PERSIST] Temporary backup and candidate removed.'
 }
 
 finish_recovery() {
