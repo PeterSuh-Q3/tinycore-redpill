@@ -227,6 +227,39 @@ function safe_fetch() {
     return 1
 }
 
+# P3 mount/config-link and P4 ownership recovery must happen before ordinary
+# menu configuration writes or the my.sh.gz updater's persistence backup. New
+# images carry the helper in the apkovl; older deployed images fetch it after
+# GitHub becomes reachable and before any automatic my.sh.gz update.
+function run_alpine_partition_recovery() {
+    is_alpine || return 0
+    local script=/home/tc/tools/recover-alpine-p3.sh
+    local tmp=/dev/shm/.recover-alpine-p3.$$.sh
+    local url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/tools/recover-alpine-p3.sh"
+
+    if [ ! -f "${script}" ] || ! grep -q 'p3_state_ok()' "${script}" 2>/dev/null ||
+       ! grep -q -- '--ensure' "${script}" 2>/dev/null || ! sh -n "${script}" 2>/dev/null; then
+        echo '[RECOVERY] Fetching the partition recovery helper before menu updates...'
+        if ! curl -fskL --retry 3 --retry-delay 2 -o "${tmp}" "${url}?_cb=$(date +%s%N 2>/dev/null || date +%s)" ||
+           [ ! -s "${tmp}" ] || ! grep -q 'p3_state_ok()' "${tmp}" ||
+           ! grep -q -- '--ensure' "${tmp}" || ! sh -n "${tmp}" 2>/dev/null; then
+            rm -f "${tmp}"
+            echo '[RECOVERY] Could not obtain a valid recovery helper; stopping before persistence updates.' >&2
+            return 1
+        fi
+        sudo mkdir -p /home/tc/tools || { rm -f "${tmp}"; return 1; }
+        if ! sudo cp "${tmp}" "${script}" || ! sudo chown tc:staff "${script}" ||
+           ! sudo chmod 755 "${script}"; then
+            rm -f "${tmp}"
+            echo '[RECOVERY] Could not install the verified helper in /home/tc/tools.' >&2
+            return 1
+        fi
+        rm -f "${tmp}"
+    fi
+
+    sudo sh "${script}" --ensure
+}
+
 # 자동 업데이트(safe_fetch) 대상 브랜치. functions.sh 소싱 전이라 is_alpine()이
 # 아직 없으므로 동일 조건을 인라인으로 판별(Alpine에서 main으로 자기 자신을
 # 덮어써 패치가 무력화되는 사고가 실측 확인되어(2026-07-12) 분리). main은
@@ -659,6 +692,20 @@ getBus "${loaderdisk}"
 
 tcrppart="${loaderdisk}3"
 
+# Run the bundled guard as soon as the loader disk is known. If this is an
+# older installation without the helper, defer until the network preflight;
+# that path fetches and runs it before getlatestmshell() can make a backup.
+MSHELL_RECOVERY_DONE=false
+if is_alpine && [ -f /home/tc/tools/recover-alpine-p3.sh ] &&
+   grep -q 'p3_state_ok()' /home/tc/tools/recover-alpine-p3.sh 2>/dev/null &&
+   grep -q -- '--ensure' /home/tc/tools/recover-alpine-p3.sh 2>/dev/null; then
+    run_alpine_partition_recovery || {
+        echo '[RECOVERY] P3/P4 could not be verified or repaired; refusing to continue.' >&2
+        exit 1
+    }
+    MSHELL_RECOVERY_DONE=true
+fi
+
 # Existing P3 images may carry a boot-discoverable comparison archive.
 # Rename it before the next reboot; leave the file intact on failure.
 if declare -F migrate_p3_apkovl_baseline >/dev/null && is_alpine &&
@@ -752,7 +799,7 @@ else
       attempt=$(( attempt + 1 ))
     done
     if [ "${net_ok}" = "true" ]; then
-      [[ -z "${1-}" && "$TCB" = "true" ]] && getlatestmshell "noask"
+      : # Automatic my.sh.gz update is deferred until partition recovery runs.
     elif [ "${static_ip_applied}" = "true" ]; then
       # 저장된 고정 IP를 이미 적용했는데도 인터넷이 안 되는 상태 - 새로
       # 값을 입력받는 FORCE_STATIC_IP_SETUP 오프라인 설정 다이얼로그는
@@ -769,11 +816,6 @@ else
         export FORCE_STATIC_IP_SETUP="true"
       fi
     fi
-    # Country detection needs the DHCP/DNS wait above, but must still happen
-    # before the GitHub probe and every git clone/download that follows.
-    offer_detected_locale_early
-    export MSHELL_LOCALE_PROMPT_DONE=true
-
     # A static-IP setup is intentionally offline.  Skip the GitHub probe and
     # continue into menu_m.sh so the saved settings can be applied on reboot.
     if [ "${FORCE_STATIC_IP_SETUP:-false}" != "true" ]; then
@@ -794,6 +836,27 @@ else
           fi
       fi
     fi
+fi
+
+# This is deliberately before the automatic my.sh.gz update: that updater
+# creates a persistence backup, so first repair/validate P3 and P4. The helper
+# is bundled in new images and fetched here for existing updated installations.
+if is_alpine && [ "${MSHELL_RECOVERY_DONE}" != "true" ] &&
+   [ "${FORCE_STATIC_IP_SETUP:-false}" != "true" ]; then
+    run_alpine_partition_recovery || {
+        echo '[RECOVERY] Startup recovery failed. Use the manual --ensure command before retrying.' >&2
+        exit 1
+    }
+    MSHELL_RECOVERY_DONE=true
+fi
+
+# Prompt for the detected locale only after the partition guard has validated
+# the writable config link, and still before any repository clone/build work.
+offer_detected_locale_early
+export MSHELL_LOCALE_PROMPT_DONE=true
+
+if [ "${net_ok:-false}" = "true" ] && [[ -z "${1-}" && "${TCB:-false}" = "true" ]]; then
+    getlatestmshell "noask"
 fi
 
 # Static-IP recovery is deliberately independent of the repository checkout.

@@ -2,6 +2,34 @@
 
 Last updated: 2026-10-04
 
+## Emergency P3/P4 persistence recovery work (2026-10-05)
+
+- The current branch is preparing loader version `1.4.5.1` to address P3
+  mount/config-link and P4 apkovl ownership corruption reported after the
+  `1.4.4.6` line. This work is local and has not been committed, pushed, or
+  released.
+- `tools/recover-alpine-p3.sh` now has `--ensure`: it checks P3 mount options,
+  `/mnt/tcrp`, the tc config symlink/write access, and the P4 archive's protected
+  owners, sudoers mode, and expected config symlink. It skips all writes if
+  both sides are healthy; if either is unhealthy it reuses the existing
+  recovery path. `--apply` remains the force-recovery mode.
+- Startup integration runs a bundled helper immediately after identifying the
+  loader disk, before P3 baseline migration/config writes. For older installs
+  without the helper, `menu.sh` fetches and validates it after GitHub access is
+  available and runs it before the automatic `my.sh.gz` update/backup.
+- `.github/workflows/alpine-make.my.sh.gz.yml` now includes the helper in both
+  `my.sh.gz` and the generated localhost apkovl at `/home/tc/tools/`.
+- The supported manual command is now the idempotent `--ensure` form:
+  `curl -fsSL 'https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/alpine-redpill/tools/recover-alpine-p3.sh' | sudo sh -s -- --ensure`.
+- Static validation currently passes (`bash -n`, `sh -n`, ShellCheck for the
+  POSIX recovery script, paired `functions.sh`/`functions_t.sh`, and
+  `git diff --check`). No repair has been run on a physical loader during this
+  change. `/Users/yousuk/tinycore-redpill/localhost.apkovl.tar.gz` currently
+  contains a regular tc config file rather than the expected link in its
+  archived tree; it was inspected only and not modified/repacked.
+
+## Previous module investigation scope
+
 This is a compact, evidence-based handoff for the active MSHELL work. It is
 not a credential store. Read it together with `AGENTS.md`.
 

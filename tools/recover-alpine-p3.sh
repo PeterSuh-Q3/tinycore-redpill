@@ -1,10 +1,10 @@
 #!/bin/sh
-# Manual recovery for Alpine loader P3 and its P4 persistence archive. Not a boot hook.
-# Usage: sudo sh recover-alpine-p3.sh [--check|--apply]
+# Recovery guard for Alpine loader P3 and its P4 persistence archive.
+# Usage: sudo sh recover-alpine-p3.sh [--check|--ensure|--apply]
 set -eu
 
 mode=${1:---check}
-case "$mode" in --check|--apply) ;; *) echo 'Usage: recover-alpine-p3.sh [--check|--apply]' >&2; exit 2 ;; esac
+case "$mode" in --check|--ensure|--apply) ;; *) echo 'Usage: recover-alpine-p3.sh [--check|--ensure|--apply]' >&2; exit 2 ;; esac
 [ "$(id -u)" -eq 0 ] || { echo 'Run as root (sudo).' >&2; exit 2; }
 
 dev=$(blkid -t UUID=6234-C863 -o device 2>/dev/null | head -n 1)
@@ -26,6 +26,76 @@ flock -x 9 || exit 1
 mounts() { awk -v mm="$mm" '$3 == mm { print $5 }' /proc/self/mountinfo; }
 options() {
     awk -v mm="$mm" -v p="$point" '$3 == mm && $5 == p { opts=$6 "," $NF } END { print opts }' /proc/self/mountinfo
+}
+tc_can_write_config() {
+    # This script already runs as root. Do not invoke sudo internally: a
+    # damaged persisted sudoers file is one of the conditions being repaired.
+    su -s /bin/sh -c 'test -w /mnt/tcrp/user_config.json' tc
+}
+
+archive_privileged_owners_ok() {
+    tar -tvzf "$1" 2>/dev/null | awk '
+        {
+            name = $NF
+            sub(/^\.\//, "", name)
+            if (name == "etc/passwd" || name == "etc/group" ||
+                name == "etc/shadow" || name == "etc/sudoers.d/" ||
+                name == "etc/sudoers.d/tc" || name == "etc/lbu/lbu.conf") {
+                if (index($2, "/")) {
+                    split($2, owner, "/")
+                    user = owner[1]
+                    group = owner[2]
+                } else if ($2 ~ /^[0-9]+$/ && $3 ~ /^[[:alnum:]_.-]+$/) {
+                    # BSD tar may print numeric uid followed by user/group names.
+                    user = $3
+                    group = $4
+                } else {
+                    user = $2
+                    group = $3
+                }
+                if (user != "root" && user != "0") bad = 1
+                if (name == "etc/shadow") {
+                    if (group != "shadow" && group != "42") bad = 1
+                } else if (group != "root" && group != "0") bad = 1
+                if (name == "etc/sudoers.d/tc" &&
+                    $1 != "-r--------" && $1 != "-r--r-----") bad = 1
+                found[name] = 1
+            }
+        }
+        END {
+            if (bad) exit 1
+            if (!found["etc/passwd"] || !found["etc/group"] ||
+                !found["etc/shadow"] || !found["etc/sudoers.d/"] ||
+                !found["etc/sudoers.d/tc"] || !found["etc/lbu/lbu.conf"]) exit 1
+        }
+    '
+}
+
+p3_state_ok() {
+    [ "$(mounts | wc -l | tr -d ' ')" -eq 1 ] && [ "$(mounts)" = "$point" ] || return 1
+    opts=$(options)
+    case ",$opts," in *,rw,*fmask=0000,*dmask=0000,*) ;; *) return 1 ;; esac
+    [ "$(readlink /mnt/tcrp 2>/dev/null)" = "$point" ] || return 1
+    [ -L /home/tc/user_config.json ] &&
+        [ "$(readlink /home/tc/user_config.json)" = /mnt/tcrp/user_config.json ] || return 1
+    [ "$(stat -c '%U:%G' /home/tc/user_config.json 2>/dev/null)" = 'tc:staff' ] || return 1
+    jq -e 'type == "object"' /mnt/tcrp/user_config.json >/dev/null 2>&1 || return 1
+    tc_can_write_config || return 1
+    [ ! -e "$point/localhost.apkovl.tar.gz" ] || return 1
+    [ "$(blockdev --getro "$dev")" = 0 ]
+}
+
+p4_state_ok() {
+    p4dev="${dev%3}4"
+    [ "$p4dev" != "$dev" ] && [ -b "$p4dev" ] || return 1
+    p4mm=$(cat "/sys/class/block/${p4dev##*/}/dev" 2>/dev/null) || return 1
+    awk -v mm="$p4mm" '$3 == mm && $5 == "/mnt/alpine" && $6 ~ /(^|,)rw(,|$)/ && / - vfat / {found=1} END {exit !found}' /proc/self/mountinfo || return 1
+    [ "$(blockdev --getro "$p4dev")" = 0 ] || return 1
+    archive="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    [ -f "$archive" ] && [ ! -L "$archive" ] || return 1
+    tar -tzf "$archive" >/dev/null 2>&1 || return 1
+    archive_privileged_owners_ok "$archive" || return 1
+    tar -tvzf "$archive" 2>/dev/null | grep -Fq 'home/tc/user_config.json -> /mnt/tcrp/user_config.json'
 }
 
 echo "P3 device: $dev ($mm)"
@@ -52,8 +122,23 @@ if [ -e /mnt/tcrp ] && [ ! -L /mnt/tcrp ]; then
 fi
 
 if [ "$mode" = --check ]; then
-    echo 'Check only. Pass --apply to drain P3 mounts and mount it with rw,umask=000.'
+    p3_state_ok && echo 'P3 state: healthy.' || echo 'P3 state: needs recovery.'
+    p4_state_ok && echo 'P4 archive: healthy.' || echo 'P4 archive: missing, unreadable, or ownership-invalid.'
+    echo 'Check only. Pass --ensure to recover only when either partition is unhealthy; --apply forces recovery.'
     exit 0
+fi
+
+if [ "$mode" = --ensure ]; then
+    p3_ok=0; p4_ok=0
+    if p3_state_ok; then p3_ok=1; echo 'P3 state: healthy; no mount or config-link changes needed.'
+    else echo 'P3 state: unhealthy; recovery is required.'; fi
+    if p4_state_ok; then p4_ok=1; echo 'P4 archive: healthy; ownership and config-link checks passed.'
+    else echo 'P4 archive: unhealthy; persistence repair is required.'; fi
+    if [ "$p3_ok" -eq 1 ] && [ "$p4_ok" -eq 1 ]; then
+        echo 'Both partitions are healthy; recovery and persistence write skipped.'
+        exit 0
+    fi
+    mode=--apply
 fi
 
 restore_home_config_link() {
@@ -62,7 +147,7 @@ restore_home_config_link() {
     if [ ! -f "$config" ] || ! jq -e 'type == "object"' "$config" >/dev/null 2>&1; then
         echo "P3 user_config.json is missing or invalid: $config" >&2; return 1;
     fi
-    sudo -u tc test -w "$config" || { echo 'tc cannot write the P3 configuration.' >&2; return 1; }
+    tc_can_write_config || { echo 'tc cannot write the P3 configuration.' >&2; return 1; }
 
     if [ -L "$home" ] && [ "$(readlink "$home")" = "$config" ]; then
         chown -h tc:staff "$home"
@@ -92,7 +177,7 @@ restore_home_config_link() {
         [ -z "$backup" ] || mv "$backup" "$home"
         return 1
     fi
-    sudo -u tc test -w "$home" || return 1
+    tc_can_write_config || return 1
     echo "Restored tc-owned symlink: $home -> $config"
 }
 
@@ -122,7 +207,7 @@ verify_recovered_state() {
     jq -e 'type == "object"' "$config" >/dev/null 2>&1 || {
         echo 'The P3 user_config.json is missing or invalid.' >&2; return 1;
     }
-    sudo -u tc test -w "$home" || {
+    tc_can_write_config || {
         echo 'tc cannot write user_config.json through the recovered symlink.' >&2; return 1;
     }
     [ "$(blockdev --getro "$dev")" = 0 ] || {
@@ -159,30 +244,6 @@ persist_recovered_state() {
         return 1
     }
     persist_p4_archive
-}
-
-archive_privileged_owners_ok() {
-    tar -tvzf "$1" 2>/dev/null | awk '
-        {
-            name = $NF
-            sub(/^\.\//, "", name)
-            if (name == "etc/passwd" || name == "etc/group" ||
-                name == "etc/shadow" || name == "etc/sudoers.d/" ||
-                name == "etc/sudoers.d/tc" || name == "etc/lbu/lbu.conf") {
-                split($2, owner, "/")
-                if (owner[1] != "root" && owner[1] != "0") bad = 1
-                if (name == "etc/sudoers.d/tc" &&
-                    $1 != "-r--------" && $1 != "-r--r-----") bad = 1
-                found[name] = 1
-            }
-        }
-        END {
-            if (bad) exit 1
-            if (!found["etc/passwd"] || !found["etc/group"] ||
-                !found["etc/shadow"] || !found["etc/sudoers.d/"] ||
-                !found["etc/sudoers.d/tc"] || !found["etc/lbu/lbu.conf"]) exit 1
-        }
-    '
 }
 
 persist_p4_archive() {
@@ -236,7 +297,8 @@ persist_p4_archive() {
 
     echo '[PERSIST] Packaging the current root-owned Alpine state outside P4...'
     lbu package "$candidate" || return 1
-    if [ ! -s "$candidate" ] || ! tar -tzf "$candidate" >/dev/null 2>&1; then
+    if [ ! -s "$candidate" ] || ! tar -tzf "$candidate" >/dev/null 2>&1 ||
+       ! archive_privileged_owners_ok "$candidate"; then
         echo 'New P4 archive is empty or invalid.' >&2; return 1;
     fi
     mkdir "$inspect" || return 1
