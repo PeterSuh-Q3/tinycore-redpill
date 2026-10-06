@@ -6301,8 +6301,9 @@ EOF
 }
 
 function xtcrpconfigureentry() {
+    local entry_title="${1:-xTCRP Configure Boot Loader (Loader Build)}"
     cat <<EOF
-menuentry 'xTCRP Configure Boot Loader (Loader Build)' {
+menuentry '${entry_title}' {
         savedefault
         search --set=root --fs-uuid $usbpart3uuid --hint hd0,msdos3
         echo Loading Linux...
@@ -6823,8 +6824,13 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    echo "Creating alpinecore configure loader entry"
-    alpineentry | sudo tee --append /tmp/grub.cfg
+    if [ "$FRKRNL" = "YES" ]; then
+        echo "Creating xTCRP compatibility entry in the Alpine menu slot"
+        xtcrpconfigureentry "xTCRP Configure Boot Loader (Compatibility Entry)" | sudo tee --append /tmp/grub.cfg
+    else
+        echo "Creating alpinecore configure loader entry"
+        alpineentry | sudo tee --append /tmp/grub.cfg
+    fi
     
     echo "Creating xTCRP configure loader entry"
     xtcrpconfigureentry | sudo tee --append /tmp/grub.cfg
