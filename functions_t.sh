@@ -6824,12 +6824,12 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
         tcrpjotentry | sudo tee --append /tmp/grub.cfg        
     fi
 
-    if [ "$FRKRNL" = "YES" ]; then
-        echo "Creating xTCRP compatibility entry in the Alpine menu slot"
-        xtcrpconfigureentry "xTCRP Configure Boot Loader (Compatibility Entry)" | sudo tee --append /tmp/grub.cfg
-    else
+    if [ "$FRKRNL" != "YES" ] || lsblk -rno LABEL | grep -Fxq alpine; then
         echo "Creating alpinecore configure loader entry"
         alpineentry | sudo tee --append /tmp/grub.cfg
+    else
+        echo "Creating xTCRP compatibility entry in the Alpine menu slot"
+        xtcrpconfigureentry "xTCRP Configure Boot Loader (Compatibility Entry)" | sudo tee --append /tmp/grub.cfg
     fi
     
     echo "Creating xTCRP configure loader entry"
