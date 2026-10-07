@@ -7264,17 +7264,27 @@ NCEOF
     fi
 
     # nvidiadriver addon: junior can't read user_config.json, so bake the menu
-    # choice (driver version / ffmpeg layer / container runtime) into
+    # choice (published SPK driver / optional FFmpeg and container runtime) into
     # /addons/nvidia.conf for its install.sh (on_patches). Empty driver => Auto
     # (install.sh detects the GPU).
     if grep -q '"nvidiadriver"' /home/tc/redpill-load/bundled-exts.json 2>/dev/null; then
       NVDRV=$(jq -r '.general.nvidia_driver // empty' "${userconfigfile}" 2>/dev/null)
       NVFF=$(jq -r '.general.nvidia_ffmpeg // empty' "${userconfigfile}" 2>/dev/null)
       NVCR=$(jq -r '.general.nvidia_container_runtime // empty' "${userconfigfile}" 2>/dev/null)
-      { [ -n "$NVDRV" ] && echo "nvidia_driver=$NVDRV"
-        [ -n "$NVFF"  ] && echo "nvidia_ffmpeg=$NVFF"
-        [ -n "$NVCR"  ] && echo "nvidia_container_runtime=$NVCR"; } | sudo tee "${RAMDISK_PATH}/addons/nvidia.conf" >/dev/null
-      echo "nvidiadriver: baked /addons/nvidia.conf (driver=${NVDRV:-auto} ffmpeg=${NVFF:-off} container-runtime=${NVCR:-off})"
+      NVSPK=$(jq -r '.general.nvidia_spk_delivery // "true"' "${userconfigfile}" 2>/dev/null)
+      NVVOL=$(jq -r '.general.nvidia_data_volume // empty' "${userconfigfile}" 2>/dev/null)
+      [[ -z "$NVDRV" || "$NVDRV" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || NVDRV=""
+      [[ "$NVFF" = true || "$NVFF" = false ]] || NVFF=false
+      [[ "$NVCR" = true || "$NVCR" = false ]] || NVCR=false
+      [[ "$NVSPK" = true || "$NVSPK" = false ]] || NVSPK=true
+      [[ -z "$NVVOL" || "$NVVOL" =~ ^volume[0-9]+$ ]] || NVVOL=""
+      { if [ -n "$NVDRV" ]; then echo "nvidia_driver=$NVDRV"; fi
+        echo "nvidia_ffmpeg=$NVFF"
+        echo "nvidia_container_runtime=$NVCR"
+        echo "nvidia_spk_delivery=$NVSPK"
+        if [ -n "$NVVOL" ]; then echo "nvidia_data_volume=$NVVOL"; fi
+      } | sudo tee "${RAMDISK_PATH}/addons/nvidia.conf" >/dev/null
+      echo "nvidiadriver: baked /addons/nvidia.conf (driver=${NVDRV:-auto} ffmpeg=$NVFF container-runtime=$NVCR spk=$NVSPK volume=${NVVOL:-volume1})"
     fi
 
     # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 — 피어/이중 컨트롤러

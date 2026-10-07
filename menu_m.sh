@@ -391,10 +391,8 @@ if [ -z "${NVIDIA_FFMPEG}" ]; then
     jsonfile=$(jq 'del(.nvidia_ffmpeg)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
 fi
 
-# Docker(Container Manager)용 nvidia 컨테이너 런타임 레이어. 기본 off -
-# 도커에서 GPU 를 쓰지 않는 사용자에게는 10MB 를 매 부팅 더 받는 것 뿐이다.
-# 켜면 install.sh 가 레이어를 설치하고 dockerd.json 에 'nvidia' 런타임을
-# 등록해 --runtime=nvidia 컨테이너가 GPU 를 볼 수 있게 된다.
+# Docker(Container Manager)용 NVIDIA 컨테이너 런타임 SPK. 기본 off.
+# 켜면 DSM 부팅 후 애드온이 드라이버 활성화를 확인하고 SPK를 설치한다.
 NVIDIA_CR=$(readConfigKey "general" "nvidia_container_runtime")
 if [ -z "${NVIDIA_CR}" ]; then
     NVIDIA_CR="false"
@@ -2522,15 +2520,14 @@ function resetNvidiaIfUnsupported() {
 }
 
 ###############################################################################
-# NVIDIA H/W transcoding driver — version selection submenu.
-# Writes user's choice to user_config.json (nvidia_driver / nvidia_ffmpeg);
-# functions.sh bakes it to /addons/nvidia.conf and install.sh (junior) reads it.
+# NVIDIA H/W transcoding driver — published SPK selection submenu.
+# Writes the selected driver and optional packages to user_config.json;
+# functions.sh bakes them to /addons/nvidia.conf for the junior addon.
 # Auto = leave nvidia_driver unset -> install.sh detects the GPU at boot.
 function nvidiaMenu() {
   # $1 = 현재 선택된 모델의 커널버전(예: 5.10.55 / 4.4.302 / 4.4.180),
-  # resolveLiveKver 로 호출부(메인 루프)에서 이미 계산해 전달한다. index 의
-  # 같은 플랫폼이라도 커널마다 발행 브랜치가 다르므로(커널 4.4 는 550 만)
-  # 이 값으로 kernels[$k].drivers 를 우선 조회해야 정확한 목록이 나온다.
+  # resolveLiveKver 로 호출부(메인 루프)에서 이미 계산해 전달한다.
+  # 게시된 SPK 변형은 커널별로 분리되어 있으므로 그 교집합만 표시한다.
   local mykver="${1:-}"
   eval "MSG77=\"\${MSG${tz}77}\""
   eval "MSG78=\"\${MSG${tz}78}\""
@@ -2543,13 +2540,21 @@ function nvidiaMenu() {
   eval "MSG85=\"\${MSG${tz}85}\""
   eval "MSG131=\"\${MSG${tz}131}\""
   local RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src"
-  local plat="${platform%%(*}" idx=/tmp/nv-index.json sup=/tmp/nv-support.json
-  # tcrp-addons 의 nvidia-index.json 과 동일한 해석 규칙: 플랫폼이 커널별
-  # 'kernels' 맵을 가지면 그 커널의 drivers 를 쓰고(예: 4.4 계열은 550 만
-  # 존재), 없으면(kver5 플랫폼) 기존 평면 drivers 를 그대로 쓴다.
-  local DQ='(.platforms[$p].kernels[$k].drivers // .platforms[$p].drivers)'
-  curl -skL "${RAW}/nvidia-index.json"       -o "$idx" 2>/dev/null
-  curl -skL "${RAW}/nvidia-gpu-support.json" -o "$sup" 2>/dev/null
+  local plat="${platform%%(*}" idx=/tmp/nv-spk-index.json sup=/tmp/nv-support.json variant=""
+  case "$mykver" in
+    4.4.180) variant=kver4-dsm70 ;;
+    4.4.302) variant=kver4-dsm72 ;;
+    5.10.55) variant=kver5 ;;
+  esac
+  # Keep a failed or partial download from turning into an apparent version
+  # list. The addon recipe independently pins the exact manifest checksum.
+  if curl -fskL "${RAW}/nvidia-spk-index.json" -o "$idx.part" 2>/dev/null \
+     && jq -e '.variants | type == "object"' "$idx.part" >/dev/null 2>&1; then
+    mv -f "$idx.part" "$idx"
+  else
+    rm -f "$idx.part" "$idx"
+  fi
+  curl -fskL "${RAW}/nvidia-gpu-support.json" -o "$sup" 2>/dev/null
 
   # detect NVIDIA GPU on this box (= target for TCRP) via sysfs
   local gpuid=""
@@ -2558,17 +2563,28 @@ function nvidiaMenu() {
     case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
       gpuid="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;; esac
   done
-  local gname="Unknown" branch=""
+  local gname="Unknown" branch="" branches=""
   if [ -s "$sup" ]; then
-    branch=$(jq -r '.default_branch' "$sup" 2>/dev/null)
+    branch=$(jq -r --arg k "${mykver%%.*}" '.default_branch_by_kernel[$k] // .default_branch // empty' "$sup" 2>/dev/null)
     [ -n "$gpuid" ] && {
       gname=$(jq -r --arg g "$gpuid" '.gpus[$g].name // "Unknown"' "$sup")
-      branch=$(jq -r --arg g "$gpuid" '.gpus[$g].branches[0] // .default_branch' "$sup")
+      branches=$(jq -r --arg g "$gpuid" '.gpus[$g].branches // [] | .[]' "$sup" 2>/dev/null)
     }
   fi
   local vers=""
-  [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" --arg k "$mykver" "$DQ"' | keys | reverse[]' "$idx" 2>/dev/null)
-  local autover; autover=$(echo "$vers" | grep "^${branch}" | head -1)
+  [ -n "$variant" ] && [ -s "$idx" ] && vers=$(jq -r --arg p "$plat" --arg v "$variant" '
+    .variants[$v] as $entry |
+    select($entry != null and (($entry.platforms // []) | index($p)) != null) |
+    $entry.drivers | keys | reverse[]' "$idx" 2>/dev/null)
+  local autover="" preferred
+  for preferred in $branches; do
+    autover=$(printf '%s\n' "$vers" | grep "^${preferred}\." | head -1)
+    [ -n "$autover" ] && break
+  done
+  if [ -z "$autover" ] && [ -z "$branches" ]; then
+    autover=$(printf '%s\n' "$vers" | grep "^${branch}\." | head -1)
+    [ -n "$autover" ] || autover=$(printf '%s\n' "$vers" | head -1)
+  fi
 
   local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
   while true; do
@@ -2633,6 +2649,12 @@ function nvidiaMenu() {
       status="\Z2ENABLED\Zn — $(printf "${MSG84}" "${cur:-Auto}" "${ffon}")"
     else
       status="\Z1DISABLED\Zn — $(printf "${MSG84}" "${cur:-Auto}" "${ffon}")  ${MSG85}"
+    fi
+    if [ ! -s "$idx" ]; then
+      status="${status}  \Z1SPK manifest unavailable\Zn"
+    fi
+    if [ -n "$cur" ] && ! printf '%s\n' "$vers" | grep -Fxq "$cur"; then
+      status="${status}  \Z1${cur}: SPK unavailable for ${plat}/${mykver}\Zn"
     fi
     # 표준 OK/Cancel 방식(--no-cancel 미사용) - Cancel 버튼과 ESC 모두
     # 아래 [ $? -ne 0 ] 로 잡혀 상위 메뉴로 복귀한다. 목록 맨 아래 z(Exit)
