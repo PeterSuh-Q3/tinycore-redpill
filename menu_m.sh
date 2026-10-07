@@ -2705,22 +2705,60 @@ function nvidiaMenu() {
 }
 
 function packing_loader() {
+    local part part_root file stage archive tmp_archive required
+    archive="/home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz"
 
-    echo "Would you like to pack your loader for a remote TCRP? [Yy/Nn] "
-    readanswer
-    if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
-        mkdir -p /dev/shm/p1
-        mkdir -p /dev/shm/p2
-        mkdir -p /dev/shm/p3
-        cp -vf /mnt/${loaderdisk}1/GRUB_VER /mnt/${loaderdisk}1/zImage /dev/shm/p1
-        cp -vf /mnt/${loaderdisk}2/GRUB_VER /mnt/${loaderdisk}2/zImage /mnt/${loaderdisk}2/rd.gz /mnt/${loaderdisk}2/grub_cksum.syno /dev/shm/p2
-        cp -vf /mnt/${loaderdisk}3/custom.gz /mnt/${loaderdisk}3/initrd-dsm /mnt/${loaderdisk}3/rd.gz /mnt/${loaderdisk}3/zImage-dsm /mnt/${loaderdisk}3/user_config.json /dev/shm/p3
-        tar -zcvf /home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz -C /dev/shm ./p1 ./p2 ./p3
-    else
-        echo "OK, the package has been canceled."
-    fi    
-    returnto "The entire process of packing the boot loader has been completed! Press any key to continue..." && return    
+    dialog --clear --backtitle "$(backtitle)" --yesno \
+      "Pack the current loader's P1, P2 and P3 files for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
 
+    if [ -e "${archive}" ]; then
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+          "The package already exists and will not be overwritten:\n${archive}" 0 0
+        return 1
+    fi
+
+    stage="$(mktemp -d /dev/shm/remote.updatepack.XXXXXX)" || return 1
+    tmp_archive="${stage}/package.tgz"
+    for part in 1 2 3; do
+        part_root="/mnt/${loaderdisk}${part}"
+        if ! mount | grep -Fq " on ${part_root} "; then
+            echo "Remote package: P${part} is not mounted at ${part_root}" >&2
+            rm -rf -- "${stage}"
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "P${part} is not mounted. No package was created." 0 0
+            return 1
+        fi
+        mkdir -p "${stage}/p${part}" || { rm -rf -- "${stage}"; return 1; }
+        case "${part}" in
+            1) required="GRUB_VER zImage" ;;
+            2) required="GRUB_VER zImage rd.gz grub_cksum.syno" ;;
+            3) required="custom.gz initrd-dsm rd.gz zImage-dsm user_config.json" ;;
+        esac
+        for file in ${required}; do
+            if [ ! -s "${part_root}/${file}" ] || [ -L "${part_root}/${file}" ] || \
+               ! cp -- "${part_root}/${file}" "${stage}/p${part}/${file}"; then
+                echo "Remote package: missing or unreadable P${part}/${file}" >&2
+                rm -rf -- "${stage}"
+                dialog --clear --backtitle "$(backtitle)" --msgbox \
+                  "Missing or unreadable P${part}/${file}. No package was created." 0 0
+                return 1
+            fi
+        done
+    done
+
+    if ! tar -czf "${tmp_archive}" -C "${stage}" p1 p2 p3 ||
+       ! tar -tzf "${tmp_archive}" >/dev/null 2>&1 ||
+       ! mv -n -- "${tmp_archive}" "${archive}"; then
+        echo "Remote package: archive creation or verification failed" >&2
+        rm -rf -- "${stage}"
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+          "Remote loader package creation failed. No complete package was published." 0 0
+        return 1
+    fi
+    rm -rf -- "${stage}"
+    dialog --clear --backtitle "$(backtitle)" --msgbox \
+      "Remote loader package created and verified:\n${archive}" 0 0
+    returnto "The entire process of packing the boot loader has been completed! Press any key to continue..."
 }
 
 function satadom_edit() {
