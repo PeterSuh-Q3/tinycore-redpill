@@ -2727,6 +2727,12 @@ function remote_package_stage_files() {
         echo "Remote package: invalid P3/xtcrp.tgz backup archive" >&2
         return 1
     fi
+    if [ "${automatic}" = "true" ] &&
+       tar -tvzf "${stage}/p3/xtcrp.tgz" 2>/dev/null |
+         grep -Eq ' -> /mnt/loop[0-9]+p3/'; then
+        echo "Remote package: P3/xtcrp.tgz still contains a disposable Docker loop path" >&2
+        return 1
+    fi
     if ! jq -e --arg model "${MODEL}" --arg build "${BUILD}" \
       '.general.model == $model and .general.version == $build' \
       "${stage}/p3/user_config.json" >/dev/null 2>&1; then

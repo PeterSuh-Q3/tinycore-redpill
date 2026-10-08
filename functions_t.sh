@@ -6041,6 +6041,20 @@ function backuploader() {
     local xtcrp_shm="${shm_path}/xtcrp.tgz"
     local xtcrp_dest="${backup_path}/xtcrp.tgz"
     local alpine_no_mydata=0
+
+    # The Docker image's loop number is disposable. Preserve the stable P3
+    # alias in xtcrp.tgz so a later restore on the physical loader does not
+    # recreate a dangling /mnt/loopNp3/auxfiles link.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ] && [ -L /home/tc/custom-module ]; then
+        local custom_module_target
+        custom_module_target="$(readlink /home/tc/custom-module)"
+        if [ "${custom_module_target}" = "${backup_path}/auxfiles" ]; then
+            ln -sfn /mnt/tcrp/auxfiles /home/tc/custom-module || return 1
+        elif [ "${custom_module_target}" != "/mnt/tcrp/auxfiles" ]; then
+            echo "${log_prefix} ERROR: Unexpected custom-module link: ${custom_module_target}" >&2
+            return 1
+        fi
+    fi
     
     # 기존 /dev/shm 파일 정리
     if [ -f "${xtcrp_shm}" ]; then
