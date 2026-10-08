@@ -43,6 +43,9 @@
 - Do not turn commit history into a feature-by-feature changelog. Prioritize
   what users need to know, including any action, limitation, or compatibility
   implication, over a list of files or internal mechanisms changed.
+- Before publishing a release, review both language versions and the final
+  GitHub release body from a user's perspective. Explain why each change was
+  needed and what users gain; do not substitute an implementation summary.
 
 ## `my.sh.gz` distribution policy
 
