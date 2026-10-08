@@ -2416,9 +2416,9 @@ function cloneloader() {
     read answer
     return 1
   fi
-  # 목록에서 제외할 디스크 경로. getBus() 가 nvme/mmc/block 에 붙여둔 'p' 는
-  # 디스크 이름이 아니라 파티션 접두사라 여기서는 뗀다.
-  tcrpdev="/dev/${loaderdisk%p}"
+  # 목록에서 제외할 실제 디스크 경로. 일반 NVMe/mmc/block 장치는
+  # loaderdisk 끝의 'p'를 제거하고, Docker loop 모드에서는 별도 원본 이름을 쓴다.
+  tcrpdev="/dev/${loaderdisk_raw:-${loaderdisk%p}}"
   # dd 원본으로 쓸 파티션 접두사는 반대로 'p' 를 살려야 한다
   # (/dev/nvme0n1p1 이지 /dev/nvme0n11 이 아니다).
   tcrpsrc="/dev/${loaderdisk}"
@@ -2732,7 +2732,7 @@ function packing_loader() {
         case "${part}" in
             1) required="GRUB_VER zImage" ;;
             2) required="GRUB_VER zImage rd.gz grub_cksum.syno" ;;
-            3) required="custom.gz initrd-dsm rd.gz zImage-dsm user_config.json" ;;
+            3) required="custom.gz initrd-dsm rd.gz zImage-dsm user_config.json xtcrp.tgz" ;;
         esac
         for file in ${required}; do
             if [ ! -s "${part_root}/${file}" ] || [ -L "${part_root}/${file}" ] || \
@@ -2744,6 +2744,13 @@ function packing_loader() {
                 return 1
             fi
         done
+        if [ "${part}" -eq 3 ] && ! tar -tzf "${stage}/p3/xtcrp.tgz" >/dev/null 2>&1; then
+            echo "Remote package: invalid P3/xtcrp.tgz backup archive" >&2
+            rm -rf -- "${stage}"
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "P3/xtcrp.tgz is not a valid gzip tar backup. No package was created." 0 0
+            return 1
+        fi
     done
 
     if ! tar -czf "${tmp_archive}" -C "${stage}" p1 p2 p3 ||

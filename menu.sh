@@ -544,6 +544,13 @@ function gitdownload() {
 }
 
 function mmc_modprobe() {
+  # Docker builder containers share the host kernel and do not carry the
+  # loader's /lib/modules tree. The mapped loop image is already available,
+  # so probing host MMC/SD modules is both unnecessary and noisy.
+  if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+    return 0
+  fi
+
   echo "excute modprobe for mmc(include sd)..."
   sudo /sbin/modprobe mmc_block
   sudo /sbin/modprobe mmc_core

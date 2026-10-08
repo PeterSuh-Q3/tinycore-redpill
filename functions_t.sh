@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.3"
-builddate="2026.10.07"
+rploaderver="1.4.5.4"
+builddate="2026.10.08"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1012,6 +1012,7 @@ function history() {
     1.4.5.1 Automatic P3 P4 persistence recovery with ownership validation
     1.4.5.2 Restore previous release rebuild and protect Alpine persistence backups
     1.4.5.3 Select NVIDIA SPK versions and preserve xTCRP boot menu slots
+    1.4.5.4 Harden remote loader packages and Docker loop image builds
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1738,6 +1739,9 @@ EOF
 # 2026.10.07 v1.4.5.3
 # Select NVIDIA SPK versions and preserve xTCRP boot menu slots
 
+# 2026.10.08 v1.4.5.4
+# Harden remote loader packages and Docker loop image builds
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2141,6 +2145,9 @@ function showlastupdate() {
 
 # 2026.10.07 v1.4.5.3
 # Select NVIDIA SPK versions and preserve xTCRP boot menu slots
+
+# 2026.10.08 v1.4.5.4
+# Harden remote loader packages and Docker loop image builds
 EOF
 }
 
@@ -2596,6 +2603,33 @@ get_verbose_status() {
 function getloaderdisk() {
 
     loaderdisk=""
+    loaderdisk_raw=""
+
+    # Docker's Alpine builder receives an explicitly mapped loop disk from
+    # its host. Never fall back to lsblk's host-visible physical disks here:
+    # doing so can select a SATA device that is not actually mapped into the
+    # container. Keep loaderdisk as a partition prefix so existing callers
+    # naturally address loopNp1..loopNp4.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        local docker_loop="${MSHELL_LOOP_DEVICE:-}"
+        docker_loop="${docker_loop#/dev/}"
+        if [[ ! "${docker_loop}" =~ ^loop[0-9]+$ ]]; then
+            echo "[ERROR] Docker builder requires MSHELL_LOOP_DEVICE=loopN." >&2
+            return 1
+        fi
+        local part
+        for part in 1 2 3 4; do
+            if [ ! -b "/dev/${docker_loop}p${part}" ]; then
+                echo "[ERROR] Required mapped loader partition /dev/${docker_loop}p${part} is unavailable." >&2
+                return 1
+            fi
+        done
+        loaderdisk_raw="${docker_loop}"
+        loaderdisk="${docker_loop}"
+        echo "LOADER DISK: ${loaderdisk_raw} (Docker loop image)" >&2
+        return 0
+    fi
+
     # Get the loader disk using the UUID "6234-C863"
     loaderdisk=$(sudo /sbin/blkid | grep "6234-C863" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
 
@@ -2613,6 +2647,8 @@ function getloaderdisk() {
             [ -n "$loaderdisk" ] && break
         done < <(lsblk -ndo NAME | grep -v '^loop' | grep -v '^zram' | sed 's/^/\/dev\//')
     fi
+
+    loaderdisk_raw="${loaderdisk}"
 
     # Output the loader disk. Must go to stderr, not stdout: sngen.sh/
     # macgen.sh source functions.sh at the top and are themselves invoked
@@ -4402,6 +4438,22 @@ function chkavail() {
 # get bus of disk
 # 1 - device path
 function getBus() {
+  if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+    local docker_loop="${loaderdisk_raw:-${loaderdisk%p}}"
+    docker_loop="${docker_loop#/dev/}"
+    [[ "${docker_loop}" =~ ^loop[0-9]+$ ]] || {
+      echo "[ERROR] Invalid Docker loop loader disk: ${docker_loop}" >&2
+      return 1
+    }
+    loaderdisk_raw="${docker_loop}"
+    loaderdisk="${docker_loop}p"
+    # Preserve the loader's existing SATA-style bus behavior; only the
+    # partition naming differs because a loop disk requires the `p` separator.
+    BUS="sata"
+    echo "${BUS}"
+    return 0
+  fi
+
   BUS=""
   # usb/ata(sata/ide)/scsi
   [ -z "${BUS}" ] && BUS=$(udevadm info --query property --name "${1}" 2>/dev/null | grep ID_BUS | cut -d= -f2 | sed 's/ata/sata/')
@@ -5466,6 +5518,17 @@ function cleanloader() {
 # 연속으로 여러 모델을 빌드할 때 스왑 사용량이 줄지 않고 누적되는 현상을 완화하기 위함.
 function cleanupmemory() {
 
+    # The Docker builder shares the host kernel and its /proc view, so
+    # /proc/swaps lists DSM's host swap devices rather than container-owned
+    # swap. The container also lacks CAP_SYS_ADMIN; attempting to cycle those
+    # devices makes an otherwise completed build report a false failure.
+    # There is no loader-runtime memory state to reclaim in this build-only
+    # container, so leave host caches and swap untouched.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        echo "[cleanupmemory] Skipping host cache/swap cleanup in Docker builder."
+        return 0
+    fi
+
     sync
     echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1
 
@@ -5768,14 +5831,30 @@ function persist_alpine_apkovl_safely() {
 
     [ -f "${active}" ] && sudo cp -p "${active}" "${active_backup}" || true
 
-    # lbu.conf overrides inherited LBU_BACKUPDIR.  Redirect it only for the
+    # lbu.conf overrides inherited LBU_BACKUPDIR. Redirect it only for the
     # staging run and restore the live configuration immediately afterwards.
+    # Minimal Alpine images commonly ship this variable commented out; a sed
+    # replacement alone then succeeds without changing anything, and lbu
+    # prints usage because it has no destination. Replace an active setting
+    # or append one, then verify the effective line before committing.
     sudo cp -p "${lbu_conf}" "${lbu_conf_backup}" || { rm -rf "${stage}"; return 1; }
-    if ! sudo sed -i "s|^LBU_BACKUPDIR=.*|LBU_BACKUPDIR=${stage}|" "${lbu_conf}"; then
+    if sudo grep -q '^LBU_BACKUPDIR=' "${lbu_conf}"; then
+        if ! sudo sed -i "s|^LBU_BACKUPDIR=.*|LBU_BACKUPDIR=${stage}|" "${lbu_conf}"; then
+            sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+            rm -rf "${stage}"
+            return 1
+        fi
+    elif ! printf '\nLBU_BACKUPDIR=%s\n' "${stage}" | sudo tee -a "${lbu_conf}" >/dev/null; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
         rm -rf "${stage}"
         return 1
     fi
-    if ! sudo lbu commit; then
+    if ! sudo grep -Fqx "LBU_BACKUPDIR=${stage}" "${lbu_conf}"; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    if ! sudo lbu commit || [ ! -s "${candidate}" ]; then
         sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
         [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         rm -rf "${stage}"
@@ -6711,7 +6790,7 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         # Check dom size and set max size accordingly for jot
         if [ "$(echo "${KVER:-4}" | cut -d'.' -f1)" -lt 5 ]; then
             if [ "${BUS}" != "usb" ]; then
-                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
+                DOM_PARA="dom_szmax=$(sudo /sbin/fdisk -l /dev/${loaderdisk_raw:-${loaderdisk%p}} | head -1 | awk -F: '{print $2}' | awk '{ print $1*1024}')"
                 sed -i "s/earlyprintk/${DOM_PARA} earlyprintk/" /tmp/tempentry.txt
             fi
         fi    
