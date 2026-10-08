@@ -5755,6 +5755,26 @@ function migrate_p3_apkovl_baseline() {
 function persist_alpine_apkovl_safely() {
     is_alpine || return 0
 
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        local host_apkovl="${MSHELL_P4_APKOVL_SOURCE:-}"
+        local expected_host_hash="${MSHELL_P4_APKOVL_SHA256:-}"
+        local actual_host_hash
+        if [ "${host_apkovl}" != "/run/mshell/host-p4/localhost.apkovl.tar.gz" ] ||
+           [ ! -f "${host_apkovl}" ] || [ -L "${host_apkovl}" ] ||
+           [[ ! "${expected_host_hash}" =~ ^[0-9a-f]{64}$ ]] ||
+           ! tar -tzf "${host_apkovl}" >/dev/null 2>&1; then
+            echo "[APKVOL] Verified read-only host P4 persistence input is unavailable; persistence cancelled." >&2
+            return 1
+        fi
+        actual_host_hash="$(sha256sum "${host_apkovl}" | awk '{print $1}')" || return 1
+        if [ "${actual_host_hash}" != "${expected_host_hash}" ]; then
+            echo "[APKVOL] Host P4 persistence input checksum changed; persistence cancelled." >&2
+            return 1
+        fi
+        echo "[APKVOL] Docker builder: verified host P4 archive ${actual_host_hash}; skipping container lbu commit."
+        return 0
+    fi
+
     local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight

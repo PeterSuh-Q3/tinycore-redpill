@@ -2681,6 +2681,7 @@ function remote_package_builder_image_digest() {
 function remote_package_stage_files() {
     local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" p4_source="$5" automatic="${6:-false}"
     local part part_root file required friend_part rel size hash source_revision="" builder_image_digest=""
+    local expected_p4_sha256="" actual_p4_sha256=""
 
     if [ "${automatic}" = "true" ]; then
         source_revision="$(remote_package_source_revision)" || return 1
@@ -2748,6 +2749,21 @@ function remote_package_stage_files() {
         return 1
     fi
 
+    if [ "${automatic}" = "true" ]; then
+        expected_p4_sha256="${MSHELL_P4_APKOVL_SHA256:-}"
+        if [[ ! "${expected_p4_sha256}" =~ ^[0-9a-f]{64}$ ]] ||
+           [ "${p4_source}" != "${MSHELL_P4_APKOVL_SOURCE:-}" ]; then
+            echo "Remote package: verified host P4 source and checksum are required" >&2
+            return 1
+        fi
+        actual_p4_sha256="$(sha256sum "${p4_source}" 2>/dev/null | awk '{print $1}')" || return 1
+        if [ "${actual_p4_sha256}" != "${expected_p4_sha256}" ]; then
+            echo "Remote package: host P4 persistence source checksum changed" >&2
+            return 1
+        fi
+        echo "Remote package: using read-only host P4 persistence seed (sha256 ${actual_p4_sha256})."
+    fi
+
     if [ ! -f "${p4_source}" ] || [ -L "${p4_source}" ] ||
        [ ! -s "${p4_source}" ] ||
        ! tar -tzf "${p4_source}" >/dev/null 2>&1 ||
@@ -2760,8 +2776,12 @@ function remote_package_stage_files() {
     jq -n --arg model "${MODEL}" --arg dsm_build "${BUILD}" \
       --arg loader_build "${rploaderver:-}" --arg source_revision "${source_revision}" \
       --arg builder_image_digest "${builder_image_digest}" \
+      --arg p4_persistence_source "${automatic}" \
+      --arg p4_persistence_sha256 "${expected_p4_sha256}" \
       '{schema:1,model:$model,dsm_build:$dsm_build,loader_build:$loader_build,
-        files:[]} + (if $source_revision != "" then
+        files:[]} + (if $p4_persistence_source == "true" then
+          {p4_persistence_source:"active-loader",p4_persistence_sha256:$p4_persistence_sha256}
+        else {} end) + (if $source_revision != "" then
           {source_revision:$source_revision,builder_image_digest:$builder_image_digest}
         else {} end)' \
       > "${stage}/manifest.json" || return 1
@@ -2936,7 +2956,16 @@ function packing_loader() {
         fi
     done
 
-    p4_source="/mnt/alpine/localhost.apkovl.tar.gz"
+    if [ "${automatic}" = "true" ]; then
+        p4_source="${MSHELL_P4_APKOVL_SOURCE:-}"
+        if [ "${p4_source}" != "/run/mshell/host-p4/localhost.apkovl.tar.gz" ]; then
+            echo "[REMOTE PACKAGE] FAILED at verified host P4 source check" >&2
+            rm -rf -- "${stage}"
+            return 1
+        fi
+    else
+        p4_source="/mnt/alpine/localhost.apkovl.tar.gz"
+    fi
     if ! mountpoint -q /mnt/alpine; then
         echo "[REMOTE PACKAGE] FAILED at P4 mount check: /mnt/alpine is not mounted" >&2
         rm -rf -- "${stage}"
