@@ -2704,14 +2704,106 @@ function nvidiaMenu() {
   done
 }
 
+function remote_package_stage_files() {
+    local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" p4_source="$5"
+    local part part_root file required friend_part rel size hash
+
+    # A package is an explicit replacement plan, so never derive paths from
+    # an unchecked model/build string or silently accept an unknown boot mode.
+    [[ "${MODEL:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] &&
+    [[ "${BUILD:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
+        echo "Remote package: invalid model or DSM build" >&2
+        return 1
+    }
+    [[ "${BIOS_CNT:-}" =~ ^[0-9]+$ ]] || {
+        echo "Remote package: BIOS boot state is unknown" >&2
+        return 1
+    }
+    case "${FRKRNL:-}" in
+        YES|NO) ;;
+        *) echo "Remote package: FRIEND boot state is unknown" >&2; return 1 ;;
+    esac
+    friend_part=3
+    [ "${BIOS_CNT}" -eq 1 ] && [ "${FRKRNL}" = "YES" ] && friend_part=1
+
+    mkdir -p "${stage}/p1/boot/grub" "${stage}/p2" "${stage}/p3" "${stage}/p4" || return 1
+    for part in 1 2 3; do
+        case "${part}" in
+            1) part_root="${p1_root}"; required="GRUB_VER zImage boot/grub/grub.cfg" ;;
+            2) part_root="${p2_root}"; required="GRUB_VER zImage rd.gz grub_cksum.syno" ;;
+            3) part_root="${p3_root}"; required="custom.gz initrd-dsm rd.gz zImage-dsm user_config.json xtcrp.tgz" ;;
+        esac
+        [ "${part}" -eq "${friend_part}" ] && required="${required} bzImage-friend initrd-friend"
+        for file in ${required}; do
+            if [ ! -f "${part_root}/${file}" ] || [ -L "${part_root}/${file}" ] ||
+               [ ! -s "${part_root}/${file}" ] ||
+               ! cp -- "${part_root}/${file}" "${stage}/p${part}/${file}"; then
+                echo "Remote package: missing or unreadable P${part}/${file}" >&2
+                return 1
+            fi
+        done
+    done
+
+    if ! tar -tzf "${stage}/p3/xtcrp.tgz" >/dev/null 2>&1; then
+        echo "Remote package: invalid P3/xtcrp.tgz backup archive" >&2
+        return 1
+    fi
+    if ! jq -e --arg model "${MODEL}" --arg build "${BUILD}" \
+      '.general.model == $model and .general.version == $build' \
+      "${stage}/p3/user_config.json" >/dev/null 2>&1; then
+        echo "Remote package: P3 user_config.json does not match model/DSM build" >&2
+        return 1
+    fi
+    # GRUB starts FRIEND; FRIEND later loads zImage-dsm/initrd-dsm from P3.
+    # The base Alpine-only GRUB must not pass as a completed DSM build.
+    if ! grep -Fq "menuentry 'Tiny Core Friend ${MODEL} ${BUILD}" "${stage}/p1/boot/grub/grub.cfg" ||
+       ! grep -Eq '^[[:space:]]*linux[[:space:]]+/bzImage-friend([[:space:]]|$)' "${stage}/p1/boot/grub/grub.cfg" ||
+       ! grep -Eq '^[[:space:]]*initrd[[:space:]]+/initrd-friend([[:space:]]|$)' "${stage}/p1/boot/grub/grub.cfg"; then
+        echo "Remote package: P1 GRUB is not a completed DSM build" >&2
+        return 1
+    fi
+
+    if [ ! -f "${p4_source}" ] || [ -L "${p4_source}" ] ||
+       [ ! -s "${p4_source}" ] ||
+       ! tar -tzf "${p4_source}" >/dev/null 2>&1 ||
+       ! cp -- "${p4_source}" "${stage}/p4/localhost.apkovl.tar.gz" ||
+       ! cmp -s "${p4_source}" "${stage}/p4/localhost.apkovl.tar.gz"; then
+        echo "Remote package: missing, invalid, or unverified P4 persistence archive" >&2
+        return 1
+    fi
+
+    jq -n --arg model "${MODEL}" --arg dsm_build "${BUILD}" \
+      --arg loader_build "${rploaderver:-}" \
+      '{schema:1,model:$model,dsm_build:$dsm_build,loader_build:$loader_build,
+        files:[]}' \
+      > "${stage}/manifest.json" || return 1
+    for rel in p1/GRUB_VER p1/zImage p1/boot/grub/grub.cfg \
+      p2/GRUB_VER p2/zImage p2/rd.gz p2/grub_cksum.syno \
+      p3/custom.gz p3/initrd-dsm p3/rd.gz p3/zImage-dsm p3/user_config.json p3/xtcrp.tgz \
+      "p${friend_part}/bzImage-friend" "p${friend_part}/initrd-friend" \
+      p4/localhost.apkovl.tar.gz; do
+        size="$(wc -c < "${stage}/${rel}" | tr -d '[:space:]')" || return 1
+        hash="$(sha256sum "${stage}/${rel}" | awk '{print $1}')" || return 1
+        jq --arg path "${rel}" --argjson size "${size}" --arg sha256 "${hash}" \
+          '.files += [{source:$path,destination:$path,size:$size,sha256:$sha256}]' \
+          "${stage}/manifest.json" > "${stage}/manifest.tmp" || return 1
+        mv -- "${stage}/manifest.tmp" "${stage}/manifest.json" || return 1
+    done
+}
+
 function packing_loader() {
-    local part part_root file stage archive tmp_archive required
+    local part part_root stage archive tmp_archive p4_source
+    [[ "${MODEL:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] &&
+    [[ "${BUILD:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
+        echo "Remote package: invalid model or DSM build" >&2
+        return 1
+    }
     archive="/home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz"
 
     dialog --clear --backtitle "$(backtitle)" --yesno \
-      "Pack the current loader's P1, P2 and P3 files for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
+      "Pack the current loader's P1-P3 files and Alpine P4 persistence for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
 
-    if [ -e "${archive}" ]; then
+    if [ -e "${archive}" ] || [ -L "${archive}" ]; then
         dialog --clear --backtitle "$(backtitle)" --msgbox \
           "The package already exists and will not be overwritten:\n${archive}" 0 0
         return 1
@@ -2728,34 +2820,29 @@ function packing_loader() {
               "P${part} is not mounted. No package was created." 0 0
             return 1
         fi
-        mkdir -p "${stage}/p${part}" || { rm -rf -- "${stage}"; return 1; }
-        case "${part}" in
-            1) required="GRUB_VER zImage" ;;
-            2) required="GRUB_VER zImage rd.gz grub_cksum.syno" ;;
-            3) required="custom.gz initrd-dsm rd.gz zImage-dsm user_config.json xtcrp.tgz" ;;
-        esac
-        for file in ${required}; do
-            if [ ! -s "${part_root}/${file}" ] || [ -L "${part_root}/${file}" ] || \
-               ! cp -- "${part_root}/${file}" "${stage}/p${part}/${file}"; then
-                echo "Remote package: missing or unreadable P${part}/${file}" >&2
-                rm -rf -- "${stage}"
-                dialog --clear --backtitle "$(backtitle)" --msgbox \
-                  "Missing or unreadable P${part}/${file}. No package was created." 0 0
-                return 1
-            fi
-        done
-        if [ "${part}" -eq 3 ] && ! tar -tzf "${stage}/p3/xtcrp.tgz" >/dev/null 2>&1; then
-            echo "Remote package: invalid P3/xtcrp.tgz backup archive" >&2
-            rm -rf -- "${stage}"
-            dialog --clear --backtitle "$(backtitle)" --msgbox \
-              "P3/xtcrp.tgz is not a valid gzip tar backup. No package was created." 0 0
-            return 1
-        fi
     done
 
-    if ! tar -czf "${tmp_archive}" -C "${stage}" p1 p2 p3 ||
+    p4_source="/mnt/alpine/localhost.apkovl.tar.gz"
+    if ! mountpoint -q /mnt/alpine; then
+        echo "Remote package: Alpine P4 is not mounted" >&2
+        rm -rf -- "${stage}"
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+          "Alpine P4 is not mounted. No package was created." 0 0
+        return 1
+    fi
+    if ! remote_package_stage_files "${stage}" \
+      "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${p4_source}"; then
+        rm -rf -- "${stage}"
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+          "Required loader files or provenance are missing/invalid. No package was created." 0 0
+        return 1
+    fi
+
+    if ! tar -czf "${tmp_archive}" -C "${stage}" manifest.json p1 p2 p3 p4 ||
        ! tar -tzf "${tmp_archive}" >/dev/null 2>&1 ||
-       ! mv -n -- "${tmp_archive}" "${archive}"; then
+       ! mv -n -- "${tmp_archive}" "${archive}" ||
+       [ -e "${tmp_archive}" ] ||
+       ! tar -tzf "${archive}" >/dev/null 2>&1; then
         echo "Remote package: archive creation or verification failed" >&2
         rm -rf -- "${stage}"
         dialog --clear --backtitle "$(backtitle)" --msgbox \
