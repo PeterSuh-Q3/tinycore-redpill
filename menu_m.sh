@@ -2136,7 +2136,7 @@ function checkUserConfig() {
 ###############################################################################
 # Where the magic happens!
 function make() {
-  local build_rc=0
+  local build_rc=0 package_rc=0
 
 
   checkUserConfig 
@@ -2191,6 +2191,20 @@ function make() {
   if [ $? -ne 0 ]; then
     dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0    
     return 1
+  fi
+
+  # my() returns success only after both the image build and rploader backup
+  # succeed. In Docker mode, publish the remote-update package immediately;
+  # normal Alpine users retain the existing interactive build completion.
+  if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+    package_docker_build_after_backup "${build_rc}"
+    package_rc=$?
+    if [ "${package_rc}" -ne 0 ]; then
+      return "${package_rc}"
+    fi
+    rm -f /home/tc/buildstatus
+    echo "Docker loader build and remote package completed successfully."
+    return 0
   fi
 
 st "finishloader" "Loader build status" "Finished building the loader"  
@@ -2704,9 +2718,44 @@ function nvidiaMenu() {
   done
 }
 
+function remote_package_source_revision() {
+    local revision="${MSHELL_SOURCE_REVISION:-}" image_revision
+
+    if [ -r /etc/mshell-builder.json ]; then
+        image_revision="$(jq -er '.source_revision | select(type == "string")' /etc/mshell-builder.json)" || {
+            echo "Remote package: builder image source revision is unavailable" >&2
+            return 1
+        }
+        if [ -n "${revision}" ] && [ "${revision}" != "${image_revision}" ]; then
+            echo "Remote package: source revision conflicts with builder image metadata" >&2
+            return 1
+        fi
+        revision="${image_revision}"
+    fi
+    if [[ ! "${revision}" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "Remote package: a verified 40-character source revision is required" >&2
+        return 1
+    fi
+    printf '%s\n' "${revision}"
+}
+
+function remote_package_builder_image_digest() {
+    local digest="${MSHELL_BUILDER_IMAGE_DIGEST:-}"
+    if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+        echo "Remote package: a verified sha256 builder image digest is required" >&2
+        return 1
+    fi
+    printf '%s\n' "${digest}"
+}
+
 function remote_package_stage_files() {
-    local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" p4_source="$5"
-    local part part_root file required friend_part rel size hash
+    local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" p4_source="$5" automatic="${6:-false}"
+    local part part_root file required friend_part rel size hash source_revision="" builder_image_digest=""
+
+    if [ "${automatic}" = "true" ]; then
+        source_revision="$(remote_package_source_revision)" || return 1
+        builder_image_digest="$(remote_package_builder_image_digest)" || return 1
+    fi
 
     # A package is an explicit replacement plan, so never derive paths from
     # an unchecked model/build string or silently accept an unknown boot mode.
@@ -2773,9 +2822,12 @@ function remote_package_stage_files() {
     fi
 
     jq -n --arg model "${MODEL}" --arg dsm_build "${BUILD}" \
-      --arg loader_build "${rploaderver:-}" \
+      --arg loader_build "${rploaderver:-}" --arg source_revision "${source_revision}" \
+      --arg builder_image_digest "${builder_image_digest}" \
       '{schema:1,model:$model,dsm_build:$dsm_build,loader_build:$loader_build,
-        files:[]}' \
+        files:[]} + (if $source_revision != "" then
+          {source_revision:$source_revision,builder_image_digest:$builder_image_digest}
+        else {} end)' \
       > "${stage}/manifest.json" || return 1
     for rel in p1/GRUB_VER p1/zImage p1/boot/grub/grub.cfg \
       p2/GRUB_VER p2/zImage p2/rd.gz p2/grub_cksum.syno \
@@ -2791,33 +2843,145 @@ function remote_package_stage_files() {
     done
 }
 
+function remote_package_publish() {
+    local stage="$1" archive="$2" publish_sidecar="${3:-false}"
+    local manifest manifest_tmp archive_tmp lock_dir manifest_published=false
+    manifest="${archive%.tgz}.manifest.json"
+    archive_tmp="${archive}.tmp.$$"
+    manifest_tmp="${manifest}.tmp.$$"
+    lock_dir="${archive}.publish-lock"
+
+    if [ -e "${archive}" ] || [ -L "${archive}" ] ||
+       { [ "${publish_sidecar}" = "true" ] && { [ -e "${manifest}" ] || [ -L "${manifest}" ]; }; }; then
+        echo "Remote package: output archive or manifest already exists; refusing overwrite" >&2
+        return 1
+    fi
+    if ! mkdir -m 0700 -- "${lock_dir}" 2>/dev/null; then
+        echo "Remote package: another publisher owns ${lock_dir}; refusing to race" >&2
+        return 1
+    fi
+    if [ -e "${archive}" ] || [ -L "${archive}" ] ||
+       { [ "${publish_sidecar}" = "true" ] && { [ -e "${manifest}" ] || [ -L "${manifest}" ]; }; }; then
+        rmdir -- "${lock_dir}"
+        echo "Remote package: output appeared during publication; refusing overwrite" >&2
+        return 1
+    fi
+
+    # Write both files under hidden temporary names on the shared output
+    # filesystem. The manager only sees the final names after verification.
+    if ! tar -czf "${archive_tmp}" -C "${stage}" manifest.json p1 p2 p3 p4 ||
+       ! tar -tzf "${archive_tmp}" >/dev/null 2>&1; then
+        rm -f -- "${archive_tmp}" "${manifest_tmp}"
+        rmdir -- "${lock_dir}"
+        echo "Remote package: archive staging or verification failed" >&2
+        return 1
+    fi
+    if [ "${publish_sidecar}" = "true" ] && {
+       ! cp -- "${stage}/manifest.json" "${manifest_tmp}" ||
+       ! jq -e '.schema == 1 and (.files | length > 0)' "${manifest_tmp}" >/dev/null 2>&1 ||
+       ! cmp -s "${stage}/manifest.json" "${manifest_tmp}"; }; then
+        rm -f -- "${archive_tmp}" "${manifest_tmp}"
+        rmdir -- "${lock_dir}"
+        echo "Remote package: sidecar manifest staging or verification failed" >&2
+        return 1
+    fi
+
+    # For Docker output, publish the sidecar first and the archive last.
+    # Manager discovery is keyed by the archive name, so its appearance means
+    # both verified outputs are already present. Manual menu behavior remains
+    # unchanged: its archive already contains manifest.json, without a sidecar.
+    if [ "${publish_sidecar}" = "true" ]; then
+        if ! mv -n -- "${manifest_tmp}" "${manifest}" || [ -e "${manifest_tmp}" ]; then
+            rm -f -- "${archive_tmp}" "${manifest_tmp}"
+            rmdir -- "${lock_dir}"
+            echo "Remote package: manifest could not be published without overwrite" >&2
+            return 1
+        fi
+        manifest_published=true
+    fi
+    if ! mv -n -- "${archive_tmp}" "${archive}" || [ -e "${archive_tmp}" ]; then
+        rm -f -- "${archive_tmp}" "${manifest_tmp}"
+        if [ "${manifest_published}" = "true" ]; then rm -f -- "${manifest}"; fi
+        rmdir -- "${lock_dir}"
+        echo "Remote package: archive could not be published without overwrite" >&2
+        return 1
+    fi
+    if ! tar -tzf "${archive}" >/dev/null 2>&1; then
+        rm -f -- "${archive_tmp}" "${manifest_tmp}"
+        rm -f -- "${archive}"
+        if [ "${manifest_published}" = "true" ]; then rm -f -- "${manifest}"; fi
+        rmdir -- "${lock_dir}"
+        echo "Remote package: published archive failed final verification" >&2
+        return 1
+    fi
+    rmdir -- "${lock_dir}"
+
+    echo "Remote package archive: ${archive}"
+    [ "${publish_sidecar}" = "true" ] && echo "Remote package manifest: ${manifest}"
+    return 0
+}
+
+function package_docker_build_after_backup() {
+    local build_rc="${1:-1}"
+    [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ] || return 0
+    if [ "${build_rc}" -ne 0 ]; then
+        echo "Remote package: build/backup did not complete successfully (rc=${build_rc}); packaging skipped." >&2
+        return "${build_rc}"
+    fi
+    packing_loader --automatic
+}
+
 function packing_loader() {
-    local part part_root stage archive tmp_archive p4_source
+    local part part_root stage stage_base archive p4_source output_dir automatic=false
+    if [ "${1:-}" = "--automatic" ]; then
+        [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ] || {
+            echo "Remote package: automatic mode is restricted to Docker builder." >&2
+            return 64
+        }
+        automatic=true
+        output_dir="${MSHELL_SHARED_OUTPUT_DIR:-${MSHELL_OUTPUT_DIR:-/out}}"
+        if [ ! -d "${output_dir}" ] || [ ! -w "${output_dir}" ]; then
+            echo "Remote package: shared output directory is unavailable: ${output_dir}" >&2
+            return 1
+        fi
+        archive="${output_dir}/remote.updatepack.${MODEL:-unknown}-${BUILD:-unknown}.tgz"
+    else
+        archive="/home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz"
+    fi
+
     [[ "${MODEL:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] &&
     [[ "${BUILD:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
         echo "Remote package: invalid model or DSM build" >&2
         return 1
     }
-    archive="/home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz"
 
-    dialog --clear --backtitle "$(backtitle)" --yesno \
-      "Pack the current loader's P1-P3 files and Alpine P4 persistence for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
+    if [ "${automatic}" != "true" ]; then
+        dialog --clear --backtitle "$(backtitle)" --yesno \
+          "Pack the current loader's P1-P3 files and Alpine P4 persistence for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
+    fi
 
-    if [ -e "${archive}" ] || [ -L "${archive}" ]; then
-        dialog --clear --backtitle "$(backtitle)" --msgbox \
-          "The package already exists and will not be overwritten:\n${archive}" 0 0
+    if [ -e "${archive}" ] || [ -L "${archive}" ] ||
+       { [ "${automatic}" = "true" ] && { [ -e "${archive%.tgz}.manifest.json" ] || [ -L "${archive%.tgz}.manifest.json" ]; }; }; then
+        echo "Remote package: output already exists; refusing overwrite: ${archive}" >&2
+        if [ "${automatic}" != "true" ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "The package or manifest already exists and will not be overwritten:\n${archive}" 0 0
+        fi
         return 1
     fi
 
-    stage="$(mktemp -d /dev/shm/remote.updatepack.XXXXXX)" || return 1
-    tmp_archive="${stage}/package.tgz"
+    stage_base="${MSHELL_TMPDIR:-/dev/shm}"
+    [ -d "${stage_base}" ] && [ -w "${stage_base}" ] || stage_base="${TMPDIR:-/tmp}"
+    stage="$(mktemp -d "${stage_base%/}/remote.updatepack.XXXXXX")" || return 1
     for part in 1 2 3; do
         part_root="/mnt/${loaderdisk}${part}"
         if ! mount | grep -Fq " on ${part_root} "; then
             echo "Remote package: P${part} is not mounted at ${part_root}" >&2
             rm -rf -- "${stage}"
-            dialog --clear --backtitle "$(backtitle)" --msgbox \
-              "P${part} is not mounted. No package was created." 0 0
+            if [ "${automatic}" != "true" ]; then
+                dialog --clear --backtitle "$(backtitle)" --msgbox \
+                  "P${part} is not mounted. No package was created." 0 0
+            fi
             return 1
         fi
     done
@@ -2826,33 +2990,36 @@ function packing_loader() {
     if ! mountpoint -q /mnt/alpine; then
         echo "Remote package: Alpine P4 is not mounted" >&2
         rm -rf -- "${stage}"
-        dialog --clear --backtitle "$(backtitle)" --msgbox \
-          "Alpine P4 is not mounted. No package was created." 0 0
+        if [ "${automatic}" != "true" ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "Alpine P4 is not mounted. No package was created." 0 0
+        fi
         return 1
     fi
     if ! remote_package_stage_files "${stage}" \
-      "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${p4_source}"; then
+      "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${p4_source}" "${automatic}"; then
         rm -rf -- "${stage}"
-        dialog --clear --backtitle "$(backtitle)" --msgbox \
-          "Required loader files or provenance are missing/invalid. No package was created." 0 0
+        if [ "${automatic}" != "true" ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "Required loader files or provenance are missing/invalid. No package was created." 0 0
+        fi
         return 1
     fi
 
-    if ! tar -czf "${tmp_archive}" -C "${stage}" manifest.json p1 p2 p3 p4 ||
-       ! tar -tzf "${tmp_archive}" >/dev/null 2>&1 ||
-       ! mv -n -- "${tmp_archive}" "${archive}" ||
-       [ -e "${tmp_archive}" ] ||
-       ! tar -tzf "${archive}" >/dev/null 2>&1; then
-        echo "Remote package: archive creation or verification failed" >&2
+    if ! remote_package_publish "${stage}" "${archive}" "${automatic}"; then
         rm -rf -- "${stage}"
-        dialog --clear --backtitle "$(backtitle)" --msgbox \
-          "Remote loader package creation failed. No complete package was published." 0 0
+        if [ "${automatic}" != "true" ]; then
+            dialog --clear --backtitle "$(backtitle)" --msgbox \
+              "Remote loader package creation failed. No complete package was published." 0 0
+        fi
         return 1
     fi
     rm -rf -- "${stage}"
-    dialog --clear --backtitle "$(backtitle)" --msgbox \
-      "Remote loader package created and verified:\n${archive}" 0 0
-    returnto "The entire process of packing the boot loader has been completed! Press any key to continue..."
+    if [ "${automatic}" != "true" ]; then
+        dialog --clear --backtitle "$(backtitle)" --msgbox \
+          "Remote loader package created and verified:\n${archive}" 0 0
+        returnto "The entire process of packing the boot loader has been completed! Press any key to continue..."
+    fi
 }
 
 function satadom_edit() {

@@ -5929,6 +5929,14 @@ function persist_alpine_apkovl_safely() {
     echo "[APKVOL] Staged Alpine persistence verified and activated."
 }
 function ensure_alpine_partition_recovery_before_backup() {
+    # A Docker build container shares the host mount namespace and works on a
+    # mapped private loader image. Its P3/P4 mounts are build inputs, not the
+    # booted Alpine system's recovery targets.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        echo "[RECOVERY] Skipping P3/P4 recovery before backup in Docker builder mode."
+        return 0
+    fi
+
     is_alpine || return 0
 
     local recovery_helper="/home/tc/tools/recover-alpine-p3.sh"
@@ -9633,6 +9641,8 @@ function my() {
       cleanupmemory
       [ "${BUS}" = "block" ] && exit 0
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
+      # rploader is the final pipeline command, so the pipeline reports its
+      # backup status. Keep the answer available for legacy error prompts.
       echo "y"|rploader backup
       backup_rc=$?
       if [ "$backup_rc" -ne 0 ]; then
