@@ -9,6 +9,18 @@ set -u # Unbound variable errors are not allowed
 #####################################################################################################
 export PATH='/home/tc/.local/bin:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
+# A completed Docker build is a one-shot operation. ttyd may open another PTY
+# after the first menu exits; never allow that PTY to modify the private image
+# or publish a second package for the same host apply session.
+if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+  for completed_package in /out/remote.updatepack.*.tgz; do
+    if [ -s "${completed_package}" ] && [ -s "${completed_package%.tgz}.manifest.json" ]; then
+      echo "Remote loader package is complete. Builder menu is closed; apply the package from MSHELL Manager."
+      exit 0
+    fi
+  done
+fi
+
 # Alpine 이식: /etc/init.d/tc-functions는 TinyCore 전용 복구 스크립트라 Alpine에 존재하지
 #않는 게 정상이며, tinycorelinux.net에서 받아올 필요도 없음. is_alpine()이면 이 체크를 skip.
 if ! is_alpine && [ ! -f "/etc/init.d/tc-functions" ]; then

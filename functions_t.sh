@@ -2415,6 +2415,11 @@ make_with_progress() {
         fi
 st "finishloader" "Finished building" "Finished building the loader"  
 log_build_step "Finished building" 12 12
+        if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+            rm -f /home/tc/buildstatus
+            echo "Remote loader package is ready in /out. Builder menu is now closed."
+            exit 0
+        fi
     else
         log_error "Build failed with exit code: $exit_code"
         show_backup_error_info
