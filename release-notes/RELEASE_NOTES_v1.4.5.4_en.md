@@ -6,6 +6,8 @@ An update package made while the source loader is missing files can leave the re
 
 The `xtcrp.tgz` loader backup now travels with the update. If that backup is absent or damaged, repair the source loader backup before trying to create the package again.
 
-## Protect the NAS during Docker-assisted builds
+## Preparing Docker-based remote builds for MSHELL Manager
 
-When a loader is built inside a Docker container on a NAS, confusing the build image with a host disk could put the NAS's own storage at risk. Docker builder mode now refuses to proceed unless the designated image is available, and avoids disturbing the host's modules, swap, and caches. It also stops if the required Alpine persistence backup was not actually created. This applies only when Docker builder mode is explicitly enabled; normal on-device builds are unchanged.
+We are preparing a way for MSHELL Manager to rebuild a loader remotely in Docker, without entering the loader itself, so that the original loader's DSM kernel can be replaced. This release provides the loader-side groundwork for that build. Manager is designed to validate the result and require user approval before applying it to the original loader; this is not yet a release of the complete remote-build feature.
+
+In Docker builder mode, the build stops if its designated image is missing and does not change the NAS host's disks, modules, swap, or caches. Normal on-device builds are unchanged.
