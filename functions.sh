@@ -2352,6 +2352,7 @@ make_with_progress() {
     local ldr_mode="${1}"
     local prevent_param="${2}"
     local build_cmd=""
+    local package_rc=0
 
     checkUserConfig 
     if [ $? -ne 0 ]; then
@@ -2402,7 +2403,16 @@ make_with_progress() {
 
         if  [ -f /home/tc/custom-module/redpill.ko ]; then
             sudo rm -rf /home/tc/custom-module/redpill.ko
-        fi      
+        fi
+        if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+            package_docker_build_after_backup "${exit_code}"
+            package_rc=$?
+            if [ "${package_rc}" -ne 0 ]; then
+                log_error "Remote package failed with exit code: ${package_rc}"
+                rm -f /home/tc/buildstatus
+                return "${package_rc}"
+            fi
+        fi
 st "finishloader" "Finished building" "Finished building the loader"  
 log_build_step "Finished building" 12 12
     else

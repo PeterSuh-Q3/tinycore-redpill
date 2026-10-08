@@ -2134,88 +2134,6 @@ function checkUserConfig() {
 }
 
 ###############################################################################
-# Where the magic happens!
-function make() {
-  local build_rc=0 package_rc=0
-
-
-  checkUserConfig 
-  if [ $? -ne 0 ]; then
-    dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0      
-    return 1  
-  fi
-
-  #if [ "${BUS}" != "usb" ] && [ ${platform} = "apollolake" ] && [ "$HYPERVISOR" = "KVM" ]; then
-  #    echo "When using SATA/NVMe type loader + Apollolake + proxmox(kvm)/qemu(kvm), loader build is not possible. KP occurs in versions after lkm 24.8.29..."
-  #    echo "press any key to continue..."
-  #    read answer
-  #    return 1
-  #fi
-
-  usbidentify
-  clear
-  rm -f /tmp/cmdline-check.log
-
-  if [ "${PREVENT_INIT}" = "OFF" ]; then
-    my "${MODEL}"-"${BUILD}" noconfig "${1}" | tee "/home/tc/zlastbuild.log"
-    build_rc=${PIPESTATUS[0]}
-  else
-    my "${MODEL}"-"${BUILD}" noconfig "${1}" prevent_param | tee "/home/tc/zlastbuild.log"
-    build_rc=${PIPESTATUS[0]}
-  fi
-
-  # A pipeline normally exposes tee's exit status, which hid my() failures.
-  # Preserve my()'s code and present the dedicated consistency log in dialog.
-  if [ "${build_rc}" -ne 0 ]; then
-    if [ -s /tmp/cmdline-check.log ] && grep -qF '[cmdline-check]' /tmp/cmdline-check.log; then
-      dialog --clear --backtitle "`backtitle`" \
-        --title "Build Error: Cmdline Validation Failed" \
-        --textbox /tmp/cmdline-check.log 0 0
-    fi
-    return "${build_rc}"
-  fi
-
-  # my() has already completed rploader backup for USB/NVMe builds.  Its
-  # user_config.json updates are therefore durable, so make them the new menu
-  # baseline and prevent restart() from performing the same backup again.
-  # Block-device builds intentionally skip that backup inside my().
-  if [ "${BUS}" != "block" ]; then
-    refresh_userconfig_hash
-  fi
-
-  if  [ -f /home/tc/custom-module/redpill.ko ]; then
-    echo "Removing redpill.ko ..."
-    sudo rm -rf /home/tc/custom-module/redpill.ko
-  fi
-
-  if [ $? -ne 0 ]; then
-    dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0    
-    return 1
-  fi
-
-  # my() returns success only after both the image build and rploader backup
-  # succeed. In Docker mode, publish the remote-update package immediately;
-  # normal Alpine users retain the existing interactive build completion.
-  if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
-    package_docker_build_after_backup "${build_rc}"
-    package_rc=$?
-    if [ "${package_rc}" -ne 0 ]; then
-      return "${package_rc}"
-    fi
-    rm -f /home/tc/buildstatus
-    echo "Docker loader build and remote package completed successfully."
-    return 0
-  fi
-
-st "finishloader" "Loader build status" "Finished building the loader"  
-  msgnormal "The loader was created successfully!!!"
-  echo "press any key to continue..."
-  read answer
-  rm -f /home/tc/buildstatus  
-  return 0
-}
-
-###############################################################################
 # Post Update for jot mode 
 function postupdate() {
   my "${MODEL}" postupdate | tee "/home/tc/zpostupdate.log"
@@ -2843,6 +2761,10 @@ function remote_package_stage_files() {
     done
 }
 
+function remote_package_log() {
+    printf '[REMOTE PACKAGE] %s\n' "$1"
+}
+
 function remote_package_publish() {
     local stage="$1" archive="$2" publish_sidecar="${3:-false}"
     local manifest manifest_tmp archive_tmp lock_dir manifest_published=false
@@ -2869,20 +2791,22 @@ function remote_package_publish() {
 
     # Write both files under hidden temporary names on the shared output
     # filesystem. The manager only sees the final names after verification.
+    [ "${publish_sidecar}" = "true" ] && remote_package_log "Creating and verifying package archive..."
     if ! tar -czf "${archive_tmp}" -C "${stage}" manifest.json p1 p2 p3 p4 ||
        ! tar -tzf "${archive_tmp}" >/dev/null 2>&1; then
         rm -f -- "${archive_tmp}" "${manifest_tmp}"
         rmdir -- "${lock_dir}"
-        echo "Remote package: archive staging or verification failed" >&2
+        echo "[REMOTE PACKAGE] FAILED at archive creation or verification" >&2
         return 1
     fi
+    [ "${publish_sidecar}" = "true" ] && remote_package_log "Archive created and verified. Staging manifest..."
     if [ "${publish_sidecar}" = "true" ] && {
        ! cp -- "${stage}/manifest.json" "${manifest_tmp}" ||
        ! jq -e '.schema == 1 and (.files | length > 0)' "${manifest_tmp}" >/dev/null 2>&1 ||
        ! cmp -s "${stage}/manifest.json" "${manifest_tmp}"; }; then
         rm -f -- "${archive_tmp}" "${manifest_tmp}"
         rmdir -- "${lock_dir}"
-        echo "Remote package: sidecar manifest staging or verification failed" >&2
+        echo "[REMOTE PACKAGE] FAILED at manifest staging or verification" >&2
         return 1
     fi
 
@@ -2891,19 +2815,21 @@ function remote_package_publish() {
     # both verified outputs are already present. Manual menu behavior remains
     # unchanged: its archive already contains manifest.json, without a sidecar.
     if [ "${publish_sidecar}" = "true" ]; then
+        remote_package_log "Publishing manifest to shared output..."
         if ! mv -n -- "${manifest_tmp}" "${manifest}" || [ -e "${manifest_tmp}" ]; then
             rm -f -- "${archive_tmp}" "${manifest_tmp}"
             rmdir -- "${lock_dir}"
-            echo "Remote package: manifest could not be published without overwrite" >&2
+            echo "[REMOTE PACKAGE] FAILED at manifest publication" >&2
             return 1
         fi
         manifest_published=true
+        remote_package_log "Publishing archive to shared output..."
     fi
     if ! mv -n -- "${archive_tmp}" "${archive}" || [ -e "${archive_tmp}" ]; then
         rm -f -- "${archive_tmp}" "${manifest_tmp}"
         if [ "${manifest_published}" = "true" ]; then rm -f -- "${manifest}"; fi
         rmdir -- "${lock_dir}"
-        echo "Remote package: archive could not be published without overwrite" >&2
+        echo "[REMOTE PACKAGE] FAILED at archive publication" >&2
         return 1
     fi
     if ! tar -tzf "${archive}" >/dev/null 2>&1; then
@@ -2911,7 +2837,7 @@ function remote_package_publish() {
         rm -f -- "${archive}"
         if [ "${manifest_published}" = "true" ]; then rm -f -- "${manifest}"; fi
         rmdir -- "${lock_dir}"
-        echo "Remote package: published archive failed final verification" >&2
+        echo "[REMOTE PACKAGE] FAILED at final published archive verification" >&2
         return 1
     fi
     rmdir -- "${lock_dir}"
@@ -2939,19 +2865,21 @@ function packing_loader() {
             return 64
         }
         automatic=true
+        remote_package_log "Starting automatic Docker package..."
         output_dir="${MSHELL_SHARED_OUTPUT_DIR:-${MSHELL_OUTPUT_DIR:-/out}}"
         if [ ! -d "${output_dir}" ] || [ ! -w "${output_dir}" ]; then
-            echo "Remote package: shared output directory is unavailable: ${output_dir}" >&2
+            echo "[REMOTE PACKAGE] FAILED at output directory check: ${output_dir}" >&2
             return 1
         fi
         archive="${output_dir}/remote.updatepack.${MODEL:-unknown}-${BUILD:-unknown}.tgz"
+        remote_package_log "Output: ${archive}"
     else
         archive="/home/tc/remote.updatepack.${MODEL}-${BUILD}.tgz"
     fi
 
     [[ "${MODEL:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] &&
     [[ "${BUILD:-}" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
-        echo "Remote package: invalid model or DSM build" >&2
+        echo "[REMOTE PACKAGE] FAILED at model/DSM build validation" >&2
         return 1
     }
 
@@ -2962,7 +2890,7 @@ function packing_loader() {
 
     if [ -e "${archive}" ] || [ -L "${archive}" ] ||
        { [ "${automatic}" = "true" ] && { [ -e "${archive%.tgz}.manifest.json" ] || [ -L "${archive%.tgz}.manifest.json" ]; }; }; then
-        echo "Remote package: output already exists; refusing overwrite: ${archive}" >&2
+        echo "[REMOTE PACKAGE] FAILED at output collision check: ${archive} already exists" >&2
         if [ "${automatic}" != "true" ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
               "The package or manifest already exists and will not be overwritten:\n${archive}" 0 0
@@ -2972,11 +2900,15 @@ function packing_loader() {
 
     stage_base="${MSHELL_TMPDIR:-/dev/shm}"
     [ -d "${stage_base}" ] && [ -w "${stage_base}" ] || stage_base="${TMPDIR:-/tmp}"
-    stage="$(mktemp -d "${stage_base%/}/remote.updatepack.XXXXXX")" || return 1
+    stage="$(mktemp -d "${stage_base%/}/remote.updatepack.XXXXXX")" || {
+        echo "[REMOTE PACKAGE] FAILED at staging directory creation" >&2
+        return 1
+    }
+    [ "${automatic}" = "true" ] && remote_package_log "Checking P1-P4 mounts..."
     for part in 1 2 3; do
         part_root="/mnt/${loaderdisk}${part}"
         if ! mount | grep -Fq " on ${part_root} "; then
-            echo "Remote package: P${part} is not mounted at ${part_root}" >&2
+            echo "[REMOTE PACKAGE] FAILED at P${part} mount check: ${part_root} is not mounted" >&2
             rm -rf -- "${stage}"
             if [ "${automatic}" != "true" ]; then
                 dialog --clear --backtitle "$(backtitle)" --msgbox \
@@ -2988,7 +2920,7 @@ function packing_loader() {
 
     p4_source="/mnt/alpine/localhost.apkovl.tar.gz"
     if ! mountpoint -q /mnt/alpine; then
-        echo "Remote package: Alpine P4 is not mounted" >&2
+        echo "[REMOTE PACKAGE] FAILED at P4 mount check: /mnt/alpine is not mounted" >&2
         rm -rf -- "${stage}"
         if [ "${automatic}" != "true" ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
@@ -2996,18 +2928,22 @@ function packing_loader() {
         fi
         return 1
     fi
+    [ "${automatic}" = "true" ] && remote_package_log "P1-P4 mounts verified. Validating and staging required files and manifest..."
     if ! remote_package_stage_files "${stage}" \
       "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${p4_source}" "${automatic}"; then
         rm -rf -- "${stage}"
+        echo "[REMOTE PACKAGE] FAILED at required file or manifest validation/staging" >&2
         if [ "${automatic}" != "true" ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
               "Required loader files or provenance are missing/invalid. No package was created." 0 0
         fi
         return 1
     fi
+    [ "${automatic}" = "true" ] && remote_package_log "Required files and manifest verified and staged."
 
     if ! remote_package_publish "${stage}" "${archive}" "${automatic}"; then
         rm -rf -- "${stage}"
+        echo "[REMOTE PACKAGE] FAILED at archive/manifest publication" >&2
         if [ "${automatic}" != "true" ]; then
             dialog --clear --backtitle "$(backtitle)" --msgbox \
               "Remote loader package creation failed. No complete package was published." 0 0
@@ -3015,6 +2951,9 @@ function packing_loader() {
         return 1
     fi
     rm -rf -- "${stage}"
+    if [ "${automatic}" = "true" ]; then
+        remote_package_log "Complete: archive ${archive} ($(wc -c < "${archive}" | tr -d '[:space:]') bytes); manifest ${archive%.tgz}.manifest.json ($(wc -c < "${archive%.tgz}.manifest.json" | tr -d '[:space:]') bytes)"
+    fi
     if [ "${automatic}" != "true" ]; then
         dialog --clear --backtitle "$(backtitle)" --msgbox \
           "Remote loader package created and verified:\n${archive}" 0 0

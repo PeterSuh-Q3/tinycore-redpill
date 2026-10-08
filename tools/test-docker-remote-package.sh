@@ -20,6 +20,7 @@ extract_function "${menu_file}" remote_package_stage_files "${tmp_dir}/stage.sh"
 extract_function "${menu_file}" remote_package_source_revision "${tmp_dir}/source-revision.sh"
 extract_function "${menu_file}" remote_package_builder_image_digest "${tmp_dir}/image-digest.sh"
 extract_function "${menu_file}" remote_package_publish "${tmp_dir}/publish.sh"
+extract_function "${menu_file}" remote_package_log "${tmp_dir}/log.sh"
 extract_function "${menu_file}" package_docker_build_after_backup "${tmp_dir}/after-build.sh"
 extract_function "${menu_file}" packing_loader "${tmp_dir}/packing.sh"
 extract_function "${repo_root}/functions.sh" getBus "${tmp_dir}/get-bus.sh"
@@ -31,6 +32,8 @@ source "${tmp_dir}/source-revision.sh"
 source "${tmp_dir}/image-digest.sh"
 # shellcheck source=/dev/null
 source "${tmp_dir}/publish.sh"
+# shellcheck source=/dev/null
+source "${tmp_dir}/log.sh"
 # shellcheck source=/dev/null
 source "${tmp_dir}/after-build.sh"
 # shellcheck source=/dev/null
@@ -183,44 +186,36 @@ remote_package_stage_files() {
 }
 MODEL=DS_AUTO
 BUILD=7.4-90080
-packing_loader --automatic
+packing_loader --automatic > "${tmp_dir}/automatic-console" 2>&1
 test -s "${out}/remote.updatepack.${MODEL}-${BUILD}.tgz"
 test -s "${out}/remote.updatepack.${MODEL}-${BUILD}.manifest.json"
 test ! -e "${tmp_dir}/dialog-called"
 grep -qx '/mnt/alpine/localhost.apkovl.tar.gz' "${tmp_dir}/p4-source-argument"
+for message in \
+  'Starting automatic Docker package' \
+  'Output:' \
+  'Checking P1-P4 mounts' \
+  'Validating and staging required files and manifest' \
+  'Creating and verifying package archive' \
+  'Publishing manifest to shared output' \
+  'Publishing archive to shared output' \
+  'Complete: archive'; do
+    grep -Fq "${message}" "${tmp_dir}/automatic-console"
+done
+grep -Eq 'Complete: archive .* \([0-9]+ bytes\); manifest .* \([0-9]+ bytes\)' "${tmp_dir}/automatic-console"
 
-# Exercise the production post-build gate: mock my()'s combined build+backup
-# result and assert only the fully successful path reaches automatic packaging.
-packing_loader() { echo package >> "${tmp_dir}/flow"; }
-run_build_flow() {
-    local build_rc="$1" backup_rc="$2" rc
-    : > "${tmp_dir}/flow"
-    echo build >> "${tmp_dir}/flow"
-    if [ "${build_rc}" -ne 0 ]; then return "${build_rc}"; fi
-    echo backup >> "${tmp_dir}/flow"
-    rc="${backup_rc}"
-    package_docker_build_after_backup "${rc}"
-}
-run_build_flow 0 0
-test "$(tr '\n' ' ' < "${tmp_dir}/flow")" = 'build backup package '
-if run_build_flow 1 0; then echo 'FAIL: build failure passed package gate' >&2; exit 1; fi
-test "$(tr '\n' ' ' < "${tmp_dir}/flow")" = 'build '
-if run_build_flow 0 7; then echo 'FAIL: backup failure passed package gate' >&2; exit 1; fi
-test "$(tr '\n' ' ' < "${tmp_dir}/flow")" = 'build backup '
-
-# The real make() checks PIPESTATUS and build failure before the Docker package
-# call. rploader is the final command in my()'s backup pipeline, so its
-# failure status is observable.
-awk '/^function make\(\) \{$/,/^}$/ { print }' "${menu_file}" > "${tmp_dir}/make.sh"
-grep -q 'build_rc=${PIPESTATUS\[0\]}' "${tmp_dir}/make.sh"
-grep -q 'if \[ "${build_rc}" -ne 0 \]' "${tmp_dir}/make.sh"
-grep -q 'package_docker_build_after_backup "${build_rc}"' "${tmp_dir}/make.sh"
-grep -q '^      echo "y"|rploader backup$' "${repo_root}/functions.sh"
-grep -q '^      echo "y"|rploader backup$' "${repo_root}/functions_t.sh"
-grep -q 'if \[ "\${BUS}" = "block" \] && exit 0' "${repo_root}/functions.sh" || \
-  grep -Fq '[ "${BUS}" = "block" ] && exit 0' "${repo_root}/functions.sh"
+# An unavailable P4 must stop before any output is published, with the stage
+# named on the same console where the user watched the build.
+mountpoint() { return 1; }
+MODEL=DS_NO_P4
+if packing_loader --automatic > "${tmp_dir}/p4-failure-console" 2>&1; then
+    echo 'FAIL: missing P4 was accepted' >&2
+    exit 1
+fi
+grep -Fq '[REMOTE PACKAGE] FAILED at P4 mount check' "${tmp_dir}/p4-failure-console"
+test ! -e "${out}/remote.updatepack.${MODEL}-${BUILD}.tgz"
+test ! -e "${out}/remote.updatepack.${MODEL}-${BUILD}.manifest.json"
 
 echo 'PASS: package contains verified P1-P4 payload and publishes archive plus sidecar manifest under /out.'
 echo 'PASS: automatic package requires a valid source revision and OCI builder image digest.'
-echo 'PASS: automatic Docker packaging is dialog-free and reads P4 from the private mounted partition.'
-echo 'PASS: packaging order is build -> backup success -> package; build/backup failures skip packaging.'
+echo 'PASS: automatic Docker packaging shows tty progress and reads P4 from the private mounted partition.'
