@@ -232,6 +232,14 @@ function safe_fetch() {
 # images carry the helper in the apkovl; older deployed images fetch it after
 # GitHub becomes reachable and before any automatic my.sh.gz update.
 function run_alpine_partition_recovery() {
+    # The Docker builder operates on a mapped loader image and has no Alpine
+    # P3/P4 persistence partitions of its own. Do not let the host's loop
+    # mounts be mistaken for the running system's persistence targets.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        echo '[RECOVERY] Skipping P3/P4 recovery in Docker builder mode.'
+        return 0
+    fi
+
     is_alpine || return 0
     local script=/home/tc/tools/recover-alpine-p3.sh
     local tmp=/dev/shm/.recover-alpine-p3.$$.sh
