@@ -55,8 +55,8 @@ getBus /dev/loop7 >/dev/null
 test "${BUS}" = sata
 test "${loaderdisk}" = loop7p
 
-# Create a completed-loader fixture. P4 is a private partition archive; the
-# stage function must copy exactly that archive into p4/ in the package.
+# Create a completed-loader fixture. P4 may exist on the source loader, but it
+# must never enter the remote package or its manifest.
 fixture="${tmp_dir}/fixture"
 stage="${tmp_dir}/stage"
 out="${tmp_dir}/out"
@@ -78,28 +78,26 @@ printf 'private P4 persistence fixture\n' > "${tmp_dir}/p4-file"
 tar -czf "${fixture}/p4/localhost.apkovl.tar.gz" -C "${tmp_dir}" p4-file
 
 remote_package_stage_files "${stage}" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz" true
-cmp -s "${fixture}/p4/localhost.apkovl.tar.gz" "${stage}/p4/localhost.apkovl.tar.gz"
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" true
 jq -e --arg revision "${MSHELL_SOURCE_REVISION}" '.source_revision == $revision' \
   "${stage}/manifest.json" >/dev/null
 jq -e --arg digest "${MSHELL_BUILDER_IMAGE_DIGEST}" '.builder_image_digest == $digest' \
   "${stage}/manifest.json" >/dev/null
-jq -e '.files[] | select(.source == "p4/localhost.apkovl.tar.gz")' \
+jq -e '([.files[].source] | all(contains("p4/") | not)) and
+  (has("p4_persistence_source") | not) and (has("p4_persistence_sha256") | not)' \
   "${stage}/manifest.json" >/dev/null
+test ! -e "${stage}/p4"
 
 MSHELL_SOURCE_REVISION=invalid
 if remote_package_stage_files "${tmp_dir}/invalid-source-stage" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz" true; then
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" true; then
     echo 'FAIL: automatic package accepted invalid source revision' >&2
     exit 1
 fi
 test ! -e "${tmp_dir}/invalid-source-stage/manifest.json"
 unset MSHELL_SOURCE_REVISION
 if remote_package_stage_files "${tmp_dir}/missing-source-stage" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz" true; then
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" true; then
     echo 'FAIL: automatic package accepted missing source revision' >&2
     exit 1
 fi
@@ -108,16 +106,14 @@ MSHELL_SOURCE_REVISION=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 MSHELL_BUILDER_IMAGE_DIGEST=invalid
 if remote_package_stage_files "${tmp_dir}/invalid-digest-stage" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz" true; then
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" true; then
     echo 'FAIL: automatic package accepted invalid builder image digest' >&2
     exit 1
 fi
 test ! -e "${tmp_dir}/invalid-digest-stage/manifest.json"
 unset MSHELL_BUILDER_IMAGE_DIGEST
 if remote_package_stage_files "${tmp_dir}/missing-digest-stage" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz" true; then
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" true; then
     echo 'FAIL: automatic package accepted missing builder image digest' >&2
     exit 1
 fi
@@ -127,8 +123,7 @@ MSHELL_BUILDER_IMAGE_DIGEST=sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 # The hardware menu package does not require container provenance.
 unset MSHELL_SOURCE_REVISION MSHELL_BUILDER_IMAGE_DIGEST
 remote_package_stage_files "${tmp_dir}/manual-stage" \
-  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3" \
-  "${fixture}/p4/localhost.apkovl.tar.gz"
+  "${fixture}/p1" "${fixture}/p2" "${fixture}/p3"
 jq -e 'has("source_revision") | not' "${tmp_dir}/manual-stage/manifest.json" >/dev/null
 jq -e 'has("builder_image_digest") | not' "${tmp_dir}/manual-stage/manifest.json" >/dev/null
 MSHELL_SOURCE_REVISION=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -139,8 +134,10 @@ remote_package_publish "${stage}" "${archive}" true
 test -s "${archive}"
 test -s "${archive%.tgz}.manifest.json"
 cmp -s "${stage}/manifest.json" "${archive%.tgz}.manifest.json"
-tar -xOf "${archive}" p4/localhost.apkovl.tar.gz > "${tmp_dir}/packaged-p4.tgz"
-cmp -s "${fixture}/p4/localhost.apkovl.tar.gz" "${tmp_dir}/packaged-p4.tgz"
+! tar -tzf "${archive}" | grep -Eq '(^|/)p4(/|$)'
+jq -e '([.files[].source] | all(contains("p4/") | not)) and
+  (has("p4_persistence_source") | not) and (has("p4_persistence_sha256") | not)' \
+  "${archive%.tgz}.manifest.json" >/dev/null
 test -z "$(find "${out}" -maxdepth 1 \( -name '*.tmp.*' -o -name '*.publish-lock' \) -print -quit)"
 
 # A second publisher must not overwrite either output.
@@ -173,16 +170,13 @@ mount() {
     printf '/dev/loop7p2 on /mnt/loop7p2 type vfat (rw)\n'
     printf '/dev/loop7p3 on /mnt/loop7p3 type vfat (rw)\n'
 }
-mountpoint() { [ "$#" -eq 2 ] && [ "$2" = /mnt/alpine ]; }
 dialog() { echo called >> "${tmp_dir}/dialog-called"; return 1; }
 remote_package_stage_files() {
-    local auto_stage="$1" p4_source="$5"
-    mkdir -p "${auto_stage}/p1" "${auto_stage}/p2" "${auto_stage}/p3" "${auto_stage}/p4"
-    printf 'private P4 from mounted partition\n' > "${auto_stage}/p4/localhost.apkovl.tar.gz"
+    local auto_stage="$1"
+    mkdir -p "${auto_stage}/p1" "${auto_stage}/p2" "${auto_stage}/p3"
     jq -n --arg revision "${MSHELL_SOURCE_REVISION}" --arg digest "${MSHELL_BUILDER_IMAGE_DIGEST}" \
-      '{schema:1,source_revision:$revision,builder_image_digest:$digest,files:[{source:"p4/localhost.apkovl.tar.gz",destination:"p4/localhost.apkovl.tar.gz",size:33,sha256:"test"}]}' \
+      '{schema:1,source_revision:$revision,builder_image_digest:$digest,files:[{source:"p3/xtcrp.tgz",destination:"p3/xtcrp.tgz",size:33,sha256:"test"}]}' \
       > "${auto_stage}/manifest.json"
-    printf '%s\n' "${p4_source}" > "${tmp_dir}/p4-source-argument"
 }
 MODEL=DS_AUTO
 BUILD=7.4-90080
@@ -190,11 +184,13 @@ packing_loader --automatic > "${tmp_dir}/automatic-console" 2>&1
 test -s "${out}/remote.updatepack.${MODEL}-${BUILD}.tgz"
 test -s "${out}/remote.updatepack.${MODEL}-${BUILD}.manifest.json"
 test ! -e "${tmp_dir}/dialog-called"
-grep -qx '/mnt/alpine/localhost.apkovl.tar.gz' "${tmp_dir}/p4-source-argument"
+! tar -tzf "${out}/remote.updatepack.${MODEL}-${BUILD}.tgz" | grep -Eq '(^|/)p4(/|$)'
+! jq -e '.files[].source | startswith("p4/")' \
+  "${out}/remote.updatepack.${MODEL}-${BUILD}.manifest.json" >/dev/null
 for message in \
   'Starting automatic Docker package' \
   'Output:' \
-  'Checking P1-P4 mounts' \
+  'Checking P1-P3 mounts' \
   'Validating and staging required files and manifest' \
   'Creating and verifying package archive' \
   'Publishing manifest to shared output' \
@@ -204,18 +200,6 @@ for message in \
 done
 grep -Eq 'Complete: archive .* \([0-9]+ bytes\); manifest .* \([0-9]+ bytes\)' "${tmp_dir}/automatic-console"
 
-# An unavailable P4 must stop before any output is published, with the stage
-# named on the same console where the user watched the build.
-mountpoint() { return 1; }
-MODEL=DS_NO_P4
-if packing_loader --automatic > "${tmp_dir}/p4-failure-console" 2>&1; then
-    echo 'FAIL: missing P4 was accepted' >&2
-    exit 1
-fi
-grep -Fq '[REMOTE PACKAGE] FAILED at P4 mount check' "${tmp_dir}/p4-failure-console"
-test ! -e "${out}/remote.updatepack.${MODEL}-${BUILD}.tgz"
-test ! -e "${out}/remote.updatepack.${MODEL}-${BUILD}.manifest.json"
-
-echo 'PASS: package contains verified P1-P4 payload and publishes archive plus sidecar manifest under /out.'
+echo 'PASS: package includes P1-P3 payload only; P4 is absent from archive and manifest.'
 echo 'PASS: automatic package requires a valid source revision and OCI builder image digest.'
-echo 'PASS: automatic Docker packaging shows tty progress and reads P4 from the private mounted partition.'
+echo 'PASS: automatic Docker packaging shows tty progress and does not require or read P4.'

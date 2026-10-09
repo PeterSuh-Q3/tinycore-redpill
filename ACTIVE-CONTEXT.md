@@ -313,8 +313,9 @@ build pilot before any module-pack publication.
 - v1.4.5.0 restores the v1.4.4.8 loader scripts and P3/P4 overlay filename
   behavior. P3 archive migration has been withdrawn pending validation.
 - The manual P3 recovery tool repairs mounts and configuration links without
-  renaming the overlay. Its persistence step still requires root and uses
-  `lbu commit`; runtime ownership must be checked before future changes.
+  renaming the overlay. Its separate explicit P4 repair action packages the
+  live root with `lbu package`; this is distinct from automatic build-backup
+  persistence.
 - The image-build workflow now selects a previous release only when its base
   image asset exists. With v1.4.4.9 assets removed, this resolves to v1.4.4.8.
 - A live P4 archive was observed with `tc:staff` owners on privileged `/etc`
@@ -388,3 +389,20 @@ build pilot before any module-pack publication.
 - Do not test this injection with `synowebapi --exec`: that command calls the
   DSM API directly and bypasses nginx and `mshellscgiproxy`.  Test through an
   authenticated `SYNO.Core.System.info` HTTP request instead.
+
+## Automatic backup and remote package P4 scope (2026-10-09)
+
+- The automatic Alpine loader-backup path no longer runs `lbu commit`, mutates
+  `lbu.conf`, stages/repackages an apkovl, or writes a new P4 persistence
+  archive. Existing P4 persistence is retained; ordinary loader backup and
+  P3 `xtcrp.tgz` handling remain.
+- Remote loader packages now contain P1-P3 only. P4 is neither staged into the
+  archive nor represented in the manifest, and packaging no longer requires
+  or reads the Alpine P4 mount/archive. The P3 `xtcrp.tgz` file remains a
+  required payload.
+- The independent `tools/recover-alpine-p3.sh` repair workflow remains
+  available; its explicit P4 repair uses `lbu package`, not the removed
+  automatic backup `lbu commit` path.
+- Syntax and local Docker remote-package/build/recovery-skip tests passed.
+  The user built and deployed the package; further package/device validation
+  is being continued in the Remote Alpine loader-builder Manager task.

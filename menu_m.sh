@@ -2679,9 +2679,8 @@ function remote_package_builder_image_digest() {
 }
 
 function remote_package_stage_files() {
-    local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" p4_source="$5" automatic="${6:-false}"
+    local stage="$1" p1_root="$2" p2_root="$3" p3_root="$4" automatic="${5:-false}"
     local part part_root file required friend_part rel size hash source_revision="" builder_image_digest=""
-    local expected_p4_sha256="" actual_p4_sha256=""
 
     if [ "${automatic}" = "true" ]; then
         source_revision="$(remote_package_source_revision)" || return 1
@@ -2706,7 +2705,7 @@ function remote_package_stage_files() {
     friend_part=3
     [ "${BIOS_CNT}" -eq 1 ] && [ "${FRKRNL}" = "YES" ] && friend_part=1
 
-    mkdir -p "${stage}/p1/boot/grub" "${stage}/p2" "${stage}/p3" "${stage}/p4" || return 1
+    mkdir -p "${stage}/p1/boot/grub" "${stage}/p2" "${stage}/p3" || return 1
     for part in 1 2 3; do
         case "${part}" in
             1) part_root="${p1_root}"; required="GRUB_VER zImage boot/grub/grub.cfg" ;;
@@ -2749,47 +2748,17 @@ function remote_package_stage_files() {
         return 1
     fi
 
-    if [ "${automatic}" = "true" ]; then
-        expected_p4_sha256="${MSHELL_P4_APKOVL_SHA256:-}"
-        if [[ ! "${expected_p4_sha256}" =~ ^[0-9a-f]{64}$ ]] ||
-           [ "${p4_source}" != "${MSHELL_P4_APKOVL_SOURCE:-}" ]; then
-            echo "Remote package: verified host P4 source and checksum are required" >&2
-            return 1
-        fi
-        actual_p4_sha256="$(sha256sum "${p4_source}" 2>/dev/null | awk '{print $1}')" || return 1
-        if [ "${actual_p4_sha256}" != "${expected_p4_sha256}" ]; then
-            echo "Remote package: host P4 persistence source checksum changed" >&2
-            return 1
-        fi
-        echo "Remote package: using read-only host P4 persistence seed (sha256 ${actual_p4_sha256})."
-    fi
-
-    if [ ! -f "${p4_source}" ] || [ -L "${p4_source}" ] ||
-       [ ! -s "${p4_source}" ] ||
-       ! tar -tzf "${p4_source}" >/dev/null 2>&1 ||
-       ! cp -- "${p4_source}" "${stage}/p4/localhost.apkovl.tar.gz" ||
-       ! cmp -s "${p4_source}" "${stage}/p4/localhost.apkovl.tar.gz"; then
-        echo "Remote package: missing, invalid, or unverified P4 persistence archive" >&2
-        return 1
-    fi
-
     jq -n --arg model "${MODEL}" --arg dsm_build "${BUILD}" \
       --arg loader_build "${rploaderver:-}" --arg source_revision "${source_revision}" \
       --arg builder_image_digest "${builder_image_digest}" \
-      --arg p4_persistence_source "${automatic}" \
-      --arg p4_persistence_sha256 "${expected_p4_sha256}" \
-      '{schema:1,model:$model,dsm_build:$dsm_build,loader_build:$loader_build,
-        files:[]} + (if $p4_persistence_source == "true" then
-          {p4_persistence_source:"active-loader",p4_persistence_sha256:$p4_persistence_sha256}
-        else {} end) + (if $source_revision != "" then
+      '{schema:1,model:$model,dsm_build:$dsm_build,loader_build:$loader_build,files:[]} + (if $source_revision != "" then
           {source_revision:$source_revision,builder_image_digest:$builder_image_digest}
         else {} end)' \
       > "${stage}/manifest.json" || return 1
     for rel in p1/GRUB_VER p1/zImage p1/boot/grub/grub.cfg \
       p2/GRUB_VER p2/zImage p2/rd.gz p2/grub_cksum.syno \
       p3/custom.gz p3/initrd-dsm p3/rd.gz p3/zImage-dsm p3/user_config.json p3/xtcrp.tgz \
-      "p${friend_part}/bzImage-friend" "p${friend_part}/initrd-friend" \
-      p4/localhost.apkovl.tar.gz; do
+      "p${friend_part}/bzImage-friend" "p${friend_part}/initrd-friend"; do
         size="$(wc -c < "${stage}/${rel}" | tr -d '[:space:]')" || return 1
         hash="$(sha256sum "${stage}/${rel}" | awk '{print $1}')" || return 1
         jq --arg path "${rel}" --argjson size "${size}" --arg sha256 "${hash}" \
@@ -2830,7 +2799,7 @@ function remote_package_publish() {
     # Write both files under hidden temporary names on the shared output
     # filesystem. The manager only sees the final names after verification.
     [ "${publish_sidecar}" = "true" ] && remote_package_log "Creating and verifying package archive..."
-    if ! tar -czf "${archive_tmp}" -C "${stage}" manifest.json p1 p2 p3 p4 ||
+    if ! tar -czf "${archive_tmp}" -C "${stage}" manifest.json p1 p2 p3 ||
        ! tar -tzf "${archive_tmp}" >/dev/null 2>&1; then
         rm -f -- "${archive_tmp}" "${manifest_tmp}"
         rmdir -- "${lock_dir}"
@@ -2896,7 +2865,7 @@ function package_docker_build_after_backup() {
 }
 
 function packing_loader() {
-    local part part_root stage stage_base archive p4_source output_dir automatic=false
+    local part part_root stage stage_base archive output_dir automatic=false
     if [ "${1:-}" = "--automatic" ]; then
         [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ] || {
             echo "Remote package: automatic mode is restricted to Docker builder." >&2
@@ -2923,7 +2892,7 @@ function packing_loader() {
 
     if [ "${automatic}" != "true" ]; then
         dialog --clear --backtitle "$(backtitle)" --yesno \
-          "Pack the current loader's P1-P3 files and Alpine P4 persistence for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
+          "Pack the current loader's P1-P3 files for remote TCRP?\n\nOutput: ${archive}" 0 0 || return 0
     fi
 
     if [ -e "${archive}" ] || [ -L "${archive}" ] ||
@@ -2942,7 +2911,7 @@ function packing_loader() {
         echo "[REMOTE PACKAGE] FAILED at staging directory creation" >&2
         return 1
     }
-    [ "${automatic}" = "true" ] && remote_package_log "Checking P1-P4 mounts..."
+    [ "${automatic}" = "true" ] && remote_package_log "Checking P1-P3 mounts..."
     for part in 1 2 3; do
         part_root="/mnt/${loaderdisk}${part}"
         if ! mount | grep -Fq " on ${part_root} "; then
@@ -2956,28 +2925,9 @@ function packing_loader() {
         fi
     done
 
-    if [ "${automatic}" = "true" ]; then
-        p4_source="${MSHELL_P4_APKOVL_SOURCE:-}"
-        if [ "${p4_source}" != "/run/mshell/host-p4/localhost.apkovl.tar.gz" ]; then
-            echo "[REMOTE PACKAGE] FAILED at verified host P4 source check" >&2
-            rm -rf -- "${stage}"
-            return 1
-        fi
-    else
-        p4_source="/mnt/alpine/localhost.apkovl.tar.gz"
-    fi
-    if ! mountpoint -q /mnt/alpine; then
-        echo "[REMOTE PACKAGE] FAILED at P4 mount check: /mnt/alpine is not mounted" >&2
-        rm -rf -- "${stage}"
-        if [ "${automatic}" != "true" ]; then
-            dialog --clear --backtitle "$(backtitle)" --msgbox \
-              "Alpine P4 is not mounted. No package was created." 0 0
-        fi
-        return 1
-    fi
-    [ "${automatic}" = "true" ] && remote_package_log "P1-P4 mounts verified. Validating and staging required files and manifest..."
+    [ "${automatic}" = "true" ] && remote_package_log "P1-P3 mounts verified. Validating and staging required files and manifest..."
     if ! remote_package_stage_files "${stage}" \
-      "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${p4_source}" "${automatic}"; then
+      "/mnt/${loaderdisk}1" "/mnt/${loaderdisk}2" "/mnt/${loaderdisk}3" "${automatic}"; then
         rm -rf -- "${stage}"
         echo "[REMOTE PACKAGE] FAILED at required file or manifest validation/staging" >&2
         if [ "${automatic}" != "true" ]; then
