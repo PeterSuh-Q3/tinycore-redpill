@@ -28,6 +28,19 @@ grep -q '^function ensure_alpine_partition_recovery_before_backup() {' "${tmp_di
 # shellcheck source=/dev/null
 source "${tmp_dir}/backup-recovery-function.sh"
 
+awk '
+  /^function backup_alpine_persistence\(\) \{$/ { copy = 1 }
+  copy { print }
+  copy && /^}$/ { exit }
+' "${functions_file}" > "${tmp_dir}/alpine-persistence-function.sh"
+grep -q '^function backup_alpine_persistence() {' "${tmp_dir}/alpine-persistence-function.sh"
+# shellcheck source=/dev/null
+source "${tmp_dir}/alpine-persistence-function.sh"
+
+cmp -s \
+  <(sed -n '/^function backup_alpine_persistence() {/,/^}/p' "${functions_file}") \
+  <(sed -n '/^function backup_alpine_persistence() {/,/^}/p' "${functions_test_file}")
+
 calls_file="${tmp_dir}/calls"
 : > "${calls_file}"
 UPDATE_BRANCH=alpine-redpill
@@ -49,9 +62,12 @@ startup_recovery_gates() {
 export MSHELL_DOCKER_BUILDER=1
 startup_recovery_gates
 ensure_alpine_partition_recovery_before_backup
+sudo() { echo "sudo $*" >> "${calls_file}"; }
+backup_alpine_persistence
 grep -q '^MENU_ENTERED$' "${calls_file}"
 ! grep -q '^curl$' "${calls_file}"
 ! grep -q '^is_alpine$' "${calls_file}"
+! grep -q '^sudo lbu commit -d$' "${calls_file}"
 
 # The production and test-track backup guards must remain synchronized.
 cmp -s \
@@ -62,6 +78,17 @@ cmp -s \
 # fetch/validation path rather than silently taking the Docker skip.
 : > "${calls_file}"
 unset MSHELL_DOCKER_BUILDER
+is_alpine() { return 0; }
+backup_alpine_persistence
+grep -q '^sudo lbu commit -d$' "${calls_file}"
+
+: > "${calls_file}"
+is_alpine() { return 1; }
+backup_alpine_persistence
+! grep -q '^sudo lbu commit -d$' "${calls_file}"
+
+: > "${calls_file}"
+is_alpine() { echo is_alpine >> "${calls_file}"; return 0; }
 if run_alpine_partition_recovery; then
     echo 'FAIL: normal Alpine recovery unexpectedly succeeded without a helper' >&2
     exit 1

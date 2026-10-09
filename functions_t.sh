@@ -5645,6 +5645,19 @@ function ensure_alpine_partition_recovery_before_backup() {
     fi
 }
 
+function backup_alpine_persistence() {
+    # Docker builder mode operates on a mapped loader image. Do not persist the
+    # container's live Alpine overlay back into the host image's P4 apkovl.
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        echo "[BACKUP] Docker builder: skipping Alpine lbu commit."
+        return 0
+    fi
+    is_alpine || return 0
+
+    echo "[BACKUP] Alpine: committing the current persistent overlay with lbu..."
+    sudo lbu commit -d
+}
+
 function backuploader() {
 
     # getlatestmshell() may update my.sh.gz while an older menu.sh process is
@@ -5820,9 +5833,7 @@ function backuploader() {
         
     else
         if is_alpine; then
-            # Alpine boots its existing P4 apkovl directly. A loader backup
-            # must not serialize the live build/container overlay back to P4.
-            echo "${log_prefix} Alpine: preserving the existing P4 apkovl; skipping mydata.tgz and lbu commit."
+            backup_alpine_persistence || return 1
             alpine_no_mydata=1
         else
             sudo /bin/tar -C / -T /opt/.filetool.lst -X /opt/.xfiletool.lst -cf - | pigz -p ${thread} > ${shm_path}/mydata.tgz
@@ -6028,9 +6039,7 @@ function backuploader_old() {
         done 2>/dev/null  # 전체 오류 출력 억제
 
         if is_alpine; then
-            # Alpine boots its existing P4 apkovl directly. Do not replace it
-            # with a snapshot of the live build/container overlay.
-            cecho y "Alpine: preserving the existing P4 apkovl; skipping mydata.tgz and lbu commit."
+            backup_alpine_persistence || return 1
             backup_loader
         else
             cecho y "Backing up home files to /mnt/${tcrppart}/mydata.tgz"
