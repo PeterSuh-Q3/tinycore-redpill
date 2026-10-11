@@ -21,7 +21,7 @@
     "check_diskcnt": "false",
     "i915mode": "1",
     "nvmesystem": "false",
-    "vmtools": "false",
+    "vmtools-qemuga": "false",
     "modulename": "all-modules",
     "mlmethod": "IML",
     "tcbautoupd": "true",

@@ -68,7 +68,7 @@
 | `e` | 저장소 패널 크기를 선택하세요 | DSM Storage Manager에 표시되는 드라이브 베이 패널 크기를 설정합니다(예: `RACK_12_Bay`, 순전히 화면 표시용). |
 | `f` | 캐시 패널 크기를 선택하세요 | `general.ssdbay`에 저장할 SSD 캐시 패널 레이아웃을 설정합니다. `1X1`, `1X2`, `1X3`, `1X4`, `1X6`, `1X8`, `2X2`, `2X3`, `2X4`, `2X6`, `2X8`, `3X4`, `4X4`를 선택할 수 있습니다. |
 | `g` | Add nvmesystem 애드온 | 단일 NVMe 장치를 단독 볼륨으로 사용할 수 있게 합니다. 메뉴 내에서 실험적/위험 기능으로 표시되며, 활성화 전 확인창이 뜹니다. |
-| `h` | Add vmtools(with qemu-guest-agent) addon | 가상화 환경 배포를 위한 `qemu-guest-agent` 지원을 번들로 추가/제거합니다. |
+| `h` | Add vmtools-qemuga addon | 가상화 환경 배포를 위한 `qemu-guest-agent` 지원을 번들로 추가/제거합니다. |
 | `z` | exit | 메인 메뉴로 돌아갑니다. |
 
 ## `g` — NVIDIA H/W Transcoding

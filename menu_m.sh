@@ -296,7 +296,8 @@ BFBAY=$(readConfigKey "general" "bay")
 SSDBAY=$(readConfigKey "general" "ssdbay")
 DMPM=$(readConfigKey "general" "devmod")
 NVMES=$(readConfigKey "general" "nvmesystem")
-VMTOOLS=$(readConfigKey "general" "vmtools")
+migrate_vmtools_addon
+VMTOOLS=$(readConfigKey "general" "vmtools-qemuga")
 SANMANAGER_REPAIR=$(readConfigKey "general" "sanmanager-repair")
 LDRMODE=$(readConfigKey "general" "loadermode")
 MDLNAME=$(readConfigKey "general" "modulename")
@@ -367,7 +368,7 @@ fi
 
 if [ -z "${VMTOOLS}" ]; then
     VMTOOLS="false"
-    writeConfigKey "general" "vmtools" "${VMTOOLS}"
+    writeConfigKey "general" "vmtools-qemuga" "${VMTOOLS}"
 fi
 
 if [ -z "${SANMANAGER_REPAIR}" ]; then
@@ -2403,14 +2404,14 @@ function add-addon() {
 
   [ "${1}" = "mac-spoof" ] && echo -n "(Warning) Enabling mac-spoof may compromise San Manager and VMM. Do you still want to add it? [yY/nN] : "
   [ "${1}" = "nvmesystem" ] && echo -n "Would you like to add nvmesystem? [yY/nN] : "
-  if [ "${1}" = "vmtools" ]; then 
+  if [ "${1}" = "vmtools-qemuga" ]; then
     if [ "${DMPM}" = "DDSML" ]; then
-      echo "vmtools requires EUDEV or DDSML+EUDEV mode. Aborting the add addon."
+      echo "vmtools-qemuga requires EUDEV or DDSML+EUDEV mode. Aborting the add addon."
       echo "press any key to continue..."
       read answer
       return 1
     fi
-    echo -n "Would you like to add vmtools? [yY/nN] : "
+    echo -n "Would you like to add vmtools-qemuga? [yY/nN] : "
   fi
   [ "${1}" = "dbgutils" ] && echo -n "Would you like to add dbgutils for error analysis? [yY/nN] : "
 
@@ -2621,7 +2622,7 @@ function nvidiaMenu() {
         case "$matched" in
           # version / Auto / ffmpeg = preference only (user_config); they do
           # NOT change the Status. Only Enable/Disable toggles the addon.
-          # 다른 설정들(bay/vmtools/nvmesystem 등)과 동일하게 전역변수를
+          # 다른 설정들(bay/vmtools-qemuga/nvmesystem 등)과 동일하게 전역변수를
           # 갱신하고 writeConfigKey 로 general.* 에 영구저장한다.
           auto)   NVIDIA_DRIVER=""; writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}" ;;
           ver)    NVIDIA_DRIVER="${verval[$i]}"; writeConfigKey "general" "nvidia_driver" "${NVIDIA_DRIVER}" ;;
@@ -3241,10 +3242,10 @@ function build-pre-option() {
   # a(selectldrmode), b(seleudev) 는 최상위 메뉴의 k/c 가 여기로 종속된
   # 것이다 - 문구(MSG06/MSG01)는 원래 최상위에서 쓰던 것을 그대로 재사용
   # (MSGID 변경 없음). 최초 진입 시 a(구 k)가 디폴트 인덱스로 선택된다.
-  # 캐시 패널 크기는 e, NVMe/vmtools/sanmanager-repair 항목은 f/g/h에 배치.
+  # 캐시 패널 크기는 e, NVMe/vmtools-qemuga/sanmanager-repair 항목은 f/g/h에 배치.
   default_resp="a"
 
-  MSG64="vmtools(with qemu-guest-agent) addon"
+  MSG64="vmtools-qemuga addon"
   MSG65="sanmanager repair (Use only when package issue occurs)"
 
   while true; do
@@ -3253,7 +3254,7 @@ function build-pre-option() {
     # 않아 화면에는 한 번 나갔다 다시 들어와야 반영되는 문제가 실기에서
     # 확인됐다(2026-08-27). 매 반복마다 bundled-exts.json을 직접 다시
     # 확인해 최신 상태를 보장한다.
-    if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+    if jq -e 'has("vmtools-qemuga")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
       VMTOOLS="true"; vmtoolsaction="Enabled"
     else
       VMTOOLS="false"; vmtoolsaction="Disabled"
@@ -3295,10 +3296,10 @@ function build-pre-option() {
     d) remapsata     ;    NEXT="z" ;;
     e) cachepanel;        NEXT="z" ;;
     f)
-      # g)(vmtools)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
+      # g)(vmtools-qemuga)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
       # 프롬프트는 여기선 건너뛴다(위험 경고 dialog가 이미 실질적인 확인
       # 역할을 하므로 이중 확인은 불필요, menu.sh test에서 이 프롬프트 때문에
-      # 토글이 막히는 문제도 vmtools에서 실기로 확인됨). bundled-exts.json을
+      # 토글이 막히는 문제도 vmtools-qemuga에서 실기로 확인됨). bundled-exts.json을
       # 직접 다뤄 확실히 반영한다.
       if [ "${NVMES}" = "false" ]; then
         dialog --colors --title "\Z1WARNING - EXPERIMENTAL FEATURE\Zn" --yesno \
@@ -3333,23 +3334,23 @@ Do you really want to continue enabling nvmesystem?" 0 0
       # 때문에 토글 자체가 막히는 것도 실기에서 확인됨).
       if [ "${VMTOOLS}" = "false" ]; then
         if [ "${DMPM}" = "DDSML" ]; then
-          dialog --clear --backtitle "`backtitle`" --msgbox "vmtools requires EUDEV or DDSML+EUDEV mode." 0 0
+          dialog --clear --backtitle "`backtitle`" --msgbox "vmtools-qemuga requires EUDEV or DDSML+EUDEV mode." 0 0
         else
-          del-addon "vmtools"
-          jsonfile=$(jq --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools/rpext-index.json" \
-            '. + {"vmtools": $url}' /home/tc/redpill-load/bundled-exts.json) \
+          del-addon "vmtools-qemuga"
+          jsonfile=$(jq --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools-qemuga/rpext-index.json" \
+            '. + {"vmtools-qemuga": $url}' /home/tc/redpill-load/bundled-exts.json) \
             && echo "${jsonfile}" | jq . > /home/tc/redpill-load/bundled-exts.json
           VMTOOLS="true"
         fi
       else
-        del-addon "vmtools"
+        del-addon "vmtools-qemuga"
         VMTOOLS="false"
       fi
-      writeConfigKey "general" "vmtools" "${VMTOOLS}"
+      writeConfigKey "general" "vmtools-qemuga" "${VMTOOLS}"
       notify_config_saved rebuild
       NEXT="z" ;;
     h)
-      # vmtools와 같이 현재 선택을 즉시 토글하고, 다음 빌드에서도 유지할
+      # vmtools-qemuga와 같이 현재 선택을 즉시 토글하고, 다음 빌드에서도 유지할
       # 사용자 의도를 general.sanmanager-repair에 기록한다.
       if [ "${SANMANAGER_REPAIR}" = "false" ]; then
         del-addon "sanmanager-repair"
@@ -4619,7 +4620,7 @@ while true; do
   else
     drmmode="Unknown DRM"
   fi
-  # NVMES/VMTOOLS(general.nvmesystem/general.vmtools)는 "다음 빌드 때
+  # NVMES/VMTOOLS(general.nvmesystem/general.vmtools-qemuga)는 "다음 빌드 때
   # 자동으로 다시 넣어줄지"에 대한 의도 플래그일 뿐이다 - 실제로 빌드에
   # 포함되는지는 bundled-exts.json에 그 키가 있느냐가 유일한 진실이므로,
   # 표시는 항상 그 파일을 직접 확인해서 도출한다(nvidiadriver와 동일한
@@ -4630,7 +4631,7 @@ while true; do
   else
     NVMES="false"; nvmeaction="Disabled"
   fi
-  if jq -e 'has("vmtools")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
+  if jq -e 'has("vmtools-qemuga")' /home/tc/redpill-load/bundled-exts.json >/dev/null 2>&1; then
     VMTOOLS="true"; vmtoolsaction="Enabled"
   else
     VMTOOLS="false"; vmtoolsaction="Disabled"

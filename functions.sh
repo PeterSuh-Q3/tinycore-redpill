@@ -203,16 +203,30 @@ function refresh_userconfig_hash() {
 # user_config.json 의 general.<addon> 값은 "다음 빌드 때 이 addon 을 자동으로
 # 다시 넣어줄지"에 대한 사용자 의도를 담는 플래그다 - 실제로 빌드에 포함되는지는
 # bundled-exts.json 에 그 키가 있느냐가 유일한 진실이다. 새 세션에서
-# bundled-exts.json 이 GitHub 기본값으로 새로 클론되면(vmtools 는 upstream
+# bundled-exts.json 이 GitHub 기본값으로 새로 클론되면(vmtools-qemuga 는 upstream
 # 기본 목록에 없음) 이 둘이 어긋난다 - 메뉴는 이전 세션에 저장된 플래그를 보고
 # "이미 추가됨"으로 표시하는데 실제 파일엔 없어서 빌드에서 조용히 누락되는
 # 버그가 실기에서 확인됐다(2026-08-27). menu_m.sh(대화형)와 buildloader()
 # (MSHELL Manager 헤드리스 재빌드 경로)양쪽에서 빌드 직전에 호출해, 의도한
 # addon 이 파일에 없으면 대화형 확인 없이 조용히 다시 넣어준다.
+function migrate_vmtools_addon() {
+    local bundled="/home/tc/redpill-load/bundled-exts.json" updated
+    # Preserve existing user choice while moving from the former addon ID.
+    if [ -f "${userconfigfile}" ] && jq -e '.general | has("vmtools")' "${userconfigfile}" >/dev/null 2>&1; then
+        updated=$(jq '.general["vmtools-qemuga"] //= .general.vmtools | del(.general.vmtools)' "${userconfigfile}") || return 1
+        write_user_config_json "${userconfigfile}" "${updated}" || return 1
+    fi
+    if [ -f "${bundled}" ] && jq -e 'has("vmtools")' "${bundled}" >/dev/null 2>&1; then
+        updated=$(jq '. | del(.vmtools) | .["vmtools-qemuga"] = "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools-qemuga/rpext-index.json"' "${bundled}") || return 1
+        printf '%s\n' "${updated}" > "${bundled}" || return 1
+    fi
+}
+
 function reconcile_addon_flags() {
     local addon flag bundled="/home/tc/redpill-load/bundled-exts.json"
+    migrate_vmtools_addon || return 1
     [ -f "${bundled}" ] || return 0
-    for addon in vmtools nvmesystem sanmanager-repair; do
+    for addon in vmtools-qemuga nvmesystem sanmanager-repair; do
         flag="$(readConfigKey "general" "${addon}")"
         if [ "${flag}" = "true" ] && ! jq -e --arg k "${addon}" 'has($k)' "${bundled}" >/dev/null 2>&1; then
             jsonfile=$(jq --arg k "${addon}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/${addon}/rpext-index.json" \
@@ -4115,7 +4129,7 @@ function preserve_usb_line_options() {
 function readConfigKey() {
   local section="$1"
   local key="$2"
-  jq -r -e ".${section}.${key} // empty" "${userconfigfile}" 2>/dev/null
+  jq -r -e --arg section "${section}" --arg key "${key}" '.[$section][$key] // empty' "${userconfigfile}" 2>/dev/null
 }
 
 ###############################################################################
@@ -6408,7 +6422,7 @@ checkmachine
 
     # 대화형(my())과 MSHELL Manager 헤드리스 재빌드(rploader()) 양쪽 모두
     # buildloader() 를 거치므로, 여기서 한 번 호출해 두면 어느 경로로 빌드하든
-    # general.vmtools=true 인데 bundled-exts.json 에서 빠진 상태를 놓치지 않는다.
+    # general.vmtools-qemuga=true 인데 bundled-exts.json 에서 빠진 상태를 놓치지 않는다.
     reconcile_addon_flags
 
     cd /home/tc
@@ -9017,6 +9031,13 @@ function my() {
   fi
   cecho y "The selected integrated module pack is ${MDLNAME}"
   
+  # Rename the legacy addon key before capturing user addons; otherwise the
+  # generic preserve/restore step would carry the old vmtools ID into the next build.
+  if ! migrate_vmtools_addon; then
+    echo "[ERROR] Failed to migrate vmtools addon settings before bundled-exts reset."
+    exit 99
+  fi
+
   # Preserve ALL user-toggled addons across the GitHub reset via a generated
   # /home/tc/merged-addons.json (= current bundled-exts MINUS the fresh GitHub
   # default MINUS module packs). This replaces the old hardcoded capture list,

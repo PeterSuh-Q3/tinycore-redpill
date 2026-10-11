@@ -80,7 +80,7 @@ Section 1 (`Main`) only shows item `c` before a model is picked — every other 
 | `e` | Choose a Storage Panel Size | Sets the drive-bay panel size DSM's Storage Manager displays (cosmetic only, e.g. `RACK_12_Bay`). |
 | `f` | Choose a Cache Panel Size | Sets the SSD cache-panel layout stored in `general.ssdbay`; available layouts are `1X1`, `1X2`, `1X3`, `1X4`, `1X6`, `1X8`, `2X2`, `2X3`, `2X4`, `2X6`, `2X8`, `3X4`, and `4X4`. |
 | `g` | Add/Remove nvmesystem Addon | Enables using a single NVMe device as a standalone volume. Marked experimental/risky in-menu; a confirmation warning is shown before enabling. |
-| `h` | Add/Remove vmtools addon | Bundles `qemu-guest-agent` support for virtualized deployments. |
+| `h` | Add/Remove vmtools-qemuga addon | Bundles `qemu-guest-agent` support for virtualized deployments. |
 | `i` | sanmanager repair (Use only when package issue occurs) | Bundles the SAN Manager repair task. Enable only when the SAN Manager package has a problem. |
 | `z` | exit | Returns to the main menu. |
 
