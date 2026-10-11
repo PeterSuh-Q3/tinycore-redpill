@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.4"
-builddate="2026.10.08"
+rploaderver="1.4.5.5"
+builddate="2026.10.11"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1027,6 +1027,7 @@ function history() {
     1.4.5.2 Restore previous release rebuild and protect Alpine persistence backups
     1.4.5.3 Select NVIDIA SPK versions and preserve xTCRP boot menu slots
     1.4.5.4 Harden remote loader packages and Docker loop image builds
+    1.4.5.5 Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1756,6 +1757,9 @@ EOF
 # 2026.10.08 v1.4.5.4
 # Harden remote loader packages and Docker loop image builds
 
+# 2026.10.11 v1.4.5.5
+# Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2162,6 +2166,9 @@ function showlastupdate() {
 
 # 2026.10.08 v1.4.5.4
 # Harden remote loader packages and Docker loop image builds
+
+# 2026.10.11 v1.4.5.5
+# Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
 EOF
 }
 
