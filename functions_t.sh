@@ -5639,6 +5639,336 @@ function backupxtcrp() {
 # 3. 용량 초과 시 /mnt/${tcrppart}/auxfiles/*.pat 파일 임의 1개 삭제
 # 4. 기존 sudo 권한 삭제 로직 참조
 # ============================================================================
+function migrate_p3_apkovl_baseline() {
+    is_alpine || return 0
+
+    local dir="${1:-/mnt/tcrp}"
+    local legacy="${dir}/localhost.apkovl.tar.gz"
+    local baseline="${dir}/localhost.apkovl.baseline.tar.gz"
+    local withdrawn
+
+    if [ "${dir}" = /mnt/tcrp ]; then
+        [ -n "${loaderdisk:-}" ] || getloaderdisk >/dev/null 2>&1 || return 1
+        ensure_loader_partition_mounted 3 || return 1
+        [ -L /mnt/tcrp ] && mountpoint -q "$(readlink -f /mnt/tcrp)" || return 1
+    fi
+    [ -f "${legacy}" ] || return 0
+    tar -tzf "${legacy}" >/dev/null 2>&1 || {
+        echo "[APKVOL] Invalid legacy P3 overlay; leaving it untouched: ${legacy}" >&2
+        return 1
+    }
+    if [ -e "${baseline}" ]; then
+        tar -tzf "${baseline}" >/dev/null 2>&1 || {
+            echo "[APKVOL] Invalid P3 baseline; leaving the legacy file untouched." >&2
+            return 1
+        }
+        withdrawn="${dir}/localhost.apkovl.withdrawn.$(date +%Y%m%d%H%M%S).$$.tar.gz"
+        [ ! -e "${withdrawn}" ] || return 1
+        sudo mv "${legacy}" "${withdrawn}" || return 1
+        echo "[APKVOL] Preserved the former P3 overlay as ${withdrawn}."
+    else
+        sudo mv "${legacy}" "${baseline}" || return 1
+        echo "[APKVOL] Renamed the P3 comparison overlay to ${baseline}."
+    fi
+    [ ! -e "${legacy}" ]
+}
+
+# Persist Alpine only through a transaction. The P3 baseline is never
+# unpacked into the live root; P4 alone holds the boot-discoverable overlay.
+# lbu writes a candidate under /tmp, validated before P4 is replaced.
+function persist_alpine_apkovl_safely() {
+    is_alpine || return 0
+
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        local host_apkovl="${MSHELL_P4_APKOVL_SOURCE:-}"
+        local expected_host_hash="${MSHELL_P4_APKOVL_SHA256:-}"
+        local actual_host_hash
+        if [ "${host_apkovl}" != "/run/mshell/host-p4/localhost.apkovl.tar.gz" ] ||
+           [ ! -f "${host_apkovl}" ] || [ -L "${host_apkovl}" ] ||
+           [[ ! "${expected_host_hash}" =~ ^[0-9a-f]{64}$ ]] ||
+           ! tar -tzf "${host_apkovl}" >/dev/null 2>&1; then
+            echo "[APKVOL] Verified read-only host P4 persistence input is unavailable; persistence cancelled." >&2
+            return 1
+        fi
+        actual_host_hash="$(sha256sum "${host_apkovl}" | awk '{print $1}')" || return 1
+        if [ "${actual_host_hash}" != "${expected_host_hash}" ]; then
+            echo "[APKVOL] Host P4 persistence input checksum changed; persistence cancelled." >&2
+            return 1
+        fi
+        echo "[APKVOL] Docker builder: verified host P4 archive ${actual_host_hash}; skipping container lbu commit."
+        return 0
+    fi
+
+    local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
+    local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
+    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight
+    local remote_hash local_hash baseline_next path owner
+
+    command -v curl >/dev/null 2>&1 || return 1
+    ensure_alpine_partition_mounted || return 1
+    migrate_p3_apkovl_baseline || return 1
+    [ -d /mnt/tcrp ] || return 1
+
+    # Never serialize a live system whose privileged files have lost root
+    # ownership. A syntactically valid apkovl can otherwise make sudo unusable
+    # after the next boot.
+    for path in /etc/passwd /etc/group /etc/shadow /etc/sudoers.d/tc /etc/lbu/lbu.conf; do
+        owner=$(sudo stat -c '%u' "${path}" 2>/dev/null) || {
+            echo "[APKVOL] Cannot verify ownership of ${path}; persistence cancelled." >&2
+            return 1
+        }
+        if [ "${owner}" != 0 ]; then
+            echo "[APKVOL] ${path} is not root-owned; persistence cancelled." >&2
+            return 1
+        fi
+    done
+
+    stage=$(mktemp -d /tmp/mshell-apkovl.XXXXXX) || return 1
+    incoming="${stage}/baseline.download"
+    candidate="${stage}/$(hostname).apkovl.tar.gz"
+    active_backup="${stage}/active.before.tar.gz"
+    preflight="${stage}/active.inspect"
+    lbu_conf="/etc/lbu/lbu.conf"
+    lbu_conf_backup="${stage}/lbu.conf.before"
+    url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/localhost.apkovl.tar.gz"
+
+    # A prior malformed P4 backup must not be silently replaced. Inspect its
+    # archived ownership before any new persistence or baseline write begins.
+    if [ -e "${active}" ]; then
+        if ! sudo mkdir -p "${preflight}" \
+            || ! sudo tar -xzf "${active}" -C "${preflight}"; then
+            echo "[APKVOL] Cannot inspect the existing P4 archive; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        for path in . etc/passwd etc/group etc/shadow etc/sudoers.d etc/sudoers.d/tc etc/lbu/lbu.conf; do
+            owner=$(sudo stat -c '%u' "${preflight}/${path}" 2>/dev/null) || owner=""
+            if [ "${owner}" != 0 ]; then
+                echo "[APKVOL] Existing P4 archive has invalid ownership for ${path}; persistence cancelled." >&2
+                sudo rm -rf -- "${stage}"
+                return 1
+            fi
+        done
+        owner=$(sudo stat -c '%a' "${preflight}" 2>/dev/null) || owner=""
+        if [ "${owner}" != 755 ]; then
+            echo "[APKVOL] Existing P4 archive root directory is not mode 0755; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        owner=$(sudo stat -c '%g' "${preflight}/etc/shadow" 2>/dev/null) || owner=""
+        if [ "${owner}" != 42 ]; then
+            echo "[APKVOL] Existing P4 archive has an invalid shadow group; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        if [ -L "${preflight}/etc/sudoers.d/tc" ] || [ ! -f "${preflight}/etc/sudoers.d/tc" ]; then
+            echo "[APKVOL] Existing P4 archive has an invalid sudoers file type; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        owner=$(sudo stat -c '%a' "${preflight}/etc/sudoers.d/tc" 2>/dev/null) || owner=""
+        case "${owner}" in 400|440) ;; *)
+            echo "[APKVOL] Existing P4 archive has unsafe sudoers permissions; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1 ;;
+        esac
+        if [ ! -L "${preflight}/home/tc/user_config.json" ] ||
+           [ "$(sudo readlink "${preflight}/home/tc/user_config.json" 2>/dev/null)" != /mnt/tcrp/user_config.json ]; then
+            echo "[APKVOL] Existing P4 archive is missing the expected user_config.json link; persistence cancelled." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+        sudo rm -rf -- "${preflight}" || { sudo rm -rf -- "${stage}"; return 1; }
+    fi
+
+    # P3 is the local baseline, but it must follow the current repository
+    # overlay. Download into staging first, then replace P3 only after the
+    # archive is valid and its hash differs. A failed remote check keeps the
+    # existing baseline so an offline boot is not blocked.
+    if curl -skL --fail --connect-timeout 15 --max-time 180 \
+        -o "${incoming}" "${url}?_cb=$(date +%s)" && \
+       tar -tzf "${incoming}" >/dev/null 2>&1; then
+        remote_hash="$(sha256sum "${incoming}" | awk '{print $1}')"
+        local_hash=""
+        [ -f "${baseline}" ] && local_hash="$(sha256sum "${baseline}" | awk '{print $1}')"
+        if [ "${remote_hash}" != "${local_hash}" ]; then
+            echo "[APKVOL] Repository overlay differs; updating P3 baseline."
+            # P3 is VFAT: cp -p attempts chown and can fail after copying the
+            # data. Stage on P3, verify bytes, then rename without preserving
+            # POSIX ownership that the filesystem cannot represent.
+            baseline_next="${baseline}.new.$$"
+            if ! sudo cp "${incoming}" "${baseline_next}" \
+                || [ "$(sha256sum "${baseline_next}" 2>/dev/null | awk '{print $1}')" != "${remote_hash}" ] \
+                || ! sudo mv -f "${baseline_next}" "${baseline}"; then
+                sudo rm -f "${baseline_next}"
+                echo "[APKVOL] Failed to verify or activate the P3 baseline." >&2
+                rm -rf "${stage}"
+                return 1
+            fi
+        else
+            echo "[APKVOL] Repository overlay matches P3 baseline."
+        fi
+    elif [ ! -f "${baseline}" ]; then
+        echo "[APKVOL] Repository overlay unavailable and P3 baseline is missing."
+        rm -rf "${stage}"
+        return 1
+    else
+        echo "[APKVOL] Repository overlay unavailable; keeping existing P3 baseline."
+    fi
+    tar -tzf "${baseline}" >/dev/null 2>&1 || { rm -rf "${stage}"; return 1; }
+
+    if [ -e "${active}" ]; then
+        if [ ! -f "${active}" ] || [ -L "${active}" ] ||
+           ! sudo cp -p "${active}" "${active_backup}" ||
+           ! sudo cmp -s "${active}" "${active_backup}"; then
+            echo "[APKVOL] Cannot create and verify a rollback copy of the existing P4 archive." >&2
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+    fi
+
+    # lbu.conf overrides inherited LBU_BACKUPDIR. Redirect it only for the
+    # staging run and restore the live configuration immediately afterwards.
+    # Minimal Alpine images commonly ship this variable commented out; a sed
+    # replacement alone then succeeds without changing anything, and lbu
+    # prints usage because it has no destination. Replace an active setting
+    # or append one, then verify the effective line before committing.
+    sudo cp -p "${lbu_conf}" "${lbu_conf_backup}" || { rm -rf "${stage}"; return 1; }
+    if sudo grep -q '^LBU_BACKUPDIR=' "${lbu_conf}"; then
+        if ! sudo sed -i "s|^LBU_BACKUPDIR=.*|LBU_BACKUPDIR=${stage}|" "${lbu_conf}"; then
+            sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+            rm -rf "${stage}"
+            return 1
+        fi
+    elif ! printf '\nLBU_BACKUPDIR=%s\n' "${stage}" | sudo tee -a "${lbu_conf}" >/dev/null; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    if ! sudo grep -Fqx "LBU_BACKUPDIR=${stage}" "${lbu_conf}"; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    if ! sudo lbu commit || [ ! -s "${candidate}" ]; then
+        sudo cp -p "${lbu_conf_backup}" "${lbu_conf}"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    fi
+    sudo cp -p "${lbu_conf_backup}" "${lbu_conf}" || {
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        rm -rf "${stage}"
+        return 1
+    }
+
+    # The archive captured the temporary staging path.  Restore the regular
+    # P4 lbu.conf inside the candidate before activating it.
+    extract="${stage}/extract"
+    repacked="${stage}/candidate.repacked"
+    if ! sudo mkdir -p "${extract}" \
+        || ! sudo chown root:root "${extract}" \
+        || ! sudo chmod 0700 "${extract}" \
+        || ! sudo tar -xzf "${candidate}" -C "${extract}" \
+        || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
+        || ! sudo chown root:root "${extract}" \
+        || ! sudo chmod 0755 "${extract}" \
+        || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
+        || ! sudo mv -f "${repacked}" "${candidate}"; then
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    # Root extraction must preserve the original tar owners. Refuse to
+    # activate an archive if any privileged member became tc-owned.
+    for path in . etc/passwd etc/group etc/shadow etc/sudoers.d etc/sudoers.d/tc etc/lbu/lbu.conf; do
+        owner=$(sudo stat -c '%u' "${extract}/${path}" 2>/dev/null) || owner=""
+        if [ "${owner}" != 0 ]; then
+            echo "[APKVOL] Candidate has invalid ownership for ${path}; persistence cancelled." >&2
+            [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+            sudo rm -rf -- "${stage}"
+            return 1
+        fi
+    done
+    owner=$(sudo stat -c '%a' "${extract}" 2>/dev/null) || owner=""
+    if [ "${owner}" != 755 ]; then
+        echo "[APKVOL] Candidate root directory is not mode 0755; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    owner=$(sudo stat -c '%g' "${extract}/etc/shadow" 2>/dev/null) || owner=""
+    if [ "${owner}" != 42 ]; then
+        echo "[APKVOL] Candidate has an invalid shadow group; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if [ -L "${extract}/etc/sudoers.d/tc" ] || [ ! -f "${extract}/etc/sudoers.d/tc" ]; then
+        echo "[APKVOL] Candidate has an invalid sudoers file type; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    owner=$(sudo stat -c '%a' "${extract}/etc/sudoers.d/tc" 2>/dev/null) || owner=""
+    case "${owner}" in 400|440) ;; *)
+        echo "[APKVOL] Candidate has unsafe sudoers permissions; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1 ;;
+    esac
+    if [ ! -L "${extract}/home/tc/user_config.json" ] ||
+       [ "$(sudo readlink "${extract}/home/tc/user_config.json" 2>/dev/null)" != /mnt/tcrp/user_config.json ]; then
+        echo "[APKVOL] Candidate is missing the expected user_config.json link; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    tar -tzf "${candidate}" >/dev/null 2>&1 || {
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    }
+    if ! tar -tvzf "${candidate}" | awk '
+        $NF == "./" {
+            found = 1
+            root_owner = ($2 == "root/root" || $2 == "0/0" || ($2 == "0" && $3 == "root" && $4 == "root"))
+            if ($1 != "drwxr-xr-x" || !root_owner) bad = 1
+        }
+        END { exit (!found || bad) }
+    '; then
+        echo "[APKVOL] Candidate root directory is not root:root mode 0755; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+
+    # Copy within P4 and rename only after the candidate is known-good.
+    sudo cp "${candidate}" "${active}.new" || {
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    }
+    if ! sudo tar -tzf "${active}.new" >/dev/null 2>&1 || ! sudo mv -f "${active}.new" "${active}"; then
+        sudo rm -f "${active}.new"
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if ! sudo sync || ! sudo cmp -s "${candidate}" "${active}" ||
+       ! sudo tar -tzf "${active}" >/dev/null 2>&1; then
+        echo "[APKVOL] Activated P4 archive failed read-back verification; restoring the previous archive." >&2
+        if [ -f "${active_backup}" ]; then
+            sudo cp "${active_backup}" "${active}" || return 1
+        else
+            sudo rm -f "${active}" || return 1
+        fi
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    sudo rm -rf -- "${stage}"
+    echo "[APKVOL] Staged Alpine persistence verified and activated."
+}
 function ensure_alpine_partition_recovery_before_backup() {
     # A Docker build container shares the host mount namespace and works on a
     # mapped private loader image. Its P3/P4 mounts are build inputs, not the
@@ -5667,16 +5997,17 @@ function ensure_alpine_partition_recovery_before_backup() {
 }
 
 function backup_alpine_persistence() {
-    # Docker builder mode operates on a mapped loader image. Do not persist the
-    # container's live Alpine overlay back into the host image's P4 apkovl.
+    # Docker builder mode operates on a mapped loader image. Never write its
+    # container overlay or remote baseline into host P4.
     if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
-        echo "[BACKUP] Docker builder: skipping Alpine lbu commit."
+        echo "[BACKUP] Docker builder: skipping Alpine apkovl persistence."
         return 0
     fi
     is_alpine || return 0
 
-    echo "[BACKUP] Alpine: committing the current persistent overlay with lbu..."
-    sudo lbu commit -d
+    ensure_alpine_partition_recovery_before_backup || return 1
+    echo "[BACKUP] Alpine: syncing the repository baseline and staging a verified P4 apkovl..."
+    persist_alpine_apkovl_safely
 }
 
 function backuploader() {
