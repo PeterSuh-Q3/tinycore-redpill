@@ -1,6 +1,55 @@
 #!/bin/sh
 # Alpine diskless startup hook, installed as /etc/local.d/restore-packages.start.
+AUTOLOGIN_HELPER="${MSHELL_AUTOLOGIN_HELPER:-/usr/local/sbin/mshell-autologin-tc}"
+AUTOLOGIN_BACKUP="${MSHELL_AUTOLOGIN_BACKUP:-/etc/mshell/mshell-autologin-tc}"
+INITTAB_FILE="${MSHELL_INITTAB_FILE:-/etc/inittab}"
+
+autologin_helper_is_valid() {
+  local helper="${1}" owner
+  [ -f "${helper}" ] && [ ! -L "${helper}" ] && [ -r "${helper}" ] && [ -x "${helper}" ] || return 1
+  [ "$(head -n 1 "${helper}" 2>/dev/null)" = '#!/bin/sh' ] || return 1
+  [ "$(grep -Fxc 'exec /bin/login -f tc' "${helper}" 2>/dev/null)" -eq 1 ] || return 1
+  /bin/sh -n "${helper}" >/dev/null 2>&1 || return 1
+  owner="$(stat -c '%u:%g' "${helper}" 2>/dev/null)" || return 1
+  [ "${owner}" = '0:0' ]
+}
+
+repair_tty1_autologin() {
+  local staged="${AUTOLOGIN_HELPER}.repair.$$"
+
+  if ! autologin_helper_is_valid "${AUTOLOGIN_HELPER}"; then
+    echo "MSHELL: tty1 autologin helper is missing or invalid; attempting backup restore." >&2
+    if autologin_helper_is_valid "${AUTOLOGIN_BACKUP}" && \
+       cp "${AUTOLOGIN_BACKUP}" "${staged}" && \
+       chown root:root "${staged}" && chmod 0755 "${staged}" && \
+       mv -f "${staged}" "${AUTOLOGIN_HELPER}" && \
+       autologin_helper_is_valid "${AUTOLOGIN_HELPER}"; then
+      echo "MSHELL: tty1 autologin helper restored from ${AUTOLOGIN_BACKUP}."
+    else
+      rm -f "${staged}"
+      echo "MSHELL: helper recovery failed; switching tty1 to a normal login prompt." >&2
+      # OpenRC's default runlevel is a blocking ::wait action in inittab, so
+      # this runs before init starts tty1's respawning getty.
+      if grep -q '^tty1::respawn:' "${INITTAB_FILE}"; then
+        sed -i 's|^tty1::respawn:.*|tty1::respawn:/sbin/getty 38400 tty1|' "${INITTAB_FILE}"
+      fi
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+if [ "${MSHELL_AUTOLOGIN_TEST_ONLY:-0}" = 1 ]; then
+  repair_tty1_autologin
+  exit $?
+fi
+
 mount -o remount,size=90% / 2>/dev/null || true
+
+# The tty1 getty starts only after the blocking OpenRC default-runlevel wait
+# below has completed. Repair its executable here before getty tries to exec it.
+repair_tty1_autologin || true
 
 /usr/local/sbin/rebuildnetifaces
 /usr/local/sbin/rebuildfstab
