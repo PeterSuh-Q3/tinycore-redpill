@@ -6,9 +6,14 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Bring last uploaded loader base img (partitions 1/2 source)
@@ -23,8 +28,14 @@ jobs:
 
           # The newest release may be the one being built, and a withdrawn
           # release may remain published without downloadable assets.
-          PREV_TAG=$(curl -fsSL 'https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases?per_page=100' |
-            jq -r --arg current "${GITHUB_REF_NAME}" '[.[] |
+          CURRENT_TAG="${{ github.event.release.tag_name || '' }}"
+          if [ -z "${CURRENT_TAG}" ]; then
+            CURRENT_VERSION="$(sed -n 's/^rploaderver="\([^"]*\)"$/\1/p' functions.sh | head -n 1)"
+            CURRENT_TAG="v${CURRENT_VERSION}"
+          fi
+
+          PREV_TAG=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" |
+            jq -r --arg current "${CURRENT_TAG}" '[.[] |
               select(.tag_name != $current) |
               select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")) |
               . as $release |
@@ -34,7 +45,7 @@ jobs:
           TAG="${PREV_TAG}"
 
           echo "TAG is ${TAG}"
-          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+          echo "BASE_IMAGE_TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
 
           curl -kfLO# https://github.com/PeterSuh-Q3/tinycore-redpill/releases/download/${TAG}/alpine-redpill.${TAG}.m-shell.img.gz
@@ -92,13 +103,16 @@ jobs:
           VERSION=v`cat functions.sh | grep rploaderver= | cut -d\" -f2`
           echo "Version: ${VERSION}"
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          RELEASE_TAG="${{ github.event.release.tag_name || '' }}"
+          [ -n "${RELEASE_TAG}" ] || RELEASE_TAG="${VERSION}"
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_OUTPUT
           mkdir /opt/output
 
           LOOPX=$(sudo losetup -f)
           echo "LOOPX = ${LOOPX}"
 
-          echo "Using TAG: ${RELEASE_TAG}"
-          sudo losetup -P ${LOOPX} alpine-redpill.${RELEASE_TAG}.m-shell.img
+          echo "Using TAG: ${BASE_IMAGE_TAG}"
+          sudo losetup -P ${LOOPX} alpine-redpill.${BASE_IMAGE_TAG}.m-shell.img
 
 
           # 3GB (2GB base + 1GB Alpine partition)
@@ -262,10 +276,8 @@ jobs:
           path: /opt/output
       # Publish a release if is a tag
       - name: Prepend RELEASE_NOTES.md to existing release body
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${{ steps.get-version.outputs.RELEASE_TAG }}"
           EXISTING_BODY=$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" --jq .body 2>/dev/null || echo "")
           {
             cat RELEASE_NOTES.md
@@ -280,7 +292,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ steps.get-version.outputs.RELEASE_TAG }}
           files: |
             /opt/output/*.gz
           body_path: /tmp/combined_release_notes.md
