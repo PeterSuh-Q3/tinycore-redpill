@@ -68,6 +68,7 @@ jobs:
 
           sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           sudo cp -vf tools/recover-alpine-p3.sh ./mydata/home/tc/tools/recover-alpine-p3.sh
+          sudo mkdir -p ./mydata/usr/local/sbin ./mydata/etc/init.d ./mydata/etc/runlevels/boot
           sudo install -m 0755 alpine/rebuildnetifaces ./mydata/usr/local/sbin/rebuildnetifaces
           sudo install -m 0755 alpine/mshell-netifaces ./mydata/etc/init.d/mshell-netifaces
           sudo ln -sfn /etc/init.d/mshell-netifaces ./mydata/etc/runlevels/boot/mshell-netifaces
