@@ -5739,6 +5739,7 @@ function persist_alpine_apkovl_safely() {
     local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight verify metadata_before metadata_after
+    local managed_source managed_target managed_owner managed_mode
     local remote_hash local_hash baseline_next path owner
 
     command -v curl >/dev/null 2>&1 || return 1
@@ -5909,8 +5910,34 @@ function persist_alpine_apkovl_safely() {
     if ! sudo mkdir -p "${extract}" \
         || ! sudo chown root:root "${extract}" \
         || ! sudo chmod 0700 "${extract}" \
-        || ! sudo tar -xzf "${baseline}" -C "${extract}" \
-        || ! sudo tar -xzf "${candidate}" -C "${extract}" \
+        || ! sudo tar -xzf "${baseline}" -C "${extract}"; then
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+
+    # This is a repository-managed boot-time system script, not user state.
+    # Keep the fresh baseline copy aside so an older live-root copy cannot
+    # overwrite it when the lbu snapshot is layered over the baseline.
+    managed_source="${stage}/rebuildnetifaces.repository"
+    managed_target="${extract}/usr/local/sbin/rebuildnetifaces"
+    if [ -L "${managed_target}" ] || [ ! -f "${managed_target}" ] || [ ! -x "${managed_target}" ]; then
+        echo "[APKVOL] Repository baseline is missing a regular executable rebuildnetifaces; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    managed_owner=$(sudo stat -c '%u:%g' "${managed_target}" 2>/dev/null) || managed_owner=""
+    managed_mode=$(sudo stat -c '%a' "${managed_target}" 2>/dev/null) || managed_mode=""
+    if [ "${managed_owner}" != "0:0" ] || [ "${managed_mode}" != "755" ] ||
+       ! sudo cp -p "${managed_target}" "${managed_source}"; then
+        echo "[APKVOL] Repository rebuildnetifaces has unexpected ownership or mode; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+
+    if ! sudo tar -xzf "${candidate}" -C "${extract}" \
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
         || ! sudo chown root:root "${extract}" \
         || ! sudo chmod 0755 "${extract}"; then
@@ -5918,6 +5945,33 @@ function persist_alpine_apkovl_safely() {
         sudo rm -rf -- "${stage}"
         return 1
     fi
+
+    # Runtime configuration remains authoritative, but this one shipped
+    # system helper must always come from the repository baseline. Reject
+    # unexpected parent symlinks/non-directories rather than following them.
+    if [ ! -d "${extract}/usr/local" ] || [ -L "${extract}/usr/local" ] ||
+       [ ! -d "${extract}/usr/local/sbin" ] || [ -L "${extract}/usr/local/sbin" ] ||
+       { [ -e "${managed_target}" ] && [ ! -f "${managed_target}" ] && [ ! -L "${managed_target}" ]; }; then
+        echo "[APKVOL] Runtime snapshot has an unsafe rebuildnetifaces path; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if [ -L "${managed_target}" ] && ! sudo rm -f -- "${managed_target}"; then
+        echo "[APKVOL] Cannot replace the runtime rebuildnetifaces symlink; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if ! sudo cp -p "${managed_source}" "${managed_target}" ||
+       ! sudo cmp -s "${managed_source}" "${managed_target}" ||
+       [ "$(sudo stat -c '%u:%g:%a' "${managed_target}" 2>/dev/null)" != "${managed_owner}:755" ]; then
+        echo "[APKVOL] Could not restore and verify repository rebuildnetifaces; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    echo "[APKVOL] Preserved repository-managed rebuildnetifaces over the runtime snapshot."
     metadata_before="${stage}/metadata.before"
     metadata_after="${stage}/metadata.after"
     verify="${stage}/verify"
