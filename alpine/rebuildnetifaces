@@ -1,0 +1,92 @@
+#!/bin/busybox ash
+# Reconcile Ethernet stanzas with the interfaces that udev exposed before
+# OpenRC starts networking. Preserve settings for present NICs, drop stale
+# ethN stanzas for removed NICs, and DHCP-configure newly detected ethN ports.
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin"
+export PATH
+umask 022
+
+IFACES_FILE="${MSHELL_NETWORK_INTERFACES:-/etc/network/interfaces}"
+SYS_CLASS_NET="${MSHELL_SYS_CLASS_NET:-/sys/class/net}"
+
+if [ ! -d "$SYS_CLASS_NET" ] || [ ! -e "$SYS_CLASS_NET/lo" ]; then
+    echo "MSHELL: Ethernet reconciliation skipped: sysfs network devices are not ready." >&2
+    exit 1
+fi
+
+IFACES_DIR="${IFACES_FILE%/*}"
+[ "$IFACES_DIR" = "$IFACES_FILE" ] && IFACES_DIR=.
+mkdir -p "$IFACES_DIR" || exit 1
+[ -s "$IFACES_FILE" ] || printf 'auto lo\niface lo inet loopback\n' > "$IFACES_FILE"
+
+TMP="${IFACES_FILE}.mshell.$$"
+trap 'rm -f "$TMP" "${TMP}.new" "${TMP}.devices"' EXIT HUP INT TERM
+
+for dev in "$SYS_CLASS_NET"/eth*; do
+    [ -e "$dev" ] || continue
+    ifname="${dev##*/}"
+    suffix="${ifname#eth}"
+    case "$suffix" in
+        ''|*[!0-9]*) continue ;;
+    esac
+    printf '%s\n' "$ifname"
+done | sort > "${TMP}.devices" || exit 1
+
+ACTIVE="$(tr '\n' ' ' < "${TMP}.devices")"
+MODE="$(stat -c '%a' "$IFACES_FILE" 2>/dev/null || echo 644)"
+
+# Remove only stale ethN auto/allow-hotplug entries and their iface stanzas.
+# All settings for interfaces currently present (including static addresses)
+# and all non-Ethernet configuration are retained verbatim.
+awk -v active="$ACTIVE" '
+function is_eth(name) { return name ~ /^eth[0-9]+$/ }
+function is_active(name) { return index(" " active " ", " " name " ") > 0 }
+function starts_section(line) {
+    return line ~ /^[[:space:]]*(iface|auto|allow-hotplug|mapping|source|source-directory)([[:space:]]|$)/
+}
+{
+    if (skip_stanza && starts_section($0)) skip_stanza = 0
+    if (skip_stanza) next
+
+    line = $0
+    sub(/^[[:space:]]+/, "", line)
+    count = split(line, words, /[[:space:]]+/)
+
+    if (words[1] == "iface" && is_eth(words[2]) && !is_active(words[2])) {
+        skip_stanza = 1
+        next
+    }
+
+    if (words[1] == "auto" || words[1] == "allow-hotplug") {
+        output = words[1]
+        kept = 1
+        for (i = 2; i <= count; i++) {
+            if (is_eth(words[i]) && !is_active(words[i])) continue
+            output = output " " words[i]
+            kept++
+        }
+        if (kept > 1) print output
+        next
+    }
+
+    print $0
+}
+' "$IFACES_FILE" > "${TMP}.new" || exit 1
+
+# Add missing interfaces only after stale entries have been removed.
+while IFS= read -r ifname; do
+    [ -n "$ifname" ] || continue
+    if ! awk -v name="$ifname" '$1 == "iface" && $2 == name { found=1 } END { exit !found }' "${TMP}.new"; then
+        {
+            printf '\nauto %s\n' "$ifname"
+            printf 'iface %s inet dhcp\n' "$ifname"
+        } >> "${TMP}.new" || exit 1
+    fi
+done < "${TMP}.devices"
+
+chmod "$MODE" "${TMP}.new" || exit 1
+chown root:root "${TMP}.new" 2>/dev/null || true
+mv -f "${TMP}.new" "$IFACES_FILE" || exit 1
+
+exit 0

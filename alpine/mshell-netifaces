@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+
+description="Reconcile Ethernet configuration with detected Alpine NICs"
+
+depend() {
+    before networking
+}
+
+start() {
+    ebegin "Matching Alpine network configuration to detected Ethernet devices"
+    /usr/local/sbin/rebuildnetifaces
+    eend $?
+}

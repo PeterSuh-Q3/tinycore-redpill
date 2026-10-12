@@ -51,7 +51,6 @@ mount -o remount,size=90% / 2>/dev/null || true
 # below has completed. Repair its executable here before getty tries to exec it.
 repair_tty1_autologin || true
 
-/usr/local/sbin/rebuildnetifaces
 /usr/local/sbin/rebuildfstab
 /usr/local/sbin/setup-disk-swap
 
