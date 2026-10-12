@@ -69,6 +69,7 @@ jobs:
           sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           sudo cp -vf tools/recover-alpine-p3.sh ./mydata/home/tc/tools/recover-alpine-p3.sh
           sudo mkdir -p ./mydata/usr/local/sbin ./mydata/etc/init.d ./mydata/etc/runlevels/boot
+          sudo install -m 0755 alpine/local.d-restore-packages.start ./mydata/etc/local.d/restore-packages.start
           sudo install -m 0755 alpine/rebuildnetifaces ./mydata/usr/local/sbin/rebuildnetifaces
           sudo install -m 0755 alpine/mshell-netifaces ./mydata/etc/init.d/mshell-netifaces
           sudo ln -sfn /etc/init.d/mshell-netifaces ./mydata/etc/runlevels/boot/mshell-netifaces
@@ -76,6 +77,7 @@ jobs:
           test -x ./mydata/etc/init.d/mshell-netifaces
           test "$(readlink ./mydata/etc/runlevels/boot/mshell-netifaces)" = "/etc/init.d/mshell-netifaces"
           grep -q 'before networking' ./mydata/etc/init.d/mshell-netifaces
+          ! grep -q '/usr/local/sbin/rebuildnetifaces' ./mydata/etc/local.d/restore-packages.start
           # 위 cp는 기존 파일을 같은 이름으로 덮어써 원본 inode(및 소유권)를
           # 유지하지만, 혹시 새로 추가된 파일이 있을 경우를 대비해 명시적으로
           # tc 소유권을 재적용.
