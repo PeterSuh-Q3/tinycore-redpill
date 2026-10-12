@@ -10,6 +10,8 @@ There was also a way for an older `rebuildnetifaces` copied from the running sys
 
 The saved `ethN` configuration could reflect the interface count detected on the previous boot. If Ethernet ports were added or removed, that stale list did not follow the hardware's current state: Alpine could try to bring up a missing device or fail to configure a newly present port. Startup now enumerates the interfaces available on each boot, preserves settings for present ports, removes stale entries, and adds DHCP configuration for newly detected ports. Thank you to **@gericb** for reporting the Ethernet issue that helped identify this case.
 
+The interface reconciliation could still be skipped if a persistence refresh kept the boot link but lost the service it points to. This release now preserves and verifies the service and its boot link together in the P4 archive, so the reconciliation can run before networking starts on the next boot. The archive is not activated if either part fails validation. Disconnected or link-down NICs still depend on the host or hardware connection being enabled.
+
 ## Recover the console login if its helper is missing
 
 If the tty1 automatic-login helper is missing or damaged, `getty` can repeatedly print “can't execute” instead of presenting a usable console. Startup now validates and restores the helper from its protected copy before getty starts; if recovery is not possible, it falls back to a normal login prompt.
