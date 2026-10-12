@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.5"
-builddate="2026.10.11"
+rploaderver="1.4.5.6"
+builddate="2026.10.12"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1028,6 +1028,7 @@ function history() {
     1.4.5.3 Select NVIDIA SPK versions and preserve xTCRP boot menu slots
     1.4.5.4 Harden remote loader packages and Docker loop image builds
     1.4.5.5 Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
+    1.4.5.6 Protect Alpine persistence and reconcile detected network interfaces
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1760,6 +1761,9 @@ EOF
 # 2026.10.11 v1.4.5.5
 # Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
 
+# 2026.10.12 v1.4.5.6
+# Protect Alpine persistence and reconcile detected network interfaces
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2169,6 +2173,9 @@ function showlastupdate() {
 
 # 2026.10.11 v1.4.5.5
 # Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
+
+# 2026.10.12 v1.4.5.6
+# Protect Alpine persistence and reconcile detected network interfaces
 EOF
 }
 
@@ -5673,6 +5680,36 @@ function migrate_p3_apkovl_baseline() {
     [ ! -e "${legacy}" ]
 }
 
+# Record every extracted member's numeric owner, group, mode, type and path.
+# The caller compares this manifest with a fresh extraction of the repacked
+# archive so any metadata drift fails closed before P4 is replaced.
+function write_apkovl_metadata_manifest() {
+    local tree="$1" manifest="$2" raw="${2}.raw" paths="${2}.paths" expected_count actual_count
+    if ! sudo find "${tree}" -print > "${paths}"; then
+        rm -f "${paths}"
+        return 1
+    fi
+    expected_count=$(wc -l < "${paths}" | tr -d '[:space:]')
+    rm -f "${paths}"
+    case "${expected_count}" in ''|*[!0-9]*) return 1 ;; esac
+    [ "${expected_count}" -gt 0 ] || return 1
+    if ! sudo sh -c 'cd "$1" && find . -exec stat -c "%u:%g:%a:%F:%n" {} \;' _ "${tree}" > "${raw}"; then
+        rm -f "${raw}"
+        return 1
+    fi
+    actual_count=$(wc -l < "${raw}" | tr -d '[:space:]')
+    if [ "${actual_count}" != "${expected_count}" ]; then
+        echo "[APKVOL] Metadata manifest is incomplete (${actual_count}/${expected_count} entries)." >&2
+        rm -f "${raw}"
+        return 1
+    fi
+    if ! LC_ALL=C sort "${raw}" > "${manifest}"; then
+        rm -f "${raw}" "${manifest}"
+        return 1
+    fi
+    rm -f "${raw}"
+}
+
 # Persist Alpine only through a transaction. The P3 baseline is never
 # unpacked into the live root; P4 alone holds the boot-discoverable overlay.
 # lbu writes a candidate under /tmp, validated before P4 is replaced.
@@ -5701,7 +5738,7 @@ function persist_alpine_apkovl_safely() {
 
     local baseline="/mnt/tcrp/localhost.apkovl.baseline.tar.gz"
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
-    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight
+    local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight verify metadata_before metadata_after
     local remote_hash local_hash baseline_next path owner
 
     command -v curl >/dev/null 2>&1 || return 1
@@ -5862,23 +5899,49 @@ function persist_alpine_apkovl_safely() {
         return 1
     }
 
-    # The archive captured the temporary staging path.  Restore the regular
-    # P4 lbu.conf inside the candidate before activating it.
+    # Compose the refreshed repository overlay as the base layer, then apply
+    # the current runtime snapshot over it. This keeps user/runtime settings
+    # authoritative while adding newly shipped files from the remote apkovl.
+    # Do this only in the private staging directory; never unpack an archive
+    # directly into the running root or an active partition.
     extract="${stage}/extract"
     repacked="${stage}/candidate.repacked"
     if ! sudo mkdir -p "${extract}" \
         || ! sudo chown root:root "${extract}" \
         || ! sudo chmod 0700 "${extract}" \
+        || ! sudo tar -xzf "${baseline}" -C "${extract}" \
         || ! sudo tar -xzf "${candidate}" -C "${extract}" \
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
         || ! sudo chown root:root "${extract}" \
-        || ! sudo chmod 0755 "${extract}" \
-        || ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
-        || ! sudo mv -f "${repacked}" "${candidate}"; then
+        || ! sudo chmod 0755 "${extract}"; then
         [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
         sudo rm -rf -- "${stage}"
         return 1
     fi
+    metadata_before="${stage}/metadata.before"
+    metadata_after="${stage}/metadata.after"
+    verify="${stage}/verify"
+    if ! write_apkovl_metadata_manifest "${extract}" "${metadata_before}"; then
+        echo "[APKVOL] Cannot record staged UID/GID/mode metadata; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if ! sudo sh -c "cd '${extract}' && tar -czf '${repacked}' ." \
+        || ! sudo mv -f "${repacked}" "${candidate}" \
+        || ! sudo mkdir -p "${verify}" \
+        || ! sudo chown root:root "${verify}" \
+        || ! sudo chmod 0700 "${verify}" \
+        || ! sudo tar -xzf "${candidate}" -C "${verify}" \
+        || ! write_apkovl_metadata_manifest "${verify}" "${metadata_after}" \
+        || ! cmp -s "${metadata_before}" "${metadata_after}"; then
+        echo "[APKVOL] Repacked archive changed member ownership or metadata; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    echo "[APKVOL] Verified UID/GID, mode, type, and path for every staged archive member."
+    echo "[APKVOL] Refreshed repository overlay and current user state composed in staging."
     # Root extraction must preserve the original tar owners. Refuse to
     # activate an archive if any privileged member became tc-owned.
     for path in . etc/passwd etc/group etc/shadow etc/sudoers.d etc/sudoers.d/tc etc/lbu/lbu.conf; do
