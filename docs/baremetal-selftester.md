@@ -20,12 +20,11 @@ This stage is not implemented by the initial addon work.
 ## Junior helper
 
 `tcrp-addons/junior-selftest` starts at the addon `on_patches` hook, only in
-junior mode. A bounded background monitor reads kernel network and block-device
-state, probes the machine's own port 5000, and writes `/tmp/junior-selftest.log`.
-It invokes a small framebuffer renderer to show a status panel when `/dev/fb0`
-is available. It does not switch virtual consoles or rely on `/dev/console`.
-The renderer supports Linux RGB565 and 32-bit true-color framebuffers, checks
-geometry before writing, and leaves an unsupported display untouched.
+junior mode. A background monitor reads kernel network and block-device state,
+probes the machine's own port 5000, and writes `/var/log/junior-selftest.log`.
+It displays a text status panel on the active Linux virtual console, normally
+`tty1`. Character output does not require a framebuffer; a framebuffer is only
+needed for pixel-based graphics. The helper redraws the panel periodically.
 
 The IP shown is the address currently assigned inside junior. TCP readiness
 means the local port accepts a connection; it is not proof of successful DSM
@@ -35,8 +34,9 @@ DSM-usable-disk assessment.
 
 ## Validation gates
 
-First verify the renderer on a physical SA6400 junior boot: `/dev/fb0`
-availability, pixel format, panel visibility and persistence while DSM draws.
-Then verify DHCP/IP, local TCP probe, and disk list against junior's own sysfs
-and network state. Only after that should the Alpine zero-choice build and
-reboot path be added. No automatic DSM install belongs in this pilot.
+The VMware Fusion pilot confirmed that DSM junior can lack `/dev/fb0` while
+`tty1` remains active and writable. Verify the text panel on the VM and on a
+physical SA6400; then refine disk classification to exclude the loader and
+confirm the displayed list against DSM's own disk view. Only after that should
+the Alpine zero-choice build and reboot path be added. No automatic DSM install
+belongs in this pilot.
