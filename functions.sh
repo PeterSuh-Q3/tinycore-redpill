@@ -5740,6 +5740,7 @@ function persist_alpine_apkovl_safely() {
     local active="/mnt/alpine/$(hostname).apkovl.tar.gz"
     local stage incoming candidate active_backup url lbu_conf lbu_conf_backup extract repacked preflight verify metadata_before metadata_after
     local managed_source managed_target managed_owner managed_mode
+    local netifaces_service_source netifaces_service_target netifaces_runlevel_target netifaces_link_target netifaces_service_owner netifaces_service_mode netifaces_link_owner
     local remote_hash local_hash baseline_next path owner
 
     command -v curl >/dev/null 2>&1 || return 1
@@ -5921,6 +5922,9 @@ function persist_alpine_apkovl_safely() {
     # overwrite it when the lbu snapshot is layered over the baseline.
     managed_source="${stage}/rebuildnetifaces.repository"
     managed_target="${extract}/usr/local/sbin/rebuildnetifaces"
+    netifaces_service_source="${stage}/mshell-netifaces.repository"
+    netifaces_service_target="${extract}/etc/init.d/mshell-netifaces"
+    netifaces_runlevel_target="${extract}/etc/runlevels/boot/mshell-netifaces"
     if [ -L "${managed_target}" ] || [ ! -f "${managed_target}" ] || [ ! -x "${managed_target}" ]; then
         echo "[APKVOL] Repository baseline is missing a regular executable rebuildnetifaces; persistence cancelled." >&2
         [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
@@ -5937,6 +5941,37 @@ function persist_alpine_apkovl_safely() {
         return 1
     fi
 
+    # The early OpenRC service and its boot runlevel link are one managed
+    # unit. The service must survive the runtime snapshot overlay, otherwise
+    # the runlevel link becomes dangling and NIC reconciliation never runs.
+    if [ -L "${netifaces_service_target}" ] || [ ! -f "${netifaces_service_target}" ] ||
+       [ ! -x "${netifaces_service_target}" ] ||
+       [ ! -L "${netifaces_runlevel_target}" ] ||
+       [ "$(sudo readlink "${netifaces_runlevel_target}" 2>/dev/null)" != /etc/init.d/mshell-netifaces ]; then
+        echo "[APKVOL] Repository baseline is missing a valid mshell-netifaces service or boot link; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    netifaces_service_owner=$(sudo stat -c '%u:%g' "${netifaces_service_target}" 2>/dev/null) || netifaces_service_owner=""
+    netifaces_service_mode=$(sudo stat -c '%a' "${netifaces_service_target}" 2>/dev/null) || netifaces_service_mode=""
+    if [ "${netifaces_service_owner}" != "0:0" ] || [ "${netifaces_service_mode}" != "755" ] ||
+       ! sudo cp -p "${netifaces_service_target}" "${netifaces_service_source}" ||
+       ! sudo cmp -s "${netifaces_service_target}" "${netifaces_service_source}"; then
+        echo "[APKVOL] Repository mshell-netifaces service has unexpected content, ownership, or mode; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    netifaces_link_target="$(sudo readlink "${netifaces_runlevel_target}" 2>/dev/null)" || netifaces_link_target=""
+    netifaces_link_owner=$(sudo stat -c '%u:%g' "${netifaces_runlevel_target}" 2>/dev/null) || netifaces_link_owner=""
+    if [ "${netifaces_link_target}" != /etc/init.d/mshell-netifaces ] || [ "${netifaces_link_owner}" != "0:0" ]; then
+        echo "[APKVOL] Cannot preserve the repository mshell-netifaces boot link; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+
     if ! sudo tar -xzf "${candidate}" -C "${extract}" \
         || ! sudo cp -p "${lbu_conf_backup}" "${extract}/etc/lbu/lbu.conf" \
         || ! sudo chown root:root "${extract}" \
@@ -5945,6 +5980,33 @@ function persist_alpine_apkovl_safely() {
         sudo rm -rf -- "${stage}"
         return 1
     fi
+
+    # Restore both pieces after applying the runtime snapshot. A snapshot may
+    # contain a stale/missing service or a dangling runlevel link; neither is
+    # allowed to replace the repository-managed pre-network hook.
+    if [ ! -d "${extract}/etc/init.d" ] || [ -L "${extract}/etc/init.d" ] ||
+       [ ! -d "${extract}/etc/runlevels/boot" ] || [ -L "${extract}/etc/runlevels/boot" ] ||
+       { [ -e "${netifaces_service_target}" ] && [ ! -f "${netifaces_service_target}" ] && [ ! -L "${netifaces_service_target}" ]; } ||
+       { [ -e "${netifaces_runlevel_target}" ] && [ ! -L "${netifaces_runlevel_target}" ] && [ ! -f "${netifaces_runlevel_target}" ]; }; then
+        echo "[APKVOL] Runtime snapshot has unsafe mshell-netifaces service paths; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    if ! sudo rm -f -- "${netifaces_service_target}" "${netifaces_runlevel_target}" ||
+       ! sudo cp -p "${netifaces_service_source}" "${netifaces_service_target}" ||
+       ! sudo ln -s /etc/init.d/mshell-netifaces "${netifaces_runlevel_target}" ||
+       ! sudo cmp -s "${netifaces_service_source}" "${netifaces_service_target}" ||
+       [ "$(sudo stat -c '%u:%g:%a' "${netifaces_service_target}" 2>/dev/null)" != "${netifaces_service_owner}:755" ] ||
+       [ ! -L "${netifaces_runlevel_target}" ] ||
+       [ "$(sudo readlink "${netifaces_runlevel_target}" 2>/dev/null)" != /etc/init.d/mshell-netifaces ] ||
+       [ "$(sudo stat -c '%u:%g' "${netifaces_runlevel_target}" 2>/dev/null)" != "${netifaces_link_owner}" ]; then
+        echo "[APKVOL] Could not restore and verify the repository mshell-netifaces service and boot link; persistence cancelled." >&2
+        [ -f "${active_backup}" ] && sudo cp "${active_backup}" "${active}"
+        sudo rm -rf -- "${stage}"
+        return 1
+    fi
+    echo "[APKVOL] Preserved and verified mshell-netifaces service plus boot runlevel link."
 
     # Runtime configuration remains authoritative, but this one shipped
     # system helper must always come from the repository baseline. Reject
@@ -5987,6 +6049,14 @@ function persist_alpine_apkovl_safely() {
         || ! sudo chown root:root "${verify}" \
         || ! sudo chmod 0700 "${verify}" \
         || ! sudo tar -xzf "${candidate}" -C "${verify}" \
+        || [ -L "${verify}/etc/init.d/mshell-netifaces" ] \
+        || [ ! -f "${verify}/etc/init.d/mshell-netifaces" ] \
+        || [ ! -x "${verify}/etc/init.d/mshell-netifaces" ] \
+        || ! sudo cmp -s "${netifaces_service_source}" "${verify}/etc/init.d/mshell-netifaces" \
+        || [ ! -L "${verify}/etc/runlevels/boot/mshell-netifaces" ] \
+        || [ "$(sudo readlink "${verify}/etc/runlevels/boot/mshell-netifaces" 2>/dev/null)" != /etc/init.d/mshell-netifaces ] \
+        || [ "$(sudo stat -c '%u:%g:%a' "${verify}/etc/init.d/mshell-netifaces" 2>/dev/null)" != "${netifaces_service_owner}:755" ] \
+        || [ "$(sudo stat -c '%u:%g' "${verify}/etc/runlevels/boot/mshell-netifaces" 2>/dev/null)" != "${netifaces_link_owner}" ] \
         || ! write_apkovl_metadata_manifest "${verify}" "${metadata_after}" \
         || ! cmp -s "${metadata_before}" "${metadata_after}"; then
         echo "[APKVOL] Repacked archive changed member ownership or metadata; persistence cancelled." >&2
