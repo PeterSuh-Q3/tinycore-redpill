@@ -1,5 +1,27 @@
 # Active Context
 
+## AST KMS unified DRM pilot (2026-10-14)
+
+- Built an isolated DSM 7.4.1 / epyc7002 pilot with Docker Desktop using
+  `dante90/syno-compiler:7.4` and eight CPUs. The exact platform `.config` and
+  `Module.symvers` came from the DSM 7.4 development package; `backlight.ko`
+  and `i2c-algo-bit.ko` were built from the matching Synology 7.4-90080 GPL
+  source. AST source was upstream Linux v6.5, adjusted only in the scratch
+  workspace for DSM 5.10's WC mapping and `iosys_map` APIs.
+- The unified output contains 22 modules: AST, AMDGPU with AMD Display Core,
+  Bochs, i915, the standalone backlight provider, `i2c-algo-bit`, and their
+  shared DRM dependency closure. Build and MODPOST succeeded; every module has
+  `5.10.55+` vermagic, SHA-256 checks passed, and all declared module
+  dependencies have providers in the pack.
+- Pilot archive:
+  `/Users/yousuk/dual-gpu-backports/out/local-docker-ast-unified-pilot/epyc7002-7.4-5.10.55-drm.tgz`
+  SHA-256 `a38d4abbefb14d8f3200d67a1a2165a26c1c65a8614dbf82b4a4ea99b7710a50`.
+  The archive is local and was not deployed or runtime-tested. The AST source
+  integration was subsequently committed and pushed to `feature/amdgpu-merge`
+  as `da5c5a9`; the build configuration enables it only for this tested target.
+- The existing `Syno AMD / NVIDIA Driver` session was asked to separately
+  assess KMS-only NVIDIA DRM module requirements for the DSM 7.4/Pascal case.
+
 Last updated: 2026-10-04
 
 ## Emergency P3/P4 persistence recovery work (2026-10-05)
