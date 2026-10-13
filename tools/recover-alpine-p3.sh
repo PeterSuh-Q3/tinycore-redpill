@@ -108,7 +108,12 @@ if [ -f /home/tc/user_config.json ] && [ -f "$point/user_config.json" ] &&
 fi
 
 for path in $(mounts); do
-    case "$path" in "$point"|"$media") ;; *)
+    # Alpine may leave the loader P3 mounted at the legacy /media/usb path
+    # while the startup code also mounts the same block device at /mnt/sdX3.
+    # mounts() filters by P3's major:minor, so allowing this alias cannot
+    # permit a different device. Recovery will normalize it to one writable
+    # mount at $point before persisting.
+    case "$path" in "$point"|"$media"|/media/usb) ;; *)
         echo "Refusing unexpected mount target: $path" >&2; exit 1 ;;
     esac
 done
