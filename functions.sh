@@ -4791,6 +4791,16 @@ function monitor() {
         #msgnormal "System Main IP:\t\t"$(/sbin/ifconfig | grep inet | grep -v 127.0.0.1 | awk '{print $2}' | awk -F \: '{print $2}' | tr '\n' ',' | sed 's#,$##')
         getip
         listpci
+        # Match FRIEND boot.sh: show every VGA-class (PCI class 0300) device.
+        GPU_NUM=0
+        while IFS= read -r GPU_ITEM; do
+            [ -z "${GPU_ITEM}" ] && continue
+            GPU_NUM=$((GPU_NUM + 1))
+            echo -e "GPU ${GPU_NUM}:\t\t"$(msgnormal "${GPU_ITEM}")
+        done <<GPU_LIST
+$(lspci -nn 2>/dev/null | sed -n 's/.*\[0300\]: //p')
+GPU_LIST
+        [ "${GPU_NUM}" -eq 0 ] && echo -e "GPU:\t\t\t"$(msgnormal "N/A")
         echo -e "-------------------------------Loader boot entries---------------------------"
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------CPU / Memory----------------------------------"
