@@ -1,5 +1,21 @@
 # Active Context
 
+## AST stability compile follow-up (2026-10-15)
+
+- The Linux 5.10.55 AST implementation from the matching DSM 7.4-90080 GPL
+  source was adapted in an isolated worktree to the current backport DRM APIs.
+  A Docker Desktop compile of AST plus the DRM/VRAM/TTM dependency closure
+  completed, including MODPOST. Vermagic is `5.10.55+ SMP mod_unload`; direct
+  dependencies are `drm`, `drm_kms_helper`, `drm_vram_helper`,
+  `drm_ttm_helper`, `dmabuf`, and `i2c-algo-bit`. The module has AST2000 and
+  AST2100 PCI aliases and no `drm_shmem_helper` dependency.
+- Artifact:
+  `/Users/yousuk/dual-gpu-backports-ast-stability-pilot/out/ast-stability/ast.ko`,
+  SHA-256 `ef3120c993ccb89b6a4090f51aaa5603d3e46a8534a83b4f29679328f0b30447`.
+  The complete unified pack was not rebuilt, and this artifact was not deployed
+  or runtime-loaded. The compile does not resolve the earlier soft-lockup; a
+  controlled runtime test remains necessary before claiming stability.
+
 ## AST KMS unified DRM pilot (2026-10-14)
 
 - Built an isolated DSM 7.4.1 / epyc7002 pilot with Docker Desktop using
