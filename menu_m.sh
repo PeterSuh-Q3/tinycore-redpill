@@ -376,7 +376,7 @@ if [ -z "${SANMANAGER_REPAIR}" ]; then
     writeConfigKey "general" "sanmanager-repair" "${SANMANAGER_REPAIR}"
 fi
 
-# nvidiaMenu(최상위 g) 의 세 항목을 다른 설정들과 동일한 방식으로
+# nvidiaMenu(최상위 g) 의 설정을 다른 항목들과 같은 방식으로
 # 전역변수화 + general.* 영구저장한다. 이전 버전은 .nvidia_driver /
 # .nvidia_ffmpeg 를 writeConfigKey 컨벤션과 다르게 최상위(top-level)에
 # 저장했다 - general 쪽이 비어 있고 구 최상위 키가 남아있으면 옮기고
@@ -391,6 +391,12 @@ if [ -z "${NVIDIA_DRIVER}" ]; then
         jsonfile=$(jq 'del(.nvidia_driver)' "${userconfigfile}") && echo -E "${jsonfile}" | jq . > "${userconfigfile}"
     fi
 fi
+
+NVIDIA_FLAVOR=$(readConfigKey "general" "nvidia_flavor")
+case "${NVIDIA_FLAVOR}" in
+    open|proprietary) ;;
+    *) NVIDIA_FLAVOR="proprietary"; writeConfigKey "general" "nvidia_flavor" "${NVIDIA_FLAVOR}" ;;
+esac
 
 NVIDIA_FFMPEG=$(readConfigKey "general" "nvidia_ffmpeg")
 if [ -z "${NVIDIA_FFMPEG}" ]; then
@@ -2466,7 +2472,7 @@ function resetNvidiaIfUnsupported() {
 
 ###############################################################################
 # NVIDIA H/W transcoding driver — published SPK selection submenu.
-# Writes the selected driver and optional packages to user_config.json;
+# Writes the selected driver flavor/version and optional packages to user_config.json;
 # functions.sh bakes them to /addons/nvidia.conf for the junior addon.
 # Auto = leave nvidia_driver unset -> install.sh detects the GPU at boot.
 function nvidiaMenu() {
@@ -2508,11 +2514,12 @@ function nvidiaMenu() {
     case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
       gpuid="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;; esac
   done
-  local gname="Unknown" branch="" branches=""
+  local gname="Unknown" garch="" branch="" branches=""
   if [ -s "$sup" ]; then
     branch=$(jq -r --arg k "${mykver%%.*}" '.default_branch_by_kernel[$k] // .default_branch // empty' "$sup" 2>/dev/null)
     [ -n "$gpuid" ] && {
       gname=$(jq -r --arg g "$gpuid" '.gpus[$g].name // "Unknown"' "$sup")
+      garch=$(jq -r --arg g "$gpuid" '.gpus[$g].arch // empty' "$sup" 2>/dev/null)
       branches=$(jq -r --arg g "$gpuid" '.gpus[$g].branches // [] | .[]' "$sup" 2>/dev/null)
     }
   fi
@@ -2533,12 +2540,13 @@ function nvidiaMenu() {
 
   local LETTERS="abcdefghijklmnopqrstuvwxy"   # z 는 Exit 전용으로 예약
   while true; do
-    local cur ffon cron has
+    local cur ffon cron has flavon
     # bay/VMTOOLS/NVMES 등과 동일한 방식 - 매번 파일을 다시 읽지 않고
     # 시작 시점에 초기화해둔 전역변수(NVIDIA_DRIVER/NVIDIA_FFMPEG/
     # NVIDIA_ENABLED)를 그대로 쓴다. 변경 시에도 이 전역변수를 갱신하고
     # writeConfigKey 로 general.* 에 영구저장한다(아래 dispatch 참고).
     cur="${NVIDIA_DRIVER}"
+    flavon="${NVIDIA_FLAVOR}"
     ffon="Off"; [ "${NVIDIA_FFMPEG}" = "true" ] && ffon="On"
     cron="Off"; [ "${NVIDIA_CR}" = "true" ] && cron="On"
     # enable/disable 상태만은 전역변수가 아니라 bundled-exts.json 을 직접
@@ -2572,6 +2580,16 @@ function nvidiaMenu() {
     done
     keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("$(printf "${MSG80}" "${ffon}")"); kind+=("ffmpeg"); verval+=("")
     keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("$(printf "${MSG131}" "${cron}")"); kind+=("crt"); verval+=("")
+    if [ "$mykver" = "5.10.55" ] && printf '%s\n' "$vers" | grep -Eq '^(580|595)\.'; then
+      sel=""; [ "$flavon" = "proprietary" ] && sel=" *"
+      keys+=("${LETTERS:${#keys[@]}:1}")
+      labels+=("Proprietary kernel module${sel} (broader GPU support)")
+      kind+=("flavor"); verval+=("proprietary")
+      sel=""; [ "$flavon" = "open" ] && sel=" *"
+      keys+=("${LETTERS:${#keys[@]}:1}")
+      labels+=("Open kernel module${sel} (Turing or newer)")
+      kind+=("flavor"); verval+=("open")
+    fi
     if [ "$has" = "yes" ]; then
       keys+=("${LETTERS:${#keys[@]}:1}"); labels+=("${MSG81}")
     else
@@ -2595,6 +2613,7 @@ function nvidiaMenu() {
     else
       status="\Z1DISABLED\Zn — $(printf "${MSG84}" "${cur:-Auto}" "${ffon}")  ${MSG85}"
     fi
+    [ "$mykver" = "5.10.55" ] && status="${status}  | module flavor: ${flavon}"
     if [ ! -s "$idx" ]; then
       status="${status}  \Z1SPK manifest unavailable\Zn"
     fi
@@ -2630,6 +2649,16 @@ function nvidiaMenu() {
                   writeConfigKey "general" "nvidia_ffmpeg" "${NVIDIA_FFMPEG}" ;;
           crt)    if [ "${NVIDIA_CR}" = "true" ]; then NVIDIA_CR="false"; else NVIDIA_CR="true"; fi
                   writeConfigKey "general" "nvidia_container_runtime" "${NVIDIA_CR}" ;;
+          flavor)
+                  if [ "${verval[$i]}" = "open" ]; then
+                    case "$garch" in Maxwell|Pascal|Volta|Kepler|Fermi|Tesla)
+                      echo "Open NVIDIA kernel modules require a Turing-or-newer GPU; detected ${garch}."
+                      sleep 2
+                      continue ;;
+                    esac
+                  fi
+                  NVIDIA_FLAVOR="${verval[$i]}"
+                  writeConfigKey "general" "nvidia_flavor" "${NVIDIA_FLAVOR}" ;;
           toggle) if [ "$has" = "yes" ]; then
                     del-addon "nvidiadriver"; NVIDIA_ENABLED="false"          # Disable
                   else

@@ -54,7 +54,7 @@ while true; do
   echo "[bundled-exts.json]  (nvidiadriver 등록 여부)"
   jq '{nvidiadriver: (.nvidiadriver // "(not added)")}' "$BEXSB"
   echo "[user_config.json]   (선택 버전 / ffmpeg)"
-  jq '{nvidia_driver: (.nvidia_driver // "(Auto)"), nvidia_ffmpeg: (.nvidia_ffmpeg // false)}' "$SB/user_config.json"
+  jq '{nvidia_driver: (.nvidia_driver // "(Auto)"), nvidia_flavor: (.nvidia_flavor // "proprietary"), nvidia_ffmpeg: (.nvidia_ffmpeg // false)}' "$SB/user_config.json"
   echo "===================================================="
   printf "서브메뉴 다시 열기? [y/N] : "; read -r a
   case "$a" in y|Y) ;; *) break ;; esac
