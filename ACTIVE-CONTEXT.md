@@ -1,5 +1,26 @@
 # Active Context
 
+## NVIDIA KMS historical milestone (user-confirmed, 2026-10-15)
+
+- The first successful NVIDIA KMS output was achieved on `geminilakenk` without
+  a special KMS-adjusted NVIDIA recompile. Preserve this as an established
+  historical result; do not answer as if `geminilakenk` had never succeeded.
+- Keep that initial success distinct from later platform/provider ABI work,
+  including the later tests that found missing DRM symbols or required
+  provider-matched headers. A later failed or inconclusive artifact does not
+  invalidate the earlier successful run; identify the exact module/provider
+  combination before reconciling them.
+- Do not attribute the success solely to Intel hardware. Intel/i915 may have
+  supplied a usable DRM environment, but NVIDIA KMS depends on a compatible DRM
+  provider/ABI and `nvidia-drm` modesetting; the causal role of the platform's
+  Intel graphics stack was not established by this historical fact.
+- In the 2026-10-15 SA6400 `epyc7002` junior test, the host's Intel iGPU was
+  `card0` and GTX 1650 (`10de:1f82`) was NVIDIA `card1`. With the matching
+  580.173.02 proprietary module bundle loaded, `nvidia_drm` reported
+  `modeset=Y`, registered `/dev/dri/card1` and `renderD129`, and initialized
+  connectors. This is a separate later provider-matched test, not the original
+  `geminilakenk` milestone.
+
 ## AST stability compile follow-up (2026-10-15)
 
 - The Linux 5.10.55 AST implementation from the matching DSM 7.4-90080 GPL
