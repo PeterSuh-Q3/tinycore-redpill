@@ -2,6 +2,24 @@
 
 ## NVIDIA KMS historical milestone (user-confirmed, 2026-10-15)
 
+- Exact 45.84 test record from 2026-10-14 (Korea time): investigation of the
+  installed full 580.173.02 Proprietary package began at about 14:33. The host
+  reported DSM 7.4.1 build 90080, kernel `5.10.55+`, platform
+  `geminilakenk`, and Quadro P620. The installed `nvidia-drm.ko` hash matched
+  the `geminilakenk` package artifact. Its first load attempt failed with
+  unresolved `drm_atomic_helper_legacy_gamma_set` and `__drm_dbg` symbols.
+- After preparing the ABI-adjusted pilot module, it was loaded at about 16:22
+  with `modeset=1`. The live value was `Y`; NVIDIA DRM initialization
+  succeeded, `/dev/dri/card0` and NVIDIA DP connectors appeared, and `DP-4`
+  reported connected with modes including 1920x1080. There were no new
+  unresolved-symbol errors during this successful load.
+- Scope: this established runtime KMS initialization and connector/mode
+  discovery on 45.84. `DP-4` still reported `enabled=disabled`, so actual
+  scanout or a display mode switch was not tested. The module was loaded live
+  from a temporary file; reboot persistence and package auto-loading were not
+  validated in that test. Preserve this exact milestone separately from the
+  later 2026-10-15 `epyc7002` provider-matched test below.
+
 - The first successful NVIDIA KMS output was achieved on `geminilakenk` without
   a special KMS-adjusted NVIDIA recompile. Preserve this as an established
   historical result; do not answer as if `geminilakenk` had never succeeded.
