@@ -21,8 +21,11 @@
   later 2026-10-15 `epyc7002` provider-matched test below.
 
 - The first successful NVIDIA KMS output was achieved on `geminilakenk` without
-  a special KMS-adjusted NVIDIA recompile. Preserve this as an established
-  historical result; do not answer as if `geminilakenk` had never succeeded.
+  a special KMS-adjusted NVIDIA recompile in the earlier test. Preserve this
+  as an established historical result; do not answer as if `geminilakenk` had
+  never succeeded. Keep it distinct from the separate 2026-10-14 45.84 test
+  above, where the installed module first failed on missing DRM symbols and an
+  ABI-adjusted pilot module was later loaded successfully.
 - Keep that initial success distinct from later platform/provider ABI work,
   including the later tests that found missing DRM symbols or required
   provider-matched headers. A later failed or inconclusive artifact does not
@@ -36,8 +39,19 @@
   `card0` and GTX 1650 (`10de:1f82`) was NVIDIA `card1`. With the matching
   580.173.02 proprietary module bundle loaded, `nvidia_drm` reported
   `modeset=Y`, registered `/dev/dri/card1` and `renderD129`, and initialized
-  connectors. This is a separate later provider-matched test, not the original
-  `geminilakenk` milestone.
+  connectors. This 45.5 test used the DRM provider built from the NVIDIA
+  provider derivative branch; it was not a provider-less success. Do not
+  conflate it with either `geminilakenk` test above.
+- For the six-platform KMS investigation (`epyc7002`, `epyc7003`,
+  `geminilakenk`, `icelaked`, `r1000nk`, `v1000nk`), do not infer that Intel
+  platform identity caused KMS success. The recorded successes had different
+  module/provider conditions: an earlier `geminilakenk` success without a
+  special NVIDIA KMS recompile, a distinct 45.84 ABI-adjusted pilot success,
+  and the 45.5 `epyc7002` success after applying the provider-derivative build.
+  These are not a controlled comparison. Provider provenance, exact module
+  hashes/build inputs, and modeset state must be recorded per run. The current
+  record does not establish KMS success for `epyc7003`, `icelaked`, `r1000nk`,
+  or `v1000nk`; keep them unverified until direct evidence is available.
 
 ## AST stability compile follow-up (2026-10-15)
 
