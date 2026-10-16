@@ -16,12 +16,22 @@
   TTYD access or SSH is unavailable; record confirmed facts, source ownership,
   and unfinished validation in `ACTIVE-CONTEXT.md` before a long investigation
   or handoff.
+- The user's MSHELL physical test devices generate ephemeral SSH host keys on
+  every reboot. An SSH host-key-change warning for a known MSHELL test device
+  is expected and does not require asking the user to confirm each time.
+  Use a device-scoped SSH invocation with an isolated temporary known-hosts
+  file for that connection; do not remove entries from the user's persistent
+  `known_hosts` or disable host-key checking globally. Confirm the destination
+  is the intended MSHELL device using available context, and investigate any
+  unexpected identity or network mismatch.
 - For module-load failures, separately verify the requesting addon, declared
   dependencies, live `modules.dep`, and module files included in the loader.
-- Kernel-module pilots use the Ubuntu build host's root-owned
-  `/root/mshell-modules` checkout as the authoritative build worktree. Do not
-  use stale non-Git copies from ordinary user home directories as a source of
-  truth.
+- Kernel-module pilots use Docker Desktop as the preferred build environment.
+  Assume Docker Desktop and the user's `dante90/syno-compiler:7.4` toolchain are
+  ready; the user has built amdgpu and backlight modules there. For DSM 7.4
+  cross-compiles, use that toolchain without asking to reconfirm readiness. Do
+  not search for or ask about the Ubuntu VM build host unless the user
+  explicitly requests it or Docker Desktop is unavailable.
 - For a provider pilot, compile only from an exact matching DSM runtime
   `.config` and `Module.symvers` plus the corresponding Synology GPL source.
   Never resolve an `Unknown symbol` by copying a provider from another
