@@ -44,6 +44,17 @@ _get_maxdisks() {
   fi
 }
 
+# PAS7700 uses NVMe drives as data-volume bays; other models map NVMe as
+# M.2 SSD cache slots. The loader menu supplies MODEL and dtsmapping() builds
+# DTSMODEL from it, so accept either source while keeping the special path
+# unavailable unless PAS7700 is actually selected.
+_is_pas7700_model() {
+  case "$(printf '%s' "${DTSMODEL:-}${MODEL:-}" | tr 'A-Z' 'a-z')" in
+    *pas7700*) return 0 ;;
+    *)         return 1 ;;
+  esac
+}
+
 
 # =============================================================================
 # udevadm 출력에서 특정 키 값 추출
@@ -564,11 +575,8 @@ map_nvme_nodes() {
     return
   fi
 
-  # PAS7700 여부 판별 (대소문자 무시, MODEL/DTSMODEL 어느 쪽에 있어도 인식)
   local NVME_AS_DATA=""
-  case "$(printf '%s' "${DTSMODEL}${MODEL}" | tr 'A-Z' 'a-z')" in
-    *pas7700*) NVME_AS_DATA="yes" ;;
-  esac
+  _is_pas7700_model && NVME_AS_DATA="yes"
 
   local DEV_COUNT MAXDISKS
   DEV_COUNT=$(printf '%s\n' "${NVME_LIST}" | wc -l)
@@ -794,6 +802,12 @@ main_menu() {
   while true; do
     local NODE_COUNT="${#DTS_NODES[@]}"
     local CHOICE
+    local NVME_MENU_LABEL
+    if _is_pas7700_model; then
+      NVME_MENU_LABEL="Map NVMe  ->  internal_slot@N (PAS7700 data volume)"
+    else
+      NVME_MENU_LABEL="Map NVMe  ->  nvme_slot@N (M.2 SSD cache)"
+    fi
     CHOICE=$(dialog --backtitle "$(backtitle)" --colors \
       --title "Synology DTS Mapping Generator" \
       --default-item "${DEFAULT_ITEM}" \
@@ -801,7 +815,7 @@ main_menu() {
       "a" "Show detected storage devices" \
       "b" "Set DTS header (compatible / model)" \
       "c" "Map SATA/SAS  ->  internal_slot@N" \
-      "d" "Map NVMe  ->  nvme_slot@N (PAS7700: internal_slot data vol)" \
+      "d" "${NVME_MENU_LABEL}" \
       "e" "Map USB   ->  usb_slot@N" \
       "f" "Preview .dts output" \
       "g" "Generate .dts file" \
