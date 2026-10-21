@@ -8003,13 +8003,38 @@ function getmodaliasfile() {
 
 function listmodules() {
 
-    if [ ! -f $MODULE_ALIAS_FILE ]; then
-        echo "Creating module alias json file"
-        getmodaliasfile >modules.alias.4.json
+    local alias_url alias_gz alias_tmp
+
+    if [ ! -s "$MODULE_ALIAS_FILE" ]; then
+        case "$MODULE_ALIAS_FILE" in
+            modules.alias.3.json) alias_url="$modalias3" ;;
+            modules.alias.4.json) alias_url="$modalias4" ;;
+            *)
+                echo "Warning: unsupported module alias index '$MODULE_ALIAS_FILE'; PCI module suggestions skipped."
+                return 0
+                ;;
+        esac
+
+        alias_gz="${MODULE_ALIAS_FILE}.gz.$$"
+        alias_tmp="${MODULE_ALIAS_FILE}.tmp.$$"
+        echo "Module alias index $MODULE_ALIAS_FILE is missing; downloading the matching index..."
+        if curl -kfsSL "$alias_url" -o "$alias_gz" \
+            && gzip -dc "$alias_gz" > "$alias_tmp" \
+            && jq -e '.modules | type == "array"' "$alias_tmp" >/dev/null 2>&1; then
+            mv "$alias_tmp" "$MODULE_ALIAS_FILE"
+            rm -f "$alias_gz"
+        else
+            rm -f "$alias_gz" "$alias_tmp"
+        fi
+    fi
+
+    if [ ! -s "$MODULE_ALIAS_FILE" ]; then
+        echo "Warning: $MODULE_ALIAS_FILE is unavailable; skipping optional PCI module suggestions. DDSML uses its separately packaged alias indexes."
+        return 0
     fi
 
     echo -n "Testing $MODULE_ALIAS_FILE -> "
-    if $(jq '.' $MODULE_ALIAS_FILE >/dev/null); then
+    if jq -e '.modules | type == "array"' "$MODULE_ALIAS_FILE" >/dev/null 2>&1; then
         echo "File OK"
         echo "------------------------------------------------------------------------------------------------"
         echo -e "It looks that you will need the following modules : \n\n"
@@ -8022,7 +8047,7 @@ function listmodules() {
 
         echo "------------------------------------------------------------------------------------------------"
     else
-        echo "Error : File $MODULE_ALIAS_FILE could not be parsed"
+        echo "Warning: $MODULE_ALIAS_FILE is invalid; skipping optional PCI module suggestions. DDSML uses its separately packaged alias indexes."
     fi
 
 }
