@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# Stage the matching Synology AMDGPU runtime SPK in a loader ramdisk. This is
-# intentionally kept in alpine-redpill instead of tcrp-addons: the package is
-# selected from the latest upstream release at build time. AMDGPU Top is
-# bundled and managed by MSHELL Manager, so it is not staged here.
+# Select and stage only the pinned Synology AMDGPU runtime metadata in a loader
+# ramdisk. The SPK itself is downloaded after DSM has mounted a package volume.
+# AMDGPU Top is bundled and managed by MSHELL Manager, so it is not staged here.
 set -u
 
 PLATFORM="${1:?platform is required}"
@@ -11,6 +10,10 @@ DSM_VERSION="${2:?DSM version is required}"
 KERNEL_VERSION="${3:?kernel version is required}"
 ADDONS_DIR="${4:?addons directory is required}"
 MANIFEST_PATH="${5:-}"
+mkdir -p "${ADDONS_DIR}"
+# Do not let a reused ramdisk tree retain an older AMD SPK or its metadata
+# when the current machine/platform/kernel no longer qualifies.
+rm -f "${ADDONS_DIR}"/syno-amdgpu-runtime-*.spk "${ADDONS_DIR}/amdgpu-driver.json"
 
 # AMD userspace runtime integrates the SynoCommunity Jellyfin SPK. Only stage
 # it for the x64 platforms declared by that package's current DSM 7.2+ build.
@@ -54,48 +57,49 @@ for GPU_CLASS in 0300 0302 0380; do
 done
 [ "${GPU_DETECTED}" = "true" ] || { echo "[amdgpu] no supported AMD display controller detected"; exit 0; }
 
+case "${DSM_VERSION}" in
+  7.4*) ;;
+  *) echo "[amdgpu] DSM ${DSM_VERSION} has no matching runtime asset; staging skipped"; exit 0 ;;
+esac
+
 if [ -z "${MANIFEST_PATH}" ] || [ ! -s "${MANIFEST_PATH}" ]; then
   echo "[amdgpu] central package manifest is unavailable" >&2
   exit 0
 fi
 
 # The runtime asset is selected from packages.amd_gpu_runtime. This point is
-# reached only for kernel 5.10.55 (kernel 4.4.x exits above).
+# reached only for kernel 5.10.55 (kernel 4.4.x exits above). Preserve the
+# build-time compatibility decision in the metadata for DSM-side validation.
 stage_amdgpu_package() {
   local manifest_key="$1" name_pattern="$2" out_json="$3"
-  local asset_json asset_name asset_url asset_sha256 target
+  local asset_json asset_name asset_url asset_sha256 asset_size version
 
   asset_json="$(jq -c --arg suffix "-7.4-x86_64-${KERNEL_ASSET}.spk" \
-    --arg key "${manifest_key}" '
+    --arg key "${manifest_key}" --arg platform "${PLATFORM}" \
+    --arg kernel "${KERNEL_VERSION}" --arg dsm "${DSM_VERSION}" '
     .packages[$key].assets[]? | select(.name | endswith($suffix)) |
-    {name, url, sha256}' "${MANIFEST_PATH}" | head -n 1)"
+    . + {package_id: "syno-amdgpu-runtime", dsm_version: $dsm,
+         platform: $platform, kernel: $kernel,
+         version: (.name | capture("-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)-7\\.4-").version)}' \
+    "${MANIFEST_PATH}" | head -n 1)"
 
   asset_name="$(printf '%s' "${asset_json}" | jq -r '.name // empty')"
   asset_url="$(printf '%s' "${asset_json}" | jq -r '.url // empty')"
   asset_sha256="$(printf '%s' "${asset_json}" | jq -r '.sha256 // empty')"
+  asset_size="$(printf '%s' "${asset_json}" | jq -r '.size // empty')"
+  version="$(printf '%s' "${asset_json}" | jq -r '.version // empty')"
   if ! echo "${asset_name}" | grep -Eq "${name_pattern}" || \
      [ "${asset_url##*/}" != "${asset_name}" ] || \
-     ! echo "${asset_sha256}" | grep -Eq '^[a-f0-9]{64}$'; then
+     ! echo "${asset_sha256}" | grep -Eq '^[a-f0-9]{64}$' || \
+     ! echo "${asset_size}" | grep -Eq '^[1-9][0-9]*$' || \
+     [ -z "${version}" ]; then
     echo "[amdgpu] no matching verified ${manifest_key} SPK in the latest release" >&2
     return 1
   fi
 
-  mkdir -p "${ADDONS_DIR}"
-  target="${ADDONS_DIR}/${asset_name}"
-  if ! curl -kfL --progress-bar --retry 2 --connect-timeout 20 "${asset_url}" -o "${target}"; then
-    rm -f "${target}"
-    echo "[amdgpu] ${manifest_key} package download failed" >&2
-    return 1
-  fi
-
-  if [ "$(sha256sum "${target}" | awk '{print $1}')" != "${asset_sha256}" ]; then
-    rm -f "${target}"
-    echo "[amdgpu] ${manifest_key} package checksum mismatch" >&2
-    return 1
-  fi
-
+  rm -f "${ADDONS_DIR}/${asset_name}"
   printf '%s\n' "${asset_json}" > "${ADDONS_DIR}/${out_json}"
-  echo "[amdgpu] staged ${asset_name} in ${ADDONS_DIR}"
+  echo "[amdgpu] staged metadata for ${asset_name}; SPK download deferred until DSM is ready"
   return 0
 }
 

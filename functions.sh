@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.6"
-builddate="2026.10.12"
+rploaderver="1.4.5.7"
+builddate="2026.10.22"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1029,6 +1029,7 @@ function history() {
     1.4.5.4 Harden remote loader packages and Docker loop image builds
     1.4.5.5 Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
     1.4.5.6 Protect Alpine persistence and reconcile detected network interfaces
+    1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1764,6 +1765,9 @@ EOF
 # 2026.10.12 v1.4.5.6
 # Protect Alpine persistence and reconcile detected network interfaces
 
+# 2026.10.22 v1.4.5.7
+# Defer selected package installation until DSM is ready and refine GPU and NVMe options
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2176,6 +2180,9 @@ function showlastupdate() {
 
 # 2026.10.12 v1.4.5.6
 # Protect Alpine persistence and reconcile detected network interfaces
+
+# 2026.10.22 v1.4.5.7
+# Defer selected package installation until DSM is ready and refine GPU and NVMe options
 EOF
 }
 
@@ -7548,56 +7555,46 @@ NCEOF
       echo "[!] Central package manifest unavailable or invalid; SPK staging skipped."
       rm -f "${LATEST_PACKAGE_MANIFEST}"
     fi
+    # Ensure a reused build tree cannot carry older embedded package payloads
+    # into initrd-dsm. Only the small pinned metadata is retained here.
+    sudo rm -f "${RAMDISK_PATH}/addons"/mshellmanager-x86_64-*.spk \
+      "${RAMDISK_PATH}/addons"/Synosmartinfo-x86_64-*.spk \
+      "${RAMDISK_PATH}/addons"/syno-amdgpu-runtime-*.spk
 
     MSHELL_MANAGER_ASSET_JSON="$(jq -c '
-      .packages.mshell_manager.assets[]? | select(.name | endswith(".spk")) |
-      {name, url, sha256}
+      .packages.mshell_manager.assets[]? | select(.name | test("^mshellmanager-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      . + {package_id: "mshellmanager", version: (.name | capture("-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)\\.spk$").version)}
     ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     MSHELL_MANAGER_SPK="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     MSHELL_MANAGER_URL="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     MSHELL_MANAGER_SHA256="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
+    MSHELL_MANAGER_SIZE="$(printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" | jq -r '.size // empty' 2>/dev/null)"
     if ! echo "${MSHELL_MANAGER_SPK}" | grep -Eq '^mshellmanager-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${MSHELL_MANAGER_URL##*/}" != "${MSHELL_MANAGER_SPK}" ] || \
-        ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
+        ! echo "${MSHELL_MANAGER_SHA256}" | grep -Eq '^[a-f0-9]{64}$' || \
+        ! echo "${MSHELL_MANAGER_SIZE}" | grep -Eq '^[1-9][0-9]*$'; then
       echo "[!] MSHELL Manager latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${MSHELL_MANAGER_URL}" \
-        -o "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"; then
-      echo "[!] MSHELL Manager SPK download failed; addon will retry after DSM boots."
-      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
-    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}" 2>/dev/null | awk '{print $1}')" != \
-        "${MSHELL_MANAGER_SHA256}" ]; then
-      echo "[!] MSHELL Manager SPK checksum mismatch; discarded."
-      sudo rm -f "${RAMDISK_PATH}/addons/${MSHELL_MANAGER_SPK}"
     else
-      # aeudev's DSM-side installer는 부팅 후 이 검증된 메타데이터를 읽는다.
-      # SPK 옆에 두면 그 설치기가 릴리즈 데이터를 셸 코드에 중복시키지 않고도
-      # 버전 비교와 업그레이드를 수행할 수 있다.
       printf '%s' "${MSHELL_MANAGER_ASSET_JSON}" > "${RAMDISK_PATH}/addons/mshell-manager.json"
-      echo "MSHELL Manager SPK saved to /addons/${MSHELL_MANAGER_SPK}"
+      echo "MSHELL Manager metadata saved; SPK will be downloaded after DSM boots"
     fi
 
     SSI_ASSET_JSON="$(jq -c '
-      .packages.syno_smart_info.assets[]? | select(.name | endswith(".spk")) |
-      {name, url, sha256}
+      .packages.syno_smart_info.assets[]? | select(.name | test("^Synosmartinfo-x86_64-[0-9]+\\.[0-9]+\\.[0-9]+\\.spk$")) |
+      . + {package_id: "Synosmartinfo", version: (.name | capture("-(?<version>[0-9]+\\.[0-9]+\\.[0-9]+)\\.spk$").version)}
     ' "${LATEST_PACKAGE_MANIFEST}" 2>/dev/null | head -n 1)"
     SSI_SPK="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.name // empty' 2>/dev/null)"
     SSI_URL="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.url // empty' 2>/dev/null)"
     SSI_SHA256="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.sha256 // empty' 2>/dev/null)"
+    SSI_SIZE="$(printf '%s' "${SSI_ASSET_JSON}" | jq -r '.size // empty' 2>/dev/null)"
     if ! echo "${SSI_SPK}" | grep -Eq '^Synosmartinfo-x86_64-[0-9]+\.[0-9]+\.[0-9]+\.spk$' || \
         [ "${SSI_URL##*/}" != "${SSI_SPK}" ] || \
-        ! echo "${SSI_SHA256}" | grep -Eq '^[a-f0-9]{64}$'; then
+        ! echo "${SSI_SHA256}" | grep -Eq '^[a-f0-9]{64}$' || \
+        ! echo "${SSI_SIZE}" | grep -Eq '^[1-9][0-9]*$'; then
       echo "[!] Syno Smart Info latest release metadata is missing or invalid; skipped."
-    elif ! curl -kfL --progress-bar --retry 2 --connect-timeout 15 "${SSI_URL}" \
-        -o "${RAMDISK_PATH}/addons/${SSI_SPK}"; then
-      echo "[!] Syno Smart Info SPK download failed; addon will retry after DSM boots."
-      sudo rm -f "${RAMDISK_PATH}/addons/${SSI_SPK}"
-    elif [ "$(sha256sum "${RAMDISK_PATH}/addons/${SSI_SPK}" 2>/dev/null | awk '{print $1}')" != \
-        "${SSI_SHA256}" ]; then
-      echo "[!] Syno Smart Info SPK checksum mismatch; discarded."
-      sudo rm -f "${RAMDISK_PATH}/addons/${SSI_SPK}"
     else
       printf '%s' "${SSI_ASSET_JSON}" > "${RAMDISK_PATH}/addons/synosmartinfo.json"
-      echo "Syno Smart Info SPK saved to /addons/${SSI_SPK}"
+      echo "Syno Smart Info metadata saved; SPK will be downloaded after DSM boots"
     fi
 
     # Intel GPU Top and AMDGPU Top are bundled and managed by MSHELL Manager,
