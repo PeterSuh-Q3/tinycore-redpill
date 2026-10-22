@@ -14,8 +14,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       RELEASE_VERSION: ${{ github.event.release.tag_name || inputs.release_tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - name: Bring last uploaded files from tinycore-redpill & lastest img
@@ -33,7 +36,7 @@ jobs:
           }
           # A withdrawn release can remain visible without its image assets.
           # Use the last release that actually has a downloadable base image.
-          PREV_TAG=$(curl -fsSL 'https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases?per_page=100' |
+          PREV_TAG=$(gh api 'repos/PeterSuh-Q3/tinycore-redpill/releases?per_page=100' |
             jq -r --arg current "${RELEASE_VERSION}" '[.[] |
               select(.tag_name != $current) |
               select(.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")) |
