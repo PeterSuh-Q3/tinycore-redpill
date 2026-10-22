@@ -1,5 +1,5 @@
 e6543ea586a5627ce220dacdcc74bc604d4d8954
-76716a5b1aa518eefb9180d869550c3a59f8b0f6
+8ea1658202bf13c3a70e9a23fa6ce8fcd082edd2
 6d50be6550995ae5dbe4a5d92590f70006f0da34
 
-    1.4.5.6 Protect Alpine persistence and reconcile detected network interfaces
+    1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
