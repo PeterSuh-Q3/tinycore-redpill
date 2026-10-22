@@ -3151,8 +3151,6 @@ function additional() {
     eval "echo \"d \\\"${MSG53}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"e \\\"${MSG54}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"f \\\"${MSG55}\\\"\"" >> "${TMP_PATH}/menua"
-    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menua"
-    [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && [ "${platform}" != "icelaked(DT)" ] && eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"i \\\"${MSG63}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"k \\\"${MSG11}\\\"\"" >> "${TMP_PATH}/menua"
     eval "echo \"q \\\"${MSG88}\\\"\"" >> "${TMP_PATH}/menua"
@@ -3201,8 +3199,6 @@ function additional() {
     d) viewerrorlog; default_resp="d";;
     e) burnloader; default_resp="e";;
     f) cloneloader; default_resp="f";;
-    h) inject_loader && chk_shr_ex; default_resp="h";;
-    m) remove_loader && chk_shr_ex; default_resp="m";;
     i) packing_loader; default_resp="i";;
     k) keymapMenu; default_resp="k";;
     q) showAutoUpdateMenu; default_resp="q";;
@@ -3228,6 +3224,8 @@ function synopart() {
   eval "MSG66=\"\${MSG${tz}66}\""
   eval "MSG68=\"\${MSG${tz}68}\""
   eval "MSG69=\"\${MSG${tz}124}\""
+  eval "MSG61=\"\${MSG${tz}61}\""
+  eval "MSG62=\"\${MSG${tz}62}\""
 
   while true; do
     eval "echo \"a \\\"${MSG08}\\\"\""                  > "${TMP_PATH}/menuc"
@@ -3237,8 +3235,20 @@ function synopart() {
     eval "echo \"e \\\"${MSG12}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"f \\\"${MSG65}\\\"\""                  >> "${TMP_PATH}/menuc"
     eval "echo \"g \\\"${MSG66}\\\"\""                  >> "${TMP_PATH}/menuc"
-    eval "echo \"h \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
+    # h/m were moved here from Additional Features. The existing h format
+    # action moves to j to avoid a key collision.
+    if [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && \
+       [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && \
+       [ "${platform}" != "icelaked(DT)" ]; then
+      eval "echo \"h \\\"${MSG61}${SHR_EX_TEXT}\\\"\"" >> "${TMP_PATH}/menuc"
+    fi
     eval "echo \"i \\\"${MSG69}\\\"\""                  >> "${TMP_PATH}/menuc"
+    eval "echo \"j \\\"${MSG68}\\\"\""                  >> "${TMP_PATH}/menuc"
+    if [ "$FRKRNL" = "NO" ] && [ "${platform}" != "epyc7002(DT)" ] && \
+       [ "${platform}" != "epyc7003ntb(DT)" ] && [ "${platform}" != "epyc7003(DT)" ] && \
+       [ "${platform}" != "icelaked(DT)" ]; then
+      eval "echo \"m \\\"${MSG62}\\\"\"" >> "${TMP_PATH}/menuc"
+    fi
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
       --menu "Choose a option" 0 0 $(dlgmenuheight $(wc -l < "${TMP_PATH}/menuc")) --file "${TMP_PATH}/menuc" \
     2>${TMP_PATH}/respc
@@ -3258,8 +3268,10 @@ function synopart() {
        get_alpine38
        default_resp="g"
        ;;
-    h) CleanSystemPart format; default_resp="h" ;;
+    j) CleanSystemPart format; default_resp="j" ;;
     i) checkExpandMd0; default_resp="i" ;;
+    h) inject_loader && chk_shr_ex; default_resp="h";;
+    m) remove_loader && chk_shr_ex; default_resp="m";;
     *) return;;
     esac
     
