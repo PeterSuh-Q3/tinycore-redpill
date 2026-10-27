@@ -4763,9 +4763,9 @@ function listpci() {
 }
 
 function monitor_md0_snapshot() {
-    local snapshot="$1" roots member assembled=0 mounted=0 mount_dir="" version_file=""
-    local detail product build update raid_level raid_state raid_total raid_active raid_failed raid_members dsm_model
-    local read_dev=/dev/md0 member_view=0 member_uuid array_uuid matched_members=0 candidate_uuid candidate_array_uuid candidate_type fs_type mount_options
+    local snapshot="$1" roots="" member="" assembled=0 mounted=0 mount_dir="" version_file=""
+    local detail="" product="" build="" update="" raid_level="" raid_state="" raid_total="" raid_active="" raid_failed="" raid_members="" dsm_model=""
+    local read_dev=/dev/md0 member_view=0 member_uuid="" array_uuid="" matched_members=0 candidate_uuid="" candidate_array_uuid="" candidate_type="" fs_type="" mount_options=""
 
     : > "${snapshot}" || return 1
     dsm_model="$(jq -r '.general.model // empty' /mnt/tcrp/user_config.json 2>/dev/null)"
