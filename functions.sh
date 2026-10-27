@@ -4762,6 +4762,125 @@ function listpci() {
 
 }
 
+function monitor_md0_snapshot() {
+    local snapshot="$1" roots member assembled=0 mounted=0 mount_dir="" version_file=""
+    local detail product build update raid_level raid_state raid_total raid_active raid_failed raid_members dsm_model
+    local read_dev=/dev/md0 member_view=0 member_uuid array_uuid matched_members=0 candidate_uuid candidate_array_uuid candidate_type fs_type mount_options
+
+    : > "${snapshot}" || return 1
+    dsm_model="$(jq -r '.general.model // empty' /mnt/tcrp/user_config.json 2>/dev/null)"
+    [ -n "${dsm_model}" ] || dsm_model=Unknown
+    if [ ! -b /dev/md0 ]; then
+        roots="$(findDSMRoot)"
+    fi
+    if ! command -v mdadm >/dev/null 2>&1; then
+        printf 'Model / DSM:\t\t%s / mdadm unavailable\n' "${dsm_model}" > "${snapshot}"
+        return 0
+    fi
+
+    # The menu's open_md0() recreates the array and changes ext4 features;
+    # monitoring must not make either modification.
+    if [ ! -b /dev/md0 ]; then
+        if [ -z "${roots}" ]; then
+            printf 'Model / DSM:\t\t%s / md0 not found\n' "${dsm_model}" > "${snapshot}"
+            return 0
+        fi
+        for member in ${roots}; do
+            case "${member}" in /dev/*) [ -b "${member}" ] || { printf 'Model / DSM:\t\t%s / md0 member unavailable\n' "${dsm_model}" > "${snapshot}"; return 0; } ;;
+                *) printf 'Model / DSM:\t\t%s / invalid md0 member\n' "${dsm_model}" > "${snapshot}"; return 0 ;;
+            esac
+        done
+        if ! sudo mdadm --assemble --readonly --run /dev/md0 ${roots} >/dev/null 2>&1; then
+            # Some Synology 0.90 RAID1 members expose ext4 at offset zero even
+            # though this mdadm cannot assemble them. Read one mirror directly,
+            # but never claim the unassembled RAID is healthy.
+            for member in ${roots}; do
+                candidate_type="$(sudo blkid -p -s TYPE -o value "${member}" 2>/dev/null)"
+                candidate_array_uuid="$(sudo blkid -p -s UUID -o value "${member}" 2>/dev/null)"
+                fs_type="$(sudo blkid -p -O 0 -S 4096 -s TYPE -o value "${member}" 2>/dev/null)"
+                candidate_uuid="$(sudo blkid -p -O 0 -S 4096 -s UUID -o value "${member}" 2>/dev/null)"
+                [ "${candidate_type}" = linux_raid_member ] && [ -n "${candidate_array_uuid}" ] && [ "${fs_type}" = ext4 ] && [ -n "${candidate_uuid}" ] || continue
+                if [ -z "${member_uuid}" ]; then
+                    member_uuid="${candidate_uuid}"
+                    array_uuid="${candidate_array_uuid}"
+                    read_dev="${member}"
+                fi
+                if [ "${member_uuid}" = "${candidate_uuid}" ] && [ "${array_uuid}" = "${candidate_array_uuid}" ]; then
+                    matched_members=$((matched_members + 1))
+                    raid_members="${raid_members}${raid_members:+, }${member#/dev/}"
+                fi
+            done
+            if [ "${matched_members}" -eq 0 ]; then
+                printf 'Model / DSM:\t\t%s / md0 assembly unavailable\n' "${dsm_model}" > "${snapshot}"
+                return 0
+            fi
+            member_view=1
+        else
+            assembled=1
+        fi
+    fi
+
+    if [ "${member_view}" -eq 0 ]; then
+        detail="$(sudo mdadm --detail /dev/md0 2>/dev/null)"
+        raid_level="$(printf '%s\n' "${detail}" | awk -F: '/^[[:space:]]*Raid Level[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit}')"
+        raid_state="$(printf '%s\n' "${detail}" | awk -F: '/^[[:space:]]*State[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit}')"
+        raid_total="$(printf '%s\n' "${detail}" | awk -F: '/^[[:space:]]*Raid Devices[[:space:]]*:/ {print $2+0; exit}')"
+        raid_active="$(printf '%s\n' "${detail}" | awk -F: '/^[[:space:]]*Active Devices[[:space:]]*:/ {print $2+0; exit}')"
+        raid_failed="$(printf '%s\n' "${detail}" | awk -F: '/^[[:space:]]*Failed Devices[[:space:]]*:/ {print $2+0; exit}')"
+        raid_members="$(printf '%s\n' "${detail}" | awk '$NF ~ /^\/dev\// {sub(/^\/dev\//, "", $NF); printf "%s%s", (n++ ? ", " : ""), $NF}')"
+    fi
+
+    # Reuse an existing mount without taking ownership of it.  Otherwise,
+    # mount only long enough to read VERSION and then release our mount.
+    mount_dir="$(mount | awk -v d="${read_dev}" '$1 == d {print $3; exit}')"
+    if [ -z "${mount_dir}" ]; then
+        mount_dir="$(mktemp -d /tmp/mshell-monitor-md0.XXXXXX)" || {
+            [ "${assembled}" -eq 1 ] && sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+            return 1
+        }
+        fs_type="$(sudo blkid -o value -s TYPE "${read_dev}" 2>/dev/null)"
+        [ "${member_view}" -eq 1 ] && fs_type=ext4
+        mount_options=ro
+        [ "${fs_type}" = ext4 ] && mount_options=ro,noload
+        if sudo mount -t "${fs_type:-ext4}" -o "${mount_options}" "${read_dev}" "${mount_dir}" 2>/dev/null; then
+            mounted=1
+        fi
+    fi
+
+    if [ "${mounted}" -eq 1 ] || mount | awk -v d="${read_dev}" -v p="${mount_dir}" '$1 == d && $3 == p {found=1} END {exit !found}'; then
+        for version_file in "${mount_dir}/etc/VERSION" "${mount_dir}/etc.defaults/VERSION"; do
+            [ -r "${version_file}" ] && break
+        done
+        if [ -r "${version_file}" ]; then
+            product="$(awk -F= '$1 == "productversion" {gsub(/"/, "", $2); print $2; exit}' "${version_file}")"
+            build="$(awk -F= '$1 == "buildnumber" {gsub(/"/, "", $2); print $2; exit}' "${version_file}")"
+            update="$(awk -F= '$1 == "smallfixnumber" {gsub(/"/, "", $2); print $2; exit}' "${version_file}")"
+            if [ -n "${product}" ]; then
+                printf 'Model / DSM:\t\t%s / %s' "${dsm_model}" "${product}" > "${snapshot}"
+                [ -n "${build}" ] && printf -- '-%s' "${build}" >> "${snapshot}"
+                case "${update}" in ''|0) ;; *) printf ' Update %s' "${update}" >> "${snapshot}" ;; esac
+                printf '\n' >> "${snapshot}"
+            fi
+        fi
+    fi
+    [ -s "${snapshot}" ] || printf 'Model / DSM:\t\t%s / version unavailable\n' "${dsm_model}" > "${snapshot}"
+    if [ "${member_view}" -eq 1 ]; then
+        printf 'md0 RAID:\t\tRAID1, state unverified (%s)\n' "${raid_members}" >> "${snapshot}"
+    elif [ -n "${raid_level}" ]; then
+        printf 'md0 RAID:\t\t%s, %s, active %s/%s, failed %s' \
+            "${raid_level}" "${raid_state:-unknown}" "${raid_active:-?}" "${raid_total:-?}" "${raid_failed:-?}" >> "${snapshot}"
+        [ -n "${raid_members}" ] && printf ' (%s)' "${raid_members}" >> "${snapshot}"
+        printf '\n' >> "${snapshot}"
+    fi
+
+    [ "${mounted}" -eq 1 ] && sudo umount "${mount_dir}" >/dev/null 2>&1
+    if [ -d "${mount_dir}" ] && [ "${mount_dir#/tmp/mshell-monitor-md0.}" != "${mount_dir}" ]; then
+        rmdir "${mount_dir}" 2>/dev/null
+    fi
+    [ "${assembled}" -eq 1 ] && sudo mdadm --stop /dev/md0 >/dev/null 2>&1
+    return 0
+}
+
 function monitor() {
 
     getloaderdisk
@@ -4774,6 +4893,10 @@ function monitor() {
 
     ensure_loader_partitions_mounted
 
+    local md0_snapshot
+    md0_snapshot="$(mktemp /tmp/mshell-monitor-info.XXXXXX)" || return 1
+    monitor_md0_snapshot "${md0_snapshot}"
+
     HYPERVISOR=$(sudo dmesg | grep -i "Hypervisor detected" | awk '{print $5}')
 
     while true; do
@@ -4781,10 +4904,15 @@ function monitor() {
         echo -e "-------------------------------System Information----------------------------"
         echo -e "Hostname:\t\t"$(hostname) 
         echo -e "uptime:\t\t\t"$(uptime | awk '{print $3}' | sed 's/,//')" min"
-        echo -e "Board Manufacturer:\t"$(cat /sys/class/dmi/id/board_vendor)
-        echo -e "Board Name:\t\t"$(cat /sys/class/dmi/id/board_name)
-        echo -e "Board Version:\t"$(cat /sys/class/dmi/id/board_version)
-        echo -e "Board Serial Number:\t"$(sudo cat /sys/class/dmi/id/board_serial)
+        local board_vendor board_name board_version board_serial
+        board_vendor="$(cat /sys/class/dmi/id/board_vendor 2>/dev/null)"
+        board_name="$(cat /sys/class/dmi/id/board_name 2>/dev/null)"
+        board_version="$(cat /sys/class/dmi/id/board_version 2>/dev/null)"
+        board_serial="$(sudo cat /sys/class/dmi/id/board_serial 2>/dev/null)"
+        case "${board_vendor}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Manufacturer:\t${board_vendor}" ;; esac
+        case "${board_name}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Name:\t\t${board_name}" ;; esac
+        case "${board_version}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Version:\t${board_version}" ;; esac
+        case "${board_serial}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Serial Number:\t${board_serial}" ;; esac
         echo -e "Operating System:\t"$(grep PRETTY_NAME /etc/os-release | awk -F \= '{print $2}')
         echo -e "Kernel:\t\t\t"$(uname -r)
         echo -e "Processor Name:\t\t"$(awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//')
@@ -4810,9 +4938,11 @@ GPU_LIST
         [ "${GPU_NUM}" -eq 0 ] && echo -e "GPU:\t\t\t"$(msgnormal "N/A")
         echo -e "-------------------------------Loader boot entries---------------------------"
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
+        echo -e "-------------------------------Installed DSM / md0 RAID----------------------"
+        cat "${md0_snapshot}"
         echo -e "-------------------------------CPU / Memory----------------------------------"
         msgnormal "Total Memory (MB):\t"$(cat /proc/meminfo |grep MemTotal | awk '{printf("%.2f"), $2/1000}')
-        echo -e "Swap Usage:\t\t"$(free | awk '/Swap/{printf("%.2f%"), ($2>0 ? $3/$2*100 : 0)}')
+        free | awk '/^Swap:/ && $2 > 0 {printf "Swap Usage:\t\t%.2f%%\n", $3/$2*100}'
         echo -e "Ramdisk Size (/):\t"$(df -h / | awk 'NR==2{print $2}')
         echo -e "Ramdisk Usage (/):\t"$(df -h / | awk 'NR==2{printf "%s (%s)", $3, $5}')
         echo -e "CPU Usage:\t\t"$(cat /proc/stat | awk '/cpu/{printf("%.2f%\n"), ($2+$4)*100/($2+$4+$5)}' | awk '{print $0}' | head -1)
