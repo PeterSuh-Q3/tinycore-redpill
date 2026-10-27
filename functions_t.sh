@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.7"
-builddate="2026.10.22"
+rploaderver="1.4.5.8"
+builddate="2026.10.27"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1030,6 +1030,7 @@ function history() {
     1.4.5.5 Prepare remote Docker rebuild packages and clarify QEMU Guest Agent selection
     1.4.5.6 Protect Alpine persistence and reconcile detected network interfaces
     1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
+    1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1768,6 +1769,9 @@ EOF
 # 2026.10.22 v1.4.5.7
 # Defer selected package installation until DSM is ready and refine GPU and NVMe options
 
+# 2026.10.27 v1.4.5.8
+# Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2183,6 +2187,9 @@ function showlastupdate() {
 
 # 2026.10.22 v1.4.5.7
 # Defer selected package installation until DSM is ready and refine GPU and NVMe options
+
+# 2026.10.27 v1.4.5.8
+# Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
 EOF
 }
 
@@ -7639,6 +7646,14 @@ NCEOF
     echo "${redpillmake}-${TAG}" >"${RAMDISK_PATH}/addons/LKM_VERSION"
     echo "${MODULES_TAG}" >"${RAMDISK_PATH}/addons/MODULES_VERSION"
     echo "${MDLNAME} (${MLMETHOD})" >"${RAMDISK_PATH}/addons/MODULE_TYPE"
+    # menu_m.sh records current board DMI in general.board before an
+    # interactive build. Headless builds use the last saved value, if any.
+    local board_snapshot
+    board_snapshot="$(readConfigKey "general" "board")"
+    if [ -n "${board_snapshot}" ]; then
+      printf '%s\n' "${board_snapshot}" >"${RAMDISK_PATH}/addons/DMI"
+      chmod 644 "${RAMDISK_PATH}/addons/DMI"
+    fi
     echo -n "."
     echo -n "" >"${RAMDISK_PATH}/addons/synoinfo.conf"
     for KEY in "${!SYNOINFO[@]}"; do
