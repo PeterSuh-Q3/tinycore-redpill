@@ -1,0 +1,39 @@
+name: DSM target resolver tests
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/*dsm*'
+      - 'tools/capture-target-cpu.sh'
+      - 'config/dsm-targets.v1.json'
+      - 'tests/dsm-resolver/**'
+      - 'functions*.sh'
+      - 'menu*.sh'
+      - '.github/workflows/dsm-resolver-tests.yml'
+permissions:
+  contents: read
+jobs:
+  resolver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: PeterSuh-Q3/redpill-load
+          ref: 73ca67be5329b62a653d73012f6a9fe19d2ef4a2
+          path: .resolver-redpill-load
+      - name: Validate scripts and catalog reproducibility
+        run: |
+          bash -n functions.sh functions_t.sh menu.sh menu_m.sh tools/dsm-resolver-bridge.sh
+          sh -n tools/dsm-target-resolver.sh
+          sh -n tools/capture-target-cpu.sh
+          if [ -f .resolver-redpill-load/config/catalog/dsm-targets.v1.json ]; then
+            python3 tools/compile-dsm-targets.py --source .resolver-redpill-load/config/catalog/dsm-targets.v1.json --output /tmp/catalog.json
+            cmp config/dsm-targets.v1.json /tmp/catalog.json
+          else
+            echo 'SKIP: pinned redpill-load revision does not yet contain the reviewed source catalog'
+          fi
+      - name: Run resolver and ext-manager integration tests
+        env:
+          REDPILL_LOAD_SOURCE: ${{ github.workspace }}/.resolver-redpill-load
+        run: python3 -m unittest discover -s tests/dsm-resolver -p 'test_*.py' -v

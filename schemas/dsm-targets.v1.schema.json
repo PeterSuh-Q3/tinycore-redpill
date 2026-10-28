@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MSHELL compiled DSM target catalog v1",
+  "type": "object",
+  "required": ["schema_version", "catalog_id", "sources", "targets", "recipes"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "catalog_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sources": {"type": "object"},
+    "recipes": {"type": "object", "additionalProperties": {"type": "object", "required": ["files"], "properties": {"files": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["name", "url", "sha256", "packed"], "properties": {"name": {"type": "string", "pattern": "^[^/]+$"}, "url": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "packed": {"type": "boolean"}}}}}}},
+    "targets": {"type": "array", "items": {
+      "type": "object",
+      "required": ["model", "platform", "release", "tuple", "channel", "status", "kernel", "legacy_version", "version", "config", "pat", "modes"],
+      "properties": {
+        "model": {"type": "string", "minLength": 1},
+        "platform": {"type": "string", "pattern": "^[a-z0-9]+$"},
+        "release": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-[0-9]+$"},
+        "tuple": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0}},
+        "channel": {"enum": ["stable", "test"]},
+        "status": {"enum": ["inherited-supported", "candidate", "verified", "blocked"]},
+        "kernel": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "modes": {"type": "array", "items": {"type": "object", "required": ["id", "module", "method", "cpu_flags", "recipe_sha256", "recipe_url"], "properties": {
+          "id": {"type": "string"}, "module": {"enum": ["all-modules", "custom-modules", "anodrm-modules"]},
+          "method": {"enum": ["IML", "PML"]}, "cpu_flags": {"type": "array", "items": {"type": "string"}},
+          "recipe_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "recipe_url": {"type": "string"}
+        }}}
+      }
+    }}
+  }
+}

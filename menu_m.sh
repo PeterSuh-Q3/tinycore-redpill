@@ -34,73 +34,6 @@ fi
 kver3explatforms="bromolow braswell cedarview"
 kver5explatforms="epyc7002(DT) epyc7003ntb(DT) epyc7003(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
 
-# ── BMI2 CPU capability detection ─────────────────────────────────────────────
-# all-modules 릴리즈에는 BMI2(mulx 등) 명령이 포함된 모듈이 있으므로
-# BMI2 미지원 CPU(Ivy Bridge 이하 등)에서는 해당 모듈 선택을 제한한다.
-HAS_BMI2="n"
-if grep -qw "bmi2" /proc/cpuinfo 2>/dev/null; then
-    HAS_BMI2="y"
-fi
-
-# 2026-07-25: BMI2 관련 두 임계값을 명시적 상수로 분리.
-#   - BMI2_REQUIRED_FROM_DSM: all-modules가 DSM 몇 버전부터 BMI2(mulx 등)를
-#     쓰기 시작하는지 (7.3.0). 이 버전부터는 BMI2 없는 CPU에서 all-modules
-#     부팅이 안 됨.
-#   - CUSTOM_MODULES_MAX_DSM: BMI2 없는 CPU용 대안인 custom-modules가 실제로
-#     빌드되어 있는 최신 DSM 버전. tcrp-modules 에 커널5 플랫폼(epyc7002/
-#     epyc7003/geminilakenk/r1000nk/v1000nk/icelaked)용 DSM 7.4 빌드가
-#     추가되어(2026-08-01) 7.3.2 상한이 해제, 현재 pats.json 지원 최신
-#     리비전인 7.4.1 까지 사용 가능.
-# 즉 BMI2 없는 CPU에서 실제 사용 가능한 범위는 "< 7.3.0"(all-modules) +
-# "7.3.0 이상"(custom-modules, CUSTOM_MODULES_MAX_DSM_ZPAD 까지)이다. 이전에는
-# selectversion()만 이 경계를 하드코딩된 매직넘버(7004)로 반영했고,
-# checkAndResetModuleName()/selectldrmode()는 "DSM>=7.3.0이면 custom-modules
-# 가능"으로만 판단해 7.4.0+에서도 custom-modules를 있는 것처럼 다뤄 일관성이
-# 없었다. 세 곳 모두 아래 공용 상수/헬퍼로 통일하고, 모델 선택 시점에도
-# enforceBmi2VersionCap()으로 즉시 반영한다.
-BMI2_REQUIRED_FROM_DSM_ZPAD="007003000"   # 7.3.0
-CUSTOM_MODULES_MAX_DSM_ZPAD="007004001"   # 7.4.1 (custom-modules 최신 빌드 상한)
-
-# "7.3.2-86009" / "7.3-69057" 같은 문자열을 major/minor/patch 9자리
-# zero-pad 정수로 변환 (patch 필드가 없으면 0으로 처리)
-function zpadDsmVersion() {
-  local raw="${1:-}" maj min pat
-  maj=$(echo "${raw}" | cut -d'.' -f1)
-  min=$(echo "${raw}" | cut -d'.' -f2 | cut -d'-' -f1)
-  pat=$(echo "${raw}" | cut -d'.' -f3 | cut -d'-' -f1)
-  printf "%03d%03d%03d" "${maj:-0}" "${min:-0}" "${pat:-0}"
-}
-
-# 모델 선택 시점에 즉시 적용: 현재 플랫폼이 kver5platforms 이고 BMI2 미지원인데
-# 저장된 general.version(DSM)이 CUSTOM_MODULES_MAX_DSM_ZPAD(7.4.1)를 초과하면
-# (즉 7.4.0+ 이면, custom-modules 조차 없어 부팅 가능한 모듈팩이 전혀 없음)
-# 해당 모델의 pats.json 지원 리비전 중 7.4.1 이하의 최신 리비전으로 즉시 되돌린다.
-function enforceBmi2VersionCap() {
-  local plat
-  plat="$(resolveLiveKver)"; plat="${plat##*|}"
-  [ "${HAS_BMI2}" = "n" ] || return 0
-  echo "${kver5platforms}" | grep -qw "${plat}" || return 0
-
-  local curBuild curZpadDsm
-  curBuild=$(readConfigKey "general" "version")
-  curZpadDsm=$(zpadDsmVersion "${curBuild}")
-  [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ] || return 0
-
-  # pats.json 에서 이 모델의 리비전 중 7.4.1 이하 최신 버전을 조회
-  local safeVersion
-  safeVersion=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[]" "${configfile}" 2>/dev/null | while read -r v; do
-    if [ "$(zpadDsmVersion "${v}")" -le "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-      echo "${v}"
-      break
-    fi
-  done)
-  [ -n "${safeVersion}" ] || return 0
-
-  echo "⚠ Stored DSM ${curBuild} needs BMI2 (not present on this CPU) and exceeds"
-  echo "  custom-modules cap (7.4.1). Resetting version to ${safeVersion}..."
-  writeConfigKey "general" "version" "${safeVersion}"
-}
-# ───────────────────────────────────────────────────────────────────────────────
 # pats.json is kept at a persistent location (/home/tc) so a redpill-load
 # clean/re-clone after a failed build does not wipe the DSM version source.
 configfile="/home/tc/pats.json"
@@ -623,178 +556,59 @@ function seleudev() {
 }
 
 function resolveLiveKver() {
-    local synomodel synoversion
-    synomodel=$(readConfigKey "general" "model")
-    synoversion=$(readConfigKey "general" "version")
-    ( getvarsmshell "${synomodel}-${synoversion}" >/dev/null 2>&1; echo "${KVER}|${ORIGIN_PLATFORM}" )
+    local result
+    mshellLoadDsmResolver || return $?
+    result=$(mshellDsmResolve identity "$(readConfigKey general model)" "$(readConfigKey general version)") || return $?
+    printf '%s' "$result" | jq -r '.target.kernel + "|" + .target.platform'
 }
 
-# ── 새로운 헬퍼 함수 추가 ──────────────────────────────────────────
+# Read-only validation: never silently substitute an unsupported module pack.
 function checkAndResetModuleName() {
-    local curMdlName
-    curMdlName=$(readConfigKey "general" "modulename")
-
-    # Derive the kernel version of the *currently selected* model live.
-    local _gv kver origin_plat
-    _gv="$(resolveLiveKver)"
-    kver="${_gv%%|*}"
-    origin_plat="${_gv##*|}"
-    
-    # kver = "5.10.55" → ZPADKVER = "5010055"
-    local curZpadkver
-    curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
-
-    local supported=false
-    # 미지원 시 되돌릴 기본 fallback (분기별로 아래에서 덮어씀)
-    local fallbackMdl="all-modules" fallbackMethod="IML"
-
-    # DSM 버전 추출 (major/minor/patch 전체 정밀도)
-    local curBuild curZpadDsm
-    curBuild=$(readConfigKey "general" "version")
-    curZpadDsm=$(zpadDsmVersion "${curBuild}")
-
-    # ── 커널 구간 3단계 분기 ────────────────────────────────────────────────────
-    if [ "${curZpadkver}" -ge 5010055 ]; then
-        # ① 커널 >= 5.10.55
-        if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
-            if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-                # DSM > 7.4.1 + BMI2 미지원: custom-modules 도 존재하지 않음.
-                # 사용 가능한 모듈팩이 전혀 없는 상태이므로, 최소한 빌드가
-                # 되도록 all-modules(IML) 로 되돌린다. (실제로는 이 DSM 버전 자체가
-                # selectversion()/enforceBmi2VersionCap() 단계에서 이미 걸러져야 함)
-                fallbackMdl="all-modules"; fallbackMethod="IML"
-                supported=false
-            else
-                # DSM 7.3.0 ~ 7.4.1 + BMI2 미지원: custom-modules + anodrm-modules 만 허용.
-                # all-modules(BMI2 포함)는 불가 → fallback 을 custom-modules(PML)로.
-                # (기존 버그: all-modules 로 되돌려 잔존 all-modules 가 그대로 빌드됨)
-                fallbackMdl="custom-modules"; fallbackMethod="PML"
-                if [ "${curMdlName}" = "custom-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
-                    supported=true
-                fi
-            fi
-        else
-            # BMI2 있거나 DSM < 7.3: all/custom/anodrm 모두 허용
-            supported=true
-        fi
-    elif [ "${curZpadkver}" -ge 4004302 ]; then
-        # ② 커널 4.4.302 이상 ~ 5.10.55 미만: custom-modules 미지원 → all-modules fallback
-        if [ "${curMdlName}" != "custom-modules" ]; then
-            supported=true
-        fi
-    else
-        # ③ 커널 < 4.4.302: all-modules/anodrm-modules 만 지원 → all-modules fallback
-        if [ "${curMdlName}" = "all-modules" ] || [ "${curMdlName}" = "anodrm-modules" ]; then
-            supported=true
-        fi
-    fi
-    # ─────────────────────────────────────────────────────────────────────────
-
-    if [ "${supported}" = "false" ]; then
-        echo "⚠ '${curMdlName}' is not supported (kver=${kver}, dsm=${curBuild}, bmi2=${HAS_BMI2})"
-        echo "  → Resetting to ${fallbackMdl} (${fallbackMethod})..."
-        MDLNAME="${fallbackMdl}"
-        MLMETHOD="${fallbackMethod}"
-        writeConfigKey "general" "modulename" "${MDLNAME}"
-        writeConfigKey "general" "mlmethod"   "${MLMETHOD}"
-        syncBundledExtsModule "${MDLNAME}"
-    fi
+    mshellLoadDsmResolver || return $?
+    mshellDsmValidate "$(readConfigKey general model)" "$(readConfigKey general version)" \
+        "$(readConfigKey general modulename)" "$(readConfigKey general mlmethod)" >/dev/null
 }
 
-###############################################################################
-# Shows available between FRIEND and JOT
 function selectldrmode() {
-  #eval "MSG28=\"\${MSG${tz}28}\""
-  MSG28="Intel iGPU i915 DRM Support"
-  MSG99="i915 + AMDGPU dual DRM"
-  MSGND="No DRM (general modules, no GPU)"
-  # 5.10.55 / 4.4.302 platforms 에 대해 custom-modules 옵션 노출.
-  # custom-modules 는 epyc7002 + geminilakenk 만 빌드되어 있다.
-  # Derive the kernel version of the *currently selected* model live.
-  local _gv kver origin_plat
-  _gv="$(resolveLiveKver)"
-  kver="${_gv%%|*}"
-  origin_plat="${_gv##*|}"
-
-  # kver = "5.10.55" → ZPADKVER = "5010055"
-  local curZpadkver
-  curZpadkver=$(echo "${kver}" | awk -F'.' '{printf "%d%03d%03d\n",$1,$2,$3}')
-
-  # DSM 버전 추출 (major/minor/patch 전체 정밀도)
-  local _build curZpadDsm
-  _build=$(readConfigKey "general" "version")
-  curZpadDsm=$(zpadDsmVersion "${_build}")
-
-  # ── 커널 구간 3단계 분기 ──────────────────────────────────────────────────────
-  # anodrm-modules(In-Memory:IML) 는 DRM/GPU 스택을 제외한 일반 모듈팩으로
-  # 모든 커널(3.x / 4.4.x / 5.10.x)에 공통 대응하므로 전 분기에 노출한다.
-  if [ "${curZpadkver}" -ge 5010055 ]; then
-    # ① 커널 >= 5.10.55
-    if [ "${curZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${HAS_BMI2}" = "n" ]; then
-      if [ "${curZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-        # DSM > 7.4.1 + BMI2 미지원: custom-modules 도 존재하지 않음 → nodrm 만 노출
-        menu_options=("n" "${MSGND}, anodrm-modules(In-Memory:IML)")
-      else
-        # DSM 7.3.0 ~ 7.4.1 + BMI2 미지원: custom-modules + nodrm 만 노출
-        menu_options=("k" "${MSG99}, custom-modules(Persistent:PML)" \
-                      "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
-      fi
-    else
-      # BMI2 있거나 DSM < 7.3: 전체 메뉴 (custom-modules 포함)
-      menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
-                    "f" "${MSG99}, all-modules(Persistent:PML)" \
-                    "k" "${MSG99}, custom-modules(Persistent:PML)" \
-                    "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
+    local result mode resp
+    local -a menu_options=()
+    mshellLoadDsmResolver || return $?
+    result=$(mshellDsmResolve options "$(readConfigKey general model)" "$(readConfigKey general version)") || return $?
+    while IFS= read -r mode; do
+        menu_options+=("$mode" "$mode")
+    done < <(printf '%s' "$result" | jq -r '.allowed_modes[].id')
+    if [ "${#menu_options[@]}" -eq 0 ]; then
+        dialog --msgbox "No supported module mode for this target CPU/release." 8 70
+        return 5
     fi
-  elif [ "${curZpadkver}" -ge 4004302 ]; then
-    # ② 커널 4.4.302 이상 ~ 5.10.55 미만: dual DRM all-modules 지원
-    menu_options=("j" "${MSG99}, all-modules(In-Memory:IML)" \
-                  "f" "${MSG99}, all-modules(Persistent:PML)" \
-                  "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
-  else
-    # ③ 커널 < 4.4.302 (커널 4.4.180 이하 커널 3.x): all-modules 만
-    menu_options=("j" "${MSG28}, all-modules(In-Memory:IML)" \
-                  "f" "${MSG28}, all-modules(Persistent:PML)" \
-                  "n" "${MSGND}, anodrm-modules(In-Memory:IML)")
-  fi
-  # ─────────────────────────────────────────────────────────────────────────────
-  
-  while true; do
-    dialog --clear --backtitle "`backtitle`" \
-      --menu "Choose a option" 0 0 $(dlgmenuheight $((${#menu_options[@]}/2))) \
-      "${menu_options[@]}" \
-    2>${TMP_PATH}/resp
-    [ $? -ne 0 ] && return
-    resp=$(<${TMP_PATH}/resp)
-    [ -z "${resp}" ] && return
-    if [ "${resp}" = "f" ]; then
-      MDLNAME="all-modules"
-      MLMETHOD="PML"
-      break
-    elif [ "${resp}" = "j" ]; then
-      MDLNAME="all-modules"
-      MLMETHOD="IML"
-      break
-    elif [ "${resp}" = "k" ]; then
-      MDLNAME="custom-modules"
-      MLMETHOD="PML"
-      break
-    elif [ "${resp}" = "n" ]; then
-      MDLNAME="anodrm-modules"
-      MLMETHOD="IML"
-      break
-    fi
-  done
-  writeConfigKey "general" "loadermode" "${LDRMODE}"
-  writeConfigKey "general" "modulename" "${MDLNAME}"
-  writeConfigKey "general" "mlmethod" "${MLMETHOD}"
+    dialog --clear --backtitle "$(backtitle)" --menu "Choose module mode" 0 0 \
+        "$(dlgmenuheight $((${#menu_options[@]}/2)))" "${menu_options[@]}" 2>"${TMP_PATH}/resp" || return 1
+    resp=$(<"${TMP_PATH}/resp")
+    mshellDsmValidate "$(readConfigKey general model)" "$(readConfigKey general version)" \
+        "${resp%:*}" "${resp##*:}" >/dev/null || return $?
+    MDLNAME="${resp%:*}"; MLMETHOD="${resp##*:}"
+    mshellSaveDsmSelection "$(readConfigKey general model)" "$(readConfigKey general version)" "$MDLNAME" "$MLMETHOD" || return $?
+    notify_config_saved rebuild
+}
 
-  # bundled-exts.json 의 *-modules 정의를 선택된 MDLNAME 으로 치환
-  # 각 모듈 분기는 서로 다른 저장소를 가리킨다:
-  #   all-modules    → tcrp-modules/main/all-modules/rpext-index.json
-  #   custom-modules → tcrp-modules/main/custom-modules/rpext-index.json
-  syncBundledExtsModule "${MDLNAME}"
-  notify_config_saved rebuild
+# Commit related selection fields together; build validation remains authoritative.
+function mshellSaveDsmSelection() {
+    local result tmp previous
+    previous=$(cat "$userconfigfile") || return 6
+    result=$(mshellDsmValidate "$1" "$2" "$3" "$4") || return $?
+    tmp=$(mktemp "${userconfigfile}.resolver.XXXXXX") || return 6
+    jq --arg model "$1" --arg version "$2" --arg module "$3" --arg method "$4" \
+       --arg kernel "$(printf '%s' "$result" | jq -r '.target.kernel')" \
+       --arg platform "$(printf '%s' "$result" | jq -r '.target.platform')" \
+       '.general += {model:$model,version:$version,modulename:$module,mlmethod:$method,kver:$kernel,resolver_platform:$platform}' \
+       "$userconfigfile" > "$tmp" && write_user_config_json "$userconfigfile" "$(cat "$tmp")"
+    local rc=$?
+    rm -f "$tmp"
+    [ "$rc" -eq 0 ] || return "$rc"
+    if ! syncBundledExtsModule "$3"; then
+        write_user_config_json "$userconfigfile" "$previous"
+        return 6
+    fi
 }
 
 # bundled-exts.json 의 *-modules 키를 ${1} 로 통일한다.
@@ -823,76 +637,31 @@ function syncBundledExtsModule() {
 ###############################################################################
 # Shows available dsm verwsion 
 function selectversion () {
-
-# 1. 최신순으로 최대 12개 결과 추출 (공백 한 개로 join)
-pat_versions=$(jq -r ".\"${MODEL}\" | keys | map(split(\"-\") | .[0:2] | join(\"-\")) | reverse | .[:12] | join(\" \")" "${configfile}")
-echo "PAT VERSIONS : $pat_versions"
-
-# 2. 배열 변환
-IFS=' ' read -ra versions <<< "$pat_versions"
-
-# 2-1. BMI2 미지원 CPU 에서는 DSM 7.4.0 이상 버전을 선택 목록에서 제외한다.
-#      (all-modules 의 BMI2(mulx 등) 명령 미지원으로 부팅 불가)
-#      현재 시놀로지가 DSM 7.4 용 GPL 커널 소스를 아직 공개하지 않아
-#      BMI2 명령을 제거한 custom-modules(PML) 커널을 빌드할 수 없으므로,
-#      GPL 이 공개되기 전까지 BMI2 미지원 CPU 에서는 7.4 이상을 원천 차단한다.
-#      단, 이 제한은 all-modules 에 BMI2 명령이 포함된 kver5platforms(커널 5.10.55)
-#      플랫폼에만 적용한다. apollolake 등 커널 4.4.302/3.x 플랫폼의 all-modules 에는
-#      BMI2 명령이 없어 BMI2 미지원 CPU 에서도 정상 부팅하므로 7.4 를 막지 않는다.
-_bmi2_plat="$(resolveLiveKver)"; _bmi2_plat="${_bmi2_plat##*|}"
-if [ "${HAS_BMI2}" = "n" ] && echo "${kver5platforms}" | grep -qw "${_bmi2_plat}"; then
-  filtered=()
-  for v in "${versions[@]}"; do
-    vZpadDsm=$(zpadDsmVersion "${v}")
-    if [ "${vZpadDsm}" -ge "${BMI2_REQUIRED_FROM_DSM_ZPAD}" ] && [ "${vZpadDsm}" -gt "${CUSTOM_MODULES_MAX_DSM_ZPAD}" ]; then
-      echo "Excluding ${v} (DSM > 7.4.1 requires BMI2 CPU; custom-modules not built past 7.4.1)"
-      continue
+    local result release selected mode
+    local -a menu_items=()
+    mshellLoadDsmResolver || return $?
+    result=$(mshellDsmResolve list "$MODEL") || return $?
+    while IFS= read -r release; do
+        menu_items+=("$release" "$release")
+    done < <(printf '%s' "$result" | jq -r '.targets[:12][].target.version')
+    if [ "${#menu_items[@]}" -eq 0 ]; then
+        dialog --msgbox "No selectable DSM release for this model and target CPU." 8 70
+        return 5
     fi
-    filtered+=("${v}")
-  done
-  versions=("${filtered[@]}")
-fi
-
-# 결과 출력 (공백 구분)
-echo "${versions[@]}"
-
-# 선택 가능한 버전이 하나도 없으면(BMI2 미지원 + 7.4 이상만 존재) 안내 후 종료
-if [ "${#versions[@]}" -eq 0 ]; then
-  dialog --clear --backtitle "$(backtitle)" \
-    --msgbox "No selectable DSM version for this CPU.\nDSM 7.4.0+ needs a BMI2-capable CPU (Synology has not released the DSM 7.4 GPL kernel source yet)." 9 70
-  return
-fi
-
-# 3. TAG-ITEM 쌍 만들기
-menu_items=()
-tags=(a b c d e f g h i j k l)
-for i in "${!versions[@]}"; do
-  menu_items+=("${tags[$i]}" "${versions[$i]}")
-done
-
-while true; do
-  dialog --clear --backtitle "$(backtitle)" \
-    --menu "Choose a option" 0 0 $(dlgmenuheight $((${#menu_items[@]}/2))) \
-    "${menu_items[@]}" \
-    2>${TMP_PATH}/resp
-  [ $? -ne 0 ] && return
-  resp=$(<${TMP_PATH}/resp)
-  [ -z "${resp}" ] && return
-
-  # 동적으로 인덱스와 BUILD 매칭
-  for i in "${!tags[@]}"; do
-    if [[ "${resp}" == "${tags[$i]}" ]]; then
-      BUILD="${versions[$i]}"
-      break 2
+    dialog --clear --backtitle "$(backtitle)" --menu "Choose DSM version" 0 0 \
+        "$(dlgmenuheight $((${#menu_items[@]}/2)))" "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
+    selected=$(<"${TMP_PATH}/resp")
+    mode="$(readConfigKey general modulename):$(readConfigKey general mlmethod)"
+    # Choosing a new release may require an explicit new mode selection.
+    result=$(mshellDsmResolve options "$MODEL" "$selected") || return $?
+    if ! printf '%s' "$result" | jq -e --arg mode "$mode" '.allowed_modes|any(.id==$mode)' >/dev/null; then
+        menu_items=()
+        while IFS= read -r mode; do menu_items+=("$mode" "$mode"); done < <(printf '%s' "$result" | jq -r '.allowed_modes[].id')
+        dialog --menu "Choose a compatible module mode" 0 0 4 "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
+        mode=$(<"${TMP_PATH}/resp")
     fi
-  done
-  echo "Invalid option"
-done
-
-writeConfigKey "general" "version" "${BUILD}"
-
-checkAndResetModuleName
-
+    mshellSaveDsmSelection "$MODEL" "$selected" "${mode%:*}" "${mode##*:}" || return $?
+    BUILD="$selected"; MDLNAME="${mode%:*}"; MLMETHOD="${mode##*:}"
 }
 
 ###############################################################################
@@ -969,32 +738,12 @@ function modelMenu() {
     # Additional actions can be performed here if needed
   fi
     
-  MODEL="`<${TMP_PATH}/resp`"
-  writeConfigKey "general" "model" "${MODEL}"
-  setSuggest $MODEL
+  local previous_model="$MODEL"
+  MODEL="$(<"${TMP_PATH}/resp")"
+  if [ "$MODEL" = "Release-model-restriction" ]; then MODEL="$previous_model"; return; fi
+  if ! selectversion; then MODEL="$previous_model"; return; fi
+  setSuggest "$MODEL"
   resetNvidiaIfUnsupported
-
-  enforceBmi2VersionCap
-
-  if [[ "${platform}" == "epyc7002(DT)" || "${platform}" == "epyc7003ntb(DT)" || "${platform}" == "epyc7003(DT)" || "${platform}" == "icelaked(DT)" || "${platform}" == "geminilakenk(DT)" || "${platform}" == "v1000nk(DT)" || "${platform}" == "r1000nk(DT)" ]]; then
-      echo "${platform} maintain ${MDLNAME}, ${MLMETHOD}"
-  else
-      MDLNAME="all-modules"
-      writeConfigKey "general" "modulename" "${MDLNAME}"      
-      MLMETHOD="IML"
-      writeConfigKey "general" "mlmethod" "${MLMETHOD}"
-      echo "${platform} change to ${MDLNAME}, ${MLMETHOD}"      
-  fi
-
-  if echo ${kver3explatforms} | grep -qw ${platform}; then
-      MDLNAME="all-modules"
-      writeConfigKey "general" "modulename" "${MDLNAME}"
-  fi
-
-  checkAndResetModuleName
-  
-  BUILD=$(jq -r ".\"${MODEL}\" | keys | max | split(\"-\") | .[0:2] | join(\"-\")" "${configfile}")
-  writeConfigKey "general" "version" "${BUILD}"  
 
   if [ "${BLOCK_DDSML}" = "Y" ] || [ "${BUS}" = "mmc" ] || echo ${kver5explatforms} | grep -qw ${platform} || [[ "${platform}" == *"(DT)"* ]]; then
     if [ "$HBADETECT" = "ON" ]; then
@@ -4646,7 +4395,7 @@ chk_shr_ex
 _gv=""; kver=""; origin_plat=""; drmmode=""
 
 while true; do
-  _gv="$(resolveLiveKver)"
+  _gv="$(resolveLiveKver)" || _gv="unknown|unknown"
   kver="${_gv%%|*}"
   if [ "${MDLNAME}" = "all-modules" ]; then
     if [[ "$kver" = "5.10.55" || "$kver" = "4.4.302" ]]; then

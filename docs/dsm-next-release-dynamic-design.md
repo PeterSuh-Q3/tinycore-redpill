@@ -121,7 +121,14 @@ ABI fingerprint는 동일성을 비교하는 자료이지 runtime 안전성 증�
 개발/CI 측 Python 도구와 loader/Friend 측 sh+jq reader를 분리한다.
 부팅 환경에 Python이나 온라인 API 호출을 필수화하지 않는다.
 
-제안 도구(아직 구현하지 않음):
+부분 구현:
+
+- `redpill-load/tools/update_pats_from_archive.py`는 repeatable `--release
+  X.Y[.Z]-BUILD`를 받아 기존 기본 목록에 없는 release도 명시적으로 조회하고,
+  exact model URL 및 공식 MD5 sidecar를 merge한다. `--dry-run`으로 검토할 수 있다.
+  PAT 내부 VERSION, SHA-256, kernel/config 분석 및 config 생성은 아직 하지 않는다.
+
+아직 구현하지 않은 제안 도구:
 
 - collect-dsm-release: 명시된 후보 릴리스의 모델별 공식 자료/PAT를 수집하고
   실제 VERSION/GRUB_VER/rd.gz/kernel을 분석. 자동 발견 결과는 discovered 상태만 생성.

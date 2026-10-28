@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.8"
-builddate="2026.10.27"
+rploaderver="1.4.5.9"
+builddate="2026.10.29"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1031,6 +1031,7 @@ function history() {
     1.4.5.6 Protect Alpine persistence and reconcile detected network interfaces
     1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
     1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
+    1.4.5.9 Route DSM selection through the reviewed target resolver
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1772,6 +1773,9 @@ EOF
 # 2026.10.27 v1.4.5.8
 # Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
 
+# 2026.10.29 v1.4.5.9
+# Route DSM selection through the reviewed target resolver
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2190,6 +2194,9 @@ function showlastupdate() {
 
 # 2026.10.27 v1.4.5.8
 # Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
+
+# 2026.10.29 v1.4.5.9
+# Route DSM selection through the reviewed target resolver
 EOF
 }
 
@@ -2870,109 +2877,36 @@ function zeropadingver() {
   ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$1" | tr '.' ' '))
 }
 
+# Keep resolver loading lazy: recovery/menu bootstrap must work with a partial update.
+function mshellLoadDsmResolver() {
+    local root="${MSHELL_SCRIPT_ROOT:-/home/tc}"
+    [ -r "$root/tools/dsm-resolver-bridge.sh" ] || {
+        echo "DSM resolver missing. Update the complete MSHELL bundle before building." >&2
+        return 3
+    }
+    . "$root/tools/dsm-resolver-bridge.sh"
+}
+
 function getvarsmshell()
 {
-
-    # Set the path for the models.json file
-    MODELS_JSON="/home/tc/models.json"
-
-    # Define platform groups
-    platforms="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk broadwellnk broadwell bromolow broadwellnkv2 broadwellntbap purley denverton apollolake r1000 v1000 geminilake avoton braswell cedarview grantley"
-
-    # Initialize MODELS array
-    MODELS=()
-
-    # Extract models for each platform and add them to the mdl file
-    for platform in $platforms; do
-      models=$(jq -r ".$platform.models[]" "$MODELS_JSON" 2>/dev/null)
-      if [ -n "$models" ]; then
-        MODELS+=($models)
-      fi
-    done
-    
-    ORIGIN_PLATFORM=""
-
-    tem="${1}"
-
-    MODEL="$(echo ${tem} |cut -d '-' -f 1)"
-    TARGET_REVISION="$(echo ${tem} |cut -d '-' -f 3)"    
-    if [ "$TARGET_REVISION" == "64570" ]; then
-      TARGET_VERSION="$(echo ${tem} |cut -d '-' -f 2 | cut -c 1-3)"
-    else
-      TARGET_VERSION="$(echo ${tem} |cut -d '-' -f 2)"
-    fi
-
-    #echo "MODEL is $MODEL"
-    TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/' | sed 's/RS/rs/' | sed 's/+/p/' | sed 's/DVA/dva/' | sed 's/FS/fs/' | sed 's/SA/sa/' )
+    local identity input="${1:-}" model release
+    MODEL=""; KVER=""; ORIGIN_PLATFORM=""; TARGET_REVISION=""; TARGET_VERSION=""
+    TARGET_PLATFORM=""; SYNOMODEL=""; ZPADKVER=""
+    model="${input%%-*}"; release="${input#*-}"
+    mshellLoadDsmResolver || return $?
+    identity=$(mshellDsmResolve identity "$model" "$release") || {
+        printf '%s\n' "$identity" | jq -r '.reasons[]?.code' >&2
+        return 4
+    }
+    MODEL="$model"
+    TARGET_REVISION=$(printf '%s' "$identity" | jq -r '.target.tuple[3]')
+    TARGET_VERSION=$(printf '%s' "$identity" | jq -r '.target.legacy_version')
+    ORIGIN_PLATFORM=$(printf '%s' "$identity" | jq -r '.target.platform')
+    KVER=$(printf '%s' "$identity" | jq -r '.target.kernel')
+    TARGET_PLATFORM=$(echo "$MODEL" | sed 's/DS/ds/;s/RS/rs/;s/+/p/;s/DVA/dva/;s/FS/fs/;s/SA/sa/')
     SYNOMODEL="${TARGET_PLATFORM}_${TARGET_REVISION}"
-    
-    
-    if ! echo ${MODELS[@]} | grep -qw ${MODEL}; then
-        echo "This synology model not supported by TCRP."
-        exit 99
-    fi
+    zeropadingver "$KVER"
 
-    if [ "$TARGET_REVISION" == "25556" ]; then
-        KVER="4.4.59"
-    elif [ "$TARGET_REVISION" == "42218" ]; then
-        KVER="4.4.180"
-    elif [ "$TARGET_REVISION" == "42661" ]; then
-        KVER="4.4.180"
-    elif [ "$TARGET_REVISION" == "42962" ]; then
-        KVER="4.4.180"
-    elif [ "$TARGET_REVISION" == "64570" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "69057" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "72806" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "81180" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "86003" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "86009" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "90075" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "90080" ]; then
-        KVER="4.4.302"
-    elif [ "$TARGET_REVISION" == "101188" ]; then
-        KVER="4.4.302"
-    else
-        echo "Synology model revision not supported by TCRP."
-        exit 0
-    fi
-
-    # Extract models for each platform and add them to the mdl file
-    for platform in $platforms; do
-      # Initialize MODELS array
-      MODELS=()
-      models=$(jq -r ".$platform.models[]" "$MODELS_JSON" 2>/dev/null)
-      if [ -n "$models" ]; then
-        MODELS=($models)
-      fi
-      if echo ${MODELS[@]} | grep -qw ${MODEL}; then
-        ORIGIN_PLATFORM="${platform}"
-        if [ ${ORIGIN_PLATFORM} == "broadwell" ]; then
-            if [ "$TARGET_REVISION" == "25556" ]; then
-                KVER="3.10.105"
-            fi
-        fi
-        if echo ${kver3platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-            if [ "$TARGET_REVISION" == "25556" ]; then
-                KVER="3.10.105"
-            else
-                KVER="3.10.108"
-            fi
-        fi    
-        if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
-            KVER="5.10.55"
-        fi
-      fi
-    done    
-
-    zeropadingver ${KVER}    
-    
     case ${MODEL} in
     DS224+)
         permanent="WBR"
@@ -7086,6 +7020,12 @@ function _set_conf_kv() {
 }
 
 function buildloader() {
+    local resolver_selection
+    mshellLoadDsmResolver || return $?
+    MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
+    MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
+    resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" "$MDLNAME" "$MLMETHOD") || return $?
+
 
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
     local_cache="/mnt/${tcrppart}/auxfiles"
@@ -7140,6 +7080,7 @@ checkmachine
 st "extensions" "Extensions collection" "Extensions collection..."
 [ "${BUS}" != "block" ] && log_build_step "Collecting extensions" 6 12
     addrequiredexts
+    mshellDsmPinRecipe "$resolver_selection" || return $?
 
 # image creation commands...
 st "make loader" "Creation boot loader" "Compile n make boot file."
@@ -8209,7 +8150,7 @@ function ext_manager() {
 
 function getredpillko() {
 
-    DSMVER=$(echo ${TARGET_VERSION} | cut -c 1-3 )
+    DSMVER=$(echo "$TARGET_VERSION" | cut -d. -f1,2)
     echo "KERNEL VERSION of getredpillko() is ${KVER}, DSMVER is ${DSMVER}"
     v=""
 
@@ -8948,7 +8889,7 @@ dialog --backtitle "$(backtitle)" --title "Inject Bootloader" \
 if [ $? -eq 0 ]; then
     synomodel="$(jq -r -e '.general.model' $userconfigfile)"
     synoversion="$(jq -r -e '.general.version' $userconfigfile)"
-    getvarsmshell "${synomodel}-${synoversion}"
+    getvarsmshell "${synomodel}-${synoversion}" || return $?
     tce-load -i gdisk
     if [ $? -eq 0 ]; then
         echo "Install gdisk OK !!!"
@@ -9394,8 +9335,13 @@ function rploader() {
     case $1 in
 
     build)
-
+        getvarsmshell "$(jq -r '.general.model' "$userconfigfile")-$(jq -r '.general.version' "$userconfigfile")" || return $?
+        mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+            "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
+            "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")" >/dev/null || return $?
         getvars $ORIGIN_PLATFORM
+        # getvars reads the legacy saved KVER. The catalog remains authoritative.
+        KVER=$(mshellDsmResolve identity "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" | jq -r '.target.kernel')
         if [ -d /dev/shm/tcrp-modules/ ]; then
             offline="YES"
         else
@@ -9413,6 +9359,11 @@ function rploader() {
         # 안전하다.
         [ "${offline}" = "NO" ] && curl -skLO# https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/models.json
         checkUserConfig
+        mshellLoadDsmResolver || return $?
+        local resolver_selection
+        resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+            "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
+            "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")") || return $?
         getredpillko
 #for test getredpillko
 #exit 0
@@ -9532,6 +9483,16 @@ function my() {
   echo "$2"
   echo "$3"
 
+  if [ "${1:-}" != update ] && [ -n "${1:-}" ]; then
+  getvarsmshell "$1" || return $?
+  local dsm_selection dsm_module dsm_method
+  dsm_module=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
+  dsm_method=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
+  dsm_selection=$(mshellDsmValidate "$MODEL" "${1#*-}" "$dsm_module" "$dsm_method") || return $?
+
+
+  fi
+
   echo "LOADER DISK = ${loaderdisk}"
   [ -z "${loaderdisk}" ] && getloaderdisk
   if [ -z "${loaderdisk}" ]; then
@@ -9587,8 +9548,6 @@ function my() {
       exit 99
   fi
   
-  getvarsmshell "$1"
-
   #echo "$TARGET_REVISION"                                                      
   #echo "$TARGET_PLATFORM"                                            
   #echo "$SYNOMODEL"                                      
@@ -10093,7 +10052,8 @@ if [ $# -gt 1 ]; then
     my) 
         getloaderdisk
         getBus "${loaderdisk}"
-        my "$2" "$3" "$4"
+        my "$2" "${3:-}" "${4:-}"
+        exit $?
         ;;
     update)
         upgrademan "$2"

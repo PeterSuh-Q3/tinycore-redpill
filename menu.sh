@@ -227,6 +227,33 @@ function safe_fetch() {
     return 1
 }
 
+# Refresh the complete resolver dependency set before standalone helper updates.
+function refresh_dsm_resolver() {
+    local stage file response
+    stage=$(mktemp -d /dev/shm/mshell-resolver.XXXXXX) || return 1
+    mkdir -p "$stage/tools" "$stage/config"
+    for file in tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh config/dsm-targets.v1.json; do
+        if ! curl -fsSL --retry 2 --connect-timeout 10 --max-time 120 \
+            "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/${file}" -o "$stage/$file"; then
+            rm -rf "$stage"; return 1
+        fi
+    done
+    if ! bash -n "$stage/tools/dsm-resolver-bridge.sh" || ! sh -n "$stage/tools/dsm-target-resolver.sh" || ! sh -n "$stage/tools/capture-target-cpu.sh"; then
+        rm -rf "$stage"; return 1
+    fi
+    response=$(printf '%s' '{"operation":"list","model":"__readiness__"}' | sh "$stage/tools/dsm-target-resolver.sh") || {
+        rm -rf "$stage"; return 1;
+    }
+    mkdir -p /home/tc/tools /home/tc/config
+    # A partial installation must block builds until the complete set is ready.
+    touch /home/tc/config/dsm-resolver-updating
+    for file in tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh config/dsm-targets.v1.json; do
+        cp -f "$stage/$file" "/home/tc/$file" || { rm -rf "$stage"; return 1; }
+    done
+    rm -f /home/tc/config/dsm-resolver-updating
+    rm -rf "$stage"
+}
+
 # P3 mount/config-link and P4 ownership recovery must happen before ordinary
 # menu configuration writes or the my.sh.gz updater's persistence backup. New
 # images carry the helper in the apkovl; older deployed images fetch it after
@@ -641,6 +668,9 @@ function extract_old_shell() {
     return 1
   fi
 
+  if grep -q 'function mshellLoadDsmResolver' "${EXTRACT_DIR}/functions.sh"; then
+    FILES+=("tools/dsm-target-resolver.sh" "tools/dsm-target-resolver.jq" "tools/dsm-resolver-bridge.sh" "tools/capture-target-cpu.sh" "config/dsm-targets.v1.json")
+  fi
   for f in "${FILES[@]}"; do
     if [ ! -s "${EXTRACT_DIR}/${f}" ]; then
       echo "[!] Required file missing from ${TAG}: ${f}"
@@ -659,7 +689,7 @@ function extract_old_shell() {
   echo "[+] Copying files to ${DEST} ..."
   for f in "${FILES[@]}"; do
     if [ -f "${EXTRACT_DIR}/${f}" ]; then
-      if ! cp -v "${EXTRACT_DIR}/${f}" "${DEST}/"; then
+      if ! mkdir -p "${DEST}/$(dirname "$f")" || ! cp -v "${EXTRACT_DIR}/${f}" "${DEST}/${f}"; then
         echo "[!] Failed to install ${f} from ${TAG}."
         rm -f "${TMP_ZIP}"
         rm -rf "${EXTRACT_DIR}"
@@ -990,6 +1020,9 @@ if [ "${offline}" = "NO" ]; then
     # 저장 파일명을 명시(쿼리스트링이 붙으면 -O가 "models.json?_cb=..."
     # 같은 엉뚱한 파일명으로 저장할 수 있어 curl 버전에 기대지 않음).
     curl -skL# -o models.json "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/models.json?_cb=$(date +%s%N 2>/dev/null || date +%s)"
+    if [ "$oldver" = "test" ] || [ "$oldver" = "unknown" ]; then
+      refresh_dsm_resolver || { echo "[!] Resolver update failed; keeping installed helpers."; exit 1; }
+    fi
     if [ "$oldver" = "test" ]; then
       # The ramdisk patch-family changes are now promoted to redpill-load
       # master; keep test mode on that branch even when an older pilot
