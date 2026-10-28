@@ -1,5 +1,5 @@
 # alpine-redpill v1.4.5.9
 
-## Select only reviewed DSM targets
+## Safer DSM build selection
 
-DSM model, build, kernel, module mode, and target CPU decisions now flow through one reviewed resolver. This keeps unsupported builds blocked and prevents a remote builder CPU from standing in for the destination. FRIEND accepts the saved kernel version only when its platform and build match the boot metadata. A PAT entry alone still does not approve a DSM target.
+This maintenance release helps prevent a loader from being built with a mismatched DSM kernel or module pack. Builds now proceed only for reviewed model, DSM version, and module combinations. A remote build may require the destination CPU information; the builder's CPU is no longer treated as a substitute. **This release does not add a new DSM version or model.**
