@@ -27,7 +27,7 @@ body:
     id: target_cpu_bmi2
     attributes:
       label: Target CPU BMI2 support
-      description: "Examples: Intel Haswell (4th Gen Core, Xeon E3 v3) and newer support BMI2. Confirm on the target NAS with: grep -m1 '^flags' /proc/cpuinfo | grep -ow bmi2. Check AMD CPUs the same way. This is the target NAS, not the GitHub Actions runner; Unknown is the safe default."
+      description: "Supported examples: Intel Core 4th Gen (Haswell) and newer, Xeon E3 v3 and newer. Treat Core 3rd Gen (Ivy Bridge) and older, Celeron J4125/N5105, and Pentium Gold G5400/G6400 as BMI2 unsupported unless the target CPU reports bmi2. Intel Xeon Gold is a different family; Haswell-based Xeon and newer support BMI2. Brand names alone are not reliable because Celeron and Pentium Gold models vary. Check the target NAS with: grep -m1 '^flags' /proc/cpuinfo | grep -ow bmi2. Check AMD CPUs the same way. Select BMI2 supported only when this command prints bmi2; this is the target NAS, not the GitHub Actions runner. Unknown is the safe default."
       options:
         - Unknown
         - BMI2 supported
