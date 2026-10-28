@@ -27,7 +27,7 @@ body:
     id: target_cpu_bmi2
     attributes:
       label: Target CPU BMI2 support
-      description: Select BMI2 supported only when the destination NAS CPU supports it. This describes the target NAS, not the GitHub Actions runner. Unknown is the safe default.
+      description: "Examples: Intel Haswell (4th Gen Core, Xeon E3 v3) and newer support BMI2. Confirm on the target NAS with: grep -m1 '^flags' /proc/cpuinfo | grep -ow bmi2. Check AMD CPUs the same way. This is the target NAS, not the GitHub Actions runner; Unknown is the safe default."
       options:
         - Unknown
         - BMI2 supported
