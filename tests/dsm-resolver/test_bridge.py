@@ -11,6 +11,31 @@ def function_from(path,name):
  s=Path(path).read_text();a=re.search(r'^function '+name+r'\s*\(',s,re.M).start();m=re.search(r'^function ',s[a+1:],re.M)
  return s[a:a+1+m.start()] if m else s[a:]
 class Bridge(unittest.TestCase):
+ def test_issue_cpu_snapshot_writer_uses_target_capability(self):
+  with tempfile.TemporaryDirectory() as d:
+   cfg=Path(d)/'user_config.json'
+   cfg.write_text(json.dumps({'general':{'target_cpu':None},'extra_cmdline':{}}))
+   helper=ROOT/'tools/set-target-cpu-snapshot.sh'
+   p=subprocess.run(['sh',str(helper),str(cfg),'supported'],capture_output=True,text=True)
+   self.assertEqual(p.returncode,0,p.stderr)
+   data=json.loads(cfg.read_text())
+   self.assertEqual(data['general']['target_cpu'],{'flags_known':True,'flags':['bmi2'],'source':'issue-target-confirmed'})
+   self.assertEqual(data['extra_cmdline'],{})
+   code='. "$MSHELL_SCRIPT_ROOT/tools/dsm-resolver-bridge.sh"; mshellDsmResolve validate SA6400 7.4.1-90080 all-modules IML'
+   env={**os.environ,'MSHELL_SCRIPT_ROOT':str(ROOT),'MSHELL_DOCKER_BUILDER':'1','MSHELL_USER_CONFIG':str(cfg)}
+   p=subprocess.run([BASH,'-c',code],env=env,capture_output=True,text=True)
+   self.assertEqual(p.returncode,0,p.stderr+p.stdout)
+   self.assertEqual(json.loads(p.stdout)['selected_mode']['module'],'all-modules')
+   p=subprocess.run(['sh',str(helper),str(cfg),'unknown'],capture_output=True,text=True)
+   self.assertEqual(p.returncode,0,p.stderr)
+   data=json.loads(cfg.read_text())
+   self.assertEqual(data['general']['target_cpu'],{'flags_known':False,'flags':[],'source':'target-unknown'})
+   p=subprocess.run([BASH,'-c',code],env=env,capture_output=True,text=True)
+   self.assertNotEqual(p.returncode,0)
+   self.assertIn('CPU_FEATURE_UNKNOWN',p.stderr+p.stdout)
+   p=subprocess.run(['sh',str(helper),str(cfg),'invalid'],capture_output=True,text=True)
+   self.assertEqual(p.returncode,2)
+
  def test_identity_failure_clears_stale_globals(self):
   code=function('mshellLoadDsmResolver')+function('getvarsmshell')+'''
 zeropadingver() { ZPADKVER="$1"; }

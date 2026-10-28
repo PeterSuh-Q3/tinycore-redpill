@@ -46,6 +46,7 @@ jobs:
           warinfo = "false"
           model = ""
           version = ""
+          target_cpu_bmi2 = "unknown"
           mac1 = ""
           mac2 = ""
           mac3 = ""
@@ -64,6 +65,11 @@ jobs:
                   iscustom = "true"
                   model = jsonbody.get("model", "")
                   version = jsonbody.get("version", "")
+                  target_cpu_bmi2 = jsonbody.get("target_cpu_bmi2", "unknown")
+                  if target_cpu_bmi2 is True or target_cpu_bmi2 == "BMI2 supported":
+                      target_cpu_bmi2 = "supported"
+                  elif target_cpu_bmi2 in (False, None, "", "Unknown", "unknown"):
+                      target_cpu_bmi2 = "unknown"
                   mac1 = jsonbody.get("mac1", "")
                   mac2 = jsonbody.get("mac2", "")
                   mac3 = jsonbody.get("mac3", "")
@@ -85,6 +91,8 @@ jobs:
                   iscustom = "true"
                   model = form_value("Model")
                   version = form_value("DSM version")
+                  target_cpu_bmi2 = form_value("Target CPU BMI2 support")
+                  target_cpu_bmi2 = "supported" if target_cpu_bmi2 == "BMI2 supported" else "unknown" if target_cpu_bmi2 in ("", "Unknown") else "invalid"
                   mac1 = form_value("MAC address 1")
                   mac2 = form_value("MAC address 2")
                   mac3 = form_value("MAC address 3")
@@ -115,6 +123,8 @@ jobs:
                   for major in platform["productvers"]
               }
               errors = []
+              if target_cpu_bmi2 not in ("supported", "unknown"):
+                  errors.append("Target CPU BMI2 support must be BMI2 supported or Unknown.")
               if model not in supported_models:
                   errors.append(f"Unsupported model: {model or '(empty)'}")
               if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+-[0-9]+", version or ""):
@@ -148,6 +158,7 @@ jobs:
 
           set_env("model", model)
           set_env("version", version)
+          set_env("target_cpu_bmi2", target_cpu_bmi2)
           set_env("mac1", mac1)
           set_env("mac2", mac2)
           set_env("mac3", mac3)
@@ -230,6 +241,8 @@ jobs:
       - name: build tinycore-redpill loader with lastest img
         id: build-loader
         if: env.iscustom == 'true'
+        env:
+          TARGET_CPU_BMI2: ${{ env.target_cpu_bmi2 }}
         run: |
           path=`pwd`
           userconfigfile="/home/tc/user_config.json"
@@ -334,6 +347,9 @@ jobs:
             echo "set version: ${{ env.version }}"
             sudo ./writekey.sh "general" "version" "${{ env.version }}" $userconfigfile
           fi
+
+          echo "Set target CPU BMI2 capability: ${TARGET_CPU_BMI2:-unknown}"
+          sudo ./tools/set-target-cpu-snapshot.sh "$userconfigfile" "${TARGET_CPU_BMI2:-unknown}"
 
           echo "Build loader for ${{ env.model }}-${{ env.version }}"
           ls -ltr ./functions.sh

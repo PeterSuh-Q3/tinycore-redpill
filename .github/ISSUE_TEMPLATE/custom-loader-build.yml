@@ -24,6 +24,16 @@ body:
     validations:
       required: true
   - type: dropdown
+    id: target_cpu_bmi2
+    attributes:
+      label: Target CPU BMI2 support
+      description: Select BMI2 supported only when the destination NAS CPU supports it. This describes the target NAS, not the GitHub Actions runner. Unknown is the safe default.
+      options:
+        - Unknown
+        - BMI2 supported
+    validations:
+      required: true
+  - type: dropdown
     id: format
     attributes:
       label: Output format
