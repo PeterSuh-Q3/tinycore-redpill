@@ -1032,7 +1032,7 @@ function history() {
     1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
     1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
     1.4.5.9 Route DSM selection through the reviewed target resolver
-    1.4.6.0 Respect target BMI2 unify kernel 5 policy and avoid jq regex parsing
+    1.4.6.0 Fix menu startup target BMI2 checks and kernel 5 policy
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1778,7 +1778,7 @@ EOF
 # Route DSM selection through the reviewed target resolver
 
 # 2026.10.29 v1.4.6.0
-# Respect target BMI2 unify kernel 5 policy and avoid jq regex parsing
+# Fix menu startup target BMI2 checks and kernel 5 policy
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2203,7 +2203,7 @@ function showlastupdate() {
 # Route DSM selection through the reviewed target resolver
 
 # 2026.10.29 v1.4.6.0
-# Respect target BMI2 unify kernel 5 policy and avoid jq regex parsing
+# Fix menu startup target BMI2 checks and kernel 5 policy
 EOF
 }
 

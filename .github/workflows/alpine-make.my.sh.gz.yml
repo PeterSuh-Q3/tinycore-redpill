@@ -72,6 +72,12 @@ jobs:
           sudo mkdir -p ./mydata/home/tc/config
           sudo cp -vf tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh ./mydata/home/tc/tools/
           sudo cp -vf config/dsm-targets.v1.json ./mydata/home/tc/config/
+          sudo chown "${TC_OWNER}" ./mydata/home/tc/config ./mydata/home/tc/tools \
+            ./mydata/home/tc/config/dsm-targets.v1.json \
+            ./mydata/home/tc/tools/dsm-target-resolver.sh \
+            ./mydata/home/tc/tools/dsm-target-resolver.jq \
+            ./mydata/home/tc/tools/dsm-resolver-bridge.sh \
+            ./mydata/home/tc/tools/capture-target-cpu.sh
 
           sudo mkdir -p ./mydata/usr/local/sbin ./mydata/etc/init.d ./mydata/etc/runlevels/boot
           sudo install -m 0755 alpine/local.d-restore-packages.start ./mydata/etc/local.d/restore-packages.start

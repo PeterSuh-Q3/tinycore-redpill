@@ -244,13 +244,17 @@ function refresh_dsm_resolver() {
     response=$(printf '%s' '{"operation":"list","model":"__readiness__"}' | sh "$stage/tools/dsm-target-resolver.sh") || {
         rm -rf "$stage"; return 1;
     }
-    mkdir -p /home/tc/tools /home/tc/config
+    sudo mkdir -p /home/tc/tools /home/tc/config || { rm -rf "$stage"; return 1; }
     # A partial installation must block builds until the complete set is ready.
-    touch /home/tc/config/dsm-resolver-updating
+    sudo touch /home/tc/config/dsm-resolver-updating || { rm -rf "$stage"; return 1; }
     for file in tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh config/dsm-targets.v1.json; do
-        cp -f "$stage/$file" "/home/tc/$file" || { rm -rf "$stage"; return 1; }
+        sudo cp -f "$stage/$file" "/home/tc/$file" || { rm -rf "$stage"; return 1; }
     done
-    rm -f /home/tc/config/dsm-resolver-updating
+    sudo chown "$(id -u):$(id -g)" /home/tc/tools /home/tc/config \
+      /home/tc/tools/dsm-target-resolver.sh /home/tc/tools/dsm-target-resolver.jq \
+      /home/tc/tools/dsm-resolver-bridge.sh /home/tc/tools/capture-target-cpu.sh \
+      /home/tc/config/dsm-targets.v1.json || { rm -rf "$stage"; return 1; }
+    sudo rm -f /home/tc/config/dsm-resolver-updating || { rm -rf "$stage"; return 1; }
     rm -rf "$stage"
 }
 

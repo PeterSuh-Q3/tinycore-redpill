@@ -12,6 +12,6 @@ Kernel 5 platform choices now come from the reviewed DSM target policy instead o
 
 Builds now proceed only for reviewed model, DSM version, and module combinations, reducing the chance of pairing a loader with a mismatched DSM kernel or module pack. A remote build may require the destination NAS CPU information; the builder's CPU is not treated as a substitute. This release does not add a new DSM version or model.
 
-## jq compatibility fix
+## Menu startup fix
 
-Some jq builds can reject the resolver's regular-expression syntax while parsing DSM release and kernel versions, which can stop the menu from starting or resolving a target. The resolver now validates numeric version components directly, without regex functions, to avoid that compatibility failure.
+An automatic update could leave the resolver catalog and its directory owned by root. The next menu startup then failed to refresh that catalog as the `tc` user and exited before showing the menu. The updater now installs the resolver files with the required permissions, and new loader bundles assign the catalog to `tc` when built. The resolver also validates numeric DSM release and kernel components without jq regex functions to reduce compatibility risk. The observed menu failure was caused by file permissions.
