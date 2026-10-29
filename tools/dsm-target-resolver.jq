@@ -1,9 +1,17 @@
 $catalogs[0] as $c |
 def fail($n;$s): {schema_version:1,operation:$q.operation,ok:false,exit_code:$n,reasons:[{code:$s}]};
+def decimal:
+ type=="string" and length>0 and all(explode[]; .>=48 and .<=57);
 def norm:
- capture("^(?<a>[0-9]+)\\.(?<b>[0-9]+)(?:\\.(?<c>[0-9]+))?-(?<d>[0-9]+)(?:-(?<e>[0-9]+))?$") |
- [.a,.b,(.c // "0"),.d,(.e // "0")] | map(tonumber) |
- "\(.[0]).\(.[1]).\(.[2])-\(.[3])-\(.[4])";
+ if type!="string" then empty else
+ split("-") as $p |
+ if ($p|length)<2 or ($p|length)>3 then empty else
+ ($p[0]|split(".")) as $v |
+ if ($v|length)<2 or ($v|length)>3 or (all($v[];decimal)|not) or
+    (all($p[1:][];decimal)|not) then empty else
+ ($v|map(tonumber)) as $vn | ($p[1:]|map(tonumber)) as $bn |
+ "\($vn[0]).\($vn[1]).\($vn[2] // 0)-\($bn[0])-\($bn[1] // 0)"
+ end end end;
 def modes:
  .modes | map(. as $m | . + {recipe:$c.recipes[.recipe_sha256],reasons:
    (if $c.recipes[.recipe_sha256]==null then [{code:"RECIPE_UNVERIFIED"}]
@@ -17,7 +25,7 @@ def result:
  source_revisions:$c.sources,target:($t|del(.modes)),allowed_modes:[$m[]|select(.reasons==[])],rejected_modes:[$m[]|select(.reasons!=[])]};
 def valid_target:
  (.model|type)=="string" and (.platform|type)=="string" and
- (.kernel|type)=="string" and (.kernel|test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+ (.kernel|type)=="string" and ((.kernel|split(".")) as $k | ($k|length)==3 and all($k[];decimal)) and
  (.tuple|type)=="array" and (.tuple|length)==5 and
  all(.tuple[]; type=="number" and .>=0 and floor==.) and
  (.release == "\(.tuple[0]).\(.tuple[1]).\(.tuple[2])-\(.tuple[3])-\(.tuple[4])") and
