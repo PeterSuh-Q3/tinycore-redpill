@@ -1032,6 +1032,7 @@ function history() {
     1.4.5.7 Defer selected package installation until DSM is ready and refine GPU and NVMe options
     1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
     1.4.5.9 Route DSM selection through the reviewed target resolver
+    1.4.6.0 Manage kernel 5 platform support through the resolver policy
     --------------------------------------------------------------------------------------
 EOF
 }
