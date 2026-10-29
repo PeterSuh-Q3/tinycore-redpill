@@ -45,15 +45,21 @@ mshellDsmValidate() {
 mshellDsmPinRecipe() {
     local selection="$1" root="${MSHELL_SCRIPT_ROOT:-/home/tc}" dir id key tmp index
     id=$(printf '%s' "$selection" | jq -r '.selected_mode.module') || return 6
-    key=$(printf '%s' "$selection" | jq -r '.target | .platform+"_"+(.tuple[0]|tostring)+(.tuple[1]|tostring)+"_"+(.kernel|gsub("\\.";""))') || return 6
+    # Buildroot's jq may be compiled without Oniguruma. Keep this filter
+    # independent of jq's regex functions (test/match/sub/gsub).
+    key=$(printf '%s' "$selection" | jq -r '.target | .platform+"_"+(.tuple[0]|tostring)+(.tuple[1]|tostring)+"_"+(.kernel|tostring|split(".")|join(""))') || return 6
     dir="$root/dsm-selection"
     mkdir -p "$dir" || return 6
     printf '%s\n' "$selection" > "$dir/selection.lock.json" || return 6
     printf '%s' "$selection" | jq '
       .source_revisions["tcrp-modules"] as $commit | .selected_mode.recipe |
-      if ($commit // "" | test("^[0-9a-f]{40}$")) then
-        .files |= map(.url |= sub("raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/";
-          "raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/"+$commit+"/"))
+      if (($commit | type) == "string" and ($commit | length) == 40 and
+          all($commit | explode[]; (. >= 48 and . <= 57) or (. >= 97 and . <= 102))) then
+        .files |= map(.url |= (
+          if startswith("raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/") then
+            "raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/" + $commit + "/" +
+            ltrimstr("raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/")
+          else . end))
       else . end' > "$dir/recipe.json" || return 6
     if [ -d /dev/shm/tcrp-modules ]; then
         printf '%s' "$selection" | jq '.selected_mode.recipe' > "$dir/recipe.json" || return 6
