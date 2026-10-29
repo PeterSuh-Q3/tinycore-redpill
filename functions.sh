@@ -3210,12 +3210,15 @@ function open_md0() {
   sudo rm -f "${TMP_PATH}/menuz"
   sudo mkdir -p "${TMP_PATH}/mdX"
   num=$(echo $DSMROOTS | wc -w)
-  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS 2>/dev/null
+  sudo mdadm -C /dev/md0 -e 0.9 -amd -R -l1 --force -n$num $DSMROOTS || return 1
   T="$(sudo blkid -o value -s TYPE /dev/md0 2>/dev/null)"
   if [ "$FRKRNL" = "NO" ] && [ "$T" = "ext4" ]; then
       sudo tune2fs -O ^quota /dev/md0
   fi    
-  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX"
+  sudo mount -t "${T:-ext4}" /dev/md0 "${TMP_PATH}/mdX" || {
+    sudo mdadm --stop /dev/md0
+    return 1
+  }
 }
 
 function close_md0() {
@@ -3466,6 +3469,42 @@ fi
 # to expand it when under-utilized. A legacy ~2.4GB md0 sitting on an 8GB
 # partition cannot hold the DSM 7.4 rootfs and makes upgrades fail at ~56%
 # ("file corrupt"). This grows the RAID + ext4 to the full partition size.
+# Stop only auto-read-only arrays containing exclusively the
+# selected system partitions. Never stop mounted or unrelated arrays.
+function releaseAutoMd0Members() {
+  local part holder md state devno slave member seen=" "
+  for part in $DSMROOTS; do
+    for holder in /sys/class/block/${part##*/}/holders/md*; do
+      [ -e "$holder" ] || continue
+      md=${holder##*/}
+      case "$seen" in *" $md "*) continue ;; esac
+      seen="$seen$md "
+      state=$(cat "/sys/class/block/$md/md/array_state" 2>/dev/null) || return 1
+      case "$state" in
+        read-auto) ;;
+        *) echo "/dev/$md is $state, not an auto-read-only array." >&2; return 1 ;;
+      esac
+      devno=$(cat "/sys/class/block/$md/dev" 2>/dev/null) || return 1
+      if awk -v dev="$devno" '$3 == dev {found=1} END {exit !found}' /proc/self/mountinfo; then
+        echo "/dev/$md is mounted; refusing to stop it." >&2
+        return 1
+      fi
+      for slave in /sys/class/block/"$md"/slaves/*; do
+        [ -e "$slave" ] || continue
+        member=${slave##*/}
+        case " $DSMROOTS " in
+          *" /dev/$member "*) ;;
+          *) echo "/dev/$md also contains unselected /dev/$member." >&2; return 1 ;;
+        esac
+      done
+    done
+  done
+  for md in $seen; do
+    echo "Stopping auto-read-only /dev/$md for system partition expansion." >&2
+    sudo mdadm --stop "/dev/$md" || return 1
+  done
+}
+
 function checkExpandMd0() {
 
   DSMROOTS="$(findDSMRoot)"
@@ -3484,9 +3523,12 @@ function checkExpandMd0() {
   # i.e. mdadm -C --force). open_md0 has no --size, so it re-creates the array
   # at the FULL partition size: after this the RAID already spans the whole
   # partition and only the ext4 filesystem may still be smaller (resize2fs).
-  open_md0
-  if ! mount 2>/dev/null | grep -q "${TMP_PATH}/mdX"; then
-    close_md0 2>/dev/null
+  if ! releaseAutoMd0Members; then
+    dialog --backtitle "$(backtitle)" --colors --title "Check/Expand System Partition(md0)" \
+      --msgbox "Cannot safely release the auto-assembled system array. Check the console for details." 0 0
+    return 1
+  fi
+  if ! open_md0 || ! mount 2>/dev/null | grep -q "${TMP_PATH}/mdX"; then
     dialog --backtitle "$(backtitle)" --colors --title "Check/Expand System Partition(md0)" \
       --msgbox "Failed to assemble/mount md0 from ${DSMROOTS}." 0 0
     return
@@ -3535,16 +3577,42 @@ EOF
 
   clear
   echo "Assembling md0 at full partition size ..."
-  open_md0                                  # mdadm -C --force => array spans whole partition
-  sudo umount "${TMP_PATH}/mdX" 2>/dev/null # offline resize
+  if ! releaseAutoMd0Members || ! open_md0; then
+    dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
+      --msgbox "Failed to prepare md0. Check the console for details; expansion was not attempted." 0 0
+    return 1
+  fi
+  if ! sudo umount "${TMP_PATH}/mdX"; then
+    echo "Failed to unmount md0; refusing offline resize." >&2
+    return 1
+  fi
   echo "Checking filesystem (e2fsck) ..."
   sudo e2fsck -f -y /dev/md0
+  local fsck_status=$?
+  if [ "$fsck_status" -gt 1 ]; then
+    echo "Filesystem check failed (exit $fsck_status); expansion stopped." >&2
+    sudo mdadm --stop /dev/md0
+    return 1
+  fi
   echo "Resizing filesystem (resize2fs) ..."
-  sudo resize2fs /dev/md0
+  if ! sudo resize2fs /dev/md0; then
+    echo "Filesystem expansion failed; see resize2fs output." >&2
+    sudo mdadm --stop /dev/md0
+    return 1
+  fi
   sudo sync
-  sudo mount /dev/md0 "${TMP_PATH}/mdX" 2>/dev/null
+  if ! sudo mount /dev/md0 "${TMP_PATH}/mdX"; then
+    echo "Expanded filesystem could not be mounted for verification." >&2
+    sudo mdadm --stop /dev/md0
+    return 1
+  fi
   NEWFS=$(df -m "${TMP_PATH}/mdX" 2>/dev/null | awk 'NR==2{print $2}')
   close_md0
+  if [ -z "$NEWFS" ] || [ "$NEWFS" -le "${FSTOTAL:-0}" ]; then
+    dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
+      --msgbox "Expansion could not be verified: filesystem ${FSTOTAL:-?} MiB -> ${NEWFS:-?} MiB." 0 0
+    return 1
+  fi
 
   dialog --backtitle "$(backtitle)" --colors --title "Expand System Partition(md0)" \
     --msgbox "Expansion complete.\n\nFilesystem : ${FSTOTAL} MiB -> ${NEWFS:-?} MiB\nPartition  : ${PMIB} MiB" 0 0
