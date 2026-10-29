@@ -32,7 +32,7 @@ if ! is_alpine && [ ! -f "/etc/init.d/tc-functions" ]; then
 fi
 
 kver3explatforms="bromolow braswell cedarview"
-kver5explatforms="epyc7002(DT) epyc7003ntb(DT) epyc7003(DT) icelaked(DT) v1000nk(DT) r1000nk(DT) geminilakenk(DT)"
+kver5explatforms=$(jq -er '.platform_policy.dt_platforms | map(. + "(DT)") | join(" ")' "${MSHELL_DSM_CATALOG:-${MSHELL_SCRIPT_ROOT:-/home/tc}/config/dsm-targets.v1.json}" 2>/dev/null) || kver5explatforms=""
 
 # pats.json is kept at a persistent location (/home/tc) so a redpill-load
 # clean/re-clone after a failed build does not wipe the DSM version source.

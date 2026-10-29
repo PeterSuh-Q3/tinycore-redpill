@@ -45,6 +45,12 @@ class Resolver(unittest.TestCase):
  def test_schema_and_missing_recipe(self):
   c=copy.deepcopy(CAT);c['schema_version']=99;self.assertEqual(self.run_query(catalog=c)['exit_code'],3)
   c=copy.deepcopy(CAT);c['recipes']={};self.assertFalse(self.run_query(catalog=c)['ok'])
+ def test_platform_policy_rejects_excluded_and_unregistered_kernel5(self):
+  self.assertEqual(set(CAT['platform_policy']['kernel5_platforms']), {'epyc7002','epyc7003','icelaked','v1000nk','r1000nk','geminilakenk'})
+  for platform in ('epyc7003ntb','unknown5'):
+   c=copy.deepcopy(CAT);c['targets'][0]['platform']=platform;c['targets'][0]['kernel']='5.10.55'
+   self.assertEqual(self.run_query(catalog=c)['exit_code'],3)
+  c=copy.deepcopy(CAT);del c['platform_policy'];self.assertEqual(self.run_query(catalog=c)['exit_code'],3)
  def test_no_shell_whitelist(self):
   menu=(ROOT/'menu_m.sh').read_text()
   self.assertNotIn('CUSTOM_MODULES_MAX_DSM',menu)

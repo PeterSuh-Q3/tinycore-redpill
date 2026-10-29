@@ -31,7 +31,7 @@ echo '{}' > "$SB/user_config.json"
 
 # --- minimal stubs mimicking the real menu_m.sh deps -------------------------
 platform="$PLATFORM_ARG"
-kver5platforms="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk"
+kver5platforms=$(jq -er '.platform_policy.kernel5_platforms | join(" ")' "${MSHELL_DSM_CATALOG:-$(dirname "$0")/../config/dsm-targets.v1.json}") || exit 1
 userconfigfile="$SB/user_config.json"
 backtitle(){ echo "NVIDIA Submenu SIMULATION (platform=$platform)"; }
 dlgmenuheight(){ local n="${1:-10}"; [ "$n" -lt 1 ] 2>/dev/null && n=1; echo "$n"; }

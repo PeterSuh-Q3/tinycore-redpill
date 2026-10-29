@@ -20,6 +20,21 @@ def git_json(root, path):
 
 def validate(data):
     assert data['schema_version'] == 1
+    policy = data['platform_policy']
+    if policy is not None:
+        assert policy['version'] == 1
+        supported = policy['kernel5_platforms']
+        excluded = policy['excluded_platforms']
+        dt = policy['dt_platforms']
+        assert len(dt) == len(set(dt)) and set(dt) <= set(supported)
+        assert all(isinstance(x, str) and x for x in supported + excluded)
+        assert len(supported) == len(set(supported)) and len(excluded) == len(set(excluded))
+        assert not set(supported) & set(excluded)
+        assert 'epyc7003ntb' in excluded
+        for target in data['targets']:
+            assert target['platform'] not in excluded
+            if target['kernel'].startswith('5.'):
+                assert target['platform'] in supported, target['platform']
     seen = set()
     for t in data['targets']:
         key = (t['model'], t['release'], t['channel'])

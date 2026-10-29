@@ -20,8 +20,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: PeterSuh-Q3/redpill-load
-          ref: 73ca67be5329b62a653d73012f6a9fe19d2ef4a2
+          ref: master
           path: .resolver-redpill-load
+      - uses: actions/checkout@v4
+        with:
+          repository: PeterSuh-Q3/tcrpfriend
+          ref: main
+          path: .resolver-friend
       - name: Validate scripts and catalog reproducibility
         run: |
           bash -n functions.sh functions_t.sh menu.sh menu_m.sh tools/dsm-resolver-bridge.sh
@@ -30,6 +35,8 @@ jobs:
           if [ -f .resolver-redpill-load/config/catalog/dsm-targets.v1.json ]; then
             python3 tools/compile-dsm-targets.py --source .resolver-redpill-load/config/catalog/dsm-targets.v1.json --output /tmp/catalog.json
             cmp config/dsm-targets.v1.json /tmp/catalog.json
+            jq -e --slurpfile catalog config/dsm-targets.v1.json 'del(.catalog_id,.legacy_kernels) == $catalog[0].platform_policy and .catalog_id == $catalog[0].catalog_id' .resolver-redpill-load/config/platform-policy.v1.json
+            cmp .resolver-redpill-load/config/platform-policy.v1.json .resolver-friend/buildroot/board/tcrpfriend/rootfs-overlay/root/platform-policy.v1.json
           else
             echo 'SKIP: pinned redpill-load revision does not yet contain the reviewed source catalog'
           fi

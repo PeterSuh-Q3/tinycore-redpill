@@ -25,8 +25,10 @@ def valid_target:
    . as $m | (["all-modules","custom-modules","anodrm-modules"]|index($m.module))!=null and
    (["IML","PML"]|index($m.method))!=null and .id==(.module+":"+.method) and
    (.cpu_flags|type)=="array" and all(.cpu_flags[];type=="string"));
-if ($c.schema_version != 1 or ($c.targets|type)!="array" or ($c.recipes|type)!="object" or ($c.catalog_id|type)!="string") then fail(3;"CATALOG_INCONSISTENT")
+if ($c.schema_version != 1 or ($c.targets|type)!="array" or ($c.recipes|type)!="object" or ($c.catalog_id|type)!="string" or $c.platform_policy.version != 1 or ($c.platform_policy.kernel5_platforms|type)!="array" or ($c.platform_policy.excluded_platforms|type)!="array" or ($c.platform_policy.dt_platforms|type)!="array") then fail(3;"CATALOG_INCONSISTENT")
+elif (($c.platform_policy.excluded_platforms | index("epyc7003ntb")) == null or (($c.platform_policy.kernel5_platforms - $c.platform_policy.excluded_platforms)|length) != ($c.platform_policy.kernel5_platforms|length)) then fail(3;"CATALOG_INCONSISTENT")
 elif (all($c.targets[];valid_target)|not) then fail(3;"CATALOG_INCONSISTENT")
+elif any($c.targets[]; . as $t | (($c.platform_policy.excluded_platforms | index($t.platform)) != null) or (($t.kernel | startswith("5.")) and (($c.platform_policy.kernel5_platforms | index($t.platform)) == null))) then fail(3;"CATALOG_INCONSISTENT")
 elif (["identity","options","list","validate"]|index($q.operation))==null or ($q.model|type)!="string" then fail(2;"INVALID_REQUEST")
 else
  [$c.targets[]|select(.model==$q.model and .channel==($q.channel // "stable"))] as $ts |

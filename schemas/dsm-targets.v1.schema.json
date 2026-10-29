@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MSHELL compiled DSM target catalog v1",
   "type": "object",
-  "required": ["schema_version", "catalog_id", "sources", "targets", "recipes"],
+  "required": ["schema_version", "catalog_id", "sources", "targets", "recipes", "platform_policy"],
   "properties": {
     "schema_version": {"const": 1},
     "catalog_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "sources": {"type": "object"},
+    "platform_policy": {"type":"object", "required":["version","kernel5_platforms","excluded_platforms","dt_platforms"], "properties":{"version":{"const":1}, "kernel5_platforms":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}}, "excluded_platforms":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}}, "dt_platforms":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}}}},
     "recipes": {"type": "object", "additionalProperties": {"type": "object", "required": ["files"], "properties": {"files": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["name", "url", "sha256", "packed"], "properties": {"name": {"type": "string", "pattern": "^[^/]+$"}, "url": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "packed": {"type": "boolean"}}}}}}},
     "targets": {"type": "array", "items": {
       "type": "object",

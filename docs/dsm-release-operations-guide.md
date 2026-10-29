@@ -160,3 +160,14 @@ release notes를 사용자 관점에서 검토한다.
 
 지원 상태를 업데이트한 뒤에도 commit/push/release/workflow dispatch는 별도 운영 지시와
 릴리스 절차에 따라 수행한다. 신규 DSM 등록만으로 published release가 만들어지지는 않는다.
+
+
+## 커널 5 플랫폼 정책 갱신
+
+검토 원본 `redpill-load/config/catalog/dsm-targets.v1.json`의 `platform_policy`에서
+`kernel5_platforms`와 별도로 검토한 `dt_platforms`를 수정한다. 제외 대상인
+`epyc7003ntb`는 추가하지 않는다. 대상별 정확한 커널과 모듈 recipe도 등록해야 한다.
+컴파일 후 `python3 tools/sync-platform-policy.py`로 redpill-load와 Friend의
+오프라인 정책을 생성하고 `--check`로 일치 여부를 확인한다. 각 저장소의
+인덱스와 실제 제공 파일을 검증한 후 관련 저장소를 함께 배포한다. Friend는
+새 이미지가 필요하며, 구버전은 새 정책을 사용하지 않는다.

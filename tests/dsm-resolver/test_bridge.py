@@ -91,6 +91,8 @@ getvarsmshell SA6400-7.4.1-90080 || exit 42
   with tempfile.TemporaryDirectory(prefix='mshell-resolver-') as d:
    d=Path(d);(d/'redpill-load/custom/extensions').mkdir(parents=True)
    shutil.copytree(source/'include',d/'redpill-load/include')
+   (d/'redpill-load/config').mkdir()
+   shutil.copy(source/'config/platform-policy.v1.json',d/'redpill-load/config/platform-policy.v1.json')
    shutil.copy(source/'ext-manager.sh',d/'redpill-load/ext-manager.sh')
    (d/'redpill-load/ext-manager.sh').chmod(0o755)
    (d/'redpill-load/bundled-exts.json').write_text('{"all-modules":"old","other":"preserve"}')

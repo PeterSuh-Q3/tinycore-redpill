@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.5.9"
+rploaderver="1.4.6.0"
 builddate="2026.10.29"
 redpillmake="prod"
 
@@ -249,7 +249,7 @@ mshtarfile="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$buil
 smallfixnumber="0"
 
 kver3platforms="bromolow braswell avoton cedarview"
-kver5platforms="epyc7002 epyc7003ntb epyc7003 icelaked v1000nk r1000nk geminilakenk"
+kver5platforms=$(jq -er '.platform_policy.kernel5_platforms | if type == "array" then join(" ") else error("missing platform policy") end' "${MSHELL_DSM_CATALOG:-${MSHELL_SCRIPT_ROOT:-/home/tc}/config/dsm-targets.v1.json}" 2>/dev/null) || kver5platforms=""
 nosas5platforms="bromolow broadwellntbap broadwellnkv2 purley"
 dsm6notsupported="broadwellntbap"
 
