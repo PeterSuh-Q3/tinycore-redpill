@@ -795,3 +795,199 @@ msgstr "꺼짐"
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "DSM 커널 명령줄에 acpi_enforce_resources=lax를 추가합니다. ACPI 자원 검사를 시스템 전체에서 완화하므로 일부 장비에서 불안정하거나 예기치 않게 재부팅될 수 있습니다. it87 같은 센서 드라이버가 ACPI 자원 충돌 때문에 로드되지 않을 때만 켜십시오. 계속하시겠습니까?"
+
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DT 디스크 매핑 도우미"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "디스크 매핑 작업 선택"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "현재 매핑과 컨트롤러 확인"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "SATA 매핑 후보 계산"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "SATA 포트 순서 조정 (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "SAS/HBA 설정과 컨트롤러 확인"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "이전 SATA 매핑 복원"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "디스크 정보 수집 도구가 없습니다. 전체 MSHELL 번들을 갱신하십시오."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "디스크 정보를 수집하지 못했습니다. 설정과 콘솔 출력을 확인하십시오."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "로더 저장장치 정보와 설정된 매핑"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "뒤로"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "아직 사용할 수 없는 기능입니다. 설정은 변경되지 않았습니다."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "DSM에서 확인한 컨트롤러 순서대로 포트 수를 쉼표로 구분해 입력하십시오 (예: 4,2). 각 값은 1부터 9까지입니다. 로더의 탐지 결과만으로 DSM 순서나 물리 베이를 확정할 수 없습니다. 확인 전에 후보를 보여줍니다."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "포트 수가 잘못되었거나 maxdisks 제한을 초과했습니다. 합계가 maxdisks를 넘지 않도록 1부터 9까지 숫자를 쉼표로 구분해 입력하십시오."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "검증하거나 적용하지 않은 후보"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "user_config.json에 유효한 maxdisks 값이 없어 후보를 계산하지 않았습니다."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "매핑 계산 도구가 없습니다. 전체 MSHELL 번들을 갱신하십시오."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap 또는 DiskIdxMap이 이미 설정되어 있습니다. sata_remap을 추가하면 디스크 순서를 예측하기 어려울 수 있습니다. 기존 값은 삭제하지 않습니다. 계속하시겠습니까?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "이 후보는 DSM 디스크 순서와 대조하지 않았습니다. 적용하시겠습니까? FRIEND를 통해 DSM을 부팅할 때 로더 재빌드는 필요하지 않습니다."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "매핑을 적용할 수 없습니다. maxdisks를 확인하고 충돌하는 sata_remap을 먼저 제거하십시오."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "복원할 수 있는 유효한 이전 매핑 백업이 없습니다."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "매핑을 저장하거나 검증하지 못했습니다. 이전 설정을 복원했습니다."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "이전 SATA 매핑을 복원하시겠습니까? FRIEND를 통해 DSM을 부팅할 때 로더 재빌드는 필요하지 않습니다."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "DSM에서 확인한 디스크 인덱스 순열을 입력하십시오. 예: 0>4:4>0. 로더의 host 및 ATA 번호만으로 DSM 디스크 순서를 확정할 수 없습니다. 취소하면 설정은 유지됩니다."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "잘못된 매핑입니다. 0부터 255까지 중복되지 않는 인덱스로 완전한 순열을 입력하십시오. 예: 0>4:4>0. 설정은 변경되지 않았습니다."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "디스크 인덱스는 DSM에서 확인해야 합니다. 잘못된 매핑을 적용하면 디스크 순서가 바뀔 수 있습니다. 저장하시겠습니까? FRIEND를 통해 DSM을 부팅할 때 로더 재빌드는 필요하지 않습니다."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "SATA 디스크 인덱스 재매핑 방법 선택"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "확인된 디스크 인덱스로 후보 생성"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "매핑 직접 입력"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "DSM에서 확인한 디스크 인덱스를 디스크 순서대로 쉼표로 구분해 입력하십시오. 예: 0,1,2,3,4. sata_remap을 적용하지 않은 원래 인덱스를 사용하십시오. 로더 장치 번호는 DSM 인덱스가 아닙니다."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "동일한 디스크 순서대로 원하는 인덱스를 입력하십시오. 예: 4,1,2,3,0. 같은 인덱스 집합을 각각 한 번씩 사용해야 합니다."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "기존 sata_remap이 설정되어 있습니다. 현재 DSM 인덱스는 이미 변경되었을 수 있습니다. 새 후보를 생성하기 전에 이를 제거하고 원래 DSM 인덱스를 확인하십시오. 설정은 변경되지 않았습니다."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "매핑을 생성할 수 없습니다. 두 목록에는 0부터 255까지 같은 인덱스가 중복 없이 있어야 하며 적어도 하나의 인덱스가 변경되어야 합니다."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "전체 포트 상세 정보 보기 (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "감지된 디스크"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "링크 다운"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "링크 상태 미확인"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "링크 업"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "설정된 매핑"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "로더의 관찰 결과만으로 DSM 디스크 순서, 물리 베이 또는 부트 디스크를 확정할 수 없습니다. 링크 상태는 사용 가능한 커널 로그를 기준으로 하며 오래되었거나 없을 수 있습니다."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "선택한 컨트롤러 순서대로 포트 수를 입력하십시오. 예: 4,4. 연결된 디스크 수가 아닌 별도로 확인한 포트 수를 사용하십시오. 각 값은 1부터 9까지입니다."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "컨트롤러 순서가 잘못되었습니다. 표시된 SATA 컨트롤러 번호를 각각 한 번씩 입력하십시오. 설정은 변경되지 않았습니다."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "SATA 컨트롤러가 감지되지 않아 후보를 생성할 수 없습니다."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA 컨트롤러"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "기타 저장장치 컨트롤러 (SATA 후보에 포함되지 않음)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCI 표시 순서와 연결된 디스크 수만으로 DSM 컨트롤러 순서, 사용 가능한 포트 수, 부트 디스크, SAS 인덱스 위치 또는 물리 베이를 확정할 수 없습니다. 후보를 입력하기 전에 모두 확인하십시오."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "DSM에서 확인한 순서대로 컨트롤러 번호를 입력하십시오. 표시된 순서를 유지하려면 Enter를 누르십시오. 로더 순서는 DSM 순서의 증거가 아닙니다."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "기본값은 위에서 감지한 디스크 수를 바탕으로 제안됩니다. 검증된 포트 수가 아니므로 사용 가능한 포트를 확인하고 필요하면 빈 포트도 포함하십시오."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "감지된 디스크가 없거나 9개를 초과하는 컨트롤러가 있어 기본 포트 수를 제안할 수 없습니다. 별도로 확인한 포트 수를 입력하십시오."

@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.6.0"
-builddate="2026.10.29"
+rploaderver="1.4.6.1"
+builddate="2026.10.30"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1033,6 +1033,7 @@ function history() {
     1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
     1.4.5.9 Route DSM selection through the reviewed target resolver
     1.4.6.0 Fix menu startup target BMI2 checks and kernel 5 policy
+    1.4.6.1 Help review disk mappings on systems with multiple storage controllers
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1780,6 +1781,9 @@ EOF
 # 2026.10.29 v1.4.6.0
 # Fix menu startup target BMI2 checks and kernel 5 policy
 
+# 2026.10.30 v1.4.6.1
+# Help review disk mappings on systems with multiple storage controllers
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2204,6 +2208,9 @@ function showlastupdate() {
 
 # 2026.10.29 v1.4.6.0
 # Fix menu startup target BMI2 checks and kernel 5 policy
+
+# 2026.10.30 v1.4.6.1
+# Help review disk mappings on systems with multiple storage controllers
 EOF
 }
 

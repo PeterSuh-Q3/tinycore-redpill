@@ -788,6 +788,202 @@ msgstr "مفعّل"
 msgid "Disabled"
 msgstr "معطّل"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "مساعد تعيين الأقراص لغير DT"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "اختر إجراء تعيين الأقراص"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "عرض التعيينات ووحدات التحكم الحالية"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "حساب اقتراح تعيين SATA"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "تعديل ترتيب منافذ SATA (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "عرض إعدادات ووحدات تحكم SAS/HBA"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "استعادة تعيين SATA السابق"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "أداة جرد الأقراص غير موجودة. حدّث حزمة MSHELL كاملة."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "تعذر جمع جرد الأقراص. تحقق من الإعدادات ومخرجات وحدة التحكم."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "جرد تخزين أداة الإقلاع والتعيينات المضبوطة"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "رجوع"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "هذا الإجراء غير متاح بعد. لم تتغير أي إعدادات."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "أدخل أعداد المنافذ وفق ترتيب وحدات تحكم DSM المؤكد، مفصولة بفواصل (مثال: 4,2). يجب أن يكون كل عدد من 1 إلى 9. لا يثبت اكتشاف أداة الإقلاع ترتيب DSM أو تعيين الخانات الفعلية. سيظهر اقتراح قبل التأكيد."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "أعداد المنافذ غير صالحة أو تم تجاوز حد maxdisks. أدخل أعدادًا مفصولة بفواصل من 1 إلى 9، بحيث لا يتجاوز مجموعها maxdisks."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "اقتراح فقط — غير مؤكد أو مطبق"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "لا توجد قيمة maxdisks صالحة في user_config.json. لم يتم حساب اقتراح."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "أداة حساب التعيين غير موجودة. حدّث حزمة MSHELL كاملة."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "تم ضبط SataPortMap أو DiskIdxMap بالفعل. قد تؤدي إضافة sata_remap إلى صعوبة توقع ترتيب الأقراص. لن تُحذف القيم الموجودة. هل تريد المتابعة؟"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "لم تتم مطابقة هذا الاقتراح مع ترتيب أقراص DSM. هل تريد تطبيقه؟ لا يلزم إعادة بناء أداة الإقلاع عند تشغيل DSM عبر FRIEND."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "تعذر تطبيق هذا التعيين: تحقق من maxdisks وأزل أولًا أي sata_remap متعارض."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "لا تتوفر نسخة احتياطية صالحة للتعيين السابق."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "تعذر حفظ التعيين أو التحقق منه. تمت استعادة الإعداد السابق."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "هل تريد استعادة تعيين SATA السابق؟ لا يلزم إعادة بناء أداة الإقلاع عند تشغيل DSM عبر FRIEND."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "أدخل تبديلًا لمؤشرات الأقراص تم التحقق منه في DSM، مثل 0>4:4>0. لا تثبت أرقام host وATA في أداة الإقلاع ترتيب أقراص DSM. ألغِ للترك دون تغيير."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "تعيين غير صالح. استخدم مؤشرات فريدة من 0 إلى 255 وتبديلًا كاملًا، مثل 0>4:4>0. لم يتغير أي إعداد."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "يجب التحقق من مؤشرات الأقراص هذه في DSM. قد يؤدي التعيين الخاطئ إلى تغيير ترتيب الأقراص. حفظ؟ لا يلزم إعادة بناء أداة الإقلاع عند تشغيل DSM عبر FRIEND."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "اختر طريقة إعداد إعادة تعيين مؤشرات أقراص SATA"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "إنشاء اقتراح من مؤشرات أقراص مؤكدة"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "إدخال التعيين يدويًا"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "أدخل مؤشرات أقراص DSM المؤكدة حسب ترتيب الأقراص، مفصولة بفواصل، مثل 0,1,2,3,4. استخدم المؤشرات الأصلية دون sata_remap؛ أرقام أجهزة أداة الإقلاع ليست مؤشرات DSM."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "أدخل المؤشر المطلوب لكل قرص بالترتيب نفسه، مثل 4,1,2,3,0. استخدم مجموعة المؤشرات نفسها مرة واحدة لكل مؤشر."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "تم ضبط sata_remap موجود بالفعل. قد تكون مؤشرات DSM الحالية قد أعيد تعيينها. أزله وتحقق من مؤشرات DSM الأصلية قبل إنشاء اقتراح جديد. لم تتغير الإعدادات."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "تعذر إنشاء التعيين. يجب أن تحتوي القائمتان على المؤشرات الفريدة نفسها من 0 إلى 255، وأن يتغير مؤشر واحد على الأقل."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "عرض تفاصيل المنافذ كاملة (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "الأقراص المكتشفة"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "الرابط متوقف"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "حالة الرابط غير معروفة"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "الرابط متصل"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "التعيينات المضبوطة"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "لا تثبت ملاحظات أداة الإقلاع ترتيب أقراص DSM أو الخانات الفعلية أو قرص الإقلاع. تأتي حالة الرابط من رسائل kernel المتاحة وقد تكون قديمة أو غير متوفرة."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "أدخل أعداد المنافذ حسب ترتيب وحدات التحكم الذي اخترته، مثل 4,4. استخدم أعداد المنافذ التي تحققت منها بشكل مستقل، لا عدد الأقراص المتصلة. يجب أن يكون كل عدد من 1 إلى 9."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "ترتيب وحدات التحكم غير صالح. أدخل رقم كل وحدة تحكم SATA معروضة مرة واحدة بالضبط. لم تتغير الإعدادات."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "لم يتم اكتشاف وحدات تحكم SATA. تعذر إنشاء اقتراح."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "وحدة تحكم SATA"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "وحدة تخزين أخرى (غير مدرجة في اقتراح SATA)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "لا يثبت ترتيب قائمة PCI وعدد الأقراص المتصلة ترتيب وحدات تحكم DSM أو المنافذ المتاحة أو قرص الإقلاع أو موضع مؤشر SAS أو الخانات الفعلية. تحقق من كل ذلك قبل إدخال اقتراح."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "أدخل أرقام وحدات التحكم حسب ترتيب DSM المؤكد. اضغط Enter للإبقاء على الترتيب المعروض. ترتيب أداة الإقلاع ليس دليلًا على ترتيب DSM."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "القيم الافتراضية مقترحة بناءً على أعداد الأقراص المكتشفة أعلاه. إنها ليست أعداد منافذ مؤكدة؛ تحقق من المنافذ المتاحة وأدرج الفارغة عند الحاجة."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "لا يتوفر اقتراح أولي لعدد المنافذ لأن وحدة تحكم لا تحتوي على أقراص مكتشفة أو تحتوي على أكثر من تسعة. أدخل أعداد المنافذ بعد التحقق منها بشكل مستقل."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "يضيف هذا الخيار acpi_enforce_resources=lax إلى سطر أوامر نواة DSM. وهو يخفف فحص موارد ACPI على مستوى النظام كله، وقد يسبب عدم الاستقرار أو إعادة تشغيل غير متوقعة على بعض الأجهزة. فعّله فقط إذا فشل تحميل برنامج تشغيل مستشعر مثل it87 بسبب تعارض موارد ACPI. هل تريد المتابعة؟"

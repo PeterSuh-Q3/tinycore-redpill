@@ -788,6 +788,202 @@ msgstr "Etkin"
 msgid "Disabled"
 msgstr "Devre dışı"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DT Disk Eşleme Yardımcısı"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "Disk eşleme işlemi seçin"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "Geçerli eşlemeleri ve denetleyicileri görüntüle"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "SATA eşleme adayı hesapla"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "SATA bağlantı noktası sırasını ayarla (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "SAS/HBA ayarlarını ve denetleyicilerini görüntüle"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "Önceki SATA eşlemesini geri yükle"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "Disk envanteri yardımcısı eksik. MSHELL paketinin tamamını güncelleyin."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "Disk envanteri toplanamadı. Yapılandırmayı ve konsol çıktısını kontrol edin."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "Yükleyici depolama envanteri ve yapılandırılmış eşlemeler"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "Geri"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "Bu işlem henüz kullanılamıyor. Hiçbir ayar değiştirilmedi."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "Bağlantı noktası sayılarını doğrulanmış DSM denetleyici sırasına göre virgülle ayırarak girin (örnek: 4,2). Her sayı 1 ile 9 arasında olmalıdır. Yükleyici algılaması DSM sırasını veya fiziksel yuva eşlemesini belirlemez. Onaydan önce bir aday gösterilir."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "Bağlantı noktası sayıları geçersiz veya maxdisks sınırı aşıldı. Toplamı maxdisks değerini aşmayan, 1 ile 9 arasındaki sayıları virgülle ayırarak girin."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "Yalnızca aday — doğrulanmadı veya uygulanmadı"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "user_config.json içinde geçerli maxdisks değeri yok. Aday hesaplanmadı."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "Eşleme hesaplayıcısı eksik. MSHELL paketinin tamamını güncelleyin."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap veya DiskIdxMap zaten yapılandırılmış. sata_remap eklemek disk sırasını öngörmeyi zorlaştırabilir. Mevcut değerler kaldırılmayacak. Devam edilsin mi?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Bu aday DSM disk sırasına göre doğrulanmadı. Uygulansın mı? DSM FRIEND üzerinden başlatıldığında yükleyiciyi yeniden oluşturmak gerekmez."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "Bu eşleme uygulanamıyor: maxdisks değerini kontrol edin ve çakışan sata_remap varsa önce kaldırın."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "Önceki eşlemenin geçerli yedeği yok."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "Eşleme kaydedilemedi veya doğrulanamadı. Önceki yapılandırma geri yüklendi."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Önceki SATA eşlemesi geri yüklensin mi? DSM FRIEND üzerinden başlatıldığında yükleyiciyi yeniden oluşturmak gerekmez."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "DSM'de doğrulanmış disk indeksi permütasyonunu girin; örneğin 0>4:4>0. Yükleyici host ve ATA numaraları DSM disk sırasını kanıtlamaz. İptal ederseniz ayarlar değişmeden kalır."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "Eşleme geçersiz. 0 ile 255 arasında benzersiz indeksler ve eksiksiz bir permütasyon kullanın; örneğin 0>4:4>0. Hiçbir ayar değiştirilmedi."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Bu disk indeksleri DSM'de doğrulanmalıdır. Yanlış eşleme disk sırasını değiştirebilir. Kaydedilsin mi? DSM FRIEND üzerinden başlatıldığında yükleyiciyi yeniden oluşturmak gerekmez."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "SATA disk indeksi yeniden eşlemesinin nasıl hazırlanacağını seçin"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "Doğrulanmış disk indekslerinden aday oluştur"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "Eşlemeyi elle gir"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "DSM'de doğrulanmış disk indekslerini disk sırasına göre virgülle ayırarak girin; örneğin 0,1,2,3,4. sata_remap kullanılmadan önceki özgün indeksleri kullanın; yükleyici aygıt numaraları DSM indeksi değildir."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "Her disk için istenen indeksi aynı sırada girin; örneğin 4,1,2,3,0. Aynı indeks kümesindeki her değeri tam bir kez kullanın."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "Mevcut bir sata_remap yapılandırılmış. Geçerli DSM indeksleri zaten yeniden eşlenmiş olabilir. Yeni aday oluşturmadan önce kaldırın ve özgün DSM indekslerini doğrulayın. Ayarlar değiştirilmedi."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "Eşleme oluşturulamıyor. Her iki liste de 0 ile 255 arasındaki aynı benzersiz indeksleri içermeli ve en az bir indeks değişmelidir."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "Tüm bağlantı noktası ayrıntılarını görüntüle (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "Algılanan diskler"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "Bağlantı kesik"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "Bağlantı durumu bilinmiyor"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "Bağlantı etkin"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "Yapılandırılmış eşlemeler"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "Yükleyici gözlemleri DSM disk sırasını, fiziksel yuvaları veya önyükleme diskini belirlemez. Bağlantı durumu mevcut kernel iletilerinden alınır ve eski ya da kullanılamaz olabilir."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "Bağlantı noktası sayılarını seçtiğiniz denetleyici sırasına göre girin; örneğin 4,4. Bağlı disk sayısını değil, bağımsız olarak doğrulanmış bağlantı noktası sayılarını kullanın. Her sayı 1 ile 9 arasında olmalıdır."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "Denetleyici sırası geçersiz. Görüntülenen her SATA denetleyici numarasını tam bir kez girin. Hiçbir ayar değiştirilmedi."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "SATA denetleyicisi algılanmadı. Aday oluşturulamıyor."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA denetleyicisi"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "Diğer depolama denetleyicisi (SATA adayına dahil değil)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCI liste sırası ve bağlı disk sayısı DSM denetleyici sırasını, kullanılabilir bağlantı noktalarını, önyükleme diskini, SAS indeks yerleşimini veya fiziksel yuvaları belirlemez. Aday girmeden önce bunların tümünü doğrulayın."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "Denetleyici numaralarını doğrulanmış DSM sırasına göre girin. Görüntülenen sırayı korumak için Enter'a basın. Yükleyici sırası DSM sırasının kanıtı değildir."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "Varsayılan değerler yukarıdaki algılanan disk sayılarına göre önerilir. Bunlar doğrulanmış bağlantı noktası sayıları değildir; kullanılabilir bağlantı noktalarını doğrulayın ve gerekirse boş portları da dahil edin."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "Bir denetleyicide algılanan disk olmadığı veya dokuzdan fazla disk olduğu için başlangıç bağlantı noktası önerisi yok. Bağımsız olarak doğrulanmış bağlantı noktası sayılarını girin."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Bu seçenek DSM çekirdek komut satırına acpi_enforce_resources=lax ekler. ACPI kaynak denetimini sistem genelinde gevşetir ve bazı donanımlarda kararsızlığa veya beklenmedik yeniden başlatmalara yol açabilir. Yalnızca it87 gibi bir sensör sürücüsü ACPI kaynak çakışması nedeniyle yüklenemiyorsa etkinleştirin. Devam edilsin mi?"

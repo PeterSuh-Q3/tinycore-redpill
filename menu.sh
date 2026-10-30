@@ -627,6 +627,21 @@ function is_supported_previous_release_tag() {
   return 0
 }
 
+# FILES, EXTRACT_DIR and TAG are local to the caller. Historical versions
+# without the assistant remain supported, while an incomplete newer tag must
+# not silently reuse a different version's installed helper.
+function historical_collect_mapping_helpers() {
+  local helper
+  for helper in nondt-mapping-inventory.sh nondt-mapping-calculate.sh nondt-mapping-config.sh nondt-sata-remap.sh; do
+    if [ -s "${EXTRACT_DIR}/tools/${helper}" ]; then
+      FILES+=("tools/${helper}")
+    elif grep -Fq "${helper}" "${EXTRACT_DIR}/menu_m.sh"; then
+      echo "[!] Required mapping helper missing from ${TAG}: tools/${helper}" >&2
+      return 1
+    fi
+  done
+}
+
 function extract_old_shell() {
 
   local TAG="${1}"
@@ -674,6 +689,11 @@ function extract_old_shell() {
 
   if grep -q 'function mshellLoadDsmResolver' "${EXTRACT_DIR}/functions.sh"; then
     FILES+=("tools/dsm-target-resolver.sh" "tools/dsm-target-resolver.jq" "tools/dsm-resolver-bridge.sh" "tools/capture-target-cpu.sh" "config/dsm-targets.v1.json")
+  fi
+  if ! historical_collect_mapping_helpers; then
+    rm -f "${TMP_ZIP}"
+    rm -rf "${EXTRACT_DIR}"
+    return 1
   fi
   for f in "${FILES[@]}"; do
     if [ ! -s "${EXTRACT_DIR}/${f}" ]; then

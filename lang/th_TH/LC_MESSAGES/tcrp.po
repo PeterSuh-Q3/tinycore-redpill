@@ -788,6 +788,202 @@ msgstr "เปิดใช้งาน"
 msgid "Disabled"
 msgstr "ปิดใช้งาน"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "ตัวช่วยกำหนดดิสก์สำหรับ Non-DT"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "เลือกการดำเนินการกำหนดดิสก์"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "ดูการกำหนดและคอนโทรลเลอร์ปัจจุบัน"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "คำนวณตัวเลือกการกำหนด SATA"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "ปรับลำดับพอร์ต SATA (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "ดูการตั้งค่าและคอนโทรลเลอร์ SAS/HBA"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "คืนค่าการกำหนด SATA ก่อนหน้า"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "ไม่พบตัวช่วยรายการดิสก์ โปรดอัปเดตชุด MSHELL ทั้งชุด"
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "รวบรวมรายการดิสก์ไม่ได้ โปรดตรวจสอบการตั้งค่าและผลลัพธ์คอนโซล"
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "รายการพื้นที่จัดเก็บของ Loader และการกำหนดที่ตั้งค่าไว้"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "กลับ"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "การดำเนินการนี้ยังใช้ไม่ได้ ไม่มีการเปลี่ยนแปลงการตั้งค่า"
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "ป้อนจำนวนพอร์ตตามลำดับคอนโทรลเลอร์ DSM ที่ตรวจสอบแล้ว โดยคั่นด้วยจุลภาค (ตัวอย่าง: 4,2) แต่ละค่าต้องอยู่ระหว่าง 1 ถึง 9 การตรวจพบของ Loader ไม่ได้ยืนยันลำดับ DSM หรือการจับคู่กับช่องใส่ดิสก์จริง จะแสดงตัวเลือกก่อนยืนยัน"
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "จำนวนพอร์ตไม่ถูกต้องหรือเกินขีดจำกัด maxdisks ป้อนตัวเลข 1 ถึง 9 คั่นด้วยจุลภาค โดยผลรวมต้องไม่เกิน maxdisks"
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "เป็นเพียงตัวเลือก — ยังไม่ตรวจสอบหรือนำไปใช้"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "ไม่มีค่า maxdisks ที่ถูกต้องใน user_config.json จึงไม่ได้คำนวณตัวเลือก"
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "ไม่พบเครื่องมือคำนวณการกำหนด โปรดอัปเดตชุด MSHELL ทั้งชุด"
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "มีการตั้งค่า SataPortMap หรือ DiskIdxMap อยู่แล้ว การเพิ่ม sata_remap อาจทำให้คาดเดาลำดับดิสก์ได้ยากขึ้น จะไม่ลบค่าที่มีอยู่ ดำเนินการต่อหรือไม่"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "ยังไม่ได้ตรวจสอบตัวเลือกนี้กับลำดับดิสก์ DSM ต้องการนำไปใช้หรือไม่ หากบูต DSM ผ่าน FRIEND ไม่จำเป็นต้องสร้าง Loader ใหม่"
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "นำการกำหนดนี้ไปใช้ไม่ได้: ตรวจสอบ maxdisks และนำ sata_remap ที่ขัดแย้งออกก่อน"
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "ไม่มีข้อมูลสำรองการกำหนดก่อนหน้าที่ถูกต้อง"
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "บันทึกหรือตรวจสอบการกำหนดไม่ได้ คืนค่าการตั้งค่าก่อนหน้าแล้ว"
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "คืนค่าการกำหนด SATA ก่อนหน้าหรือไม่ หากบูต DSM ผ่าน FRIEND ไม่จำเป็นต้องสร้าง Loader ใหม่"
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "ป้อนการเรียงดัชนีดิสก์ที่ตรวจสอบใน DSM แล้ว เช่น 0>4:4>0 หมายเลข host และ ATA ของ Loader ไม่ได้ยืนยันลำดับดิสก์ DSM ยกเลิกเพื่อคงการตั้งค่าเดิม"
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "การกำหนดไม่ถูกต้อง ใช้ดัชนีไม่ซ้ำกันตั้งแต่ 0 ถึง 255 และการเรียงสับเปลี่ยนครบชุด เช่น 0>4:4>0 ไม่มีการเปลี่ยนแปลงการตั้งค่า"
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "ต้องตรวจสอบดัชนีดิสก์เหล่านี้ใน DSM การกำหนดผิดอาจเปลี่ยนลำดับดิสก์ บันทึกหรือไม่ หากบูต DSM ผ่าน FRIEND ไม่จำเป็นต้องสร้าง Loader ใหม่"
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "เลือกวิธีเตรียมการเปลี่ยนดัชนีดิสก์ SATA"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "สร้างตัวเลือกจากดัชนีดิสก์ที่ตรวจสอบแล้ว"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "ป้อนการกำหนดด้วยตนเอง"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "ป้อนดัชนีดิสก์ DSM ที่ตรวจสอบแล้วตามลำดับดิสก์ คั่นด้วยจุลภาค เช่น 0,1,2,3,4 ใช้ดัชนีเดิมก่อนใช้ sata_remap หมายเลขอุปกรณ์ Loader ไม่ใช่ดัชนี DSM"
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "ป้อนดัชนีที่ต้องการของแต่ละดิสก์ตามลำดับเดียวกัน เช่น 4,1,2,3,0 ใช้ชุดดัชนีเดิมโดยแต่ละค่าต้องปรากฏเพียงครั้งเดียว"
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "มีการตั้งค่า sata_remap อยู่แล้ว ดัชนี DSM ปัจจุบันอาจถูกเปลี่ยนแล้ว ให้นำออกและตรวจสอบดัชนี DSM เดิมก่อนสร้างตัวเลือกใหม่ ไม่มีการเปลี่ยนแปลงการตั้งค่า"
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "สร้างการกำหนดไม่ได้ ทั้งสองรายการต้องมีดัชนีไม่ซ้ำกันชุดเดียวกันตั้งแต่ 0 ถึง 255 และต้องมีดัชนีเปลี่ยนอย่างน้อยหนึ่งค่า"
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "ดูรายละเอียดพอร์ตทั้งหมด (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "ดิสก์ที่ตรวจพบ"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "ลิงก์ไม่เชื่อมต่อ"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "ไม่ทราบสถานะลิงก์"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "ลิงก์เชื่อมต่อ"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "การกำหนดที่ตั้งค่าไว้"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "ข้อมูลจาก Loader ไม่ได้ยืนยันลำดับดิสก์ DSM ช่องใส่ดิสก์จริง หรือดิสก์บูต สถานะลิงก์มาจากข้อความเคอร์เนลที่มีอยู่และอาจล้าสมัยหรือไม่มีข้อมูล"
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "ป้อนจำนวนพอร์ตตามลำดับคอนโทรลเลอร์ที่เลือก เช่น 4,4 ใช้จำนวนพอร์ตที่ตรวจสอบแยกต่างหาก ไม่ใช่จำนวนดิสก์ที่เชื่อมต่อ แต่ละค่าต้องอยู่ระหว่าง 1 ถึง 9"
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "ลำดับคอนโทรลเลอร์ไม่ถูกต้อง ป้อนหมายเลขคอนโทรลเลอร์ SATA ที่แสดงแต่ละหมายเลขเพียงครั้งเดียว ไม่มีการเปลี่ยนแปลงการตั้งค่า"
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "ไม่พบคอนโทรลเลอร์ SATA จึงสร้างตัวเลือกไม่ได้"
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "คอนโทรลเลอร์ SATA"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "คอนโทรลเลอร์พื้นที่จัดเก็บอื่น (ไม่รวมในตัวเลือก SATA)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "ลำดับรายการ PCI และจำนวนดิสก์ที่เชื่อมต่อไม่ได้ยืนยันลำดับคอนโทรลเลอร์ DSM จำนวนพอร์ตที่ใช้ได้ ดิสก์บูต ตำแหน่งดัชนี SAS หรือช่องใส่จริง โปรดตรวจสอบทั้งหมดก่อนป้อนตัวเลือก"
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "ป้อนหมายเลขคอนโทรลเลอร์ตามลำดับ DSM ที่ตรวจสอบแล้ว กด Enter เพื่อคงลำดับที่แสดง ลำดับ Loader ไม่ใช่หลักฐานลำดับ DSM"
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "ค่าเริ่มต้นเป็นข้อเสนอจากจำนวนดิสก์ที่ตรวจพบด้านบน ไม่ใช่จำนวนพอร์ตที่ตรวจสอบแล้ว โปรดตรวจสอบพอร์ตที่ใช้ได้และรวมพอร์ตว่างหากจำเป็น"
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "ไม่มีคำแนะนำจำนวนพอร์ตเริ่มต้นเนื่องจากคอนโทรลเลอร์ไม่มีดิสก์ที่ตรวจพบหรือมีมากกว่าเก้าดิสก์ ป้อนจำนวนพอร์ตที่ตรวจสอบแยกต่างหาก"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "ตัวเลือกนี้เพิ่ม acpi_enforce_resources=lax ลงในบรรทัดคำสั่งเคอร์เนล DSM โดยผ่อนปรนการตรวจสอบทรัพยากร ACPI ทั้งระบบ ซึ่งอาจทำให้ฮาร์ดแวร์บางชนิดทำงานไม่เสถียรหรือรีสตาร์ตโดยไม่คาดคิด เปิดใช้เฉพาะเมื่อไดรเวอร์เซ็นเซอร์ เช่น it87 โหลดไม่ได้เพราะทรัพยากร ACPI ขัดแย้งกัน ดำเนินการต่อหรือไม่?"

@@ -3064,10 +3064,6 @@ function build-pre-option() {
     # c(dtsmapping) 는 additional() 메뉴(n) 의 1번 항목이었던 것이 여기 3번
     # 항목으로 옮겨온 것 - 문구(MSG52) 그대로 재사용, MSGID 변경 없음.
     eval "echo \"c \\\"\${MSG${tz}52}\\\"\""                                    >> "${TMP_PATH}/menud"
-    # DT (Device-tree) 모델은 sata_remap 미지원 → SataPort remap 메뉴 비노출
-    if ! echo "${platform}" | grep -q "(DT)"; then
-      eval "echo \"d \\\"\${MSG${tz}56}\\\"\""                                  >> "${TMP_PATH}/menud"
-    fi
     eval "echo \"e \\\"\${MSG${tz}132} (${SSDBAY:-1X1})\\\"\""                  >> "${TMP_PATH}/menud"
     eval "echo \"f \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
     eval "echo \"g \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
@@ -3083,7 +3079,6 @@ function build-pre-option() {
     a) selectldrmode ;    NEXT="z" ;;
     b) seleudev      ;    NEXT="z" ;;
     c) dtsmapping    ;    NEXT="z" ;;
-    d) remapsata     ;    NEXT="z" ;;
     e) cachepanel;        NEXT="z" ;;
     f)
       # g)(vmtools-qemuga)와 동일한 방식 - add-addon()의 "추가하시겠습니까? [yY/nN]"
@@ -3257,37 +3252,232 @@ function sortnetif() {
   rm -f /tmp/ethlist
 }
 
-function remapsata() {
-  CON=""
-  remap=""
+function nondtMappingInventory() {
+  local report raw helper mode="${1:-summary}"
+  helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-inventory.sh"
+  if [ ! -r "$helper" ]; then
+    dialog --backtitle "$(backtitle)" --title "${MSGZZ205}" --msgbox "${MSGZZ211}" 0 0
+    return 1
+  fi
+  report=$(mktemp "${TMP_PATH}/nondt-inventory.XXXXXX") || return 1
+  raw=$(mktemp "${TMP_PATH}/nondt-raw.XXXXXX") || { rm -f "$report"; return 1; }
+  if ! bash "$helper" "$userconfigfile" >"$raw"; then
+    rm -f "$report" "$raw"
+    dialog --backtitle "$(backtitle)" --title "${MSGZZ205}" --msgbox "${MSGZZ212}" 0 0
+    return 1
+  fi
+  if [ "$mode" = detail ]; then
+    cp "$raw" "$report"
+  elif ! jq -r --arg disks "$MSGZZ238" --arg down "$MSGZZ239" --arg unknown "$MSGZZ240" \
+    --arg up "$MSGZZ241" --arg settings "$MSGZZ242" --arg caution "$MSGZZ243" '
+      . as $inv |
+      ($inv.controllers[] | . as $c |
+       "\($c.pci) [\($c.class)]  \($c.driver // "?")",
+       ("  \($disks): " + ([$inv.disks[] | select(.sysfs_path | contains("/" + $c.pci + "/")) | .name] | if length == 0 then "-" else join(", ") end)),
+       (if $c.class | startswith("0x0106") then
+          [$inv.ata_ports[] | select(.sysfs_path | contains("/" + $c.pci + "/"))] as $p |
+          "  \($down): \([$p[] | select(.link_state == "down")] | length)  \($unknown): \([$p[] | select(.link_state == "unknown")] | length)  \($up): \([$p[] | select(.link_state == "up")] | length)"
+        else empty end), ""),
+      "\($settings): \($inv.settings | tojson)", "", $caution
+    ' "$raw" >"$report"; then
+    rm -f "$report" "$raw"; dialog --msgbox "${MSGZZ212}" 0 0; return 1
+  fi
+  dialog --backtitle "$(backtitle)" --title "${MSGZZ213}" --textbox "$report" 0 0
+  rm -f "$report" "$raw"
+}
 
-  for PCI in $(lspci -d ::106 | awk '{print $1}'); do
-    PORTS=$(ls -l /sys/class/scsi_host | grep "${PCI}" | awk -F'/' '{print $NF}' | sed 's/host//' | sort -n)
-    for P in ${PORTS}; do
-      if [ "$(dmesg | grep 'SATA link down' | grep ata$((${P} + 1)): | wc -l)" -eq 0 ]; then          
-        if lsscsi -b | grep -v - | grep -q "\[${P}:"; then
-          CON+="$(printf "%d" ${P}) "
-        fi
-      fi
-    done
+function nondtMappingCandidate() {
+  local helper inventory maxdisks input result portmap idxmap previous raw pci expected order default_order index i mapping_summary order_guide count suggested suggestion_text
+  local -a port_counts entries sata_pcis ordered_pcis order_entries
+  local -A selected=()
+  helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-calculate.sh"
+  inventory="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-inventory.sh"
+  if [ ! -r "$helper" ] || [ ! -r "$inventory" ]; then
+    dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" --msgbox "${MSGZZ220}" 0 0
+    return 1
+  fi
+  maxdisks=$(jq -r '.synoinfo.maxdisks // empty' "$userconfigfile") || return 1
+  if ! [[ "$maxdisks" =~ ^[0-9]{1,3}$ ]] || [ "$((10#$maxdisks))" -lt 1 ] || [ "$((10#$maxdisks))" -gt 256 ]; then
+    dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" --msgbox "${MSGZZ219}" 0 0
+    return 1
+  fi
+  raw=$(mktemp "${TMP_PATH}/nondt-candidate.XXXXXX") || return 1
+  if ! bash "$inventory" "$userconfigfile" > "$raw"; then
+    rm -f "$raw"; dialog --msgbox "${MSGZZ212}" 0 0; return 1
+  fi
+  sata_pcis=()
+  while IFS= read -r pci; do [ -n "$pci" ] && sata_pcis+=("$pci"); done < <(jq -r '.controllers[] | select(.class | startswith("0x0106")) | .pci' "$raw")
+  expected=${#sata_pcis[@]}
+  if [ "$expected" -eq 0 ]; then
+    rm -f "$raw"; dialog --msgbox "${MSGZZ246}" 0 0; return 1
+  fi
+  default_order=""
+  order_guide=""
+  for ((i=1; i<=expected; i++)); do
+    [ -z "$default_order" ] || default_order+=','
+    default_order+="$i"
+    order_guide+="#$i ${sata_pcis[$((i-1))]}\n"
   done
-
-  #echo $CON
-
-  CON_ARR=($CON)
-  PORTS_ARR=($PORTS)
-  len=${#CON_ARR[@]}
-
-  for ((i=0; i<$len; i++)); do
-    remap+="${CON_ARR[i]}\\\\>${PORTS_ARR[i]}"
-    if [ $i -lt $((len-1)) ]; then
-      remap+=":"
+  order=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" \
+    --inputbox "${order_guide}\n${MSGZZ250}" 0 0 "$default_order" 3>&1 1>&2 2>&3) || { rm -f "$raw"; return 0; }
+  if ! [[ "$order" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]]; then
+    rm -f "$raw"; dialog --msgbox "${MSGZZ245}" 0 0; return 1
+  fi
+  IFS=',' read -r -a order_entries <<< "$order"
+  ordered_pcis=()
+  for index in "${order_entries[@]}"; do
+    if [ "${#index}" -gt 3 ] || [ "$index" -gt "$expected" ] || [[ ${selected[$index]+yes} ]]; then
+      rm -f "$raw"; dialog --msgbox "${MSGZZ245}" 0 0; return 1
     fi
+    selected["$index"]=1; ordered_pcis+=("${sata_pcis[$((index - 1))]}")
   done
-  
-  #echo $remap
+  if [ "${#ordered_pcis[@]}" -ne "$expected" ]; then
+    rm -f "$raw"; dialog --msgbox "${MSGZZ245}" 0 0; return 1
+  fi
+  mapping_summary=""; suggested=""; suggestion_text="${MSGZZ251}"
+  for pci in "${ordered_pcis[@]}"; do
+    count=$(jq -r --arg pci "$pci" '[.disks[] | select(.sysfs_path | contains("/" + $pci + "/"))] | length' "$raw") || { rm -f "$raw"; return 1; }
+    [ -z "$mapping_summary" ] || mapping_summary+=", "
+    mapping_summary+="${pci}=${count}"
+    [ -z "$suggested" ] || suggested+=','
+    suggested+="$count"
+    if [ "$count" -lt 1 ] || [ "$count" -gt 9 ]; then suggestion_text="${MSGZZ252}"; fi
+  done
+  rm -f "$raw"
+  if [ "$suggestion_text" = "$MSGZZ252" ]; then suggested=""; fi
+  input=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" \
+    --inputbox "${MSGZZ238}: ${mapping_summary}\n\n${suggestion_text}\n\n${MSGZZ244}" 0 0 "$suggested" 3>&1 1>&2 2>&3) || return 0
+  if ! [[ "$input" =~ ^[1-9](,[1-9])*$ ]]; then
+    dialog --msgbox "${MSGZZ217}" 0 0; return 1
+  fi
+  IFS=',' read -r -a port_counts <<< "$input"
+  if [ "${#port_counts[@]}" -ne "$expected" ]; then
+    dialog --msgbox "${MSGZZ217}" 0 0; return 1
+  fi
+  mapping_summary=""
+  for ((i=0; i<expected; i++)); do
+    mapping_summary+="${ordered_pcis[$i]}=${port_counts[$i]} "
+  done
+  if ! result=$(bash "$helper" "$maxdisks" "${port_counts[@]}"); then
+    dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" --msgbox "${MSGZZ217}" 0 0
+    return 1
+  fi
+  portmap=$(jq -er '.SataPortMap' <<< "$result") || return 1
+  idxmap=$(jq -er '.DiskIdxMap' <<< "$result") || return 1
+  previous=$(jq -r '"SataPortMap=\(.extra_cmdline.SataPortMap // "(unset)")\nDiskIdxMap=\(.extra_cmdline.DiskIdxMap // "(unset)")"' "$userconfigfile") || return 1
+  dialog --backtitle "$(backtitle)" --title "${MSGZZ218}" --yesno \
+    "${previous}\n\n${mapping_summary}\nSataPortMap=${portmap}\nDiskIdxMap=${idxmap}\n\n${MSGZZ222}" 0 0 || return 0
+  nondtMappingCommit apply "$portmap" "$idxmap"
+}
+
+# Update both managed keys together while preserving the user_config symlink.
+function nondtMappingCommit() {
+  local operation="$1" helper backup staged snapshot result
+  helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-config.sh"
+  backup="${MSHELL_MAPPING_BACKUP:-/mnt/${tcrppart}/nondt-mapping-previous.json}"
+  [ -r "$helper" ] || { dialog --msgbox "${MSGZZ220}" 0 0; return 1; }
+  staged=$(mktemp "${TMP_PATH}/nondt-stage.XXXXXX") || return 1
+  snapshot=$(mktemp "${TMP_PATH}/nondt-previous.XXXXXX") || { rm -f "$staged"; return 1; }
+  if ! bash "$helper" snapshot "$userconfigfile" > "$snapshot"; then
+    rm -f "$staged" "$snapshot"; return 1
+  fi
+  if [ "$operation" = apply ]; then
+    result=$(bash "$helper" apply "$userconfigfile" "$2" "$3") || {
+      rm -f "$staged" "$snapshot"; dialog --msgbox "${MSGZZ223}" 0 0; return 1; }
+  else
+    result=$(bash "$helper" restore "$userconfigfile" "$backup") || {
+      rm -f "$staged" "$snapshot"; dialog --msgbox "${MSGZZ224}" 0 0; return 1; }
+  fi
+  printf '%s\n' "$result" > "$staged"
+  config_change_begin "Non-DT disk mapping" || { rm -f "$staged" "$snapshot"; return 1; }
+  if ! cp "$staged" "$userconfigfile" ||
+     ! strip_usb_line_key SataPortMap || ! strip_usb_line_key DiskIdxMap ||
+     ! sync_usb_line || ! sync_part_config ||
+     ! validate_loader_cmdline config >/dev/null 2>&1; then
+    cp "$CONFIG_CHANGE_SNAPSHOT" "$userconfigfile" && sync_part_config
+    rm -f "$CONFIG_CHANGE_SNAPSHOT" "$staged" "$snapshot"
+    CONFIG_CHANGE_SNAPSHOT=""
+    dialog --msgbox "${MSGZZ225}" 0 0
+    return 1
+  fi
+  if ! cp "$snapshot" "$backup"; then
+    cp "$CONFIG_CHANGE_SNAPSHOT" "$userconfigfile" && sync_part_config
+    rm -f "$CONFIG_CHANGE_SNAPSHOT" "$staged" "$snapshot"
+    CONFIG_CHANGE_SNAPSHOT=""
+    dialog --msgbox "${MSGZZ225}" 0 0
+    return 1
+  fi
+  rm -f "$staged" "$snapshot"
+  config_change_finish cmdline
+}
+
+function nondtMappingMenu() {
+  local choice
+  while true; do
+    choice=$(dialog --clear --backtitle "$(backtitle)" --title "${MSGZZ204}" \
+      --menu "${MSGZZ205}" 0 0 "$(dlgmenuheight 7)" \
+      a "${MSGZZ206}" \
+      b "${MSGZZ207}" \
+      c "${MSGZZ208}" \
+      d "${MSGZZ209}" \
+      e "${MSGZZ210}" \
+      f "${MSGZZ237}" \
+      q "${MSGZZ214}" 3>&1 1>&2 2>&3) || return
+    case "$choice" in
+      a|d) nondtMappingInventory ;;
+      f) nondtMappingInventory detail ;;
+      b) nondtMappingCandidate ;;
+      e) dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" --yesno "${MSGZZ226}" 0 0 && nondtMappingCommit restore ;;
+      c)
+        if jq -e '((.extra_cmdline.SataPortMap // "") != "") or ((.extra_cmdline.DiskIdxMap // "") != "")' "$userconfigfile" >/dev/null 2>&1; then
+          dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" --yesno "${MSGZZ221}" 0 0 || continue
+        fi
+        remapsata ;;
+      q) return ;;
+    esac
+  done
+}
+
+function remapsata() {
+  local helper current input remap encoded json mode source_order target_order
+  helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-sata-remap.sh"
+  [ -r "$helper" ] || { dialog --msgbox "${MSGZZ220}" 0 0; return 1; }
+  current=$(jq -r '.extra_cmdline.sata_remap // ""' "$userconfigfile") || return 1
+  current=${current//\\>/ >}
+  current=${current// /}
+  mode=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ208}" --menu "${MSGZZ230}" 0 0 0 \
+    a "${MSGZZ231}" b "${MSGZZ232}" 3>&1 1>&2 2>&3) || return 0
+  case "$mode" in
+    a)
+      if [ -n "$current" ]; then
+        dialog --msgbox "${MSGZZ235}" 0 0; return 1
+      fi
+      source_order=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ208}" \
+        --inputbox "${MSGZZ233}" 0 0 3>&1 1>&2 2>&3) || return 0
+      target_order=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ208}" \
+        --inputbox "${MSGZZ234}" 0 0 3>&1 1>&2 2>&3) || return 0
+      remap=$(bash "$helper" --generate "$source_order" "$target_order") || {
+        dialog --msgbox "${MSGZZ236}" 0 0; return 1; }
+      ;;
+    b)
+      input=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ208}" \
+        --inputbox "${MSGZZ227}" 0 0 "$current" 3>&1 1>&2 2>&3) || return 0
+      remap=$(bash "$helper" "$input") || { dialog --msgbox "${MSGZZ228}" 0 0; return 1; }
+      ;;
+    *) return 0 ;;
+  esac
+  dialog --backtitle "$(backtitle)" --title "${MSGZZ208}" --yesno \
+    "sata_remap=${remap}\n\n${MSGZZ229}" 0 0 || return 0
+  # GRUB treats > as redirection. Keep one literal backslash in JSON/cmdline.
+  encoded=${remap//>/\\>}
+  json=$(jq --arg value "$encoded" '.extra_cmdline //= {} | .extra_cmdline.sata_remap=$value' "$userconfigfile") || return 1
   config_change_begin "SATA Remap" || return
-  writeConfigKey "extra_cmdline" "sata_remap" "${remap}"
+  if ! write_user_config_json "$userconfigfile" "$json" || ! sync_usb_line || ! sync_part_config; then
+    cp "$CONFIG_CHANGE_SNAPSHOT" "$userconfigfile" && sync_part_config
+    rm -f "$CONFIG_CHANGE_SNAPSHOT"; CONFIG_CHANGE_SNAPSHOT=""
+    dialog --msgbox "${MSGZZ225}" 0 0
+    return 1
+  fi
   config_change_finish cmdline
 }
 
@@ -4457,6 +4647,10 @@ while true; do
     eval "echo \"s \\\"\${MSG${tz}03}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"a \\\"\${MSG${tz}72}\\\"\""             >> "${TMP_PATH}/menu"
     eval "echo \"z \\\"\${MSGZZ67}\\\"\""                >> "${TMP_PATH}/menu"
+    # Keep the established (DT) marker guard; the assistant is Non-DT only.
+    if ! echo "${platform}" | grep -q "(DT)"; then
+      printf 'h "%s"\n' "${MSGZZ204}" >> "${TMP_PATH}/menu"
+    fi
     [ "${nv_locked}" != "hide" ] && eval "echo \"g \\\"${nvlabel}\\\"\"" >> "${TMP_PATH}/menu"
     # k(selectldrmode) 와 c(seleudev) 는 최상위에서 빠지고 z(build-pre-option)
     # 의 하위메뉴 1·2번 항목으로 종속됐다 - 아래 build-pre-option() 참고.
@@ -4548,6 +4742,7 @@ while true; do
        fi
        NEXT="p" ;;
     z) build-pre-option ; NEXT="p" ;;
+    h) nondtMappingMenu; NEXT="h" ;;
     g) [ "${nv_locked}" = "yes" ] || nvidiaMenu "${kver}"; NEXT="g" ;;
     p) # epyc7003ntb (PAS7700): 단일(single) standalone 방식으로 통일 —
        # 이중 컨트롤러 역할 선택 다이얼로그(ntbfsdn)는 제거했다. 피어가 없으므로

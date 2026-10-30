@@ -788,6 +788,202 @@ msgstr "Aktif"
 msgid "Disabled"
 msgstr "Nonaktif"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Asisten Pemetaan Disk Non-DT"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "Pilih tindakan pemetaan disk"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "Lihat pemetaan dan pengontrol saat ini"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "Hitung kandidat pemetaan SATA"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "Atur urutan port SATA (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "Lihat pengaturan dan pengontrol SAS/HBA"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "Pulihkan pemetaan SATA sebelumnya"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "Bantuan inventaris disk tidak tersedia. Perbarui seluruh bundel MSHELL."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "Inventaris disk tidak dapat dikumpulkan. Periksa konfigurasi dan keluaran konsol."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "Inventaris penyimpanan loader dan pemetaan yang dikonfigurasi"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "Kembali"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "Tindakan ini belum tersedia. Tidak ada pengaturan yang diubah."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "Masukkan jumlah port sesuai urutan pengontrol DSM yang telah diverifikasi, dipisahkan koma (contoh: 4,2). Setiap nilai harus 1 hingga 9. Deteksi loader tidak memastikan urutan DSM atau pemetaan ke bay fisik. Kandidat ditampilkan sebelum konfirmasi."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "Jumlah port tidak valid atau batas maxdisks terlampaui. Masukkan angka 1 hingga 9 yang dipisahkan koma dan jumlahnya tidak melebihi maxdisks."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "Hanya kandidat — belum diverifikasi atau diterapkan"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "Tidak ada nilai maxdisks yang valid di user_config.json. Kandidat tidak dihitung."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "Kalkulator pemetaan tidak tersedia. Perbarui seluruh bundel MSHELL."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap atau DiskIdxMap sudah dikonfigurasi. Menambahkan sata_remap dapat membuat urutan disk lebih sulit diperkirakan. Nilai yang ada tidak akan dihapus. Lanjutkan?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Kandidat ini belum diverifikasi terhadap urutan disk DSM. Terapkan? Pembuatan ulang loader tidak diperlukan saat DSM diboot melalui FRIEND."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "Pemetaan ini tidak dapat diterapkan: periksa maxdisks dan hapus sata_remap yang bertentangan terlebih dahulu."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "Cadangan pemetaan sebelumnya yang valid tidak tersedia."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "Pemetaan tidak dapat disimpan atau divalidasi. Konfigurasi sebelumnya dipulihkan."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Pulihkan pemetaan SATA sebelumnya? Pembuatan ulang loader tidak diperlukan saat DSM diboot melalui FRIEND."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "Masukkan permutasi indeks disk yang telah diverifikasi di DSM, misalnya 0>4:4>0. Nomor host dan ATA loader tidak membuktikan urutan disk DSM. Batalkan untuk membiarkan pengaturan tetap."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "Pemetaan tidak valid. Gunakan indeks unik 0 hingga 255 dan permutasi lengkap, misalnya 0>4:4>0. Tidak ada pengaturan yang diubah."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Indeks disk ini harus diverifikasi di DSM. Pemetaan yang salah dapat mengubah urutan disk. Simpan? Pembuatan ulang loader tidak diperlukan saat DSM diboot melalui FRIEND."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "Pilih cara menyiapkan pemetaan ulang indeks disk SATA"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "Buat kandidat dari indeks disk yang telah diverifikasi"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "Masukkan pemetaan secara manual"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "Masukkan indeks disk DSM yang telah diverifikasi sesuai urutan disk, dipisahkan koma, misalnya 0,1,2,3,4. Gunakan indeks asli tanpa sata_remap; nomor perangkat loader bukan indeks DSM."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "Masukkan indeks yang diinginkan untuk setiap disk dalam urutan yang sama, misalnya 4,1,2,3,0. Gunakan kumpulan indeks yang sama tepat satu kali."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "sata_remap sudah dikonfigurasi. Indeks DSM saat ini mungkin sudah dipetakan ulang. Hapus dan verifikasi indeks DSM asli sebelum membuat kandidat baru. Tidak ada pengaturan yang diubah."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "Pemetaan tidak dapat dibuat. Kedua daftar harus berisi indeks unik yang sama dari 0 hingga 255, dan setidaknya satu indeks harus berubah."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "Lihat detail port lengkap (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "Disk terdeteksi"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "Tautan terputus"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "Status tautan tidak diketahui"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "Tautan aktif"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "Pemetaan yang dikonfigurasi"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "Pengamatan loader tidak memastikan urutan disk DSM, bay fisik, atau disk boot. Status tautan berasal dari pesan kernel yang tersedia dan mungkin sudah usang atau tidak tersedia."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "Masukkan jumlah port sesuai urutan pengontrol yang dipilih, misalnya 4,4. Gunakan jumlah port yang diverifikasi secara terpisah, bukan jumlah disk yang terhubung. Setiap nilai harus 1 hingga 9."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "Urutan pengontrol tidak valid. Masukkan setiap nomor pengontrol SATA yang ditampilkan tepat satu kali. Tidak ada pengaturan yang diubah."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "Tidak ada pengontrol SATA yang terdeteksi. Kandidat tidak dapat dibuat."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "Pengontrol SATA"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "Pengontrol penyimpanan lain (tidak disertakan dalam kandidat SATA)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "Urutan daftar PCI dan jumlah disk terhubung tidak memastikan urutan pengontrol DSM, port yang tersedia, disk boot, posisi indeks SAS, atau bay fisik. Verifikasi semuanya sebelum memasukkan kandidat."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "Masukkan nomor pengontrol sesuai urutan DSM yang telah diverifikasi. Tekan Enter untuk mempertahankan urutan yang ditampilkan. Urutan loader bukan bukti urutan DSM."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "Nilai bawaan disarankan berdasarkan jumlah disk yang terdeteksi di atas. Ini bukan jumlah port terverifikasi; periksa port yang tersedia dan sertakan port kosong bila diperlukan."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "Saran jumlah port awal tidak tersedia karena suatu pengontrol tidak memiliki disk terdeteksi atau memiliki lebih dari sembilan. Masukkan jumlah port yang diverifikasi secara terpisah."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Opsi ini menambahkan acpi_enforce_resources=lax ke baris perintah kernel DSM. Pemeriksaan sumber daya ACPI dilonggarkan di seluruh sistem dan dapat menyebabkan ketidakstabilan atau mulai ulang tak terduga pada perangkat keras tertentu. Aktifkan hanya jika driver sensor seperti it87 gagal dimuat karena konflik sumber daya ACPI. Lanjutkan?"

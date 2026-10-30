@@ -788,6 +788,202 @@ msgstr "Bekapcsolva"
 msgid "Disabled"
 msgstr "Kikapcsolva"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DT lemez-hozzárendelési segéd"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "Válasszon lemez-hozzárendelési műveletet"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "Jelenlegi hozzárendelések és vezérlők megtekintése"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "SATA-hozzárendelési javaslat számítása"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "SATA-portok sorrendjének módosítása (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "SAS/HBA-beállítások és vezérlők megtekintése"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "Előző SATA-hozzárendelés visszaállítása"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "Hiányzik a lemezinventár-segéd. Frissítse a teljes MSHELL-csomagot."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "A lemezinventár nem gyűjthető össze. Ellenőrizze a konfigurációt és a konzolkimenetet."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "Betöltő tárhelyeinek leltára és konfigurált hozzárendelések"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "Vissza"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "Ez a művelet még nem érhető el. A beállítások nem változtak."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "Adja meg a portok számát az ellenőrzött DSM-vezérlősorrendben, vesszővel elválasztva (példa: 4,2). Minden érték 1 és 9 közé essen. A betöltő észlelése nem állapítja meg a DSM sorrendjét vagy a fizikai rekeszek megfeleltetését. Jóváhagyás előtt javaslat jelenik meg."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "Érvénytelen portszám vagy a maxdisks korlát túllépése. Adjon meg vesszővel elválasztott, 1–9 közötti számokat, amelyek összege nem haladja meg a maxdisks értékét."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "Csak javaslat — nincs ellenőrizve és alkalmazva"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "A user_config.json fájlban nincs érvényes maxdisks érték. Nem készült javaslat."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "Hiányzik a hozzárendelés-számító. Frissítse a teljes MSHELL-csomagot."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "A SataPortMap vagy a DiskIdxMap már be van állítva. A sata_remap hozzáadása nehezebben kiszámíthatóvá teheti a lemezek sorrendjét. A meglévő értékek nem törlődnek. Folytatja?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Ezt a javaslatot nem ellenőrizték a DSM-lemezek sorrendjével. Alkalmazza? FRIEND-en keresztüli DSM-indításkor nem szükséges újraépíteni a betöltőt."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "A hozzárendelés nem alkalmazható: ellenőrizze a maxdisks értéket, és előbb távolítsa el az ütköző sata_remap beállítást."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "Nem érhető el érvényes biztonsági mentés az előző hozzárendelésről."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "A hozzárendelés mentése vagy ellenőrzése sikertelen. Az előző konfiguráció visszaállt."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Visszaállítja az előző SATA-hozzárendelést? FRIEND-en keresztüli DSM-indításkor nem szükséges újraépíteni a betöltőt."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "Adjon meg a DSM-ben ellenőrzött lemezindex-permutációt, például 0>4:4>0. A betöltő host- és ATA-számai nem igazolják a DSM lemezek sorrendjét. Mégse esetén a beállítások változatlanok maradnak."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "Érvénytelen hozzárendelés. Használjon egyedi, 0–255 közötti indexeket és teljes permutációt, például 0>4:4>0. Nem változott beállítás."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Ezeket a lemezindexeket DSM-ben kell ellenőrizni. A hibás hozzárendelés megváltoztathatja a lemezek sorrendjét. Mentés? FRIEND-en keresztüli DSM-indításkor nem szükséges újraépíteni a betöltőt."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "Válassza ki a SATA-lemezindexek átrendezésének módját"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "Javaslat létrehozása ellenőrzött lemezindexekből"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "Hozzárendelés kézi megadása"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "Adja meg a DSM-ben ellenőrzött lemezindexeket a lemezek sorrendjében, vesszővel elválasztva, például 0,1,2,3,4. A sata_remap nélküli eredeti indexeket használja; a betöltő eszközszámai nem DSM-indexek."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "Adja meg minden lemez kívánt indexét ugyanebben a sorrendben, például 4,1,2,3,0. Ugyanazt az indexkészletet pontosan egyszer használja."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "Már be van állítva sata_remap. A jelenlegi DSM-indexek már át lehetnek rendezve. Új javaslat előtt távolítsa el, és ellenőrizze az eredeti DSM-indexeket. A beállítások nem változtak."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "Nem hozható létre hozzárendelés. Mindkét listában ugyanazoknak az egyedi, 0–255 közötti indexeknek kell szerepelniük, és legalább egy indexnek változnia kell."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "Teljes portadatok megtekintése (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "Észlelt lemezek"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "Kapcsolat bontva"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "A kapcsolat állapota ismeretlen"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "Kapcsolat aktív"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "Konfigurált hozzárendelések"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "A betöltő megfigyelései nem határozzák meg a DSM-lemezek sorrendjét, a fizikai rekeszeket vagy a rendszerindító lemezt. A kapcsolat állapota az elérhető kernelüzenetekből származik, ezért elavult vagy hiányzó lehet."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "Adja meg a portok számát a kiválasztott vezérlősorrendben, például 4,4. A csatlakoztatott lemezek száma helyett külön ellenőrzött portszerkezetet használjon. Minden érték 1–9."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "Érvénytelen vezérlősorrend. Minden megjelenített SATA-vezérlő számát pontosan egyszer adja meg. A beállítások nem változtak."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "Nem találhatók SATA-vezérlők. Nem készíthető javaslat."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA-vezérlő"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "Egyéb tárolóvezérlő (nem része a SATA-javaslatnak)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "A PCI-lista sorrendje és a csatlakoztatott lemezek száma nem határozza meg a DSM-vezérlők sorrendjét, az elérhető portokat, a rendszerindító lemezt, a SAS-index helyét vagy a fizikai rekeszeket. Javaslat megadása előtt mindezt ellenőrizze."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "Adja meg a vezérlők számát az ellenőrzött DSM-sorrendben. Nyomja meg az Entert a megjelenített sorrend megtartásához. A betöltő sorrendje nem bizonyítja a DSM sorrendjét."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "Az alapértékek a fent észlelt lemezszámok alapján javasoltak. Nem ellenőrzött portszerkezetet jelentenek; ellenőrizze az elérhető portokat, és szükség esetén az üreseket is vegye figyelembe."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "Nem javasolható kezdeti portszerkezet, mert az egyik vezérlőn nincs észlelt lemez, vagy kilencnél több van. Adjon meg külön ellenőrzött portszerkezetet."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Ez hozzáadja az acpi_enforce_resources=lax paramétert a DSM kernel parancssorához. Rendszerszinten enyhíti az ACPI-erőforrások ellenőrzését, ami egyes gépeken instabilitást vagy váratlan újraindulást okozhat. Csak akkor kapcsolja be, ha egy érzékelő-illesztőprogram, például az it87, ACPI-erőforrásütközés miatt nem töltődik be. Folytatja?"

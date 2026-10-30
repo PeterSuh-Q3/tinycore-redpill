@@ -788,6 +788,202 @@ msgstr "已启用"
 msgid "Disabled"
 msgstr "已禁用"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DT 磁盘映射助手"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "选择磁盘映射操作"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "查看当前映射和控制器"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "计算 SATA 映射候选值"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "调整 SATA 端口顺序 (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "查看 SAS/HBA 设置和控制器"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "恢复先前的 SATA 映射"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "缺少磁盘清单辅助工具。请更新完整的 MSHELL 套件。"
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "无法收集磁盘清单。请检查配置和控制台输出。"
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "Loader 存储清单和已配置的映射"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "返回"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "此操作尚不可用。设置未更改。"
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "请按已核实的 DSM 控制器顺序输入端口数，并用逗号分隔 (例如: 4,2)。每个数值必须为 1 至 9。Loader 检测结果不能确定 DSM 顺序或物理盘位映射。确认前会显示候选值。"
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "端口数无效或超出 maxdisks 限制。请输入以逗号分隔的 1 至 9 的数字，且总和不得超过 maxdisks。"
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "仅为候选值 — 未核实或应用"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "user_config.json 中没有有效的 maxdisks 值。未计算候选值。"
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "缺少映射计算工具。请更新完整的 MSHELL 套件。"
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap 或 DiskIdxMap 已配置。添加 sata_remap 可能使磁盘顺序更难预测。不会删除现有值。继续吗？"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "此候选值尚未根据 DSM 磁盘顺序核实。是否应用？通过 FRIEND 启动 DSM 时无需重建 Loader。"
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "无法应用此映射: 请检查 maxdisks，并先删除任何冲突的 sata_remap。"
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "没有可用的有效先前映射备份。"
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "无法保存或验证映射。已恢复先前的配置。"
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "恢复先前的 SATA 映射？通过 FRIEND 启动 DSM 时无需重建 Loader。"
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "请输入已在 DSM 中核实的磁盘索引置换，例如 0>4:4>0。Loader 的 host 和 ATA 编号不能证明 DSM 磁盘顺序。取消可保持设置不变。"
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "映射无效。请使用 0 至 255 之间不重复的索引并提供完整置换，例如 0>4:4>0。设置未更改。"
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "这些磁盘索引必须在 DSM 中核实。错误的映射可能改变磁盘顺序。保存吗？通过 FRIEND 启动 DSM 时无需重建 Loader。"
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "选择 SATA 磁盘索引重映射的准备方式"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "根据已核实的磁盘索引生成候选值"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "手动输入映射"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "请按磁盘顺序输入已在 DSM 中核实的磁盘索引，并用逗号分隔，例如 0,1,2,3,4。请使用未应用 sata_remap 前的原始索引；Loader 设备编号不是 DSM 索引。"
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "请按相同顺序为每个磁盘输入所需索引，例如 4,1,2,3,0。相同的索引集合中每个索引只能使用一次。"
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "已配置 sata_remap。当前 DSM 索引可能已经重映射。生成新候选值前，请先移除它并核实原始 DSM 索引。设置未更改。"
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "无法生成映射。两个列表必须包含相同且不重复的 0 至 255 索引，并且至少更改一个索引。"
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "查看完整端口详情 (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "已检测到的磁盘"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "链路断开"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "链路状态未知"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "链路已连接"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "已配置的映射"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "Loader 观察结果不能确定 DSM 磁盘顺序、物理盘位或启动磁盘。链路状态来自可用的内核消息，可能已过时或不可用。"
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "请按所选控制器顺序输入端口数，例如 4,4。请使用单独核实的端口数，而不是已连接磁盘数。每个数值必须为 1 至 9。"
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "控制器顺序无效。请对每个显示的 SATA 控制器编号各输入一次。设置未更改。"
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "未检测到 SATA 控制器。无法生成候选值。"
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA 控制器"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "其他存储控制器 (不包含在 SATA 候选值中)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCI 列表顺序和已连接磁盘数不能确定 DSM 控制器顺序、可用端口、启动磁盘、SAS 索引位置或物理盘位。输入候选值前请核实这些信息。"
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "请按已核实的 DSM 顺序输入控制器编号。按 Enter 保留显示顺序。Loader 顺序不能证明 DSM 顺序。"
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "默认值根据上方检测到的磁盘数量建议得出，并非已核实的端口数；请核实可用端口，必要时包括空端口。"
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "由于某个控制器没有检测到磁盘或检测到超过九个磁盘，因此无法提供初始端口数建议。请输入单独核实的端口数。"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "这会将 acpi_enforce_resources=lax 添加到 DSM 内核命令行。它会在整个系统范围内放宽 ACPI 资源检查，在某些硬件上可能导致系统不稳定或意外重启。仅当 it87 等传感器驱动因 ACPI 资源冲突而无法加载时启用。是否继续？"

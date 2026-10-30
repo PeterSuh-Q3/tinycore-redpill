@@ -795,3 +795,199 @@ msgstr "Disabled"
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
+
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DT Disk Mapping Assistant"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "Choose a disk mapping action"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "View current mappings and controllers"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "Calculate SATA mapping candidate"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "Adjust SATA port order (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "View SAS/HBA settings and controllers"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "Restore previous SATA mapping"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "The disk inventory helper is missing. Update the complete MSHELL bundle."
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "Could not collect the disk inventory. Check the configuration and console output."
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "Loader storage inventory and configured mappings"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "Back"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "This action is not yet available. No settings were changed."
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "Candidate only - not verified or applied"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "The mapping calculator is missing. Update the complete MSHELL bundle."
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "No valid previous mapping backup is available."
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "The mapping could not be saved or validated. The previous configuration was restored."
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "Choose how to prepare SATA disk-index remapping"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "Generate candidate from verified disk indices"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "Enter mapping manually"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "View full port details (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "Detected disks"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "Link down"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "Link unknown"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "Link up"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "Configured mappings"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "No SATA controllers were detected. A candidate cannot be generated."
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA controller"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "Other storage controller (not included in SATA candidate)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."

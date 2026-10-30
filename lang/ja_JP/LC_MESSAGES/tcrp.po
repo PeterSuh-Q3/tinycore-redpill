@@ -788,6 +788,202 @@ msgstr "有効"
 msgid "Disabled"
 msgstr "無効"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "Non-DTディスクマッピングアシスタント"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "ディスクマッピング操作を選択"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "現在のマッピングとコントローラーを表示"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "SATAマッピング候補を計算"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "SATAポート順序を調整 (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "SAS/HBA設定とコントローラーを表示"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "以前のSATAマッピングを復元"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "ディスク一覧取得ヘルパーがありません。MSHELLバンドル全体を更新してください。"
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "ディスク一覧を取得できませんでした。設定とコンソール出力を確認してください。"
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "ローダーのストレージ一覧と設定済みマッピング"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "戻る"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "この操作はまだ利用できません。設定は変更されていません。"
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "確認済みのDSMコントローラー順でポート数をカンマ区切りで入力してください (例: 4,2)。各値は1～9です。ローダーの検出結果からDSMの順序や物理ベイの対応は確定できません。確認前に候補を表示します。"
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "ポート数が無効かmaxdisksの上限を超えています。合計がmaxdisks以下となる1～9の数値をカンマ区切りで入力してください。"
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "候補のみ — 未確認・未適用"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "user_config.jsonに有効なmaxdisks値がありません。候補は計算されませんでした。"
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "マッピング計算ツールがありません。MSHELLバンドル全体を更新してください。"
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMapまたはDiskIdxMapは既に設定されています。sata_remapを追加するとディスク順序の予測が難しくなる場合があります。既存の値は削除されません。続行しますか？"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "この候補はDSMのディスク順序と照合されていません。適用しますか？FRIEND経由でDSMを起動する場合、ローダーの再ビルドは不要です。"
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "このマッピングは適用できません。maxdisksを確認し、競合するsata_remapがあれば先に削除してください。"
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "有効な以前のマッピングバックアップがありません。"
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "マッピングを保存または検証できませんでした。以前の設定を復元しました。"
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "以前のSATAマッピングを復元しますか？FRIEND経由でDSMを起動する場合、ローダーの再ビルドは不要です。"
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "DSMで確認したディスクインデックスの置換を入力してください (例: 0>4:4>0)。ローダーのhost番号やATA番号はDSMのディスク順序を証明しません。キャンセルすると設定は変更されません。"
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "マッピングが無効です。0～255の重複しないインデックスを使った完全な置換を入力してください (例: 0>4:4>0)。設定は変更されていません。"
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "これらのディスクインデックスはDSMで確認する必要があります。誤ったマッピングはディスク順序を変更する可能性があります。保存しますか？FRIEND経由でDSMを起動する場合、ローダーの再ビルドは不要です。"
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "SATAディスクインデックスの再マッピング方法を選択"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "確認済みディスクインデックスから候補を生成"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "マッピングを手動入力"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "DSMで確認したディスクインデックスをディスク順にカンマ区切りで入力してください (例: 0,1,2,3,4)。sata_remap適用前の元のインデックスを使ってください。ローダーのデバイス番号はDSMインデックスではありません。"
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "同じディスク順で各ディスクの希望インデックスを入力してください (例: 4,1,2,3,0)。同じインデックス集合をそれぞれ1回だけ使ってください。"
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "既存のsata_remapが設定されています。現在のDSMインデックスは既に変更されている可能性があります。新しい候補を生成する前に削除し、元のDSMインデックスを確認してください。設定は変更されていません。"
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "マッピングを生成できません。両方の一覧に0～255の同じ重複しないインデックスが含まれ、少なくとも1つのインデックスが変更されている必要があります。"
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "ポートの詳細をすべて表示 (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "検出されたディスク"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "リンクダウン"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "リンク状態不明"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "リンクアップ"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "設定済みマッピング"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "ローダーの観測だけではDSMのディスク順序、物理ベイ、起動ディスクは確定できません。リンク状態は取得可能なカーネルメッセージに基づき、古いか取得できない場合があります。"
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "選択したコントローラー順でポート数を入力してください (例: 4,4)。接続ディスク数ではなく、別途確認したポート数を使ってください。各値は1～9です。"
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "コントローラー順序が無効です。表示されたSATAコントローラー番号をそれぞれ1回入力してください。設定は変更されていません。"
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "SATAコントローラーが検出されませんでした。候補を生成できません。"
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATAコントローラー"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "その他のストレージコントローラー (SATA候補には含まれません)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCIの表示順や接続ディスク数からはDSMコントローラー順、利用可能なポート数、起動ディスク、SASインデックス配置、物理ベイを確定できません。候補を入力する前にすべて確認してください。"
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "確認済みのDSM順でコントローラー番号を入力してください。表示順を維持する場合はEnterを押します。ローダーの順序はDSMの順序を証明しません。"
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "初期値は上記の検出ディスク数から提案されています。確認済みのポート数ではありません。利用可能なポートを確認し、必要に応じて空きポートも含めてください。"
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "コントローラーに検出ディスクがないか、9台を超えるため、初期ポート数を提案できません。別途確認したポート数を入力してください。"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "DSMカーネルのコマンドラインに acpi_enforce_resources=lax を追加します。ACPIリソース検査をシステム全体で緩和するため、一部の機器では動作が不安定になったり、予期せず再起動したりする可能性があります。it87などのセンサードライバーがACPIリソースの競合で読み込めない場合にのみ有効にしてください。続行しますか？"

@@ -788,6 +788,202 @@ msgstr "सक्रिय"
 msgid "Disabled"
 msgstr "निष्क्रिय"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "नॉन-DT डिस्क मैपिंग सहायक"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "डिस्क मैपिंग क्रिया चुनें"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "मौजूदा मैपिंग और नियंत्रक देखें"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "SATA मैपिंग उम्मीदवार की गणना करें"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "SATA पोर्ट क्रम बदलें (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "SAS/HBA सेटिंग और नियंत्रक देखें"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "पिछली SATA मैपिंग पुनर्स्थापित करें"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "डिस्क सूची सहायक अनुपलब्ध है। पूरा MSHELL बंडल अपडेट करें।"
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "डिस्क सूची एकत्र नहीं हो सकी। कॉन्फ़िगरेशन और कंसोल आउटपुट जांचें।"
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "लोडर स्टोरेज सूची और कॉन्फ़िगर की गई मैपिंग"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "वापस"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "यह क्रिया अभी उपलब्ध नहीं है। कोई सेटिंग नहीं बदली।"
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "सत्यापित DSM नियंत्रक क्रम में पोर्ट संख्या कॉमा से अलग करके दर्ज करें (उदाहरण: 4,2)। हर संख्या 1 से 9 होनी चाहिए। लोडर पहचान से DSM क्रम या भौतिक बे मैपिंग तय नहीं होती। पुष्टि से पहले उम्मीदवार दिखाया जाएगा।"
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "पोर्ट संख्या अमान्य है या maxdisks सीमा पार है। 1 से 9 तक की कॉमा-विभाजित संख्याएं दर्ज करें, जिनका योग maxdisks से अधिक न हो।"
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "केवल उम्मीदवार — सत्यापित या लागू नहीं"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "user_config.json में मान्य maxdisks मान नहीं है। कोई उम्मीदवार नहीं निकाला गया।"
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "मैपिंग कैलकुलेटर उपलब्ध नहीं है। पूरा MSHELL बंडल अपडेट करें।"
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap या DiskIdxMap पहले से कॉन्फ़िगर है। sata_remap जोड़ने से डिस्क क्रम का अनुमान कठिन हो सकता है। मौजूदा मान हटाए नहीं जाएंगे। जारी रखें?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "इस उम्मीदवार को DSM डिस्क क्रम से सत्यापित नहीं किया गया। लागू करें? FRIEND से DSM बूट करने पर लोडर पुनर्निर्माण आवश्यक नहीं है।"
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "यह मैपिंग लागू नहीं हो सकती: maxdisks जांचें और टकराव वाला sata_remap पहले हटाएं।"
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "पिछली मैपिंग का कोई मान्य बैकअप उपलब्ध नहीं है।"
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "मैपिंग सहेजी या सत्यापित नहीं हो सकी। पिछला कॉन्फ़िगरेशन पुनर्स्थापित किया गया।"
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "पिछली SATA मैपिंग पुनर्स्थापित करें? FRIEND से DSM बूट करने पर लोडर पुनर्निर्माण आवश्यक नहीं है।"
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "DSM में सत्यापित डिस्क-इंडेक्स क्रम बदलकर दर्ज करें, उदाहरण 0>4:4>0। लोडर host और ATA नंबर DSM डिस्क क्रम प्रमाणित नहीं करते। रद्द करने पर सेटिंग अपरिवर्तित रहेगी।"
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "मैपिंग अमान्य है। 0 से 255 तक अद्वितीय इंडेक्स और पूरा क्रम बदलकर दर्ज करें, उदाहरण 0>4:4>0। कोई सेटिंग नहीं बदली।"
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "इन डिस्क इंडेक्स को DSM में सत्यापित करना आवश्यक है। गलत मैपिंग से डिस्क क्रम बदल सकता है। सहेजें? FRIEND से DSM बूट करने पर लोडर पुनर्निर्माण आवश्यक नहीं है।"
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "SATA डिस्क-इंडेक्स रीमैपिंग तैयार करने का तरीका चुनें"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "सत्यापित डिस्क इंडेक्स से उम्मीदवार बनाएं"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "मैपिंग मैन्युअल दर्ज करें"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "DSM में सत्यापित डिस्क इंडेक्स डिस्क क्रम में कॉमा से अलग करके दर्ज करें, उदाहरण 0,1,2,3,4। sata_remap के बिना मूल इंडेक्स इस्तेमाल करें; लोडर डिवाइस नंबर DSM इंडेक्स नहीं हैं।"
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "उसी क्रम में हर डिस्क का इच्छित इंडेक्स दर्ज करें, उदाहरण 4,1,2,3,0। समान इंडेक्स समूह का प्रत्येक इंडेक्स ठीक एक बार इस्तेमाल करें।"
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "मौजूदा sata_remap कॉन्फ़िगर है। वर्तमान DSM इंडेक्स पहले से रीमैप हो सकते हैं। नया उम्मीदवार बनाने से पहले इसे हटाएं और मूल DSM इंडेक्स सत्यापित करें। कोई सेटिंग नहीं बदली।"
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "मैपिंग नहीं बन सकती। दोनों सूचियों में 0 से 255 तक समान अद्वितीय इंडेक्स होने चाहिए और कम-से-कम एक इंडेक्स बदलना चाहिए।"
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "पूरे पोर्ट विवरण देखें (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "पता चली डिस्क"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "लिंक बंद"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "लिंक स्थिति अज्ञात"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "लिंक चालू"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "कॉन्फ़िगर की गई मैपिंग"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "लोडर अवलोकन DSM डिस्क क्रम, भौतिक बे या बूट डिस्क तय नहीं करते। लिंक स्थिति उपलब्ध kernel संदेशों से आती है और पुरानी या अनुपलब्ध हो सकती है।"
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "चुने गए नियंत्रक क्रम में पोर्ट संख्या दर्ज करें, उदाहरण 4,4। जुड़े डिस्क की संख्या नहीं, स्वतंत्र रूप से सत्यापित पोर्ट संख्या इस्तेमाल करें। हर संख्या 1 से 9 होनी चाहिए।"
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "नियंत्रक क्रम अमान्य है। दिखाए गए प्रत्येक SATA नियंत्रक नंबर को ठीक एक बार दर्ज करें। कोई सेटिंग नहीं बदली।"
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "कोई SATA नियंत्रक नहीं मिला। उम्मीदवार नहीं बनाया जा सकता।"
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "SATA नियंत्रक"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "अन्य स्टोरेज नियंत्रक (SATA उम्मीदवार में शामिल नहीं)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "PCI सूची क्रम और जुड़े डिस्क की संख्या से DSM नियंत्रक क्रम, उपलब्ध पोर्ट, बूट डिस्क, SAS इंडेक्स स्थान या भौतिक बे तय नहीं होते। उम्मीदवार दर्ज करने से पहले इन सभी की पुष्टि करें।"
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "सत्यापित DSM क्रम में नियंत्रक नंबर दर्ज करें। दिखाया गया क्रम बनाए रखने के लिए Enter दबाएं। लोडर क्रम DSM क्रम का प्रमाण नहीं है।"
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "डिफ़ॉल्ट मान ऊपर मिली डिस्क संख्या के आधार पर सुझाए गए हैं। ये सत्यापित पोर्ट संख्या नहीं हैं; उपलब्ध पोर्ट जांचें और जरूरत पर खाली पोर्ट शामिल करें।"
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "किसी नियंत्रक पर कोई डिस्क नहीं मिली या नौ से अधिक मिलीं, इसलिए शुरुआती पोर्ट संख्या का सुझाव उपलब्ध नहीं है। स्वतंत्र रूप से सत्यापित पोर्ट संख्या दर्ज करें।"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "यह DSM कर्नेल कमांड लाइन में acpi_enforce_resources=lax जोड़ता है। इससे पूरे सिस्टम में ACPI संसाधन जाँच ढीली पड़ती है और कुछ हार्डवेयर पर अस्थिरता या अप्रत्याशित रीस्टार्ट हो सकते हैं। इसे केवल तभी सक्रिय करें जब it87 जैसा सेंसर ड्राइवर ACPI संसाधन टकराव के कारण लोड न हो। जारी रखें?"

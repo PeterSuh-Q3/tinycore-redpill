@@ -788,6 +788,202 @@ msgstr "ነቅቷል"
 msgid "Disabled"
 msgstr "ጠፍቷል"
 
+#: MSGZZ204
+msgid "Non-DT Disk Mapping Assistant"
+msgstr "የNon-DT ዲስክ ካርታ ረዳት"
+
+#: MSGZZ205
+msgid "Choose a disk mapping action"
+msgstr "የዲስክ ካርታ እርምጃ ይምረጡ"
+
+#: MSGZZ206
+msgid "View current mappings and controllers"
+msgstr "የአሁኑን ካርታዎችና መቆጣጠሪያዎች ይመልከቱ"
+
+#: MSGZZ207
+msgid "Calculate SATA mapping candidate"
+msgstr "የSATA ካርታ እጩ ያስሉ"
+
+#: MSGZZ208
+msgid "Adjust SATA port order (sata_remap)"
+msgstr "የSATA ፖርት ቅደም ተከተል ያስተካክሉ (sata_remap)"
+
+#: MSGZZ209
+msgid "View SAS/HBA settings and controllers"
+msgstr "የSAS/HBA ቅንብሮችና መቆጣጠሪያዎች ይመልከቱ"
+
+#: MSGZZ210
+msgid "Restore previous SATA mapping"
+msgstr "የቀድሞውን የSATA ካርታ መልስ"
+
+#: MSGZZ211
+msgid "The disk inventory helper is missing. Update the complete MSHELL bundle."
+msgstr "የዲስክ ዝርዝር መርጃው የለም። ሙሉውን MSHELL ጥቅል ያዘምኑ።"
+
+#: MSGZZ212
+msgid "Could not collect the disk inventory. Check the configuration and console output."
+msgstr "የዲስክ ዝርዝሩን ማሰባሰብ አልተቻለም። ቅንብሩንና የኮንሶል ውጤቱን ያረጋግጡ።"
+
+#: MSGZZ213
+msgid "Loader storage inventory and configured mappings"
+msgstr "የLoader ማከማቻ ዝርዝርና የተዋቀሩ ካርታዎች"
+
+#: MSGZZ214
+msgid "Back"
+msgstr "ተመለስ"
+
+#: MSGZZ215
+msgid "This action is not yet available. No settings were changed."
+msgstr "ይህ እርምጃ ገና አይገኝም። ምንም ቅንብር አልተቀየረም።"
+
+#: MSGZZ216
+msgid "Enter port counts in verified DSM controller order, separated by commas (example: 4,2). Each count must be 1 through 9. Loader detection does not establish DSM order or physical bay mapping. A candidate is shown before confirmation."
+msgstr "በተረጋገጠው የDSM መቆጣጠሪያ ቅደም ተከተል የፖርት ብዛትን በኮማ ተለይተው ያስገቡ (ምሳሌ፦ 4,2)። እያንዳንዱ ቁጥር 1 እስከ 9 መሆን አለበት። Loader ማወቂያ የDSM ቅደም ተከተልን ወይም አካላዊ ቤይ ካርታን አያረጋግጥም። ከማረጋገጫ በፊት እጩ ይታያል።"
+
+#: MSGZZ217
+msgid "Invalid port counts or maxdisks limit. Enter comma-separated numbers from 1 through 9 whose sum does not exceed maxdisks."
+msgstr "የፖርት ብዛት ወይም maxdisks ገደብ ልክ አይደለም። ድምራቸው maxdisks የማይበልጥ ከ1 እስከ 9 ቁጥሮችን በኮማ ይለዩ።"
+
+#: MSGZZ218
+msgid "Candidate only - not verified or applied"
+msgstr "እጩ ብቻ — አልተረጋገጠም ወይም አልተተገበረም"
+
+#: MSGZZ219
+msgid "No valid maxdisks value exists in user_config.json. No candidate was calculated."
+msgstr "በuser_config.json ውስጥ ልክ የሆነ maxdisks ዋጋ የለም። እጩ አልተሰላም።"
+
+#: MSGZZ220
+msgid "The mapping calculator is missing. Update the complete MSHELL bundle."
+msgstr "የካርታ ማስያው የለም። ሙሉውን MSHELL ጥቅል ያዘምኑ።"
+
+#: MSGZZ221
+msgid "SataPortMap or DiskIdxMap is already configured. Adding sata_remap can make disk ordering harder to predict. Existing values will not be removed. Continue?"
+msgstr "SataPortMap ወይም DiskIdxMap አስቀድሞ ተዋቅሯል። sata_remap መጨመር የዲስክ ቅደም ተከተልን ለመገመት አስቸጋሪ ሊያደርግ ይችላል። ያሉት ዋጋዎች አይሰረዙም። ይቀጥሉ?"
+
+#: MSGZZ222
+msgid "This candidate is not verified against DSM disk order. Apply it? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "ይህ እጩ ከDSM የዲስክ ቅደም ተከተል ጋር አልተረጋገጠም። ይተግብሩ? DSM በFRIEND ሲነሳ Loader እንደገና መገንባት አያስፈልግም።"
+
+#: MSGZZ223
+msgid "Cannot apply this mapping: check maxdisks and remove any conflicting sata_remap first."
+msgstr "ይህን ካርታ መተግበር አይቻልም፦ maxdisks ያረጋግጡና የሚጋጭ sata_remap ካለ መጀመሪያ ያስወግዱ።"
+
+#: MSGZZ224
+msgid "No valid previous mapping backup is available."
+msgstr "ትክክለኛ የቀድሞ ካርታ ምትኬ አይገኝም።"
+
+#: MSGZZ225
+msgid "The mapping could not be saved or validated. The previous configuration was restored."
+msgstr "ካርታውን ማስቀመጥ ወይም ማረጋገጥ አልተቻለም። የቀድሞው ቅንብር ተመልሷል።"
+
+#: MSGZZ226
+msgid "Restore the previous SATA mapping? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "የቀድሞውን የSATA ካርታ ይመልሱ? DSM በFRIEND ሲነሳ Loader እንደገና መገንባት አያስፈልግም።"
+
+#: MSGZZ227
+msgid "Enter a verified DSM disk-index permutation, for example 0>4:4>0. Loader host and ATA numbers do not prove DSM disk order. Cancel to leave settings unchanged."
+msgstr "በDSM የተረጋገጠ የዲስክ ኢንዴክስ ለውጥ ያስገቡ፣ ለምሳሌ 0>4:4>0። Loader host እና ATA ቁጥሮች የDSM ዲስክ ቅደም ተከተልን አያረጋግጡም። ሰርዝ ቅንብሮችን እንዳሉ ይተዋል።"
+
+#: MSGZZ228
+msgid "Invalid mapping. Use unique indices 0 through 255 and a complete permutation, for example 0>4:4>0. No setting was changed."
+msgstr "ልክ ያልሆነ ካርታ። ከ0 እስከ 255 ያሉ የተለያዩ ኢንዴክሶችንና ሙሉ ለውጥ ይጠቀሙ፣ ለምሳሌ 0>4:4>0። ምንም ቅንብር አልተቀየረም።"
+
+#: MSGZZ229
+msgid "These disk indices must be verified in DSM. Applying the wrong mapping may change disk order. Save? A loader rebuild is not required when booting DSM through FRIEND."
+msgstr "እነዚህ የዲስክ ኢንዴክሶች በDSM መረጋገጥ አለባቸው። የተሳሳተ ካርታ የዲስክ ቅደም ተከተልን ሊቀይር ይችላል። ያስቀምጡ? DSM በFRIEND ሲነሳ Loader እንደገና መገንባት አያስፈልግም።"
+
+#: MSGZZ230
+msgid "Choose how to prepare SATA disk-index remapping"
+msgstr "የSATA ዲስክ ኢንዴክስ እንዴት እንደሚቀየር ይምረጡ"
+
+#: MSGZZ231
+msgid "Generate candidate from verified disk indices"
+msgstr "ከተረጋገጡ የዲስክ ኢንዴክሶች እጩ ይፍጠሩ"
+
+#: MSGZZ232
+msgid "Enter mapping manually"
+msgstr "ካርታውን በእጅ ያስገቡ"
+
+#: MSGZZ233
+msgid "Enter verified DSM disk indices in disk order, separated by commas, for example 0,1,2,3,4. Use the original indices without sata_remap; loader device numbers are not DSM indices."
+msgstr "በDSM የተረጋገጡ የዲስክ ኢንዴክሶችን በዲስክ ቅደም ተከተል፣ በኮማ ተለይተው ያስገቡ፣ ለምሳሌ 0,1,2,3,4። sata_remap ሳይኖር የነበሩትን ኢንዴክሶች ይጠቀሙ፤ Loader መሣሪያ ቁጥሮች የDSM ኢንዴክሶች አይደሉም።"
+
+#: MSGZZ234
+msgid "Enter the desired index for each disk in the same order, for example 4,1,2,3,0. Use the same set of indices exactly once."
+msgstr "በተመሳሳይ ቅደም ተከተል ለእያንዳንዱ ዲስክ የሚፈለገውን ኢንዴክስ ያስገቡ፣ ለምሳሌ 4,1,2,3,0። ተመሳሳይ የኢንዴክስ ስብስብን እያንዳንዱን አንድ ጊዜ ብቻ ይጠቀሙ።"
+
+#: MSGZZ235
+msgid "An existing sata_remap is configured. Its current DSM indices may already be remapped. Remove it and verify the original DSM indices before generating a new candidate. No settings were changed."
+msgstr "sata_remap አስቀድሞ ተዋቅሯል። የአሁኑ የDSM ኢንዴክሶች ቀድሞ ተቀይረው ሊሆን ይችላል። አዲስ እጩ ከመፍጠርዎ በፊት ያስወግዱትና የመጀመሪያዎቹን DSM ኢንዴክሶች ያረጋግጡ። ቅንብሮች አልተቀየሩም።"
+
+#: MSGZZ236
+msgid "Cannot generate a mapping. Both lists must contain the same unique indices from 0 through 255, and at least one index must change."
+msgstr "ካርታ ማመንጨት አይቻልም። ሁለቱም ዝርዝሮች ከ0 እስከ 255 ተመሳሳይ የተለያዩ ኢንዴክሶችን መያዝ አለባቸው፣ ቢያንስ አንድ ኢንዴክስም መቀየር አለበት።"
+
+#: MSGZZ237
+msgid "View full port details (JSON)"
+msgstr "ሙሉ የፖርት ዝርዝሮችን ይመልከቱ (JSON)"
+
+#: MSGZZ238
+msgid "Detected disks"
+msgstr "የተገኙ ዲስኮች"
+
+#: MSGZZ239
+msgid "Link down"
+msgstr "ግንኙነት የለም"
+
+#: MSGZZ240
+msgid "Link unknown"
+msgstr "የግንኙነት ሁኔታ አይታወቅም"
+
+#: MSGZZ241
+msgid "Link up"
+msgstr "ግንኙነት አለ"
+
+#: MSGZZ242
+msgid "Configured mappings"
+msgstr "የተዋቀሩ ካርታዎች"
+
+#: MSGZZ243
+msgid "Loader observations do not establish DSM disk order, physical bays or boot disk. Link state comes from available kernel messages and may be stale or unavailable."
+msgstr "የLoader ምልከታዎች የDSM ዲስክ ቅደም ተከተል፣ አካላዊ ቤዮችን ወይም የቡት ዲስክን አያረጋግጡም። የግንኙነት ሁኔታው ከሚገኙ የከርነል መልዕክቶች ይመጣል፣ ያረጀ ወይም የማይገኝ ሊሆን ይችላል።"
+
+#: MSGZZ244
+msgid "Enter the port counts in the controller order you selected, for example 4,4. Use independently verified port counts, not the number of connected disks. Each count must be 1 through 9."
+msgstr "በመረጡት የመቆጣጠሪያ ቅደም ተከተል የፖርት ብዛትን ያስገቡ፣ ለምሳሌ 4,4። የተገናኙ ዲስኮችን ብዛት ሳይሆን በተናጠል የተረጋገጠ የፖርት ብዛት ይጠቀሙ። እያንዳንዱ ቁጥር 1 እስከ 9 ነው።"
+
+#: MSGZZ245
+msgid "Invalid controller order. Enter each displayed SATA controller number exactly once. No settings were changed."
+msgstr "የመቆጣጠሪያ ቅደም ተከተል ልክ አይደለም። የታዩትን የSATA መቆጣጠሪያ ቁጥሮች እያንዳንዱን በትክክል አንድ ጊዜ ያስገቡ። ቅንብር አልተቀየረም።"
+
+#: MSGZZ246
+msgid "No SATA controllers were detected. A candidate cannot be generated."
+msgstr "ምንም የSATA መቆጣጠሪያ አልተገኘም። እጩ ማመንጨት አይቻልም።"
+
+#: MSGZZ247
+msgid "SATA controller"
+msgstr "የSATA መቆጣጠሪያ"
+
+#: MSGZZ248
+msgid "Other storage controller (not included in SATA candidate)"
+msgstr "ሌላ የማከማቻ መቆጣጠሪያ (በSATA እጩ ውስጥ አይካተትም)"
+
+#: MSGZZ249
+msgid "PCI listing order and connected disk counts do not establish DSM controller order, available port counts, boot disk, SAS index placement or physical bays. Verify all of these before entering a candidate."
+msgstr "የPCI ዝርዝር ቅደም ተከተልና የተገናኙ ዲስኮች ብዛት የDSM መቆጣጠሪያ ቅደም ተከተልን፣ የሚገኙ ፖርቶችን፣ የቡት ዲስክን፣ የSAS ኢንዴክስ ቦታን ወይም አካላዊ ቤይዎችን አያረጋግጡም። እጩ ከማስገባትዎ በፊት ይህን ሁሉ ያረጋግጡ።"
+
+#: MSGZZ250
+msgid "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order."
+msgstr "በተረጋገጠው የDSM ቅደም ተከተል የመቆጣጠሪያ ቁጥሮችን ያስገቡ። የታየውን ቅደም ተከተል ለመጠበቅ Enter ይጫኑ። የLoader ቅደም ተከተል የDSM ቅደም ተከተል ማስረጃ አይደለም።"
+
+#: MSGZZ251
+msgid "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required."
+msgstr "ነባሪ ዋጋዎቹ ከላይ በተገኙት የዲስክ ብዛቶች የተመሰረቱ ጥቆማዎች ናቸው። የተረጋገጡ የፖርት ብዛቶች አይደሉም፤ ያሉትን ፖርቶች ያረጋግጡና ካስፈለገ ባዶ ፖርቶችን ያካትቱ።"
+
+#: MSGZZ252
+msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+msgstr "አንድ መቆጣጠሪያ የተገኙ ዲስኮች ስለሌሉት ወይም ከዘጠኝ በላይ ስላሉት የመጀመሪያ የፖርት ብዛት ጥቆማ የለም። በተናጠል የተረጋገጠ የፖርት ብዛት ያስገቡ።"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "ይህ acpi_enforce_resources=lax ወደ DSM ከርነል የትእዛዝ መስመር ይጨምራል። የACPI ሀብት ምርመራን በስርዓቱ ሁሉ ያሳልላል እና በአንዳንድ ሃርድዌር ላይ አለመረጋጋት ወይም ያልተጠበቀ ዳግም መነሳት ሊያስከትል ይችላል። እንደ it87 ያለ ዳሳሽ ነጂ በACPI ሀብት ግጭት ምክንያት ሲጫን ካልተሳካ ብቻ ያንቁት። ይቀጥሉ?"

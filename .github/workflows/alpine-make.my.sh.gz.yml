@@ -46,7 +46,7 @@ jobs:
           echo "note=${note_escaped}" >> $GITHUB_OUTPUT
 
           chmod +x preoff.sh
-          tar -zcvf my.sh.gz tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh config/dsm-targets.v1.json lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh tools/install-amdgpu-addon.sh tools/recover-alpine-p3.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
+          tar -zcvf my.sh.gz tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh tools/nondt-mapping-inventory.sh tools/nondt-mapping-calculate.sh tools/nondt-mapping-config.sh tools/nondt-sata-remap.sh config/dsm-targets.v1.json lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh tools/install-amdgpu-addon.sh tools/recover-alpine-p3.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh
 
           # localhost.apkovl.tar.gz는 root:root, root:shadow 등 특권 소유권의
           # 시스템 파일(/etc/shadow, /etc/sudoers.d 등)을 담고 있음. 비-root
@@ -70,14 +70,18 @@ jobs:
           sudo cp -vf my.sh.gz lang.tgz i18n.h functions.sh monitor.sh menu.sh menu_m.sh ntp.sh sngen.sh macgen.sh edisk.sh tc_recover.sh dts_mapping.sh burnloader.sh models.json custom_config.json modules.alias.4.json extractor.gz preoff.sh user_config.json ./mydata/home/tc/
           sudo cp -vf tools/recover-alpine-p3.sh ./mydata/home/tc/tools/recover-alpine-p3.sh
           sudo mkdir -p ./mydata/home/tc/config
-          sudo cp -vf tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh ./mydata/home/tc/tools/
+          sudo cp -vf tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh tools/nondt-mapping-inventory.sh tools/nondt-mapping-calculate.sh tools/nondt-mapping-config.sh tools/nondt-sata-remap.sh ./mydata/home/tc/tools/
           sudo cp -vf config/dsm-targets.v1.json ./mydata/home/tc/config/
           sudo chown "${TC_OWNER}" ./mydata/home/tc/config ./mydata/home/tc/tools \
             ./mydata/home/tc/config/dsm-targets.v1.json \
             ./mydata/home/tc/tools/dsm-target-resolver.sh \
             ./mydata/home/tc/tools/dsm-target-resolver.jq \
             ./mydata/home/tc/tools/dsm-resolver-bridge.sh \
-            ./mydata/home/tc/tools/capture-target-cpu.sh
+            ./mydata/home/tc/tools/capture-target-cpu.sh \
+            ./mydata/home/tc/tools/nondt-mapping-inventory.sh \
+            ./mydata/home/tc/tools/nondt-mapping-calculate.sh \
+            ./mydata/home/tc/tools/nondt-mapping-config.sh \
+            ./mydata/home/tc/tools/nondt-sata-remap.sh
 
           sudo mkdir -p ./mydata/usr/local/sbin ./mydata/etc/init.d ./mydata/etc/runlevels/boot
           sudo install -m 0755 alpine/local.d-restore-packages.start ./mydata/etc/local.d/restore-packages.start
