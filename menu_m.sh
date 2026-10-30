@@ -3253,7 +3253,8 @@ function sortnetif() {
 }
 
 function nondtMappingInventory() {
-  local report raw helper mode="${1:-summary}"
+  local report raw helper mode="${1:-summary}" loader_disk=""
+  local -a inventory_args
   helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-inventory.sh"
   if [ ! -r "$helper" ]; then
     dialog --backtitle "$(backtitle)" --title "${MSGZZ205}" --msgbox "${MSGZZ211}" 0 0
@@ -3261,7 +3262,13 @@ function nondtMappingInventory() {
   fi
   report=$(mktemp "${TMP_PATH}/nondt-inventory.XXXXXX") || return 1
   raw=$(mktemp "${TMP_PATH}/nondt-raw.XXXXXX") || { rm -f "$report"; return 1; }
-  if ! bash "$helper" "$userconfigfile" >"$raw"; then
+  inventory_args=("$userconfigfile")
+  if [ "${BUS:-}" = "sata" ]; then
+    loader_disk="${loaderdisk_raw:-${loaderdisk:-}}"
+    loader_disk="${loader_disk#/dev/}"
+    [ -z "$loader_disk" ] || inventory_args+=("$loader_disk")
+  fi
+  if ! bash "$helper" "${inventory_args[@]}" >"$raw"; then
     rm -f "$report" "$raw"
     dialog --backtitle "$(backtitle)" --title "${MSGZZ205}" --msgbox "${MSGZZ212}" 0 0
     return 1
@@ -3287,8 +3294,8 @@ function nondtMappingInventory() {
 }
 
 function nondtMappingCandidate() {
-  local helper inventory maxdisks input result portmap idxmap previous raw pci expected order default_order index i mapping_summary order_guide count suggested suggestion_text
-  local -a port_counts entries sata_pcis ordered_pcis order_entries
+  local helper inventory maxdisks input result portmap idxmap previous raw pci expected order default_order index i mapping_summary order_guide count suggested suggestion_text loader_disk=""
+  local -a port_counts entries sata_pcis ordered_pcis order_entries inventory_args
   local -A selected=()
   helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-calculate.sh"
   inventory="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-inventory.sh"
@@ -3302,7 +3309,13 @@ function nondtMappingCandidate() {
     return 1
   fi
   raw=$(mktemp "${TMP_PATH}/nondt-candidate.XXXXXX") || return 1
-  if ! bash "$inventory" "$userconfigfile" > "$raw"; then
+  inventory_args=("$userconfigfile")
+  if [ "${BUS:-}" = "sata" ]; then
+    loader_disk="${loaderdisk_raw:-${loaderdisk:-}}"
+    loader_disk="${loader_disk#/dev/}"
+    [ -z "$loader_disk" ] || inventory_args+=("$loader_disk")
+  fi
+  if ! bash "$inventory" "${inventory_args[@]}" > "$raw"; then
     rm -f "$raw"; dialog --msgbox "${MSGZZ212}" 0 0; return 1
   fi
   sata_pcis=()
@@ -3336,7 +3349,7 @@ function nondtMappingCandidate() {
   fi
   mapping_summary=""; suggested=""; suggestion_text="${MSGZZ251}"
   for pci in "${ordered_pcis[@]}"; do
-    count=$(jq -r --arg pci "$pci" '[.disks[] | select(.sysfs_path | contains("/" + $pci + "/"))] | length' "$raw") || { rm -f "$raw"; return 1; }
+    count=$(jq -r --arg pci "$pci" '[.disks[] | select(.mapping_eligible != false) | select(.sysfs_path | contains("/" + $pci + "/"))] | length' "$raw") || { rm -f "$raw"; return 1; }
     [ -z "$mapping_summary" ] || mapping_summary+=", "
     mapping_summary+="${pci}=${count}"
     [ -z "$suggested" ] || suggested+=','

@@ -3,6 +3,8 @@
 set -eu
 sys_root="${MSHELL_INVENTORY_SYS_ROOT:-/sys}"
 config="${1:-/home/tc/user_config.json}"
+loader_disk="${2:-}"
+loader_disk="${loader_disk#/dev/}"
 if [ ! -d "$sys_root/class/block" ] || [ ! -d "$sys_root/bus/pci/devices" ]; then
   echo 'Storage or PCI sysfs inventory is unavailable' >&2
   exit 1
@@ -78,9 +80,11 @@ for entry in "$sys_root"/class/block/*; do
   serial=$(read_value "$entry/device/serial")
   wwid=$(read_value "$entry/device/wwid")
   sectors=$(read_value "$entry/size")
+  boot_role=unknown
+  [ -z "$loader_disk" ] || [ "$name" != "$loader_disk" ] || boot_role=loader
   disks=$(jq -c --arg name "$name" --arg path "$target" --arg model "$model" \
-    --arg serial "$serial" --arg wwid "$wwid" --arg sectors "$sectors" \
-    '. + [{name:$name,sysfs_path:$path,model:$model,serial:$serial,wwid:$wwid,sectors:$sectors,boot_role:"unknown",dsm_slot:null}]' <<<"$disks")
+    --arg serial "$serial" --arg wwid "$wwid" --arg sectors "$sectors" --arg boot_role "$boot_role" \
+    '. + [{name:$name,sysfs_path:$path,model:$model,serial:$serial,wwid:$wwid,sectors:$sectors,boot_role:$boot_role,mapping_eligible:($boot_role != "loader"),dsm_slot:null}]' <<<"$disks")
 done
 
 jq -n --slurpfile config "$config" --argjson controllers "$controllers" --argjson disks "$disks" --argjson ports "$ports" --argjson hosts "$hosts" '

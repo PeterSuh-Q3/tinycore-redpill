@@ -8,6 +8,7 @@ printf '%s\n' '{"general":{"usb_line":"quiet","sata_line":""},"synoinfo":{"maxdi
 bash "$tool" snapshot "$tmp/config" > "$tmp/snapshot"
 bash "$tool" apply "$tmp/config" 42 0004 > "$tmp/applied"
 jq -e '.extra_cmdline.SataPortMap == "42" and .extra_cmdline.DiskIdxMap == "0004" and .extra_cmdline.SasIdxMap == "0" and .synoinfo.usbportcfg == "0x40"' "$tmp/applied" >/dev/null
+if "$tool" apply "$tmp/config" @ 0000 >/dev/null 2>&1; then echo 'Automatic @ SataPortMap unexpectedly accepted' >&2; exit 1; fi
 bash "$tool" restore "$tmp/applied" "$tmp/snapshot" > "$tmp/restored"
 jq -e '(.extra_cmdline | has("SataPortMap")) and .extra_cmdline.SataPortMap == null and (.extra_cmdline | has("DiskIdxMap") | not) and .extra_cmdline.SasIdxMap == "0" and .extra_cmdline.other == "keep"' "$tmp/restored" >/dev/null
 for pair in '42 0005' '90 0009' '99 0009'; do

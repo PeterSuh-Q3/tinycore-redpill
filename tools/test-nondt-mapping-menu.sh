@@ -11,11 +11,11 @@ grep -Fq 'h) nondtMappingMenu;' "$root/menu_m.sh"
 grep -Fq 'tools/nondt-mapping-inventory.sh' "$root/.github/workflows/alpine-make.my.sh.gz.yml"
 awk '/# Keep the established \(DT\) marker guard/{capture=1;next} capture {print; if ($0 ~ /^[[:space:]]*fi$/) exit}' "$root/menu_m.sh" > "$tmp/guard.sh"
 test -s "$tmp/guard.sh"
-TMP_PATH="$tmp" MSGZZ204='Non-DT mapping'
+TMP_PATH="$tmp" MSGZZ204='SataPortMap/DiskIdxMap mapping'
 platform=apollolake
 : > "$tmp/menu"
 source "$tmp/guard.sh"
-grep -Fq 'h "Non-DT mapping"' "$tmp/menu"
+grep -Fq 'h "SataPortMap/DiskIdxMap mapping"' "$tmp/menu"
 platform='epyc7002(DT)'
 : > "$tmp/menu"
 source "$tmp/guard.sh"
@@ -94,13 +94,15 @@ dialog() {
     *' --msgbox '*) printf '%s\n' "$*" >> "$tmp/candidate-output" ;;
   esac
 }
+BUS=sata
+loaderdisk_raw=sda
 test_order='1,2'
 test_counts='4,2'
 nondtMappingCandidate
 grep -Fq 'SataPortMap=42' "$tmp/candidate-output"
 grep -Fq 'DiskIdxMap=0004' "$tmp/candidate-output"
-grep -Fq '0000:02:04.0=4, 0000:02:05.0=4' "$tmp/prompts"
-grep -Fq '4,4' "$tmp/prompts"
+grep -Fq '0000:02:04.0=3, 0000:02:05.0=4' "$tmp/prompts"
+grep -Fq '3,4' "$tmp/prompts"
 grep -Fq 'message251' "$tmp/prompts"
 test "$before" = "$(cksum "$userconfigfile")"
 test_counts='4,10'
@@ -126,4 +128,6 @@ nondtMappingCandidate
 grep -Fq 'SataPortMap=24' "$tmp/candidate-output"
 grep -Fq 'DiskIdxMap=0002' "$tmp/candidate-output"
 grep -Fq '0000:02:05.0=2 0000:02:04.0=4' "$tmp/candidate-output"
-echo 'Non-DT menu routing and guard tests passed.'
+grep -Fq 'mapping_eligible' "$root/tools/nondt-mapping-inventory.sh"
+grep -Fq 'SataPortMap/DiskIdxMap Disk Mapping Assistant' "$root/i18n.h"
+echo 'SataPortMap/DiskIdxMap menu routing and SATA-loader exclusion tests passed.'

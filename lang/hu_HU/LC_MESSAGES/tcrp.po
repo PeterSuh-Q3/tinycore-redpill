@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "Kikapcsolva"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "Non-DT lemez-hozzárendelési segéd"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "SataPortMap/DiskIdxMap lemez-hozzárendelési segéd"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

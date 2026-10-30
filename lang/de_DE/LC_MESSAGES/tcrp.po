@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "Deaktiviert"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "Non-DT-Diskzuordnungsassistent"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "SataPortMap/DiskIdxMap-Diskzuordnungsassistent"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

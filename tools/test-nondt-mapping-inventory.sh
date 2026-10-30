@@ -19,9 +19,11 @@ printf '1\n' > "$test_dir/sys/class/block/sda1/partition"
 printf '8192\n' > "$test_dir/sys/class/block/nvme0n1/size"
 printf '%s\n' '{"extra_cmdline":{"SataPortMap":"42","DiskIdxMap":"0004","SasIdxMap":"0","other":"keep"},"synoinfo":{"maxdisks":"12","usbportcfg":"0x40"}}' > "$test_dir/config.json"
 printf '%s\n' '[ 1.0] ata1: SATA link down' '[ 2.0] ata1: SATA link up 6.0 Gbps' '[ 3.0] ata2: SATA link down' > "$test_dir/dmesg"
-result=$(MSHELL_INVENTORY_SYS_ROOT="$test_dir/sys" MSHELL_INVENTORY_DMESG_FILE="$test_dir/dmesg" bash "$base/tools/nondt-mapping-inventory.sh" "$test_dir/config.json")
-jq -e '.schema == 1 and .mapping_verified == false and (.controllers|length)==2 and (.disks|length)==2 and .ata_ports[0].dummy_state == "unknown" and .scsi_hosts[0].driver == "ahci" and .settings.extra_cmdline.SasIdxMap == "0" and (.settings.extra_cmdline|has("other")|not) and ([.disks[].name]|index("sda1")|not) and ([.controllers[]|select(.pci == "0000:00:17.0" and .driver == "ahci")]|length)==1 and ([.disks[]|select(.name == "sda" and .serial == "serial-a" and .boot_role == "unknown" and .dsm_slot == null)]|length)==1' <<<"$result" >/dev/null
+result=$(MSHELL_INVENTORY_SYS_ROOT="$test_dir/sys" MSHELL_INVENTORY_DMESG_FILE="$test_dir/dmesg" bash "$base/tools/nondt-mapping-inventory.sh" "$test_dir/config.json" /dev/sda)
+jq -e '.schema == 1 and .mapping_verified == false and (.controllers|length)==2 and (.disks|length)==2 and .ata_ports[0].dummy_state == "unknown" and .scsi_hosts[0].driver == "ahci" and .settings.extra_cmdline.SasIdxMap == "0" and (.settings.extra_cmdline|has("other")|not) and ([.disks[].name]|index("sda1")|not) and ([.controllers[]|select(.pci == "0000:00:17.0" and .driver == "ahci")]|length)==1 and ([.disks[]|select(.name == "sda" and .serial == "serial-a" and .boot_role == "loader" and .mapping_eligible == false and .dsm_slot == null)]|length)==1' <<<"$result" >/dev/null
 jq -e '([.ata_ports[]|select(.name == "ata1" and .link_state == "up")]|length)==1 and ([.ata_ports[]|select(.name == "ata2" and .link_state == "down")]|length)==1 and ([.ata_ports[]|select(.name == "ata3" and .link_state == "unknown")]|length)==1' <<<"$result" >/dev/null
+result_without_loader=$(MSHELL_INVENTORY_SYS_ROOT="$test_dir/sys" bash "$base/tools/nondt-mapping-inventory.sh" "$test_dir/config.json")
+jq -e '[.disks[]|select(.name == "sda" and .boot_role == "unknown" and .mapping_eligible == true)]|length == 1' <<<"$result_without_loader" >/dev/null
 if MSHELL_INVENTORY_SYS_ROOT="$test_dir/sys" bash "$base/tools/nondt-mapping-inventory.sh" "$test_dir/missing.json" >/dev/null 2>&1; then
   echo 'Missing config unexpectedly accepted' >&2
   exit 1

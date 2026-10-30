@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "ปิดใช้งาน"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "ตัวช่วยกำหนดดิสก์สำหรับ Non-DT"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "ตัวช่วยจับคู่ดิสก์ SataPortMap/DiskIdxMap"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

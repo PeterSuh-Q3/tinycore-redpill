@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "ጠፍቷል"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "የNon-DT ዲስክ ካርታ ረዳት"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "የSataPortMap/DiskIdxMap ዲስክ ካርታ ረዳት"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

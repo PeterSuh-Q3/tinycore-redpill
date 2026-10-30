@@ -797,8 +797,8 @@ msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It r
 msgstr "DSM 커널 명령줄에 acpi_enforce_resources=lax를 추가합니다. ACPI 자원 검사를 시스템 전체에서 완화하므로 일부 장비에서 불안정하거나 예기치 않게 재부팅될 수 있습니다. it87 같은 센서 드라이버가 ACPI 자원 충돌 때문에 로드되지 않을 때만 켜십시오. 계속하시겠습니까?"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "Non-DT 디스크 매핑 도우미"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "SataPortMap/DiskIdxMap 디스크 매핑 도우미"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

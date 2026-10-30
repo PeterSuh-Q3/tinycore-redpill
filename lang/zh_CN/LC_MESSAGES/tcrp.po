@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "已禁用"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "Non-DT 磁盘映射助手"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "SataPortMap/DiskIdxMap 磁盘映射助手"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

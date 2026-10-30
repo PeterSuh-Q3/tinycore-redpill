@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "निष्क्रिय"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "नॉन-DT डिस्क मैपिंग सहायक"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "SataPortMap/DiskIdxMap डिस्क मैपिंग सहायक"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

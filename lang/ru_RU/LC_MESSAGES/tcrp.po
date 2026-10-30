@@ -789,8 +789,8 @@ msgid "Disabled"
 msgstr "Выключено"
 
 #: MSGZZ204
-msgid "Non-DT Disk Mapping Assistant"
-msgstr "Помощник сопоставления дисков Non-DT"
+msgid "SataPortMap/DiskIdxMap Disk Mapping Assistant"
+msgstr "Помощник сопоставления дисков SataPortMap/DiskIdxMap"
 
 #: MSGZZ205
 msgid "Choose a disk mapping action"

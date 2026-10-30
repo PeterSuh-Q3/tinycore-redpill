@@ -198,7 +198,7 @@ MSGZZ200=$(gettext "tcrp" "Improve fan sensor detection (relax ACPI resource che
 MSGZZ201=$(gettext "tcrp" "Enabled")
 MSGZZ202=$(gettext "tcrp" "Disabled")
 MSGZZ203=$(gettext "tcrp" "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?")
-MSGZZ204=$(gettext "tcrp" "Non-DT Disk Mapping Assistant")
+MSGZZ204=$(gettext "tcrp" "SataPortMap/DiskIdxMap Disk Mapping Assistant")
 MSGZZ205=$(gettext "tcrp" "Choose a disk mapping action")
 MSGZZ206=$(gettext "tcrp" "View current mappings and controllers")
 MSGZZ207=$(gettext "tcrp" "Calculate SATA mapping candidate")
