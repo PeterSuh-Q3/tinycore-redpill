@@ -1033,7 +1033,7 @@ function history() {
     1.4.5.8 Make xTCRP builds more reliable and DSM hardware and disk status easier to inspect
     1.4.5.9 Route DSM selection through the reviewed target resolver
     1.4.6.0 Fix menu startup target BMI2 checks and kernel 5 policy
-    1.4.6.1 Help review disk mappings on systems with multiple storage controllers
+    1.4.6.1 Improve md0 reporting and expansion and review disk mappings
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1782,7 +1782,7 @@ EOF
 # Fix menu startup target BMI2 checks and kernel 5 policy
 
 # 2026.10.30 v1.4.6.1
-# Help review disk mappings on systems with multiple storage controllers
+# Improve md0 reporting and expansion and review disk mappings
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2210,7 +2210,7 @@ function showlastupdate() {
 # Fix menu startup target BMI2 checks and kernel 5 policy
 
 # 2026.10.30 v1.4.6.1
-# Help review disk mappings on systems with multiple storage controllers
+# Improve md0 reporting and expansion and review disk mappings
 EOF
 }
 
