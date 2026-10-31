@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -20,7 +20,7 @@ jobs:
         id: get-tag
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential bison flex libgmp3-dev xorriso qemu-utils libfreetype6-dev jq
+          sudo apt-get install -y build-essential bison flex gawk pkg-config libgmp3-dev xorriso qemu-utils libfreetype6-dev jq grub-pc-bin grub-efi-amd64-bin
           #sudo apt-get install grub2 qemu-utils grub-efi-amd64-bin
 
           #LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "https://github.com/PeterSuh-Q3/tinycore-redpill/releases/latest"`"
@@ -67,7 +67,7 @@ jobs:
       - name: Configure GRUB
         working-directory: grub-2.12
         run: |
-          ./configure --prefix=/usr        \
+          TARGET_CFLAGS="-Os -march=x86-64 -mno-avx -mno-avx2 -mno-bmi -mno-bmi2" ./configure --prefix=/usr        \
             --sysconfdir=/etc    \
             --disable-efiemu     \
             --enable-grub-mkfont \
@@ -150,6 +150,7 @@ jobs:
           # Keep the removable-media fallback while providing a unique EFI path
           # for a physical machine's AlpineRedpill NVRAM boot entry.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
+          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
@@ -225,6 +226,7 @@ jobs:
           # Keep the removable-media fallback while providing a unique EFI path
           # for a physical machine's AlpineRedpill NVRAM boot entry.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
+          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
