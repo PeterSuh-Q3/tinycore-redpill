@@ -991,3 +991,11 @@ msgstr "The default values are suggested from the detected disk counts above. Th
 #: MSGZZ252
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
+
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."

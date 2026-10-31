@@ -984,6 +984,14 @@ msgstr "Die Standardwerte werden anhand der oben erkannten Laufwerkszahlen vorge
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "Kein anfänglicher Portanzahlvorschlag verfügbar, da ein Controller keine erkannten Laufwerke oder mehr als neun hat. Geben Sie unabhängig bestätigte Portanzahlen ein."
 
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "Das SATA-Bootloader-Laufwerk %s befindet sich an Controller %s / ata%s. Sein physischer Port zählt zur SataPortMap-Anzahl dieses Controllers; das Bootloader-Laufwerk selbst wird keinem DSM-Laufwerksschacht zugeordnet."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "Controller und ATA-Port des SATA-Bootloaders konnten nicht bestätigt werden. Prüfen Sie den Standort, bevor Sie entscheiden, ob sein physischer Port in SataPortMap zählt; ordnen Sie das Bootloader-Laufwerk keinem DSM-Laufwerksschacht zu."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Dies fügt acpi_enforce_resources=lax zur DSM-Kernel-Befehlszeile hinzu. Die ACPI-Ressourcenprüfung wird systemweit gelockert; auf manchen Geräten kann dies Instabilität oder unerwartete Neustarts verursachen. Nur aktivieren, wenn ein Sensortreiber wie it87 wegen eines ACPI-Ressourcenkonflikts nicht geladen werden kann. Fortfahren?"

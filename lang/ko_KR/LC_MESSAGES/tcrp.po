@@ -991,3 +991,11 @@ msgstr "기본값은 위에서 감지한 디스크 수를 바탕으로 제안됩
 #: MSGZZ252
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "감지된 디스크가 없거나 9개를 초과하는 컨트롤러가 있어 기본 포트 수를 제안할 수 없습니다. 별도로 확인한 포트 수를 입력하십시오."
+
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "SATA 부트로더 디스크 %s는 컨트롤러 %s / ata%s에 있습니다. 이 물리 포트는 해당 컨트롤러의 SataPortMap 개수에 포함되며, 부트로더 디스크 자체는 DSM 디스크 슬롯에서 제외됩니다."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "SATA 부트로더의 컨트롤러와 ATA 포트를 확인하지 못했습니다. 물리 포트를 SataPortMap에 포함할지 결정하기 전에 위치를 확인하고, 부트로더 디스크를 DSM 디스크 슬롯에 할당하지 마십시오."

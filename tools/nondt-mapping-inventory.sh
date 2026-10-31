@@ -82,9 +82,18 @@ for entry in "$sys_root"/class/block/*; do
   sectors=$(read_value "$entry/size")
   boot_role=unknown
   [ -z "$loader_disk" ] || [ "$name" != "$loader_disk" ] || boot_role=loader
+  controller_pci=""
+  for pci in $(jq -r '.[].pci' <<<"$controllers"); do
+    case "$target" in *"/$pci/"*) controller_pci="$pci"; break ;; esac
+  done
+  ata_path=""
+  case "$target" in
+    */ata*/host*) ata_path="${target#*/ata}"; ata_path="${ata_path%%/*}" ;;
+  esac
   disks=$(jq -c --arg name "$name" --arg path "$target" --arg model "$model" \
     --arg serial "$serial" --arg wwid "$wwid" --arg sectors "$sectors" --arg boot_role "$boot_role" \
-    '. + [{name:$name,sysfs_path:$path,model:$model,serial:$serial,wwid:$wwid,sectors:$sectors,boot_role:$boot_role,mapping_eligible:($boot_role != "loader"),dsm_slot:null}]' <<<"$disks")
+    --arg controller_pci "$controller_pci" --arg ata_path "$ata_path" \
+    '. + [{name:$name,sysfs_path:$path,model:$model,serial:$serial,wwid:$wwid,sectors:$sectors,boot_role:$boot_role,mapping_eligible:($boot_role != "loader"),controller_pci:(if $controller_pci == "" then null else $controller_pci end),ata_path:(if $ata_path == "" then null else ("ata" + $ata_path) end),dsm_slot:null}]' <<<"$disks")
 done
 
 jq -n --slurpfile config "$config" --argjson controllers "$controllers" --argjson disks "$disks" --argjson ports "$ports" --argjson hosts "$hosts" '

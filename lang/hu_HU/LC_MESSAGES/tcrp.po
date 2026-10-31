@@ -984,6 +984,14 @@ msgstr "Az alapértékek a fent észlelt lemezszámok alapján javasoltak. Nem e
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "Nem javasolható kezdeti portszerkezet, mert az egyik vezérlőn nincs észlelt lemez, vagy kilencnél több van. Adjon meg külön ellenőrzött portszerkezetet."
 
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "A(z) %s SATA rendszerbetöltő lemez a(z) %s vezérlő / ata%s pontján található. Fizikai portja beleszámít a vezérlő SataPortMap értékébe; maga a rendszerbetöltő lemez nem DSM-lemezhely."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "A SATA rendszerbetöltő vezérlője és ATA-portja nem volt ellenőrizhető. A SataPortMap módosítása előtt ellenőrizze a helyét; a rendszerbetöltő lemezt ne rendelje DSM-lemezhelyhez."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Ez hozzáadja az acpi_enforce_resources=lax paramétert a DSM kernel parancssorához. Rendszerszinten enyhíti az ACPI-erőforrások ellenőrzését, ami egyes gépeken instabilitást vagy váratlan újraindulást okozhat. Csak akkor kapcsolja be, ha egy érzékelő-illesztőprogram, például az it87, ACPI-erőforrásütközés miatt nem töltődik be. Folytatja?"

@@ -3294,7 +3294,7 @@ function nondtMappingInventory() {
 }
 
 function nondtMappingCandidate() {
-  local helper inventory maxdisks input result portmap idxmap previous raw pci expected order default_order index i mapping_summary order_guide count suggested suggestion_text loader_disk=""
+  local helper inventory maxdisks input result portmap idxmap previous raw pci expected order default_order index i mapping_summary order_guide count suggested suggestion_text loader_disk="" loader_note="" loader_record="" loader_name="" loader_pci="" loader_ata_path="" loader_controller_selected=0
   local -a port_counts entries sata_pcis ordered_pcis order_entries inventory_args
   local -A selected=()
   helper="${MSHELL_MAPPING_TOOLS_ROOT:-/home/tc/tools}/nondt-mapping-calculate.sh"
@@ -3347,9 +3347,24 @@ function nondtMappingCandidate() {
   if [ "${#ordered_pcis[@]}" -ne "$expected" ]; then
     rm -f "$raw"; dialog --msgbox "${MSGZZ245}" 0 0; return 1
   fi
+  [ "${BUS:-}" != "sata" ] || loader_note="$MSGZZ254"
+  loader_record=$(jq -c '[.disks[] | select(.boot_role == "loader")][0] // empty' "$raw") || { rm -f "$raw"; return 1; }
+  if [ -n "$loader_record" ]; then
+    loader_name=$(jq -r '.name' <<<"$loader_record")
+    loader_pci=$(jq -r '.controller_pci // empty' <<<"$loader_record")
+    loader_ata_path=$(jq -r '.ata_path // empty | sub("^ata"; "")' <<<"$loader_record")
+    for pci in "${sata_pcis[@]}"; do
+      [ "$loader_pci" != "$pci" ] || { loader_controller_selected=1; break; }
+    done
+    if [ -n "$loader_pci" ] && [ -n "$loader_ata_path" ] && [ "$loader_controller_selected" -eq 1 ]; then
+      printf -v loader_note "$MSGZZ253" "$loader_name" "$loader_pci" "$loader_ata_path"
+    else
+      loader_note="$MSGZZ254"
+    fi
+  fi
   mapping_summary=""; suggested=""; suggestion_text="${MSGZZ251}"
   for pci in "${ordered_pcis[@]}"; do
-    count=$(jq -r --arg pci "$pci" '[.disks[] | select(.mapping_eligible != false) | select(.sysfs_path | contains("/" + $pci + "/"))] | length' "$raw") || { rm -f "$raw"; return 1; }
+    count=$(jq -r --arg pci "$pci" '[.disks[] | select(.sysfs_path | contains("/" + $pci + "/"))] | length' "$raw") || { rm -f "$raw"; return 1; }
     [ -z "$mapping_summary" ] || mapping_summary+=", "
     mapping_summary+="${pci}=${count}"
     [ -z "$suggested" ] || suggested+=','
@@ -3359,7 +3374,7 @@ function nondtMappingCandidate() {
   rm -f "$raw"
   if [ "$suggestion_text" = "$MSGZZ252" ]; then suggested=""; fi
   input=$(dialog --backtitle "$(backtitle)" --title "${MSGZZ204}" \
-    --inputbox "${MSGZZ238}: ${mapping_summary}\n\n${suggestion_text}\n\n${MSGZZ244}" 0 0 "$suggested" 3>&1 1>&2 2>&3) || return 0
+    --inputbox "${MSGZZ238}: ${mapping_summary}\n${loader_note}\n\n${suggestion_text}\n\n${MSGZZ244}" 0 0 "$suggested" 3>&1 1>&2 2>&3) || return 0
   if ! [[ "$input" =~ ^[1-9](,[1-9])*$ ]]; then
     dialog --msgbox "${MSGZZ217}" 0 0; return 1
   fi

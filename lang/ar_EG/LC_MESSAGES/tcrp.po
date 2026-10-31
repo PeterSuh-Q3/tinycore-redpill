@@ -984,6 +984,14 @@ msgstr "القيم الافتراضية مقترحة بناءً على أعدا�
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "لا يتوفر اقتراح أولي لعدد المنافذ لأن وحدة تحكم لا تحتوي على أقراص مكتشفة أو تحتوي على أكثر من تسعة. أدخل أعداد المنافذ بعد التحقق منها بشكل مستقل."
 
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "قرص محمّل الإقلاع SATA ‏%s متصل بوحدة التحكم %s / ata%s. يُحتسب منفذه الفعلي ضمن عدد SataPortMap لوحدة التحكم؛ أما القرص نفسه فلا يُخصص كقرص DSM."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "تعذر تأكيد وحدة التحكم ومنفذ ATA الخاصين بمحمّل الإقلاع SATA. تحقق من موقعه قبل تقرير احتساب منفذه الفعلي في SataPortMap؛ ولا تخصص قرص محمّل الإقلاع كقرص DSM."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "يضيف هذا الخيار acpi_enforce_resources=lax إلى سطر أوامر نواة DSM. وهو يخفف فحص موارد ACPI على مستوى النظام كله، وقد يسبب عدم الاستقرار أو إعادة تشغيل غير متوقعة على بعض الأجهزة. فعّله فقط إذا فشل تحميل برنامج تشغيل مستشعر مثل it87 بسبب تعارض موارد ACPI. هل تريد المتابعة؟"

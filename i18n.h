@@ -247,5 +247,7 @@ MSGZZ249=$(gettext "tcrp" "PCI listing order and connected disk counts do not es
 MSGZZ250=$(gettext "tcrp" "Enter controller numbers in verified DSM order. Press Enter to keep the displayed order. Loader order is not proof of DSM order.")
 MSGZZ251=$(gettext "tcrp" "The default values are suggested from the detected disk counts above. They are not verified port counts; verify the available ports and include empty ports if required.")
 MSGZZ252=$(gettext "tcrp" "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts.")
+MSGZZ253=$(gettext "tcrp" "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots.")
+MSGZZ254=$(gettext "tcrp" "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot.")
 MSGZZ186=$(gettext "tcrp" "Could not apply static IP settings to the running kernel. They will still take effect on next boot.")
 }

@@ -984,6 +984,14 @@ msgstr "Значения по умолчанию предложены на ос�
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "Начальное предложение числа портов недоступно: у контроллера нет обнаруженных дисков или их больше девяти. Введите независимо проверенное число портов."
 
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "Загрузочный SATA-диск %s подключён к контроллеру %s / ata%s. Его физический порт учитывается в SataPortMap этого контроллера, но сам диск исключён из слотов DSM."
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "Не удалось определить контроллер и ATA-порт загрузочного SATA-диска. Проверьте его расположение, прежде чем включать физический порт в SataPortMap; не назначайте сам загрузочный диск в слот DSM."
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Этот параметр добавляет acpi_enforce_resources=lax в командную строку ядра DSM. Он ослабляет проверку ресурсов ACPI во всей системе и на некоторых устройствах может вызвать нестабильность или неожиданные перезагрузки. Включайте его только в том случае, если драйвер датчика, например it87, не загружается из-за конфликта ресурсов ACPI. Продолжить?"

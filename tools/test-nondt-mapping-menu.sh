@@ -27,7 +27,7 @@ test -s "$tmp/menu-function.sh"
 source "$tmp/menu-function.sh"
 backtitle() { printf '%s' test; }
 dlgmenuheight() { printf '%s' "$1"; }
-for n in {204..252}; do printf -v "MSGZZ$n" '%s' "message$n"; done
+for n in {204..254}; do printf -v "MSGZZ$n" '%s' "message$n"; done
 userconfigfile="$tmp/menu-config.json"
 printf '%s\n' '{"extra_cmdline":{}}' > "$userconfigfile"
 dialog() {
@@ -79,9 +79,13 @@ mkdir -p "$tmp/sys/class/block" "$tmp/sys/bus/pci/devices/0000:02:04.0" "$tmp/sy
 printf '0x010601\n' > "$tmp/sys/bus/pci/devices/0000:02:04.0/class"
 printf '0x010601\n' > "$tmp/sys/bus/pci/devices/0000:02:05.0/class"
 for disk in a b c d e f g h; do
-  case "$disk" in a|b|c|d) pci=0000:02:04.0 ;; *) pci=0000:02:05.0 ;; esac
-  mkdir -p "$tmp/sys/devices/$pci/block/sd$disk/device"
-  ln -s "$tmp/sys/devices/$pci/block/sd$disk" "$tmp/sys/class/block/sd$disk"
+  case "$disk" in
+    a|b|c|d) pci=0000:02:04.0 ;;
+    *) pci=0000:02:05.0 ;;
+  esac
+  case "$disk" in a|e) ata=1 ;; b|f) ata=2 ;; c|g) ata=3 ;; d|h) ata=4 ;; esac
+  mkdir -p "$tmp/sys/devices/$pci/ata$ata/host$ata/target$ata:0:0/$ata:0:0:0/block/sd$disk/device"
+  ln -s "$tmp/sys/devices/$pci/ata$ata/host$ata/target$ata:0:0/$ata:0:0:0/block/sd$disk" "$tmp/sys/class/block/sd$disk"
 done
 userconfigfile="$tmp/user_config.json"
 printf '%s\n' '{"synoinfo":{"maxdisks":"12"},"extra_cmdline":{"SasIdxMap":"0"}}' > "$userconfigfile"
@@ -96,15 +100,22 @@ dialog() {
 }
 BUS=sata
 loaderdisk_raw=sda
+MSGZZ253='loader %s at %s/ata%s included in SataPortMap; excluded DSM slot'
+MSGZZ254='SATA loader position unknown'
 test_order='1,2'
 test_counts='4,2'
 nondtMappingCandidate
 grep -Fq 'SataPortMap=42' "$tmp/candidate-output"
 grep -Fq 'DiskIdxMap=0004' "$tmp/candidate-output"
-grep -Fq '0000:02:04.0=3, 0000:02:05.0=4' "$tmp/prompts"
-grep -Fq '3,4' "$tmp/prompts"
+grep -Fq '0000:02:04.0=4, 0000:02:05.0=4' "$tmp/prompts"
+grep -Fq '4,4' "$tmp/prompts"
+grep -Fq 'loader sda at 0000:02:04.0/ata1 included in SataPortMap; excluded DSM slot' "$tmp/prompts"
 grep -Fq 'message251' "$tmp/prompts"
 test "$before" = "$(cksum "$userconfigfile")"
+loaderdisk_raw=sdi
+nondtMappingCandidate
+grep -Fq 'SATA loader position unknown' "$tmp/prompts"
+loaderdisk_raw=sda
 test_counts='4,10'
 if nondtMappingCandidate; then echo 'Invalid input unexpectedly accepted' >&2; exit 1; fi
 test "$before" = "$(cksum "$userconfigfile")"

@@ -984,6 +984,14 @@ msgstr "默认值根据上方检测到的磁盘数量建议得出，并非已核
 msgid "No initial port-count suggestion is available because a controller has no detected disks or more than nine. Enter independently verified port counts."
 msgstr "由于某个控制器没有检测到磁盘或检测到超过九个磁盘，因此无法提供初始端口数建议。请输入单独核实的端口数。"
 
+#: MSGZZ253
+msgid "SATA bootloader disk %s is at controller %s / ata%s. Its physical port is included in that controller's SataPortMap count; the bootloader disk itself is excluded from DSM disk slots."
+msgstr "SATA 引导盘 %s 位于控制器 %s / ata%s。其物理端口计入该控制器的 SataPortMap 数量；引导盘本身不分配为 DSM 磁盘槽位。"
+
+#: MSGZZ254
+msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
+msgstr "无法确认 SATA 引导盘的控制器和 ATA 端口。请先核实其位置，再决定是否将物理端口计入 SataPortMap；不要将引导盘分配为 DSM 磁盘槽位。"
+
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "这会将 acpi_enforce_resources=lax 添加到 DSM 内核命令行。它会在整个系统范围内放宽 ACPI 资源检查，在某些硬件上可能导致系统不稳定或意外重启。仅当 it87 等传感器驱动因 ACPI 资源冲突而无法加载时启用。是否继续？"
