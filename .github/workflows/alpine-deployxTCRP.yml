@@ -302,8 +302,9 @@ jobs:
       # Publish a release if is a tag
       # (RELEASE_NOTES.md 병합 생략 - 릴리즈 생성 시 이미 작성한 노트를 그대로 유지)
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
+          token: ${{ github.token }}
           tag_name: ${{ env.RELEASE_VERSION }}
           files: |
             /opt/output/*.gz
