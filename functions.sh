@@ -4940,7 +4940,7 @@ function monitor() {
         board_serial="$(sudo cat /sys/class/dmi/id/board_serial 2>/dev/null)"
         case "${board_vendor}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Manufacturer:\t${board_vendor}" ;; esac
         case "${board_name}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Name:\t\t${board_name}" ;; esac
-        case "${board_version}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Version:\t${board_version}" ;; esac
+        case "${board_version}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Version:\t\t${board_version}" ;; esac
         case "${board_serial}" in ''|[Nn][Oo][Nn][Ee]) ;; *) echo -e "Board Serial Number:\t${board_serial}" ;; esac
         echo -e "Operating System:\t"$(grep PRETTY_NAME /etc/os-release | awk -F \= '{print $2}')
         echo -e "Kernel:\t\t\t"$(uname -r)
@@ -4960,11 +4960,15 @@ function monitor() {
         while IFS= read -r GPU_ITEM; do
             [ -z "${GPU_ITEM}" ] && continue
             GPU_NUM=$((GPU_NUM + 1))
-            echo -e "GPU ${GPU_NUM}:\t\t"$(msgnormal "${GPU_ITEM}")
+            printf 'GPU %s: ' "${GPU_NUM}"
+            msgnormal "${GPU_ITEM}"
         done <<GPU_LIST
 $(lspci -nn 2>/dev/null | sed -n 's/.*\[0300\]: //p')
 GPU_LIST
-        [ "${GPU_NUM}" -eq 0 ] && echo -e "GPU:\t\t\t"$(msgnormal "N/A")
+        if [ "${GPU_NUM}" -eq 0 ]; then
+            printf 'GPU: '
+            msgnormal "N/A"
+        fi
         echo -e "-------------------------------Loader boot entries---------------------------"
         grep -i menuentry /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk -F \' '{print $2}'
         echo -e "-------------------------------Installed DSM / md0 RAID----------------------"
