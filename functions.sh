@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.6.1"
-builddate="2026.10.30"
+rploaderver="1.4.6.2"
+builddate="2026.11.01"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1034,6 +1034,7 @@ function history() {
     1.4.5.9 Route DSM selection through the reviewed target resolver
     1.4.6.0 Fix menu startup target BMI2 checks and kernel 5 policy
     1.4.6.1 Improve md0 reporting and expansion and review disk mappings
+    1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1784,6 +1785,9 @@ EOF
 # 2026.10.30 v1.4.6.1
 # Improve md0 reporting and expansion and review disk mappings
 
+# 2026.11.01 v1.4.6.2
+# Restore older CPU boot compatibility and improve system partition and disk mapping guidance
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2211,6 +2215,9 @@ function showlastupdate() {
 
 # 2026.10.30 v1.4.6.1
 # Improve md0 reporting and expansion and review disk mappings
+
+# 2026.11.01 v1.4.6.2
+# Restore older CPU boot compatibility and improve system partition and disk mapping guidance
 EOF
 }
 
