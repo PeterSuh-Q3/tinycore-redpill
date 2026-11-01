@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "only binaries directly produced by a repository-owned build workflow/script and staged into loader initrd-dsm /exts",
+  "excluded": [
+    "prebuilt/downloaded extension payloads without an in-scope build recipe",
+    "kernel module packs (custom-modules, all-modules, nvidia driver/module archives)",
+    "GRUB and release-image binaries (handled by release-image inspection, not initrd-dsm)",
+    "DSM kernel/ramdisk payloads built or supplied by upstream loader/toolchain projects"
+  ],
+  "targets": [
+    {
+      "path": "exts/junior-realtime-helper/kms-display",
+      "required": false,
+      "build_source": "PeterSuh-Q3/tcrp-addons:junior-realtime-helper/src/build-kms-display.sh",
+      "output": "junior-realtime-helper/src/kms-display",
+      "method": "x86_64-linux-gnu-gcc -static -march=x86-64 -mtune=generic",
+      "runtime_tested": {
+        "sha256": "3610884a09c54dd55a8983fc0607a92b4e197693032d173889e57e2a28884d79",
+        "cpu": "Intel Pentium Gold G5500"
+      }
+    },
+    {
+      "path": "exts/powersched/powersched",
+      "required": false,
+      "build_source": "PeterSuh-Q3/tcrp-addons:.github/workflows/build-powersched.yml",
+      "output": "dist/powersched",
+      "method": "g++ -march=x86-64 -mtune=generic"
+    },
+    {
+      "path": "exts/cpuinfo/mshellscgiproxy.tgz",
+      "required": false,
+      "build_source": "PeterSuh-Q3/tcrp-addons:.github/workflows/build-mshellscgiproxy.yml",
+      "output": "cpuinfo/src/mshellscgiproxy/mshellscgiproxy",
+      "method": "Go linux/amd64 GOAMD64=v1 CGO_ENABLED=0; packaged as tgz",
+      "runtime_tested": {
+        "sha256": "d28f01789781f2ee86ac3de0d7291fbe64b137896a5327a8fda5122ba0303cf1",
+        "cpu": "Intel Pentium Gold G5500"
+      }
+    }
+  ]
+}

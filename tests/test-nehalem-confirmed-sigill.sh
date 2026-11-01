@@ -11,7 +11,7 @@ make_report() {
 make_report FAIL SIGILL
 sh "$root/tools/nehalem-confirmed-sigill.sh" "$tmp/report.json" attempt-1
 if sh "$root/tools/nehalem-confirmed-sigill.sh" "$tmp/report.json" attempt-2; then exit 1; fi
-for state in PASS WARN UNTESTED SKIPPED; do
+for state in PASSED WARN UNTESTED SKIPPED; do
   make_report "$state" SIGILL
   if sh "$root/tools/nehalem-confirmed-sigill.sh" "$tmp/report.json" attempt-1; then exit 1; fi
 done

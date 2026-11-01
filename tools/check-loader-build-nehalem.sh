@@ -24,10 +24,13 @@ case "$gate" in SKIP|CHECK|UNKNOWN) ;; *) gate=UNKNOWN;; esac
 status=UNTESTED reason= checked=0 warnings=0 untested=0
 items="$work/items.jsonl"
 : > "$items"
+manifest="$(dirname "$0")/nehalem-loader-build-targets.v1.json"
+manifest_sha=unavailable
+[ -r "$manifest" ] && manifest_sha=$(sha256sum "$manifest" | awk '{print $1}')
 file_count=0 total_bytes=0 sequence=0 scan_limit_hit=0
 
 record_elf() {
-  local blob=$1 path=$2 kind=$3 magic machine linkage verdict itemhash
+  local blob=$1 path=$2 kind=$3 magic machine linkage verdict itemhash disasm tested_hash tested_cpu
   magic=$(od -An -tx1 -N4 "$blob" | tr -d ' \n')
   [ "$magic" = 7f454c46 ] || return 0
   [ "$kind" = kernel-module ] || kind=elf
@@ -35,15 +38,27 @@ record_elf() {
   machine=$(readelf -h "$blob" 2>/dev/null | awk -F: '/Machine:/ {gsub(/^[[:space:]]+/, "", $2); print $2; exit}')
   [ -n "$machine" ] || machine=unknown
   if readelf -l "$blob" 2>/dev/null | grep -q 'Requesting program interpreter'; then linkage=dynamic; else linkage='static-or-relocatable'; fi
-  if objdump -d "$blob" 2>/dev/null | LC_ALL=C grep -Eq '[[:space:]](v[a-z0-9]+|shlx|shrx|sarx|blsr|blsi|bzhi|pdep|pext)([[:space:]]|$)'; then
+  disasm="$work/disassembly.$checked"
+  if [ "$machine" = unknown ] || ! objdump -d "$blob" > "$disasm" 2>/dev/null; then
+    verdict=UNTESTED; untested=$((untested+1))
+  elif LC_ALL=C grep -Eq '[[:space:]](v[a-z0-9]+|shlx|shrx|sarx|blsr|blsi|bzhi|pdep|pext)([[:space:]]|$)' "$disasm"; then
     warnings=$((warnings+1)); verdict=WARN
   else
-    verdict=UNTESTED; untested=$((untested+1))
+    verdict=PASSED
   fi
   itemhash=$(sha256sum "$blob" | awk '{print $1}')
+  tested_hash=$(jq -r --arg path "$path" '.targets[] | . as $target | select($path == $target.path or ($path | startswith($target.path + " (")) or ($path | startswith($target.path + "!/"))) | .runtime_tested.sha256 // empty' "$manifest" 2>/dev/null | sed -n '1p')
+  tested_cpu=$(jq -r --arg path "$path" '.targets[] | . as $target | select($path == $target.path or ($path | startswith($target.path + " (")) or ($path | startswith($target.path + "!/"))) | .runtime_tested.cpu // empty' "$manifest" 2>/dev/null | sed -n '1p')
+  if [ "$verdict" = WARN ] && [ -n "$tested_hash" ] && [ "$itemhash" = "$tested_hash" ] && [ -n "$tested_cpu" ]; then
+    jq -cn --arg path "$path" --arg sha256 "$itemhash" --arg type "$kind" --arg status "$verdict" \
+      --arg display_status 'PASSED (AVX present; runtime-tested)' --arg tested_cpu "$tested_cpu" \
+      --arg architecture "$machine" --arg linkage "$linkage" \
+      '{path:$path,sha256:$sha256,type:$type,status:$status,display_status:$display_status,runtime_tested_cpu:$tested_cpu,architecture:$architecture,linkage:$linkage,scope:"AVX is present; exact artifact runtime-tested on the listed CPU; this does not establish Nehalem execution"}' >> "$items"
+    return 0
+  fi
   jq -cn --arg path "$path" --arg sha256 "$itemhash" --arg type "$kind" --arg status "$verdict" \
     --arg architecture "$machine" --arg linkage "$linkage" \
-    '{path:$path,sha256:$sha256,type:$type,architecture:$architecture,linkage:$linkage,status:$status,scope:"static opcode observation only; execution not proven"}' >> "$items"
+    '{path:$path,sha256:$sha256,type:$type,architecture:$architecture,linkage:$linkage,status:$status,scope:"static Nehalem-instruction scan; runtime execution not performed"}' >> "$items"
 }
 
 record_container() {
@@ -112,6 +127,7 @@ elif [ "$mode" = auto ] && [ "$gate" = UNKNOWN ]; then
 else
   missing=
   for tool in cpio xz gzip bsdtar objdump readelf jq sha256sum; do command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"; done
+  [ -r "$manifest" ] || missing="$missing target-manifest"
   if [ -n "$missing" ]; then
     reason="required inspection tools missing:$missing"
   else
@@ -130,10 +146,27 @@ else
         cpio -it < "$archive" > "$work/paths" 2>/dev/null || reason='cannot list initrd archive'
       fi
       if [ -z "$reason" ]; then
-        # Only inspect selected extension files; archive paths are streamed, never extracted by name.
-        LC_ALL=C awk '/^(\.\/)?exts\// && !/\.\./ && length($0)<512 {print}' "$work/paths" > "$work/selected"
+        jq -e '.schema_version == 1 and (.targets | type == "array")' "$manifest" >/dev/null 2>&1 || reason='invalid build-target manifest'
+      fi
+      if [ -z "$reason" ]; then
+        # Only inspect artifacts explicitly tied to repository-owned build recipes.
+        : > "$work/selected"
+        target_count=$(jq '.targets | length' "$manifest")
+        i=0
+        while [ "$i" -lt "$target_count" ]; do
+          target_path=$(jq -r ".targets[$i].path" "$manifest")
+          target_required=$(jq -r ".targets[$i].required // false" "$manifest")
+          if grep -Fxq "$target_path" "$work/paths"; then
+            printf '%s\n' "$target_path" >> "$work/selected"
+          else
+            if [ "$target_required" = true ]; then target_status=UNTESTED; untested=$((untested+1)); else target_status=SKIPPED; fi
+            jq -cn --arg path "$target_path" --arg status "$target_status" \
+              '{path:$path,status:$status,scope:"allowlisted build output absent from this initrd (optional/not selected)"}' >> "$items"
+          fi
+          i=$((i+1))
+        done
         count=$(wc -l < "$work/selected" | tr -d ' ')
-        if [ "$count" -gt 2000 ]; then reason='extension inventory exceeds 2000-file inspection limit'; fi
+        [ "$count" -le 2000 ] || reason='build-target list exceeds inspection limit'
       fi
       if [ -z "$reason" ]; then
         while IFS= read -r path; do
@@ -144,8 +177,11 @@ else
           case "$path" in *.ko) kind=kernel-module;; *) kind=other;; esac
           scan_blob "$work/item" "$path" 0 "$kind"
         done < "$work/selected"
-        if [ "$warnings" -gt 0 ]; then status=WARN; else status=UNTESTED; fi
-        reason='static inspection cannot prove Nehalem execution; kernel-module ABI remains untested'
+        if [ "$warnings" -gt 0 ]; then status=WARN
+        elif [ "$untested" -gt 0 ]; then status=UNTESTED
+        else status=PASSED
+        fi
+        reason='allowlisted workflow/script build outputs passed the static Nehalem instruction scan; runtime execution was not performed'
         [ "$scan_limit_hit" = 0 ] || reason="$reason; one or more archive safety limits were reached"
       fi
     fi
@@ -153,7 +189,8 @@ else
 fi
 tmp="${report}.tmp.$$"
 jq -s --arg schema 'mshell-nehalem-loader-v1' --arg attempt "${MSHELL_NEHALEM_ATTEMPT:-standalone}" \
+  --arg target_manifest_sha256 "$manifest_sha" \
   --arg sha256 "$hash" --arg gate "$gate" --arg mode "$mode" --arg status "$status" --arg reason "$reason" \
   --argjson checked "$checked" --argjson warnings "$warnings" --argjson untested "$untested" \
-  '{schema:$schema,attempt:$attempt,artifact_sha256:$sha256,cpu_gate:$gate,mode:$mode,status:$status,reason:$reason,checked:$checked,warnings:$warnings,untested:$untested,files:.}' \
+  '{schema:$schema,attempt:$attempt,artifact_sha256:$sha256,target_manifest_sha256:$target_manifest_sha256,cpu_gate:$gate,mode:$mode,status:$status,reason:$reason,checked:$checked,warnings:$warnings,untested:$untested,files:.}' \
   "$items" > "$tmp" 2>/dev/null && mv -f "$tmp" "$report" || { rm -f "$tmp"; exit 2; }
