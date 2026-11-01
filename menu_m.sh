@@ -664,6 +664,49 @@ function selectversion () {
     BUILD="$selected"; MDLNAME="${mode%:*}"; MLMETHOD="${mode##*:}"
 }
 
+# Reconcile a persisted module choice against the CPU that is actually running
+# the loader before the first main-menu frame is drawn. In particular, do not
+# leave all-modules as the displayed/default choice when the CPU is known to
+# lack BMI2 and the selected catalog mode requires it. This changes only the
+# module pack/method for the saved DSM target; it never silently changes DSM
+# model or version.
+function autoCorrectBmi2ModuleMode() {
+    local result current_mode bmi2_missing fallback old_module old_method
+    [ -n "${MODEL:-}" ] && [ -n "${BUILD:-}" ] || return 0
+    mshellLoadDsmResolver || return 0
+
+    current_mode="${MDLNAME:-all-modules}:${MLMETHOD:-IML}"
+    result=$(mshellDsmResolve options "${MODEL}" "${BUILD}") || return 0
+    if printf '%s' "${result}" | jq -e --arg mode "${current_mode}" \
+        '.allowed_modes | any(.id == $mode)' >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Only auto-switch for a confirmed missing BMI2 requirement. Other
+    # incompatibilities (unknown CPU data, missing recipe, etc.) must not be
+    # disguised as a BMI2 fallback.
+    bmi2_missing=$(printf '%s' "${result}" | jq -r --arg mode "${current_mode}" '
+        [.rejected_modes[] | select(.id == $mode and (.cpu_flags | index("bmi2") != null))
+         | .reasons[]? | select(.code == "CPU_FEATURE_MISSING")] | length')
+    [ "${bmi2_missing:-0}" -gt 0 ] || return 0
+
+    # Prefer the BMI2-free custom module pack, choosing PML when the catalog
+    # exposes it (the current supported fallback for the affected targets).
+    fallback=$(printf '%s' "${result}" | jq -r '
+        ([.allowed_modes[] | select(.module == "custom-modules" and .method == "PML")] +
+         [.allowed_modes[] | select(.module == "custom-modules")]) | .[0].id // empty')
+    [ -n "${fallback}" ] || return 0
+
+    old_module="${MDLNAME:-all-modules}"
+    old_method="${MLMETHOD:-IML}"
+    if mshellSaveDsmSelection "${MODEL}" "${BUILD}" "${fallback%:*}" "${fallback##*:}"; then
+        MDLNAME="${fallback%:*}"
+        MLMETHOD="${fallback##*:}"
+        printf '[BMI2] CPU lacks BMI2; changed module mode %s:%s -> %s:%s before showing the loader menu.\n' \
+            "${old_module}" "${old_method}" "${MDLNAME}" "${MLMETHOD}"
+    fi
+}
+
 ###############################################################################
 # Shows available models to user choose one
 function modelMenu() {
@@ -4597,6 +4640,11 @@ fi
 if ! is_alpine && [ "$FRKRNL" = "NO" ] && [ $(lspci -d ::107 | wc -l) -gt 0 ]; then
     tce-load -iw scsi-6.1.2-tinycore64.tcz
 fi
+
+# Correct an incompatible persisted BMI2 module mode before rendering the
+# first menu, so the user never sees all-modules as the default on a CPU that
+# cannot execute that target's BMI2-requiring pack.
+autoCorrectBmi2ModuleMode
 
 NEXT="m"
 setSuggest $MODEL
