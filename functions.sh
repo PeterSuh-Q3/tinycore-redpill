@@ -2465,6 +2465,14 @@ make_with_progress() {
         exit_code=${PIPESTATUS[0]}
     fi
     set +o pipefail    
+
+    # VERBOSE=OFF discards the tee's terminal stream. Replay the complete
+    # machine-readable inspection report from the parent shell so it remains
+    # visible without changing the zlastbuild.log capture or build exit code.
+    if [ "$VERBOSE_MODE" = "OFF" ] && [ -s "$MSHELL_NEHALEM_REPORT" ]; then
+        echo "Nehalem compatibility report:"
+        cat "$MSHELL_NEHALEM_REPORT"
+    fi
     
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
