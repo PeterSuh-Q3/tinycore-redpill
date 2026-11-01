@@ -4876,14 +4876,12 @@ function monitor_md0_snapshot() {
     fi
 
     if [ "${mounted}" -eq 1 ] || mount | awk -v d="${read_dev}" -v p="${mount_dir}" '$1 == d && $3 == p {found=1} END {exit !found}'; then
-        # The selected loader model can differ from the DSM actually installed
-        # on md0. Use DSM's own configured display model; never substitute the
-        # loader's user_config.json value when md0 is unavailable.
-        for synoinfo_file in "${mount_dir}/etc/synoinfo.conf" "${mount_dir}/etc.defaults/synoinfo.conf"; do
-            [ -r "${synoinfo_file}" ] || continue
+        # Read the model from DSM's defaults file only. The runtime
+        # /etc/synoinfo.conf can contain a transient/overridden model name.
+        synoinfo_file="${mount_dir}/etc.defaults/synoinfo.conf"
+        if [ -r "${synoinfo_file}" ]; then
             dsm_model="$(awk -F= '$1 == "upnpmodelname" {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); gsub(/^"|"$/, "", $2); print $2; exit}' "${synoinfo_file}")"
-            [ -n "${dsm_model}" ] && break
-        done
+        fi
         for version_file in "${mount_dir}/etc/VERSION" "${mount_dir}/etc.defaults/VERSION"; do
             [ -r "${version_file}" ] && break
         done
