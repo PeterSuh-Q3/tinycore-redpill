@@ -61,13 +61,6 @@ record_elf() {
     '{path:$path,sha256:$sha256,type:$type,architecture:$architecture,linkage:$linkage,status:$status,scope:"static Nehalem-instruction scan; runtime execution not performed"}' >> "$items"
 }
 
-record_container() {
-  local blob=$1 path=$2 kind=$3 itemhash
-  itemhash=$(sha256sum "$blob" | awk '{print $1}')
-  jq -cn --arg path "$path" --arg sha256 "$itemhash" --arg type "$kind" \
-    '{path:$path,sha256:$sha256,type:$type,status:"PASS",scope:"container decompressed and recursively inventoried; see child entries"}' >> "$items"
-}
-
 scan_blob() {
   local blob=$1 path=$2 depth=$3 kind=${4:-other} bytes magic member expanded list members child child_kind
   [ "$depth" -le 3 ] || { untested=$((untested+1)); return; }
@@ -89,14 +82,14 @@ scan_blob() {
     (ulimit -f 131072; gzip -dc "$blob" > "$member") 2>/dev/null || { untested=$((untested+1)); rm -f "$member"; return; }
     expanded=$(wc -c < "$member" | tr -d ' '); total_bytes=$((total_bytes+expanded))
     if [ "$total_bytes" -gt 536870912 ]; then scan_limit_hit=1; untested=$((untested+1)); rm -f "$member"; return; fi
-    scan_blob "$member" "$path (gzip content)" $((depth+1)); record_container "$blob" "$path" gzip; rm -f "$member"; return
+    scan_blob "$member" "$path (gzip content)" $((depth+1)); rm -f "$member"; return
   fi
   if xz -t "$blob" >/dev/null 2>&1; then
     sequence=$((sequence+1)); member="$work/decompressed.$sequence"
     (ulimit -f 131072; xz -dc "$blob" > "$member") 2>/dev/null || { untested=$((untested+1)); rm -f "$member"; return; }
     expanded=$(wc -c < "$member" | tr -d ' '); total_bytes=$((total_bytes+expanded))
     if [ "$total_bytes" -gt 536870912 ]; then scan_limit_hit=1; untested=$((untested+1)); rm -f "$member"; return; fi
-    scan_blob "$member" "$path (xz content)" $((depth+1)); record_container "$blob" "$path" xz; rm -f "$member"; return
+    scan_blob "$member" "$path (xz content)" $((depth+1)); rm -f "$member"; return
   fi
 
   if bsdtar -tf "$blob" > "$work/nested-paths.$sequence" 2>/dev/null; then
@@ -117,7 +110,6 @@ scan_blob() {
       case "$child_path" in *.ko) child_kind=kernel-module;; *) child_kind=other;; esac
       scan_blob "$member" "$child_path" $((depth+1)); rm -f "$member"
     done < "$list"
-    record_container "$blob" "$path" archive
   fi
 }
 if [ "$mode" = auto ] && [ "$gate" = SKIP ]; then
