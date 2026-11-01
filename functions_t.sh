@@ -2,7 +2,7 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.6.2"
+rploaderver="1.4.6.3"
 builddate="2026.11.01"
 redpillmake="prod"
 
@@ -1035,6 +1035,7 @@ function history() {
     1.4.6.0 Fix menu startup target BMI2 checks and kernel 5 policy
     1.4.6.1 Improve md0 reporting and expansion and review disk mappings
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
+    1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -2423,10 +2424,16 @@ make_with_progress() {
     local prevent_param="${2}"
     local build_cmd=""
     local package_rc=0
+    local nehalem_dir nehalem_attempt nehalem_summary
+    nehalem_dir=$(mktemp -d /tmp/mshell-nehalem-build.XXXXXXXX 2>/dev/null) || nehalem_dir=""
+    nehalem_attempt="$(basename "${nehalem_dir:-none}")"
+    export MSHELL_NEHALEM_ATTEMPT="$nehalem_attempt"
+    export MSHELL_NEHALEM_REPORT="${nehalem_dir:+${nehalem_dir}/report.json}"
 
     checkUserConfig 
     if [ $? -ne 0 ]; then
         dialog --backtitle "`backtitle`" --title "Error loader building" 0 0 #--textbox "${LOG_FILE}" 0 0      
+        echo 'Nehalem compatibility: NOT RUN — loader build failed before compatibility check' | tee /home/tc/zlastbuild.log
         return 1  
     fi
     
@@ -2479,6 +2486,8 @@ make_with_progress() {
             package_rc=$?
             if [ "${package_rc}" -ne 0 ]; then
                 log_error "Remote package failed with exit code: ${package_rc}"
+                nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
+                printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
                 rm -f /home/tc/buildstatus
                 return "${package_rc}"
             fi
@@ -2488,12 +2497,17 @@ log_build_step "Finished building" 12 12
         if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
             rm -f /home/tc/buildstatus
             echo "Remote loader package is ready in /out. Builder menu is now closed."
+            nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
+            printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
             exit 0
         fi
     else
         log_error "Build failed with exit code: $exit_code"
         show_backup_error_info
     fi
+
+    nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
+    printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
     
     echo "press any key to continue..."
     read answer
@@ -7877,6 +7891,15 @@ NCEOF
             return 99
         fi
     fi
+    # Advisory only: report the exact validated artifact, never change build status.
+    if [ -n "${MSHELL_NEHALEM_REPORT:-}" ]; then
+        : > "${MSHELL_NEHALEM_REPORT}.attempted" 2>/dev/null || true
+        if [ -x /home/tc/tools/check-loader-build-nehalem.sh ]; then
+            timeout 90 /home/tc/tools/check-loader-build-nehalem.sh --auto --initrd "$INITRD_TMP" --report "$MSHELL_NEHALEM_REPORT" || true
+        else
+            echo "Nehalem check: UNTESTED (checker unavailable)"
+        fi
+    fi
     if ! sudo dd if="$INITRD_TMP" of="/mnt/${loaderdisk}3/initrd-dsm" conv=fsync status=progress; then
         rm -f "$INITRD_TMP"
         echo "ERROR: failed to publish initrd-dsm to loader partition"
@@ -9575,6 +9598,15 @@ function prefillDefaultSataPortMap() {
 }
 
 function my() {
+  # Headless rploader builds do not pass through make_with_progress().
+  local nehalem_owns_report=0 nehalem_dir="" nehalem_attempt=""
+  if [ -z "${MSHELL_NEHALEM_REPORT:-}" ]; then
+      nehalem_dir=$(mktemp -d /tmp/mshell-nehalem-headless.XXXXXXXX 2>/dev/null) || nehalem_dir=""
+      nehalem_attempt=$(basename "${nehalem_dir:-none}")
+      export MSHELL_NEHALEM_ATTEMPT="$nehalem_attempt"
+      export MSHELL_NEHALEM_REPORT="${nehalem_dir:+${nehalem_dir}/report.json}"
+      nehalem_owns_report=1
+  fi
 
   echo "$1"
   echo "$2"
@@ -10128,7 +10160,12 @@ function my() {
       echo "y"|rploader clean
   else
       cleanupmemory
-      [ "${BUS}" = "block" ] && exit 0
+      if [ "${BUS}" = "block" ]; then
+          if [ "$nehalem_owns_report" = 1 ]; then
+              /home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$MSHELL_NEHALEM_ATTEMPT" 2>/dev/null || echo 'Nehalem compatibility: UNTESTED — summary unavailable'
+          fi
+          exit 0
+      fi
       [ "$MACHINE" != "VIRTUAL" ] && sleep 2
       # rploader is the final pipeline command, so the pipeline reports its
       # backup status. Keep the answer available for legacy error prompts.
@@ -10136,8 +10173,14 @@ function my() {
       backup_rc=$?
       if [ "$backup_rc" -ne 0 ]; then
           cecho r "Loader backup failed after build."
+          if [ "$nehalem_owns_report" = 1 ]; then
+              /home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$MSHELL_NEHALEM_ATTEMPT" 2>/dev/null || echo 'Nehalem compatibility: UNTESTED — summary unavailable'
+          fi
           return "$backup_rc"
       fi
+  fi
+  if [ "$nehalem_owns_report" = 1 ]; then
+      /home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$MSHELL_NEHALEM_ATTEMPT" 2>/dev/null || echo 'Nehalem compatibility: UNTESTED — summary unavailable'
   fi
   return $errorcode
 #[ "$FRKRNL" = "YES" ] && readanswer  
