@@ -7505,6 +7505,7 @@ st "frienddownload" "Friend downloading" "TCRP friend copied to /mnt/${loaderdis
     # SA6400 patches for JOT Mode
     if echo ${kver5platforms} | grep -qw ${ORIGIN_PLATFORM}; then
         echo -e "Apply Epyc7002, v1000nk, r1000nk, geminilakenk  Fixes"
+        echo -e "Please wait; processing initrd-dsm may take several minutes."
         sudo sed -i 's#/dev/console#/var/log/lrc#g' $rdtemp/usr/bin/busybox
         sudo sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' $rdtemp/linuxrc.syno
     fi
@@ -7896,6 +7897,7 @@ NCEOF
         : > "${MSHELL_NEHALEM_REPORT}.attempted" 2>/dev/null || true
         if [ -x /home/tc/tools/check-loader-build-nehalem.sh ]; then
             timeout 90 /home/tc/tools/check-loader-build-nehalem.sh --auto --initrd "$INITRD_TMP" --report "$MSHELL_NEHALEM_REPORT" || true
+            [ ! -s "$MSHELL_NEHALEM_REPORT" ] || cat "$MSHELL_NEHALEM_REPORT"
         else
             echo "Nehalem check: UNTESTED (checker unavailable)"
         fi
