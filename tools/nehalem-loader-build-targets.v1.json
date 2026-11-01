@@ -16,7 +16,7 @@
       "method": "x86_64-linux-gnu-gcc -static -march=x86-64 -mtune=generic",
       "runtime_tested": {
         "sha256": "3610884a09c54dd55a8983fc0607a92b4e197693032d173889e57e2a28884d79",
-        "cpu": "Intel Pentium Gold G5500"
+        "cpu": "Intel i3-3217U"
       }
     },
     {
@@ -34,7 +34,7 @@
       "method": "Go linux/amd64 GOAMD64=v1 CGO_ENABLED=0; packaged as tgz",
       "runtime_tested": {
         "sha256": "d28f01789781f2ee86ac3de0d7291fbe64b137896a5327a8fda5122ba0303cf1",
-        "cpu": "Intel Pentium Gold G5500"
+        "cpu": "Intel i3-3217U"
       }
     }
   ]
