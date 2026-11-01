@@ -144,7 +144,6 @@ jobs:
           # Refresh it with this build's baseline-safe GRUB instead of keeping the
           # potentially newer/unsupported binary from the source image.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
-          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grub.cfg /mnt/tarp1/boot/grub/grub.cfg
 
@@ -196,6 +195,8 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
+
+          sudo bash "${GITHUB_WORKSPACE}/tools/check-release-image-grub.sh" "${GITHUB_WORKSPACE}/alpine-redpill.${VERSION}.xtcrp.img"
 
           gzip -c alpine-redpill.${VERSION}.xtcrp.img > /opt/output/alpine-redpill.${VERSION}.xtcrp.img.gz
           qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.xtcrp.img alpine-redpill.${VERSION}.xtcrp.vmdk
@@ -232,7 +233,6 @@ jobs:
           sudo grub-install --target=x86_64-efi --removable --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=GRUB          
           # Keep every EFI entry on the image on the same baseline-safe build.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
-          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grub.cfg /mnt/tarp1/boot/grub/grub.cfg
 
@@ -284,6 +284,8 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp3
           sudo losetup -d ${LOOPZ}
+
+          sudo bash "${GITHUB_WORKSPACE}/tools/check-release-image-grub.sh" "${GITHUB_WORKSPACE}/alpine-redpill.${VERSION}.xtcrp-4GB.img"
 
           gzip -c alpine-redpill.${VERSION}.xtcrp-4GB.img > /opt/output/alpine-redpill.${VERSION}.xtcrp-4GB.img.gz
           qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.xtcrp-4GB.img alpine-redpill.${VERSION}.xtcrp-4GB.vmdk

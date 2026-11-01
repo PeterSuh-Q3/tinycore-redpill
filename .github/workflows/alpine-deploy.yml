@@ -150,7 +150,6 @@ jobs:
           # Keep the removable-media fallback while providing a unique EFI path
           # for a physical machine's AlpineRedpill NVRAM boot entry.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
-          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
@@ -185,6 +184,9 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp4
           sudo losetup -d ${LOOPZ}
+
+          # Inspect the final raw image once, with P1 mounted read-only.
+          sudo bash "${GITHUB_WORKSPACE}/tools/check-release-image-grub.sh" "${GITHUB_WORKSPACE}/alpine-redpill.${VERSION}.m-shell.img"
 
           gzip -c alpine-redpill.${VERSION}.m-shell.img > /opt/output/alpine-redpill.${VERSION}.m-shell.img.gz
           qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.m-shell.img alpine-redpill.${VERSION}.m-shell.vmdk
@@ -226,7 +228,6 @@ jobs:
           # Keep the removable-media fallback while providing a unique EFI path
           # for a physical machine's AlpineRedpill NVRAM boot entry.
           sudo grub-install --target=x86_64-efi --no-nvram --efi-directory="/mnt/tarp1" --boot-directory="/mnt/tarp1/boot" --bootloader-id=AlpineRedpill
-          bash "${GITHUB_WORKSPACE}/tools/check-grub-x86-baseline.sh" /mnt/tarp1
 
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/boot/grub/grub.cfg
           sudo cp -vf ${GITHUB_WORKSPACE}/grub/grubtiny.cfg /mnt/tarp1/EFI/BOOT/grub.cfg
@@ -261,6 +262,9 @@ jobs:
           sudo umount /mnt/tarp1
           sudo umount /mnt/tarp4
           sudo losetup -d ${LOOPZ}
+
+          # Same final-image check for the 5GB layout; no duplicate mounted-P1 scan.
+          sudo bash "${GITHUB_WORKSPACE}/tools/check-release-image-grub.sh" "${GITHUB_WORKSPACE}/alpine-redpill.${VERSION}.m-shell-5GB.img"
 
           gzip -c alpine-redpill.${VERSION}.m-shell-5GB.img > /opt/output/alpine-redpill.${VERSION}.m-shell-5GB.img.gz
           qemu-img convert -f raw -O vmdk alpine-redpill.${VERSION}.m-shell-5GB.img alpine-redpill.${VERSION}.m-shell-5GB.vmdk

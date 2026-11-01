@@ -64,6 +64,13 @@
 - The build workflow may regenerate and commit `my.sh.gz`. Those automated commits can make the local branch fall behind and cause a non-fast-forward push or rebase requirement.
 - Before committing or pushing changes, fetch the target branch and integrate any workflow-generated commits first (for example, `git fetch origin <branch>` followed by rebase or another explicitly safe integration).
 
+## Legacy x86 binary compatibility: purpose and evidence
+
+- Keep the original failure mode central: the official Manager v1.5.5 helper built on a GitHub Ubuntu 26.04.1 / GCC 15.2 runner executed AVX in statically linked glibc startup code and failed with `SIGILL` on older CPUs. That runner reported an `x86-64-v3` default and supplied a different `libc.a` from the official Ubuntu container. A source-level `-march=x86-64` flag alone does not rewrite linked static libraries or startup objects. Do not generalize this to every GCC 15 build or claim the precise library-provenance difference is resolved without evidence.
+- The Nehalem checks target final binaries built by project-owned workflows or build scripts, where a build-environment regression is actionable. The loader-build allowlist currently contains `junior-realtime-helper/kms-display`, `powersched/powersched`, and `cpuinfo/mshellscgiproxy`; the release-image GRUB EFI/modules check is a separate path. Do not silently expand this policy to downloaded module packs, upstream kernels, or every file in an archive.
+- `my.sh.gz` packaging only distributes checker scripts and the target manifest; it is not itself a binary compatibility test. Regenerate it only when updated checker/manifest data must reach deployed loaders, not merely because a runtime-test CPU label changed.
+- Treat a `runtime_tested_cpu` label as evidence only for the exact SHA-256 binary and actual CPU/configuration tested. The physical DSM 45.17 Intel i3-3217U run supports runtime claims for the matching junior helper and `mshellscgiproxy` artifacts, but does not establish execution on an AVX-absent CPU or on all Intel third-generation CPUs. Keep historical failure evidence separate from later successful runtime evidence.
+
 ## Paired functions files
 
 - Any implementation or bug fix added to `functions.sh` must also be applied to `functions_t.sh` in the same change. Keep the production and test-track helper behavior synchronized; do not leave a functions-only fix in one file.
