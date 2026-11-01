@@ -112,6 +112,22 @@ Each FRIEND retry gets a distinct report and corresponding attempt log; the
 final headless status must refer to the final attempt, not an earlier PASS.
 Separate the compatibility result from a subsequent Docker packaging error.
 
+### Deterministic incompatibility and Manager retry
+
+When a Manager-initiated build fails and the outer FRIEND retry loop decides
+whether to retry, check the current attempt's validated binary-inspection
+report **before** the existing `CPU_FEATURE_MISSING` branch. Stop further
+attempts only when the report confirms an actually executed unsupported CPU
+instruction (`SIGILL` with the defined trusted test evidence). `WARN`,
+`UNTESTED`, `SKIPPED`, missing or invalid reports, or an unrelated build failure
+do not qualify; preserve the existing retry policy and existing
+`CPU_FEATURE_MISSING` handling. Do not change the build return code merely
+because an advisory inspection found a problem. The check itself still runs at
+the completed temporary-initrd stage, not before the build. Associate evidence
+with a unique attempt and artifact hash; do not trust a marker in arbitrary
+build output or a stale report. Test confirmed failure, each non-failure state,
+corrupt/stale reports, unrelated failures, and existing CPU-feature rejection.
+
 The summary states observed AVX/BMI2 availability, outcome, counts of checked,
 warning and untested items, and report location where available. Use `SKIPPED`
 with the AVX/BMI2 reason when auto mode does not run; use `UNTESTED` for unknown
