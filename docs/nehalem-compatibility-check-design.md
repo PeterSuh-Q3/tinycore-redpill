@@ -45,6 +45,28 @@ inspection tools produce an explicit `UNTESTED` warning; the ordinary loader
 build continues by default. Confirmed failures and safe publication/rollback
 behavior require explicit integration testing before enforcing a hard stop.
 
+### Always-visible final build summary
+
+Keep detailed inspection output governed by the existing `VERBOSE` setting, but
+retain the result separately and print a concise compatibility summary at the
+very end of the user-visible loader build log, including when `VERBOSE` is OFF.
+Integrate at the actual outer build completion/failure boundary, after ordinary
+build output, rather than inside a subshell whose output may be suppressed.
+Preserve the original build exit status and avoid duplicate summaries on nested
+traps or multiple return paths. Record the same final result in the build log and
+show the report path when a report was actually created.
+
+The summary states observed AVX/BMI2 availability, outcome, counts of checked,
+warning and untested items, and report location where available. Use `SKIPPED`
+with the AVX/BMI2 reason when auto mode does not run; use `UNTESTED` for unknown
+CPU features or unavailable inspection tools, with the specific reason. If the
+build fails before reaching the check, show `NOT RUN — loader build failed before
+compatibility check`, not PASS or SKIPPED. Final output is best effort: forced
+termination, power loss, or an uncatchable signal can prevent the summary.
+Verification must cover VERBOSE ON/OFF, normal success, auto skip, unavailable
+features/tools, confirmed failure, build failure before the check, and unchanged
+exit codes; assert that no subsequent build output displaces the final summary.
+
 ## 2. Release-image check
 
 Proposed entry point: `tools/check-release-image-nehalem.sh`.
