@@ -311,6 +311,14 @@ function migrate_ipsettings_schema() {
         write_user_config_json "${cfg}" "${json}" || return 1
     fi
 
+    # The repository template shows one blank NIC object to document the
+    # current schema. It is only a placeholder, not a configured static NIC;
+    # remove incomplete entries before the menu/runtime counts them.
+    json=$(jq 'if (.ipsettings|type) == "array" then
+                .ipsettings = [.ipsettings[] | select((.ipiface // "") != "" and (.ipaddr // "") != "")]
+              else . end' "${cfg}") || return 1
+    write_user_config_json "${cfg}" "${json}" || return 1
+
     # 배열 원소에 아직 ipdns가 남아있으면(NIC별 DNS 입력을 받던 중간 스키마)
     # 첫 값을 전역 .netdns.ipdns로 승격하고 원소들에서는 제거한다. primary가
     # 하나도 없으면(과거 배열 스키마 실험판 등) 첫 항목을 primary로 승격하는

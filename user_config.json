@@ -27,11 +27,19 @@
     "tcbautoupd": "true",
     "prevent_init": "OFF"    
   }, 
-  "ipsettings": {
-    "ipset": "",
-    "ipaddr": "",
-    "ipgw": "",
-    "ipdns": "",
+  "ipsettings": [
+    {
+      "ipset": "",
+      "ipiface": "",
+      "ipaddr": "",
+      "ipgw": "",
+      "primary": false
+    }
+  ],
+  "netdns": {
+    "ipdns": ""
+  },
+  "netproxy": {
     "ipproxy": ""
   },
   "extra_cmdline": {
