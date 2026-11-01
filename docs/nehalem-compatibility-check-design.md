@@ -12,11 +12,16 @@ Nehalem and generic x86-64 baseline are not interchangeable claims.
 
 Proposed entry point: `tools/check-loader-build-nehalem.sh`.
 
-After selected addons and modules have been assembled and before final boot
-payload publication, inspect the actual generated build artifacts. Determine the
-safe insertion point after tracing the current build's temporary files, commits,
-failure handling, and paired `functions.sh` / `functions_t.sh` behavior. A check
-failure must not damage or silently replace a previously working loader.
+After selected addons and modules have been assembled, inspect the actual
+generated build artifacts. In `buildloader()`, inspect the validated temporary
+`INITRD_TMP` after the final ramdisk is assembled and before it is written to
+P3's `initrd-dsm`. This check reads the temporary artifact without modifying it.
+Apply integration consistently to both `functions.sh` and `functions_t.sh`.
+
+**No P1/P2 backup, recovery, or whole-loader rollback is added.** Earlier build
+steps may already have written boot files before this check. If a loader build
+fails, retain the existing `redpill-load` cleanup and rebuild-from-the-beginning
+procedure; do not claim the previous complete loader remains recoverable.
 
 Default `--auto` mode reads CPU features exposed **inside the running builder**:
 
@@ -42,8 +47,16 @@ kernel compatibility from user-space instruction checks.
 
 No automatic package install or arbitrary binary execution. Missing optional
 inspection tools produce an explicit `UNTESTED` warning; the ordinary loader
-build continues by default. Confirmed failures and safe publication/rollback
-behavior require explicit integration testing before enforcing a hard stop.
+build continues. Initially the compatibility check is advisory, including a
+confirmed finding: record its severity and evidence without changing the
+existing build exit status or failure cleanup. Any later hard-stop policy needs
+separate approval and must not imply P1/P2 rollback.
+
+Run inspection from the shared build path, not only the interactive menu:
+Manager's headless `rploader build` can bypass `make_with_progress()`. Provide
+and test an appropriate headless result/log path as well. Ship the checker and
+any shared helper in `my.sh.gz`, Alpine overlay and Docker builder distribution
+paths; a missing checker reports `UNTESTED`, never a false pass.
 
 ### Always-visible final build summary
 
@@ -53,8 +66,13 @@ very end of the user-visible loader build log, including when `VERBOSE` is OFF.
 Integrate at the actual outer build completion/failure boundary, after ordinary
 build output, rather than inside a subshell whose output may be suppressed.
 Preserve the original build exit status and avoid duplicate summaries on nested
-traps or multiple return paths. Record the same final result in the build log and
-show the report path when a report was actually created.
+traps or multiple return paths. The build executes in a `tee` pipeline, so pass
+the result through a unique per-build result file rather than relying on shell
+variables crossing the pipeline. Do not reuse stale results. Record the same
+final result in the build log and show the report path when actually created.
+Cover interactive completion and failure, plus Docker packaging success, failure
+and early exit. On the interactive path, show the summary before the keypress
+prompt while keeping it the final entry in `zlastbuild.log`.
 
 The summary states observed AVX/BMI2 availability, outcome, counts of checked,
 warning and untested items, and report location where available. Use `SKIPPED`
