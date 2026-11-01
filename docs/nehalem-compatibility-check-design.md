@@ -58,6 +58,41 @@ and test an appropriate headless result/log path as well. Ship the checker and
 any shared helper in `my.sh.gz`, Alpine overlay and Docker builder distribution
 paths; a missing checker reports `UNTESTED`, never a false pass.
 
+### Execution and distribution contracts
+
+Interactive and Docker menu builds run `make_with_progress()` -> `my()` ->
+`rploader build` -> `buildloader()`. FRIEND's Manager auto-rebuild instead
+invokes `my()` from its own shell and may retry up to three times. Invoke the
+inspection at the common `buildloader()` temporary-initrd boundary; each outer
+entry point is responsible for publishing its own final result. Inspect FRIEND's
+actual retry and log finalization flow before changing `tcrpfriend`; do not
+assume a message emitted inside `buildloader()` is its final visible log entry.
+Preserve existing timeout, retry, exit status and cleanup behavior.
+
+The checker accepts `--auto` or `--force`, `--initrd` naming the completed
+temporary artifact, and `--report` naming a build-specific report. Treat the
+report as untrusted data, never source it as shell code. An absent, incomplete,
+malformed or mismatched report is `UNTESTED`, not PASS. A safe report identifies
+the build attempt, artifact hash, CPU gate decision, per-file outcomes and
+omissions. Publish it atomically to a private per-attempt location and avoid
+stale results or collisions. Failure to create a report is advisory and must
+not modify the loader build's existing exit code.
+
+Distribution must be verified for each supported environment:
+
+| Path | Required delivery and verification |
+| --- | --- |
+| Existing loader update | Include checker and shared library in `my.sh.gz` under `/home/tc/tools/`; verify update extraction and mode. |
+| New Alpine image | Include the same files in `localhost.apkovl.tar.gz`; verify content, ownership and execution permissions without changing existing privileged overlay ownership. |
+| Docker builder | Fetch checker and dependencies from the same pinned source revision as `functions.sh`; install them and record/verify their hashes in builder metadata. Existing builder images missing them remain `UNTESTED`, not build failures. |
+| FRIEND headless rebuild | Verify the refresh delivers the checker; retain separate results for each attempt, and report missing checker as `UNTESTED`. |
+
+The Alpine packaging workflow explicitly enumerates files for `my.sh.gz` and
+copies overlay contents separately; updating only one list is insufficient.
+Docker builder changes belong to the separate `mshell-manager` worktree; FRIEND
+retry/log changes, if required, belong to `tcrpfriend`. Do not infer that a
+source-repository commit updates an already published Docker image or loader.
+
 ### Always-visible final build summary
 
 Keep detailed inspection output governed by the existing `VERBOSE` setting, but
@@ -73,6 +108,9 @@ final result in the build log and show the report path when actually created.
 Cover interactive completion and failure, plus Docker packaging success, failure
 and early exit. On the interactive path, show the summary before the keypress
 prompt while keeping it the final entry in `zlastbuild.log`.
+Each FRIEND retry gets a distinct report and corresponding attempt log; the
+final headless status must refer to the final attempt, not an earlier PASS.
+Separate the compatibility result from a subsequent Docker packaging error.
 
 The summary states observed AVX/BMI2 availability, outcome, counts of checked,
 warning and untested items, and report location where available. Use `SKIPPED`
@@ -153,6 +191,11 @@ the tested image and distributed artifacts must be traceable by hash.
    invalid ELF, nested archives, corrupt images, missing tools, and failed mounts.
 6. Validate representative actual images and DSM builds. Test Nehalem execution
    and physical boot where available; test `.ko` loading on matching DSM kernels.
+7. Verify the actual `my.sh.gz`, Alpine overlay, and Docker image include matching
+   checker files and hashes. Test an older installation with a missing checker.
+8. Exercise interactive VERBOSE ON/OFF, Docker packaging success/failure, and
+   FRIEND headless retries, including failure before inspection, no stale result,
+   final log placement and unchanged original build return status.
 
 No implementation, package rebuild, release, or deployment is authorized by this
 design document alone.
