@@ -93,11 +93,14 @@ Docker builder changes belong to the separate `mshell-manager` worktree; FRIEND
 retry/log changes, if required, belong to `tcrpfriend`. Do not infer that a
 source-repository commit updates an already published Docker image or loader.
 
-### Always-visible final build summary
+### Always-visible final build result
 
-Keep detailed inspection output governed by the existing `VERBOSE` setting, but
-retain the result separately and print a concise compatibility summary at the
-very end of the user-visible loader build log, including when `VERBOSE` is OFF.
+Keep the result separately. On the interactive/Docker menu path, show a valid
+machine-readable report once at the very end of the user-visible loader build
+log, including when `VERBOSE` is OFF. Do not also print a duplicate summary
+after the report. If the report is missing or invalid, print a concise
+`UNTESTED` or `NOT RUN` result instead. FRIEND's headless path may retain a
+single concise summary of its attempt rather than dumping the full JSON.
 Integrate at the actual outer build completion/failure boundary, after ordinary
 build output, rather than inside a subshell whose output may be suppressed.
 Preserve the original build exit status and avoid duplicate summaries on nested
@@ -106,7 +109,7 @@ the result through a unique per-build result file rather than relying on shell
 variables crossing the pipeline. Do not reuse stale results. Record the same
 final result in the build log and show the report path when actually created.
 Cover interactive completion and failure, plus Docker packaging success, failure
-and early exit. On the interactive path, show the summary before the keypress
+and early exit. On the interactive path, show the result before the keypress
 prompt while keeping it the final entry in `zlastbuild.log`.
 Each FRIEND retry gets a distinct report and corresponding attempt log; the
 final headless status must refer to the final attempt, not an earlier PASS.
@@ -134,10 +137,10 @@ with the AVX/BMI2 reason when auto mode does not run; use `UNTESTED` for unknown
 CPU features or unavailable inspection tools, with the specific reason. If the
 build fails before reaching the check, show `NOT RUN — loader build failed before
 compatibility check`, not PASS or SKIPPED. Final output is best effort: forced
-termination, power loss, or an uncatchable signal can prevent the summary.
+termination, power loss, or an uncatchable signal can prevent the final result.
 Verification must cover VERBOSE ON/OFF, normal success, auto skip, unavailable
 features/tools, confirmed failure, build failure before the check, and unchanged
-exit codes; assert that no subsequent build output displaces the final summary.
+exit codes; assert that no subsequent build output displaces the final result.
 
 ## 2. Release-image check
 

@@ -2419,12 +2419,24 @@ function dhcp_freeze() {
 #################################################################################
 # Build with Progress Bar
 #################################################################################
+show_nehalem_build_result() {
+    local report="${1:-}" attempt="${2:-}" log="${3:-/home/tc/zlastbuild.log}" summary_tool="${4:-/home/tc/tools/nehalem-report-summary.sh}" summary
+    summary=$("$summary_tool" "$report" "$attempt" 2>/dev/null) || summary='Nehalem compatibility: UNTESTED — summary unavailable'
+    if [ -n "$report" ] && [ -s "$report" ] && [[ "$summary" == *"; report=$report" ]]; then
+        # Print the validated report once, after all build and backup progress.
+        { echo "Nehalem compatibility report:"; cat "$report"; } | tee -a "$log"
+    else
+        # A missing/invalid report still needs a visible UNTESTED/NOT RUN result.
+        printf '%s\n' "$summary" | tee -a "$log"
+    fi
+}
+
 make_with_progress() {
     local ldr_mode="${1}"
     local prevent_param="${2}"
     local build_cmd=""
     local package_rc=0
-    local nehalem_dir nehalem_attempt nehalem_summary
+    local nehalem_dir nehalem_attempt
     nehalem_dir=$(mktemp -d /tmp/mshell-nehalem-build.XXXXXXXX 2>/dev/null) || nehalem_dir=""
     nehalem_attempt="$(basename "${nehalem_dir:-none}")"
     export MSHELL_NEHALEM_ATTEMPT="$nehalem_attempt"
@@ -2466,14 +2478,6 @@ make_with_progress() {
     fi
     set +o pipefail    
 
-    # VERBOSE=OFF discards the tee's terminal stream. Replay the complete
-    # machine-readable inspection report from the parent shell so it remains
-    # visible without changing the zlastbuild.log capture or build exit code.
-    if [ "$VERBOSE_MODE" = "OFF" ] && [ -s "$MSHELL_NEHALEM_REPORT" ]; then
-        echo "Nehalem compatibility report:"
-        cat "$MSHELL_NEHALEM_REPORT"
-    fi
-    
     # Always show exit code
     if [ $exit_code -eq 0 ]; then
         # my() runs on the left side of the tee pipeline, so it cannot update
@@ -2494,8 +2498,7 @@ make_with_progress() {
             package_rc=$?
             if [ "${package_rc}" -ne 0 ]; then
                 log_error "Remote package failed with exit code: ${package_rc}"
-                nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
-                printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
+                show_nehalem_build_result "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt"
                 rm -f /home/tc/buildstatus
                 return "${package_rc}"
             fi
@@ -2505,8 +2508,7 @@ log_build_step "Finished building" 12 12
         if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
             rm -f /home/tc/buildstatus
             echo "Remote loader package is ready in /out. Builder menu is now closed."
-            nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
-            printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
+            show_nehalem_build_result "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt"
             exit 0
         fi
     else
@@ -2514,8 +2516,7 @@ log_build_step "Finished building" 12 12
         show_backup_error_info
     fi
 
-    nehalem_summary=$(/home/tc/tools/nehalem-report-summary.sh "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt" 2>/dev/null) || nehalem_summary='Nehalem compatibility: UNTESTED — summary unavailable'
-    printf '%s\n' "$nehalem_summary" | tee -a /home/tc/zlastbuild.log
+    show_nehalem_build_result "$MSHELL_NEHALEM_REPORT" "$nehalem_attempt"
     
     echo "press any key to continue..."
     read answer
@@ -7905,9 +7906,8 @@ NCEOF
         : > "${MSHELL_NEHALEM_REPORT}.attempted" 2>/dev/null || true
         if [ -x /home/tc/tools/check-loader-build-nehalem.sh ]; then
             timeout 90 /home/tc/tools/check-loader-build-nehalem.sh --auto --initrd "$INITRD_TMP" --report "$MSHELL_NEHALEM_REPORT" || true
-            [ ! -s "$MSHELL_NEHALEM_REPORT" ] || cat "$MSHELL_NEHALEM_REPORT"
         else
-            echo "Nehalem check: UNTESTED (checker unavailable)"
+            : # The final build result reports that the checker was unavailable.
         fi
     fi
     if ! sudo dd if="$INITRD_TMP" of="/mnt/${loaderdisk}3/initrd-dsm" conv=fsync status=progress; then
