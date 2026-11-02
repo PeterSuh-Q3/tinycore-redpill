@@ -1,0 +1,48 @@
+#include <windows.h>
+
+1 24 "application.manifest"
+
+#define IDI_ICON1 101
+#define IDD_ABOUTBOX 2004
+
+IDI_ICON1 ICON "SynoXtract.ico"
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 300, 110
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About SynoXtract"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "", 2005, "Static", SS_ICON | SS_REALSIZEIMAGE, 10, 10, 85, 85
+    LTEXT           "SynoXtract GUI v1.1 - pRT", -1, 100, 14, 150, 8, SS_NOPREFIX
+    LTEXT           "Simple GUI for SynoXtract", -1, 100, 28, 150, 16
+    CONTROL         "<a href=""https://github.com/prt1999/SynoXtract"">https://github.com/prt1999/SynoXtract</a>", 2006, "SysLink", WS_TABSTOP | WS_GROUP, 100, 58, 150, 10
+    DEFPUSHBUTTON   "OK", IDOK, 240, 85, 50, 14, WS_GROUP
+END
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,1,0,0
+PRODUCTVERSION  1,1,0,0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0x0L
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "pRT"
+            VALUE "FileDescription", "SynoXtract GUI - Synology .pat/.spk extractor"
+            VALUE "FileVersion", "1.1.0.0"
+            VALUE "InternalName", "synoxtract-gui"
+            VALUE "OriginalFilename", "synoxtract-gui.exe"
+            VALUE "ProductName", "SynoXtract"
+            VALUE "ProductVersion", "1.1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
