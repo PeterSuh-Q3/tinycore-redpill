@@ -7905,8 +7905,8 @@ NCEOF
             echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
 
-        # Replace the one affected module in the extracted DSM ramdisk before
-        # compression: xhci-hcd loads before the all-modules install hook can overwrite it.
+        # Replace modules in the extracted DSM ramdisk before compression: USB
+        # drivers load before the all-modules install hook can overwrite them.
         # Keep the legacy DSM 7.3 custom-kernel path and also cover the DSM
         # 7.3/7.4 detour kernel, whose signature is in P3 zImage-dsm, not P1.
         if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && \
@@ -7914,21 +7914,25 @@ NCEOF
              [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; }; then
             _USB_TGZ="${rdtemp}/exts/all-modules/${ORIGIN_PLATFORM}-${DSMVER}-${KVER}.tgz"
             if [ -s "${_USB_TGZ}" ]; then
-                echo "[BMI2-fix] Replacing early xhci-hcd.ko from ${_USB_TGZ} before initrd compression"
-                _EARLY_MOD="xhci-hcd.ko"
+                echo "[BMI2-fix] Replacing early DSM modules from ${_USB_TGZ} before initrd compression"
+                _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
                 _TMPUSB=$(mktemp -d) || return 99
-                sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" "${_EARLY_MOD}" >/dev/null 2>&1
+                sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
                 if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
-                    if [ ! -s "${_TMPUSB}/${_EARLY_MOD}" ]; then
-                        echo "[BMI2-fix] missing required early module ${_EARLY_MOD} in ${_USB_TGZ}" >&2
-                        rm -rf "${_TMPUSB}"
-                        return 99
+                    for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                        if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
+                            echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
+                            rm -rf "${_TMPUSB}"
+                            return 99
+                        fi
+                    done
+                fi
+                for _MOD in ${_USB_MODS}; do
+                    if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
+                        echo "[BMI2-fix] Replaced: ${_MOD}"
                     fi
-                fi
-                if [ -f "${_TMPUSB}/${_EARLY_MOD}" ]; then
-                    sudo cp -f "${_TMPUSB}/${_EARLY_MOD}" "$rdtemp/usr/lib/modules/${_EARLY_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
-                    echo "[BMI2-fix] Replaced: ${_EARLY_MOD}"
-                fi
+                done
                 rm -rf "${_TMPUSB}"
             elif [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
                 echo "[BMI2-fix] all-modules archive is missing; cannot safely boot detour kernel" >&2
