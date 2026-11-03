@@ -172,7 +172,6 @@ build="alpine-redpill"
 DETOURBMI2_TEST_VERSION="1.4.7.0"
 DETOURBMI2_REDPILL_BRANCH="master"
 DETOURBMI2_REDPILL_COMMIT="b5d2b814632994e53675c0c2b4977543b41eae93"
-DETOURBMI2_ASSET_COMMIT="4e14b527c4625f850ead7b7dc73e89b8d2177958"
 DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -1044,7 +1043,7 @@ function history() {
     1.4.6.1 Improve md0 reporting and expansion and review disk mappings
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
-    1.4.7.0 Test-only detourbmi2 pilot: clone the pinned redpill-load test branch, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified private gzip assets
+    1.4.7.0 Test-only detourbmi2 pilot: clone the pinned redpill-load test branch, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified release gzip assets
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -4672,65 +4671,34 @@ function prepareDetourBmi2TestLoader() {
     echo "[detourbmi2] using redpill-load master@${current} for MSHELL test ${rploaderver}"
 }
 
-# Download one private kernel asset at the immutable asset-repository commit.
-# The read-only PAT is entered through /dev/tty, written only to a mode-600
-# config in tmpfs for curl, and never placed in argv, environment, logs, or disk.
-function detourBmi2FetchPrivateContent() {
-    local cfg="$1" url="$2" destination="$3" headers="${3}.headers" status location
-    status="$(curl --config "${cfg}" --header 'Accept: application/vnd.github.raw+json' \
-        --header 'X-GitHub-Api-Version: 2022-11-28' --dump-header "${headers}" \
-        --output "${destination}" --write-out '%{http_code}' "${url}")" || {
-            rm -f "${headers}" "${destination}"
-            return 1
-        }
-    case "${status}" in
-        200)
-            rm -f "${headers}"
-            return 0 ;;
-        301|302|303|307|308)
-            # The GitHub API can redirect raw content to object storage. Never
-            # forward the PAT on that second request; only fetch the HTTPS URL.
-            location="$(awk 'tolower($1)=="location:" {sub(/\r$/, "", $2); value=$2} END {print value}' "${headers}")"
-            rm -f "${headers}" "${destination}"
-            [[ "${location}" == https://* ]] || return 1
-            curl --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
-                --retry 3 --retry-delay 2 --output "${destination}" "${location}" ;;
-        *)
-            rm -f "${headers}" "${destination}"
-            echo "[detourbmi2] GitHub API returned HTTP ${status}" >&2
-            return 1 ;;
+# Follow the public repository's latest non-prerelease release. No end-user
+# credential is required; the pinned manifest and per-file SHA-256 checks
+# remain mandatory, so changed asset sets fail closed until this pin is updated.
+function detourBmi2FetchPublicAsset() {
+    local filename="$1" destination="$2"
+    local url="https://github.com/PeterSuh-Q3/redpill-load/releases/latest/download/${filename}"
+    case "${filename}" in manifest.json|bzImage-*.gz) ;; *)
+        echo "[detourbmi2] refusing unexpected public asset name: ${filename}" >&2
+        return 1 ;;
     esac
+    curl --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
+        --retry 3 --retry-delay 2 --output "${destination}" "${url}"
 }
 
 function fetchDetourBmi2TestAsset() (
     local model="$1" platform="$2" release="$3" kernel="$4"
-    local asset_root="/dev/shm/mshell-detourbmi2-${BASHPID}" manifest cfg token entry filename compressed_sha image_sha url actual image_tmp
+    local asset_root="/dev/shm/mshell-detourbmi2-${BASHPID}" manifest entry filename compressed_sha image_sha actual image_tmp
     mkdir -m 700 "${asset_root}" || return 1
     manifest="${asset_root}/manifest.json"
-    cfg="${asset_root}/curl-auth.conf"
     image_tmp="${asset_root}/image.raw.tmp"
-    trap 'rm -f "${cfg:-}"; unset token' EXIT HUP INT TERM
+    trap 'rm -f "${image_tmp:-}"' EXIT HUP INT TERM
 
-    printf 'Private kernel asset read-only PAT: ' >/dev/tty 2>/dev/null || { echo "[detourbmi2] interactive terminal required to enter the private asset PAT" >&2; return 1; }
-    IFS= read -r -s token </dev/tty || { echo >&2; return 1; }
-    printf '\n' >/dev/tty
-    [[ "${token}" =~ ^github_pat_[A-Za-z0-9_]+$ || "${token}" =~ ^ghp_[A-Za-z0-9]+$ ]] || {
-        unset token
-        echo "[detourbmi2] token format is invalid" >&2
-        return 1
-    }
-    (umask 077; printf 'silent\nshow-error\nfail\nconnect-timeout = 15\nmax-time = 300\nretry = 3\nretry-delay = 2\nheader = "Authorization: Bearer %s"\n' "${token}" > "${cfg}") || { rm -f "${cfg}"; unset token; return 1; }
-    unset token
-
-    url="https://api.github.com/repos/PeterSuh-Q3/dsm-kernel-compat/contents/ext/detourbmi2-zImage/manifest.json?ref=${DETOURBMI2_ASSET_COMMIT}"
-    if ! detourBmi2FetchPrivateContent "${cfg}" "${url}" "${manifest}"; then
-        rm -f "${cfg}" "${manifest}"
-        echo "[detourbmi2] failed to download the private asset manifest" >&2
+    if ! detourBmi2FetchPublicAsset manifest.json "${manifest}"; then
+        echo "[detourbmi2] failed to download the public release manifest" >&2
         return 1
     fi
-    actual="$(sha256sum "${manifest}" | awk '{print $1}')" || { rm -f "${cfg}"; return 1; }
+    actual="$(sha256sum "${manifest}" | awk '{print $1}')" || return 1
     [ "${actual}" = "${DETOURBMI2_MANIFEST_SHA256}" ] || {
-        rm -f "${cfg}" "${manifest}"
         echo "[detourbmi2] manifest SHA-256 mismatch" >&2
         return 1
     }
@@ -4738,24 +4706,19 @@ function fetchDetourBmi2TestAsset() (
     entry="$(jq -er --arg model "${model}" --arg platform "${platform}" --arg release "${release}" \
         --arg kernel "${kernel%+}+" \
         '[.assets[] | select(.model==$model and .platform==$platform and .dsm_release==$release and .kernel_release==$kernel)] | if length==1 then .[0] else error("no unique compatible asset") end | [.filename,.sha256,.image_sha256] | @tsv' "${manifest}")" || {
-        rm -f "${cfg}" "${manifest}"
         echo "[detourbmi2] no unique asset for ${model}/${platform}/${release}/${kernel}" >&2
         return 1
     }
     IFS=$'\t' read -r filename compressed_sha image_sha <<< "${entry}"
     [[ "${filename}" =~ ^bzImage-${platform}-7\.[34]-5\.10\.55\.gz$ ]] && \
         [[ "${compressed_sha}" =~ ^[[:xdigit:]]{64}$ ]] && [[ "${image_sha}" =~ ^[[:xdigit:]]{64}$ ]] || {
-            rm -f "${cfg}" "${manifest}"
             echo "[detourbmi2] asset manifest entry is malformed" >&2
             return 1
         }
-    url="https://api.github.com/repos/PeterSuh-Q3/dsm-kernel-compat/contents/ext/detourbmi2-zImage/${filename}?ref=${DETOURBMI2_ASSET_COMMIT}"
-    if ! detourBmi2FetchPrivateContent "${cfg}" "${url}" "${asset_root}/${filename}"; then
-        rm -f "${cfg}"
-        echo "[detourbmi2] failed to download ${filename}" >&2
+    if ! detourBmi2FetchPublicAsset "${filename}" "${asset_root}/${filename}"; then
+        echo "[detourbmi2] failed to download public release asset ${filename}" >&2
         return 1
     fi
-    rm -f "${cfg}"
     actual="$(sha256sum "${asset_root}/${filename}" | awk '{print $1}')" || return 1
     [ "${actual}" = "${compressed_sha}" ] || { echo "[detourbmi2] compressed asset SHA-256 mismatch" >&2; return 1; }
     gzip -t "${asset_root}/${filename}" || { echo "[detourbmi2] downloaded asset is not valid gzip" >&2; return 1; }
