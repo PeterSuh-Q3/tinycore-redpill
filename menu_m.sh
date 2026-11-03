@@ -584,14 +584,39 @@ function mshellDetourBmi2ModeCandidate() {
 }
 
 function mshellDsmAvailableModes() {
-    local model="$1" release="$2" result method candidate
+    local model="$1" release="$2" result method candidate candidate_iml mode
+    local -a regular_modes=() custom_modes=()
     result=$(mshellDsmResolve options "${model}" "${release}") || return $?
-    printf '%s' "${result}" | jq -r '.allowed_modes[].id'
-    mshellDetourBmi2TestEnabled || return 0
-    for method in IML PML; do
-        candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" "all-modules:${method}") || continue
-        printf '%s' "${candidate}" | jq -r '.id'
-    done
+
+    # Preserve the catalog's existing order unless this is the test-only
+    # no-BMI2 case where all-modules:IML is exposed as a detour choice.
+    candidate_iml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:IML) || candidate_iml=""
+    if [ -z "${candidate_iml}" ]; then
+        printf '%s' "${result}" | jq -r '.allowed_modes[].id'
+        mshellDetourBmi2TestEnabled || return 0
+        for method in IML PML; do
+            candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" "all-modules:${method}") || continue
+            printf '%s' "${candidate}" | jq -r '.id'
+        done
+        return 0
+    fi
+
+    # The no-BMI2 popup should lead with the detour that preserves the
+    # all-modules pack (IML). Keep every custom-modules choice at the bottom.
+    printf '%s' "${candidate_iml}" | jq -r '.id'
+    while IFS= read -r mode; do
+        [ "${mode}" = all-modules:IML ] && continue
+        case "${mode}" in
+            custom-modules:*) custom_modes+=("${mode}") ;;
+            *) regular_modes+=("${mode}") ;;
+        esac
+    done < <(printf '%s' "${result}" | jq -r '.allowed_modes[].id')
+    candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:PML) || candidate=""
+    if [ -n "${candidate}" ]; then
+        regular_modes+=("$(printf '%s' "${candidate}" | jq -r '.id')")
+    fi
+    for mode in "${regular_modes[@]}"; do printf '%s\n' "${mode}"; done
+    for mode in "${custom_modes[@]}"; do printf '%s\n' "${mode}"; done
 }
 
 # Ordinary selections use standard validation. The test-only exception wraps
