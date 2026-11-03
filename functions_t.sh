@@ -4612,7 +4612,7 @@ function gitclone() {
 function prepareDetourBmi2TestLoader() {
     [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
 
-    local repo="/home/tc/redpill-load" dirty file current
+    local repo="/home/tc/redpill-load" dirty file current baseline_blob working_blob
     if [ ! -d "${repo}/.git" ]; then
         (cd /home/tc && gitclone) || return 1
     fi
@@ -4624,6 +4624,16 @@ function prepareDetourBmi2TestLoader() {
 
     dirty="$(git -C "${repo}" diff --name-only)"
     for file in ${dirty}; do
+        # menu_t.sh chmods the test checkout's shell scripts. Ignore and later
+        # restore a mode-only delta when the working-tree blob still matches
+        # HEAD; content changes continue through the strict allowlist below.
+        baseline_blob="$(git -C "${repo}" rev-parse "HEAD:${file}" 2>/dev/null)" || {
+            echo "[detourbmi2] cannot resolve tracked file ${file}; refusing branch switch" >&2; return 1;
+        }
+        working_blob="$(git -C "${repo}" hash-object -- "${repo}/${file}" 2>/dev/null)" || {
+            echo "[detourbmi2] cannot hash local file ${file}; refusing branch switch" >&2; return 1;
+        }
+        [ "${baseline_blob}" = "${working_blob}" ] && continue
         case "${file}" in
             build-loader.sh)
                 cmp -s "${repo}/build-loader.sh" "${repo}/build-loader_t.sh" || {
