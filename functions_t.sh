@@ -9647,6 +9647,29 @@ function remove_loader() {
 
 }
 
+function mshellDsmValidateBuildSelection() {
+    local model="$1" release="$2" module="$3" method="$4" options candidate
+    if [ "${rploaderver:-}" = "${DETOURBMI2_TEST_VERSION:-}" ] && [ -f /tmp/test_mode ]; then
+        case "${module}:${method}" in
+            all-modules:IML|all-modules:PML) ;;
+            *) mshellDsmValidate "${model}" "${release}" "${module}" "${method}"; return $? ;;
+        esac
+        options=$(mshellDsmResolve options "${model}" "${release}") || return $?
+        candidate=$(printf '%s' "${options}" | jq -ce --arg id "${module}:${method}" '
+            select(.target.kernel|startswith("5."))
+            | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
+            | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+                and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+            | if length==1 then .[0] else empty end' 2>/dev/null) || candidate=""
+        if [ -n "${candidate}" ]; then
+            printf '%s' "${options}" | jq --argjson selected "${candidate}" \
+                '. + {selected_mode:$selected} | del(.allowed_modes,.rejected_modes)'
+            return $?
+        fi
+    fi
+    mshellDsmValidate "${model}" "${release}" "${module}" "${method}"
+}
+
 function rploader() {
 
     getip
@@ -9667,7 +9690,7 @@ function rploader() {
 
     build)
         getvarsmshell "$(jq -r '.general.model' "$userconfigfile")-$(jq -r '.general.version' "$userconfigfile")" || return $?
-        mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+        mshellDsmValidateBuildSelection "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
             "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
             "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")" >/dev/null || return $?
         getvars $ORIGIN_PLATFORM
@@ -9692,7 +9715,7 @@ function rploader() {
         checkUserConfig
         mshellLoadDsmResolver || return $?
         local resolver_selection
-        resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+        resolver_selection=$(mshellDsmValidateBuildSelection "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
             "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
             "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")") || return $?
         getredpillko
@@ -9828,7 +9851,7 @@ function my() {
   local dsm_selection dsm_module dsm_method
   dsm_module=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
   dsm_method=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
-  dsm_selection=$(mshellDsmValidate "$MODEL" "${1#*-}" "$dsm_module" "$dsm_method") || return $?
+  dsm_selection=$(mshellDsmValidateBuildSelection "$MODEL" "${1#*-}" "$dsm_module" "$dsm_method") || return $?
 
 
   fi
