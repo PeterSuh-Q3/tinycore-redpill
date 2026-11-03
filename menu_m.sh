@@ -573,7 +573,9 @@ function mshellDetourBmi2TestEnabled() {
 function mshellDetourBmi2ModeCandidate() {
     local model="$1" release="$2" mode="$3" options
     mshellDetourBmi2TestEnabled || return 1
-    case "${mode}" in all-modules:IML|all-modules:PML) ;; *) return 1 ;; esac
+    # Detour BMI2 builds are IML-only: PML leaves vulnerable early DSM modules
+    # in the initrd and must never be offered as a detour choice.
+    [ "${mode}" = "all-modules:IML" ] || return 1
     options=$(mshellDsmResolve options "${model}" "${release}") || return 1
     printf '%s' "${options}" | jq -ce --arg id "${mode}" '
         select(.target.kernel|startswith("5."))
@@ -594,10 +596,8 @@ function mshellDsmAvailableModes() {
     if [ -z "${candidate_iml}" ]; then
         printf '%s' "${result}" | jq -r '.allowed_modes[].id'
         mshellDetourBmi2TestEnabled || return 0
-        for method in IML PML; do
-            candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" "all-modules:${method}") || continue
-            printf '%s' "${candidate}" | jq -r '.id'
-        done
+        candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:IML) || return 0
+        printf '%s' "${candidate}" | jq -r '.id'
         return 0
     fi
 
@@ -611,10 +611,6 @@ function mshellDsmAvailableModes() {
             *) regular_modes+=("${mode}") ;;
         esac
     done < <(printf '%s' "${result}" | jq -r '.allowed_modes[].id')
-    candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:PML) || candidate=""
-    if [ -n "${candidate}" ]; then
-        regular_modes+=("$(printf '%s' "${candidate}" | jq -r '.id')")
-    fi
     for mode in "${regular_modes[@]}"; do printf '%s\n' "${mode}"; done
     for mode in "${custom_modes[@]}"; do printf '%s\n' "${mode}"; done
 }
@@ -726,7 +722,7 @@ function selectversion () {
     selected=$(<"${TMP_PATH}/resp")
     mode="$(readConfigKey general modulename):$(readConfigKey general mlmethod)"
     if mshellDetourBmi2TestEnabled; then
-        for method in "${MLMETHOD:-IML}" IML PML; do
+        for method in "${MLMETHOD:-IML}" IML; do
             candidate=$(mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "all-modules:${method}") || continue
             mode="all-modules:${method}"
             break
@@ -762,7 +758,7 @@ function autoCorrectBmi2ModuleMode() {
     # normal menu or another test version.
     if mshellDetourBmi2TestEnabled; then
         local method candidate
-        for method in "${MLMETHOD:-IML}" IML PML; do
+        for method in "${MLMETHOD:-IML}" IML; do
             candidate=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" "all-modules:${method}") || continue
             old_module="${MDLNAME:-all-modules}"
             old_method="${MLMETHOD:-IML}"
