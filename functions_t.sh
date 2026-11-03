@@ -317,13 +317,37 @@ function migrate_ipsettings_schema() {
         write_user_config_json "${cfg}" "${json}" || return 1
     fi
 
-    # 배열 원소에 아직 ipdns가 남아있으면(NIC별 DNS 입력을 받던 중간 스키마)
-    # 첫 값을 전역 .netdns.ipdns로 승격하고 원소들에서는 제거한다. primary가
-    # 하나도 없으면(과거 배열 스키마 실험판 등) 첫 항목을 primary로 승격하는
-    # 안전망도 동일하게 유지 - "게이트웨이는 항상 정확히 1개" 불변식을 이
-    # 함수를 거치기만 하면 항상 보장한다.
+    # Drop incomplete static-IP placeholders before counting or applying them.
+    # A blank scaffold such as {ipset:"", ipiface:"", ipaddr:"", ...} was
+    # previously treated as a configured static network. That disabled DHCP's
+    # gateway route even though no static address or gateway could be applied.
+    # Keep only entries usable by apply_saved_static_ip(); require at least one
+    # valid gateway candidate so an incomplete static setup falls back to DHCP.
+    # For multiple NICs, retain all valid addresses and make the existing
+    # primary gateway owner win, or promote the first entry that has a gateway.
     json=$(jq '
-      (if ((.ipsettings|type)=="array") and (([.ipsettings[]? | select((.ipdns? // "") != "")] | length) > 0)
+      def valid_ipv4:
+        type == "string" and
+        test("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$");
+      def valid_cidr:
+        type == "string" and
+        test("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])/(3[0-2]|[12]?[0-9])$");
+      .ipsettings = (
+        [ .ipsettings[]?
+          | select(type == "object")
+          | select((.ipset // "static") == "static")
+          | select((.ipiface // "") | type == "string" and test("^eth[0-7]$"))
+          | select((.ipaddr // "") | valid_cidr)
+          | .ipset = "static"
+        ] as $entries
+        | ([ $entries | to_entries[] | select(.value.primary == true and (.value.ipgw | valid_ipv4)) ][0]
+           // [ $entries | to_entries[] | select(.value.ipgw | valid_ipv4) ][0]) as $primary
+        | if $primary == null then []
+          else [ $entries | to_entries[]
+                 | .value + {primary: (.key == $primary.key)} ]
+          end
+      )
+      | (if ((.ipsettings|type)=="array") and (([.ipsettings[]? | select((.ipdns? // "") != "")] | length) > 0)
               and ((.netdns.ipdns // "") == "")
           then .netdns.ipdns = ([.ipsettings[] | select((.ipdns? // "") != "")][0].ipdns)
           else . end)
@@ -3818,6 +3842,11 @@ function getlatestmshell() {
       
       echo "Updating m shell with latest updates"
       . /home/tc/functions.sh
+      if ! migrate_ipsettings_schema "${userconfigfile:-/home/tc/user_config.json}"; then
+        retval=3
+        msgalert "Failed to normalize saved IP settings after update"
+        return $retval
+      fi
       showlastupdate
       echo "y" | rploader backup
       
