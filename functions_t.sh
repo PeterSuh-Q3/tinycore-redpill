@@ -4723,9 +4723,20 @@ function prepareDetourBmi2TestLoader() {
                     echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
                 } ;;
             include/file.sh)
-                grep -q '\[curl-diag\]' "${repo}/include/file.sh" || {
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
-                } ;;
+                # Accept only the exact diagnostic patch generated below.
+                # A marker-only check could silently bless unrelated edits.
+                local expected_file
+                expected_file="$(mktemp /tmp/detourbmi2-file-sh.XXXXXX)" || return 1
+                git -C "${repo}" show "HEAD:${file}" > "${expected_file}" || {
+                    rm -f "${expected_file}"; return 1;
+                }
+                patchredpillload "${expected_file}"
+                if ! cmp -s "${expected_file}" "${repo}/${file}"; then
+                    rm -f "${expected_file}"
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2
+                    return 1
+                fi
+                rm -f "${expected_file}" ;;
             *)
                 echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2
                 return 1 ;;
@@ -4827,7 +4838,7 @@ function fetchDetourBmi2TestAsset() (
 # /home/tc/redpill-load는 tmpfs 위에 매 빌드마다 새로 clone되므로, clone 직후 이
 # 함수를 통해 로그가 남도록 패치한다 (원본 저장소를 직접 수정할 수 없어 로컬 패치).
 function patchredpillload() {
-    local f="/home/tc/redpill-load/include/file.sh"
+    local f="${1:-/home/tc/redpill-load/include/file.sh}"
     [ -f "$f" ] || return 0
 
     # (1) cpio 리패킹 실패 원인 로그 캡처
@@ -4860,12 +4871,26 @@ EOF
             awk -v n="$dl_line" -v repl="$newline" 'NR==n{print repl; next} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
         fi
     fi
+
+    # Keep the Alpine-specific retry policy after the guarded branch switch.
+    # menu.sh defers its early patch in test mode, so this is the single
+    # deterministic source for both fresh and already-prepared test checkouts.
+    if is_alpine; then
+        sed -i 's/--retry 5 /--retry 8 --retry-delay 3 --retry-all-errors /g' "$f"
+    fi
 }
 
 function gitdownload() {
 
     cd /home/tc
     git config --global http.sslVerify false    
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
+        # Test mode must not pull whichever branch an existing checkout happens
+        # to track. The guarded preparer fetches and switches to master, then
+        # reapplies only the known test overlays and diagnostic patch.
+        prepareDetourBmi2TestLoader
+        return $?
+    fi
     if [ -d "/home/tc/redpill-load" ]; then
         cecho y "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load

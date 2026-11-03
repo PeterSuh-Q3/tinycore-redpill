@@ -582,7 +582,15 @@ function gitdownload() {
     else
         gitclone
     fi
-    patch_rpt_download_retry
+    if [ "${oldver:-}" = "test" ] && [ -f /tmp/test_mode ]; then
+        # Test functions_t.sh switches/validates the checkout again at build
+        # time. Leave include/file.sh pristine here so that this early Alpine
+        # patch cannot be mistaken for an operator edit by that guarded switch.
+        # patchredpillload applies the required -n curl fix after the switch.
+        echo "Deferring Alpine file.sh patch until the guarded test checkout is prepared"
+    else
+        patch_rpt_download_retry
+    fi
 }
 
 function mmc_modprobe() {
