@@ -378,6 +378,9 @@ function apply_saved_static_ip() {
     # DHCP boot regains its normal gateway and DNS behaviour.
     configure_udhcpc_static_policy ""
     clear_udhcpc_source_route_hook
+    if ! restore_dhcp_default_route; then
+      echo "DHCP gateway is not ready; continuing with normal network retries."
+    fi
     return 1
   fi
 

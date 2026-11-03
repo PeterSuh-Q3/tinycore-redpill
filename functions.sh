@@ -496,6 +496,31 @@ function clear_udhcpc_source_route_hook() {
         /etc/udhcpc/post-renew/90-mshell-source-route
 }
 
+# Removing a saved static-IP policy does not replay an existing DHCP lease.
+# Ask the resident client to renew only when its gateway route is missing.
+function restore_dhcp_default_route() {
+    ip -4 route show default | grep -q '^default ' && return 0
+    local nic path pidfile pid cmdline requested=0 attempt
+    for path in /sys/class/net/eth*; do
+        [ -e "${path}/ifindex" ] || continue
+        nic="${path##*/}"
+        [ -n "$(ip -4 -o addr show dev "${nic}" scope global 2>/dev/null)" ] || continue
+        pidfile="/var/run/udhcpc.${nic}.pid"
+        [ -r "${pidfile}" ] || continue
+        pid=$(cat "${pidfile}" 2>/dev/null)
+        case "${pid}" in ''|*[!0-9]*) continue ;; esac
+        cmdline=$(sudo tr '\0' ' ' < "/proc/${pid}/cmdline" 2>/dev/null) || continue
+        case " ${cmdline} " in *"udhcpc "*"-i ${nic}"*) ;; *) continue ;; esac
+        sudo kill -USR1 "${pid}" 2>/dev/null && requested=1
+    done
+    [ "${requested}" -eq 1 ] || return 1
+    for attempt in 1 2 3 4 5; do
+        ip -4 route show default | grep -q '^default ' && return 0
+        sleep 1
+    done
+    return 1
+}
+
 # Reverts one interface to DHCP in the running FRIEND kernel: flushes any
 # static address left on it, kills whichever DHCP client (dhcpcd or BusyBox
 # udhcpc) might still be pointed elsewhere, and starts a fresh DHCP request.
