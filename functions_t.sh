@@ -171,7 +171,6 @@ build="alpine-redpill"
 # functions.sh path and production redpill-load branch unchanged.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
 DETOURBMI2_REDPILL_BRANCH="master"
-DETOURBMI2_REDPILL_COMMIT="190589cbbba2887ec14ecbf08c49c971f04aea49"
 DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -1043,7 +1042,7 @@ function history() {
     1.4.6.1 Improve md0 reporting and expansion and review disk mappings
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
-    1.4.7.0 Test-only detourbmi2 pilot: clone the pinned redpill-load test branch, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified release gzip assets
+    1.4.7.0 Test-only detourbmi2 pilot: use the latest redpill-load master for test builds, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified release gzip assets
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -4607,7 +4606,7 @@ function gitclone() {
 # menu_t.sh has its own startup clone routine and may already have fetched
 # redpill-load/master before this test-only functions_t.sh is sourced. At build
 # time, move only the known menu_t test copies back to their tracked baseline,
-# then check out the pinned master revision. Unrecognized local edits stop the
+# then check out the latest fetched master revision. Unrecognized local edits stop the
 # switch so this pilot cannot discard an operator's redpill-load work.
 function prepareDetourBmi2TestLoader() {
     [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
@@ -4666,14 +4665,10 @@ function prepareDetourBmi2TestLoader() {
         esac
     done
 
-    # Check the remote pin before resetting any local files. A stale pin or
-    # network error must leave the user's runtime addon JSON and overlays intact.
+    # Fetch the latest master before resetting any local files. A network error
+    # must leave the user's runtime addon JSON and overlays intact.
     git -C "${repo}" fetch --depth=1 origin "${DETOURBMI2_REDPILL_BRANCH}" || return 1
     current="$(git -C "${repo}" rev-parse FETCH_HEAD 2>/dev/null)"
-    [ "${current}" = "${DETOURBMI2_REDPILL_COMMIT}" ] || {
-        echo "[detourbmi2] fetched redpill-load commit ${current}; expected ${DETOURBMI2_REDPILL_COMMIT}" >&2
-        return 1
-    }
 
     if [ "${preserve_bundled_exts}" -eq 1 ]; then
         saved_bundled_exts="$(mktemp /tmp/detourbmi2-bundled-exts.XXXXXX)" || return 1
