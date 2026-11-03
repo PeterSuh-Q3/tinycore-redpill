@@ -27,15 +27,7 @@
     "tcbautoupd": "true",
     "prevent_init": "OFF"    
   }, 
-  "ipsettings": [
-    {
-      "ipset": "",
-      "ipiface": "",
-      "ipaddr": "",
-      "ipgw": "",
-      "primary": false
-    }
-  ],
+  "ipsettings": [],
   "netdns": {
     "ipdns": ""
   },
