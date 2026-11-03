@@ -7980,24 +7980,38 @@ NCEOF
             echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
 
-        # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules tgz에서
-        # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
-        # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
-        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ] && \
-           strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; then
-            _USB_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
-            if [ -n "${_USB_TGZ}" ]; then
-                echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_USB_TGZ}"
+        # Replace modules in the extracted DSM ramdisk before compression: USB
+        # drivers load before the all-modules install hook can overwrite them.
+        # Keep the legacy DSM 7.3 custom-kernel path and also cover the DSM
+        # 7.3/7.4 detour kernel, whose signature is in P3 zImage-dsm, not P1.
+        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && \
+           { { [ "${DSMVER}" = "7.3" ] && strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; } || \
+             [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; }; then
+            _USB_TGZ="${rdtemp}/exts/all-modules/${ORIGIN_PLATFORM}-${DSMVER}-${KVER}.tgz"
+            if [ -s "${_USB_TGZ}" ]; then
+                echo "[BMI2-fix] Replacing early DSM modules from ${_USB_TGZ} before initrd compression"
                 _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
-                _TMPUSB=$(mktemp -d)
+                _TMPUSB=$(mktemp -d) || return 99
                 sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                    for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                        if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
+                            echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
+                            rm -rf "${_TMPUSB}"
+                            return 99
+                        fi
+                    done
+                fi
                 for _MOD in ${_USB_MODS}; do
                     if [ -f "${_TMPUSB}/${_MOD}" ]; then
-                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
+                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
                         echo "[BMI2-fix] Replaced: ${_MOD}"
                     fi
                 done
                 rm -rf "${_TMPUSB}"
+            elif [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                echo "[BMI2-fix] all-modules archive is missing; cannot safely boot detour kernel" >&2
+                return 99
             fi
         fi
     fi
