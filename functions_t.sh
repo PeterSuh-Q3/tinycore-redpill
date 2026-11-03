@@ -170,7 +170,7 @@ build="alpine-redpill"
 # 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
 # functions.sh path and production redpill-load branch unchanged.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
-DETOURBMI2_REDPILL_BRANCH="codex/detourbmi2-kernel-routing"
+DETOURBMI2_REDPILL_BRANCH="master"
 DETOURBMI2_REDPILL_COMMIT="b5d2b814632994e53675c0c2b4977543b41eae93"
 DETOURBMI2_ASSET_COMMIT="4e14b527c4625f850ead7b7dc73e89b8d2177958"
 DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
@@ -4608,7 +4608,7 @@ function gitclone() {
 # menu_t.sh has its own startup clone routine and may already have fetched
 # redpill-load/master before this test-only functions_t.sh is sourced. At build
 # time, move only the known menu_t test copies back to their tracked baseline,
-# then check out the pinned test branch. Unrecognized local edits stop the
+# then check out the pinned master revision. Unrecognized local edits stop the
 # switch so this pilot cannot discard an operator's redpill-load work.
 function prepareDetourBmi2TestLoader() {
     [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
@@ -4669,7 +4669,7 @@ function prepareDetourBmi2TestLoader() {
     cp -f "${repo}/config/pats_t.json" "${repo}/config/pats.json" || return 1
     chmod +x "${repo}"/*.sh || return 1
     patchredpillload
-    echo "[detourbmi2] using redpill-load ${DETOURBMI2_REDPILL_BRANCH}@${current} for MSHELL test ${rploaderver}"
+    echo "[detourbmi2] using redpill-load master@${current} for MSHELL test ${rploaderver}"
 }
 
 # Download one private kernel asset at the immutable asset-repository commit.
