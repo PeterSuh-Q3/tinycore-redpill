@@ -171,7 +171,7 @@ build="alpine-redpill"
 # functions.sh path and production redpill-load branch unchanged.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
 DETOURBMI2_REDPILL_BRANCH="master"
-DETOURBMI2_REDPILL_COMMIT="b5d2b814632994e53675c0c2b4977543b41eae93"
+DETOURBMI2_REDPILL_COMMIT="d80b6d9f823a33e9ff8bf3c22c5200a591d98e96"
 DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -4613,6 +4613,7 @@ function prepareDetourBmi2TestLoader() {
     [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
 
     local repo="/home/tc/redpill-load" dirty file current baseline_blob working_blob
+    local saved_bundled_exts="" preserve_bundled_exts=0
     if [ ! -d "${repo}/.git" ]; then
         (cd /home/tc && gitclone) || return 1
     fi
@@ -4644,9 +4645,13 @@ function prepareDetourBmi2TestLoader() {
                     echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
                 } ;;
             bundled-exts.json)
-                cmp -s "${repo}/bundled-exts.json" "${repo}/bundled-exts_t.json" || {
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
-                } ;;
+                # This is live menu state: addon toggles and module selection
+                # intentionally rewrite it. Keep the user's exact JSON across
+                # the test-branch switch instead of treating it as source code.
+                jq -e 'type == "object"' "${repo}/${file}" >/dev/null 2>&1 || {
+                    echo "[detourbmi2] invalid runtime JSON in ${file}; refusing branch switch" >&2; return 1;
+                }
+                preserve_bundled_exts=1 ;;
             config/pats.json)
                 cmp -s "${repo}/config/pats.json" "${repo}/config/pats_t.json" || {
                     echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
@@ -4661,20 +4666,33 @@ function prepareDetourBmi2TestLoader() {
         esac
     done
 
-    # The only accepted dirty files above are generated test overlays or the
-    # existing diagnostic patch. They are recreated after switching branches.
-    for file in ${dirty}; do git -C "${repo}" checkout -- "${file}" || return 1; done
+    # Check the remote pin before resetting any local files. A stale pin or
+    # network error must leave the user's runtime addon JSON and overlays intact.
     git -C "${repo}" fetch --depth=1 origin "${DETOURBMI2_REDPILL_BRANCH}" || return 1
     current="$(git -C "${repo}" rev-parse FETCH_HEAD 2>/dev/null)"
     [ "${current}" = "${DETOURBMI2_REDPILL_COMMIT}" ] || {
         echo "[detourbmi2] fetched redpill-load commit ${current}; expected ${DETOURBMI2_REDPILL_COMMIT}" >&2
         return 1
     }
-    git -C "${repo}" checkout -B "${DETOURBMI2_REDPILL_BRANCH}" FETCH_HEAD || return 1
 
-    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || return 1
-    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || return 1
-    cp -f "${repo}/bundled-exts_t.json" "${repo}/bundled-exts.json" || return 1
+    if [ "${preserve_bundled_exts}" -eq 1 ]; then
+        saved_bundled_exts="$(mktemp /tmp/detourbmi2-bundled-exts.XXXXXX)" || return 1
+        cp -f "${repo}/bundled-exts.json" "${saved_bundled_exts}" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
+    fi
+
+    # Accepted generated test overlays and the diagnostic patch are recreated
+    # after switching. Runtime bundled-exts.json is backed up and restored.
+    for file in ${dirty}; do git -C "${repo}" checkout -- "${file}" || return 1; done
+    git -C "${repo}" checkout -B "${DETOURBMI2_REDPILL_BRANCH}" FETCH_HEAD || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
+
+    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
+    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
+    if [ "${preserve_bundled_exts}" -eq 1 ]; then
+        cp -f "${saved_bundled_exts}" "${repo}/bundled-exts.json" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
+        rm -f "${saved_bundled_exts}"
+    else
+        cp -f "${repo}/bundled-exts_t.json" "${repo}/bundled-exts.json" || return 1
+    fi
     cp -f "${repo}/config/pats_t.json" "${repo}/config/pats.json" || return 1
     chmod +x "${repo}"/*.sh || return 1
     patchredpillload
