@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.6.3"
-builddate="2026.11.01"
+rploaderver="1.4.7.0"
+builddate="2026.11.03"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -166,6 +166,14 @@ GDISK="$(command -v gdisk 2>/dev/null || echo /usr/sbin/gdisk)"
 # 계속 stale main에서 받아와 "menu.sh test 실행 시 v1.3.1.1로 회귀"하는
 # 사고가 실측 확인됨(152 실기, menu.sh의 UPDATE_BRANCH와 동일한 버그 패턴).
 build="alpine-redpill"
+
+# 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
+# functions.sh path and production redpill-load branch unchanged.
+DETOURBMI2_TEST_VERSION="1.4.7.0"
+DETOURBMI2_REDPILL_BRANCH="codex/detourbmi2-kernel-routing"
+DETOURBMI2_REDPILL_COMMIT="5124c3f7a285a28fcebbb20ad641a4928a5b5c4d"
+DETOURBMI2_ASSET_COMMIT="4e14b527c4625f850ead7b7dc73e89b8d2177958"
+DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
@@ -1036,6 +1044,7 @@ function history() {
     1.4.6.1 Improve md0 reporting and expansion and review disk mappings
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
+    1.4.7.0 Test-only detourbmi2 pilot: clone the pinned redpill-load test branch, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified private gzip assets
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -4577,7 +4586,11 @@ function getBus() {
 ###############################################################################
 # git clone redpill-load
 function gitclone() {
-    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    local branch="master"
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
+        branch="${DETOURBMI2_REDPILL_BRANCH}"
+    fi
+    git clone -b "${branch}" --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
     # clone 실패(또는 부분 실패로 .git 없는 손상된 디렉터리)를 여기서
     # 바로 잡지 않으면, 뒤이은 모든 단계(bundled-exts.json 읽기, 확장
     # 다운로드, redpill.ko 복사 등)가 존재하지 않거나 손상된
@@ -4591,6 +4604,167 @@ function gitclone() {
     fi
     patchredpillload
 }
+
+# menu_t.sh has its own startup clone routine and may already have fetched
+# redpill-load/master before this test-only functions_t.sh is sourced. At build
+# time, move only the known menu_t test copies back to their tracked baseline,
+# then check out the pinned test branch. Unrecognized local edits stop the
+# switch so this pilot cannot discard an operator's redpill-load work.
+function prepareDetourBmi2TestLoader() {
+    [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
+
+    local repo="/home/tc/redpill-load" dirty file current
+    if [ ! -d "${repo}/.git" ]; then
+        (cd /home/tc && gitclone) || return 1
+    fi
+    [ -d "${repo}/.git" ] || { echo "[detourbmi2] redpill-load clone is missing" >&2; return 1; }
+    if ! git -C "${repo}" diff --cached --quiet; then
+        echo "[detourbmi2] staged redpill-load changes found; refusing branch switch" >&2
+        return 1
+    fi
+
+    dirty="$(git -C "${repo}" diff --name-only)"
+    for file in ${dirty}; do
+        case "${file}" in
+            build-loader.sh)
+                cmp -s "${repo}/build-loader.sh" "${repo}/build-loader_t.sh" || {
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
+                } ;;
+            ext-manager.sh)
+                cmp -s "${repo}/ext-manager.sh" "${repo}/ext-manager_t.sh" || {
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
+                } ;;
+            bundled-exts.json)
+                cmp -s "${repo}/bundled-exts.json" "${repo}/bundled-exts_t.json" || {
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
+                } ;;
+            config/pats.json)
+                cmp -s "${repo}/config/pats.json" "${repo}/config/pats_t.json" || {
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
+                } ;;
+            include/file.sh)
+                grep -q '\[curl-diag\]' "${repo}/include/file.sh" || {
+                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
+                } ;;
+            *)
+                echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2
+                return 1 ;;
+        esac
+    done
+
+    # The only accepted dirty files above are generated test overlays or the
+    # existing diagnostic patch. They are recreated after switching branches.
+    for file in ${dirty}; do git -C "${repo}" checkout -- "${file}" || return 1; done
+    git -C "${repo}" fetch --depth=1 origin "${DETOURBMI2_REDPILL_BRANCH}" || return 1
+    current="$(git -C "${repo}" rev-parse FETCH_HEAD 2>/dev/null)"
+    [ "${current}" = "${DETOURBMI2_REDPILL_COMMIT}" ] || {
+        echo "[detourbmi2] fetched redpill-load commit ${current}; expected ${DETOURBMI2_REDPILL_COMMIT}" >&2
+        return 1
+    }
+    git -C "${repo}" checkout -B "${DETOURBMI2_REDPILL_BRANCH}" FETCH_HEAD || return 1
+
+    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || return 1
+    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || return 1
+    cp -f "${repo}/bundled-exts_t.json" "${repo}/bundled-exts.json" || return 1
+    cp -f "${repo}/config/pats_t.json" "${repo}/config/pats.json" || return 1
+    chmod +x "${repo}"/*.sh || return 1
+    patchredpillload
+    echo "[detourbmi2] using redpill-load ${DETOURBMI2_REDPILL_BRANCH}@${current} for MSHELL test ${rploaderver}"
+}
+
+# Download one private kernel asset at the immutable asset-repository commit.
+# The read-only PAT is entered through /dev/tty, written only to a mode-600
+# config in tmpfs for curl, and never placed in argv, environment, logs, or disk.
+function detourBmi2FetchPrivateContent() {
+    local cfg="$1" url="$2" destination="$3" headers="${3}.headers" status location
+    status="$(curl --config "${cfg}" --header 'Accept: application/vnd.github.raw+json' \
+        --header 'X-GitHub-Api-Version: 2022-11-28' --dump-header "${headers}" \
+        --output "${destination}" --write-out '%{http_code}' "${url}")" || {
+            rm -f "${headers}" "${destination}"
+            return 1
+        }
+    case "${status}" in
+        200)
+            rm -f "${headers}"
+            return 0 ;;
+        301|302|303|307|308)
+            # The GitHub API can redirect raw content to object storage. Never
+            # forward the PAT on that second request; only fetch the HTTPS URL.
+            location="$(awk 'tolower($1)=="location:" {sub(/\r$/, "", $2); value=$2} END {print value}' "${headers}")"
+            rm -f "${headers}" "${destination}"
+            [[ "${location}" == https://* ]] || return 1
+            curl --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
+                --retry 3 --retry-delay 2 --output "${destination}" "${location}" ;;
+        *)
+            rm -f "${headers}" "${destination}"
+            echo "[detourbmi2] GitHub API returned HTTP ${status}" >&2
+            return 1 ;;
+    esac
+}
+
+function fetchDetourBmi2TestAsset() (
+    local model="$1" platform="$2" release="$3" kernel="$4"
+    local asset_root="/dev/shm/mshell-detourbmi2-${BASHPID}" manifest cfg token entry filename compressed_sha image_sha url actual image_tmp
+    mkdir -m 700 "${asset_root}" || return 1
+    manifest="${asset_root}/manifest.json"
+    cfg="${asset_root}/curl-auth.conf"
+    image_tmp="${asset_root}/image.raw.tmp"
+    trap 'rm -f "${cfg:-}"; unset token' EXIT HUP INT TERM
+
+    printf 'Private kernel asset read-only PAT: ' >/dev/tty 2>/dev/null || { echo "[detourbmi2] interactive terminal required to enter the private asset PAT" >&2; return 1; }
+    IFS= read -r -s token </dev/tty || { echo >&2; return 1; }
+    printf '\n' >/dev/tty
+    [[ "${token}" =~ ^github_pat_[A-Za-z0-9_]+$ || "${token}" =~ ^ghp_[A-Za-z0-9]+$ ]] || {
+        unset token
+        echo "[detourbmi2] token format is invalid" >&2
+        return 1
+    }
+    (umask 077; printf 'silent\nshow-error\nfail\nconnect-timeout = 15\nmax-time = 300\nretry = 3\nretry-delay = 2\nheader = "Authorization: Bearer %s"\n' "${token}" > "${cfg}") || { rm -f "${cfg}"; unset token; return 1; }
+    unset token
+
+    url="https://api.github.com/repos/PeterSuh-Q3/dsm-kernel-compat/contents/ext/detourbmi2-zImage/manifest.json?ref=${DETOURBMI2_ASSET_COMMIT}"
+    if ! detourBmi2FetchPrivateContent "${cfg}" "${url}" "${manifest}"; then
+        rm -f "${cfg}" "${manifest}"
+        echo "[detourbmi2] failed to download the private asset manifest" >&2
+        return 1
+    fi
+    actual="$(sha256sum "${manifest}" | awk '{print $1}')" || { rm -f "${cfg}"; return 1; }
+    [ "${actual}" = "${DETOURBMI2_MANIFEST_SHA256}" ] || {
+        rm -f "${cfg}" "${manifest}"
+        echo "[detourbmi2] manifest SHA-256 mismatch" >&2
+        return 1
+    }
+
+    entry="$(jq -er --arg model "${model}" --arg platform "${platform}" --arg release "${release}" \
+        --arg kernel "${kernel%+}+" \
+        '[.assets[] | select(.model==$model and .platform==$platform and .dsm_release==$release and .kernel_release==$kernel)] | if length==1 then .[0] else error("no unique compatible asset") end | [.filename,.sha256,.image_sha256] | @tsv' "${manifest}")" || {
+        rm -f "${cfg}" "${manifest}"
+        echo "[detourbmi2] no unique asset for ${model}/${platform}/${release}/${kernel}" >&2
+        return 1
+    }
+    IFS=$'\t' read -r filename compressed_sha image_sha <<< "${entry}"
+    [[ "${filename}" =~ ^bzImage-${platform}-7\.[34]-5\.10\.55\.gz$ ]] && \
+        [[ "${compressed_sha}" =~ ^[[:xdigit:]]{64}$ ]] && [[ "${image_sha}" =~ ^[[:xdigit:]]{64}$ ]] || {
+            rm -f "${cfg}" "${manifest}"
+            echo "[detourbmi2] asset manifest entry is malformed" >&2
+            return 1
+        }
+    url="https://api.github.com/repos/PeterSuh-Q3/dsm-kernel-compat/contents/ext/detourbmi2-zImage/${filename}?ref=${DETOURBMI2_ASSET_COMMIT}"
+    if ! detourBmi2FetchPrivateContent "${cfg}" "${url}" "${asset_root}/${filename}"; then
+        rm -f "${cfg}"
+        echo "[detourbmi2] failed to download ${filename}" >&2
+        return 1
+    fi
+    rm -f "${cfg}"
+    actual="$(sha256sum "${asset_root}/${filename}" | awk '{print $1}')" || return 1
+    [ "${actual}" = "${compressed_sha}" ] || { echo "[detourbmi2] compressed asset SHA-256 mismatch" >&2; return 1; }
+    gzip -t "${asset_root}/${filename}" || { echo "[detourbmi2] downloaded asset is not valid gzip" >&2; return 1; }
+    gzip -dc "${asset_root}/${filename}" > "${image_tmp}" || return 1
+    actual="$(sha256sum "${image_tmp}" | awk '{print $1}')" || return 1
+    [ "${actual}" = "${image_sha}" ] || { echo "[detourbmi2] decompressed image SHA-256 mismatch" >&2; return 1; }
+    rm -f "${image_tmp}"
+    printf '%s\n' "${asset_root}"
+)
 
 # redpill-load의 brp_pack_cpiord()는 기본적으로 find/cpio stderr를 /dev/null로 버려서
 # "Failed to repack flat ramdisk" 실패시 원인(디스크 공간부족/OOM 등)을 알 수 없다.
@@ -7140,11 +7314,47 @@ function _set_conf_kv() {
 }
 
 function buildloader() {
-    local resolver_selection
+    local resolver_selection detour_options detour_candidate detour_method detour_release
+    local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
+        prepareDetourBmi2TestLoader || return 99
+    fi
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
-    resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" "$MDLNAME" "$MLMETHOD") || return $?
+    detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] && \
+       [[ "${KVER}" == 5.* ]] && [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
+        # The resolver currently attaches BMI2 to all-modules modes. In this
+        # test lane only, accept the exact all-modules recipe when that is its
+        # sole rejection reason, then pair it with the pinned replacement
+        # kernel. Every other resolver rejection remains fatal.
+        detour_options="$(mshellDsmResolve options "${MODEL}" "${detour_release}")" || return 99
+        detour_method="${MLMETHOD}"
+        case "${detour_method}" in IML|PML) ;; *) detour_method="IML" ;; esac
+        detour_candidate="$(printf '%s' "${detour_options}" | jq -ce --arg id "all-modules:${detour_method}" '
+            [.rejected_modes[] | select(.id==$id and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")] |
+            if length==1 then .[0] else empty end' 2>/dev/null)" || detour_candidate=""
+        if [ -n "${detour_candidate}" ]; then
+            DETOURBMI2_ASSET_DIR="$(fetchDetourBmi2TestAsset "${MODEL}" "${ORIGIN_PLATFORM}" "${detour_release}" "${KVER}")" || return 99
+            [ -n "${DETOURBMI2_ASSET_DIR}" ] || { echo "[detourbmi2] asset download returned no directory" >&2; return 99; }
+            resolver_selection="$(printf '%s' "${detour_options}" | jq --argjson selected "${detour_candidate}" '.selected_mode=$selected')" || return 99
+            MDLNAME="all-modules"
+            MLMETHOD="${detour_method}"
+            if [ "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" != "all-modules" ]; then
+                writeConfigKey "general" "modulename" "all-modules" || return 99
+            fi
+            if [ "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")" != "${MLMETHOD}" ]; then
+                writeConfigKey "general" "mlmethod" "${MLMETHOD}" || return 99
+            fi
+            DETOURBMI2_PROFILE="detourbmi2"
+            echo "[detourbmi2] BMI2 is missing: keeping all-modules:${MLMETHOD}; only zImage-dsm will use the verified gzip kernel asset."
+        else
+            resolver_selection="$(mshellDsmValidate "$MODEL" "${detour_release}" "$MDLNAME" "$MLMETHOD")" || return $?
+        fi
+    else
+        resolver_selection="$(mshellDsmValidate "$MODEL" "${detour_release}" "$MDLNAME" "$MLMETHOD")" || return $?
+    fi
 
 
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
@@ -7223,9 +7433,37 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         echo "jun build option has been specified, so JUN MOD loader will be created"
         # jun's mod must patch using custom.gz from the first partition, so you need to fix the partition.
         sed -i "s/BRP_OUT_P2}\/\${BRP_CUSTOM_RD_NAME/BRP_OUT_P1}\/\${BRP_CUSTOM_RD_NAME/g" /home/tc/redpill-load/build-loader.sh
-        $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        if [ -n "${DETOURBMI2_PROFILE}" ]; then
+            if [ "$FRKRNL" = "NO" ]; then
+                sudo env BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            else
+                env BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            fi
+        else
+            $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        fi
     else
-        $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        if [ -n "${DETOURBMI2_PROFILE}" ]; then
+            if [ "$FRKRNL" = "NO" ]; then
+                sudo env BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            else
+                env BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            fi
+        else
+            $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        fi
     fi
 
     [ $? -ne 0 ] && echo "FAILED : Loader creation failed check the output for any errors" && exit 99

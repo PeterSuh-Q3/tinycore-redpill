@@ -562,10 +562,58 @@ function resolveLiveKver() {
     printf '%s' "$result" | jq -r '.target.kernel + "|" + .target.platform'
 }
 
+# The detour pilot is limited to menu_t.sh's test lane and one explicit
+# functions_t.sh version. Production resolver behavior remains unchanged.
+function mshellDetourBmi2TestEnabled() {
+    [ -f /tmp/test_mode ] && [ "${rploaderver:-}" = "1.4.7.0" ]
+}
+
+# Return a rejected all-modules catalog entry only for the precise detour case:
+# BMI2 is its sole rejection reason, and the target is DSM 7.3/7.4 on kernel 5.
+function mshellDetourBmi2ModeCandidate() {
+    local model="$1" release="$2" mode="$3" options
+    mshellDetourBmi2TestEnabled || return 1
+    case "${mode}" in all-modules:IML|all-modules:PML) ;; *) return 1 ;; esac
+    options=$(mshellDsmResolve options "${model}" "${release}") || return 1
+    printf '%s' "${options}" | jq -ce --arg id "${mode}" '
+        select(.target.kernel|startswith("5."))
+        | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
+        | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+            and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+        | if length==1 then .[0] else empty end' 2>/dev/null
+}
+
+function mshellDsmAvailableModes() {
+    local model="$1" release="$2" result method candidate
+    result=$(mshellDsmResolve options "${model}" "${release}") || return $?
+    printf '%s' "${result}" | jq -r '.allowed_modes[].id'
+    mshellDetourBmi2TestEnabled || return 0
+    for method in IML PML; do
+        candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" "all-modules:${method}") || continue
+        printf '%s' "${candidate}" | jq -r '.id'
+    done
+}
+
+# Ordinary selections use standard validation. The test-only exception wraps
+# the resolver's rejected entry as selected_mode; recipe data stays catalog sourced.
+function mshellDsmSelectionResult() {
+    local result options candidate rc
+    if result=$(mshellDsmValidate "$1" "$2" "$3" "$4" 2>/dev/null); then
+        printf '%s\n' "${result}"
+        return 0
+    else
+        rc=$?
+    fi
+    candidate=$(mshellDetourBmi2ModeCandidate "$1" "$2" "$3:$4") || return "${rc}"
+    options=$(mshellDsmResolve options "$1" "$2") || return $?
+    printf '%s' "${options}" | jq --argjson selected "${candidate}" \
+        '. + {selected_mode:$selected} | del(.allowed_modes,.rejected_modes)'
+}
+
 # Read-only validation: never silently substitute an unsupported module pack.
 function checkAndResetModuleName() {
     mshellLoadDsmResolver || return $?
-    mshellDsmValidate "$(readConfigKey general model)" "$(readConfigKey general version)" \
+    mshellDsmSelectionResult "$(readConfigKey general model)" "$(readConfigKey general version)" \
         "$(readConfigKey general modulename)" "$(readConfigKey general mlmethod)" >/dev/null
 }
 
@@ -576,7 +624,7 @@ function selectldrmode() {
     result=$(mshellDsmResolve options "$(readConfigKey general model)" "$(readConfigKey general version)") || return $?
     while IFS= read -r mode; do
         menu_options+=("$mode" "$mode")
-    done < <(printf '%s' "$result" | jq -r '.allowed_modes[].id')
+    done < <(mshellDsmAvailableModes "$(readConfigKey general model)" "$(readConfigKey general version)")
     if [ "${#menu_options[@]}" -eq 0 ]; then
         dialog --msgbox "No supported module mode for this target CPU/release." 8 70
         return 5
@@ -584,7 +632,7 @@ function selectldrmode() {
     dialog --clear --backtitle "$(backtitle)" --menu "Choose module mode" 0 0 \
         "$(dlgmenuheight $((${#menu_options[@]}/2)))" "${menu_options[@]}" 2>"${TMP_PATH}/resp" || return 1
     resp=$(<"${TMP_PATH}/resp")
-    mshellDsmValidate "$(readConfigKey general model)" "$(readConfigKey general version)" \
+    mshellDsmSelectionResult "$(readConfigKey general model)" "$(readConfigKey general version)" \
         "${resp%:*}" "${resp##*:}" >/dev/null || return $?
     MDLNAME="${resp%:*}"; MLMETHOD="${resp##*:}"
     mshellSaveDsmSelection "$(readConfigKey general model)" "$(readConfigKey general version)" "$MDLNAME" "$MLMETHOD" || return $?
@@ -595,7 +643,7 @@ function selectldrmode() {
 function mshellSaveDsmSelection() {
     local result tmp previous
     previous=$(cat "$userconfigfile") || return 6
-    result=$(mshellDsmValidate "$1" "$2" "$3" "$4") || return $?
+    result=$(mshellDsmSelectionResult "$1" "$2" "$3" "$4") || return $?
     tmp=$(mktemp "${userconfigfile}.resolver.XXXXXX") || return 6
     jq --arg model "$1" --arg version "$2" --arg module "$3" --arg method "$4" \
        --arg kernel "$(printf '%s' "$result" | jq -r '.target.kernel')" \
@@ -637,7 +685,7 @@ function syncBundledExtsModule() {
 ###############################################################################
 # Shows available dsm verwsion 
 function selectversion () {
-    local result release selected mode
+    local result release selected mode method candidate
     local -a menu_items=()
     mshellLoadDsmResolver || return $?
     result=$(mshellDsmResolve list "$MODEL") || return $?
@@ -652,11 +700,19 @@ function selectversion () {
         "$(dlgmenuheight $((${#menu_items[@]}/2)))" "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
     selected=$(<"${TMP_PATH}/resp")
     mode="$(readConfigKey general modulename):$(readConfigKey general mlmethod)"
+    if mshellDetourBmi2TestEnabled; then
+        for method in "${MLMETHOD:-IML}" IML PML; do
+            candidate=$(mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "all-modules:${method}") || continue
+            mode="all-modules:${method}"
+            break
+        done
+    fi
     # Choosing a new release may require an explicit new mode selection.
     result=$(mshellDsmResolve options "$MODEL" "$selected") || return $?
-    if ! printf '%s' "$result" | jq -e --arg mode "$mode" '.allowed_modes|any(.id==$mode)' >/dev/null; then
+    if ! printf '%s' "$result" | jq -e --arg mode "$mode" '.allowed_modes|any(.id==$mode)' >/dev/null && \
+       ! mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "$mode" >/dev/null 2>&1; then
         menu_items=()
-        while IFS= read -r mode; do menu_items+=("$mode" "$mode"); done < <(printf '%s' "$result" | jq -r '.allowed_modes[].id')
+        while IFS= read -r mode; do menu_items+=("$mode" "$mode"); done < <(mshellDsmAvailableModes "$MODEL" "$selected")
         dialog --menu "Choose a compatible module mode" 0 0 4 "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
         mode=$(<"${TMP_PATH}/resp")
     fi
@@ -674,6 +730,28 @@ function autoCorrectBmi2ModuleMode() {
     local result current_mode bmi2_missing fallback old_module old_method
     [ -n "${MODEL:-}" ] && [ -n "${BUILD:-}" ] || return 0
     mshellLoadDsmResolver || return 0
+
+    # In the 1.4.7.0 test lane, select all-modules automatically when its only
+    # incompatibility is BMI2. buildloader() then replaces zImage-dsm while
+    # keeping the all-modules initrd/module pack. This branch never runs in the
+    # normal menu or another test version.
+    if mshellDetourBmi2TestEnabled; then
+        local method candidate
+        for method in "${MLMETHOD:-IML}" IML PML; do
+            candidate=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" "all-modules:${method}") || continue
+            old_module="${MDLNAME:-all-modules}"
+            old_method="${MLMETHOD:-IML}"
+            if [ "${old_module}" != all-modules ] || [ "${old_method}" != "${method}" ]; then
+                if mshellSaveDsmSelection "${MODEL}" "${BUILD}" all-modules "${method}"; then
+                    MDLNAME=all-modules
+                    MLMETHOD="${method}"
+                    printf '[BMI2 test] CPU lacks BMI2; selected all-modules:%s with the detour kernel profile.\n' "${method}"
+                fi
+            fi
+            return 0
+        done
+        return 0
+    fi
 
     current_mode="${MDLNAME:-all-modules}:${MLMETHOD:-IML}"
     result=$(mshellDsmResolve options "${MODEL}" "${BUILD}") || return 0
