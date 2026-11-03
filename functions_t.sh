@@ -170,7 +170,6 @@ build="alpine-redpill"
 # 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
 # functions.sh path and production redpill-load branch unchanged.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
-DETOURBMI2_REDPILL_BRANCH="master"
 DETOURBMI2_MANIFEST_SHA256="99616c0a9e3121a710255338481e614eeebdb45bf45af07e97edb5c20879a74b"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
@@ -4651,11 +4650,7 @@ function getBus() {
 ###############################################################################
 # git clone redpill-load
 function gitclone() {
-    local branch="master"
-    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
-        branch="${DETOURBMI2_REDPILL_BRANCH}"
-    fi
-    git clone -b "${branch}" --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
     # clone 실패(또는 부분 실패로 .git 없는 손상된 디렉터리)를 여기서
     # 바로 잡지 않으면, 뒤이은 모든 단계(bundled-exts.json 읽기, 확장
     # 다운로드, redpill.ko 복사 등)가 존재하지 않거나 손상된
@@ -4670,105 +4665,39 @@ function gitclone() {
     patchredpillload
 }
 
-# menu_t.sh has its own startup clone routine and may already have fetched
-# redpill-load/master before this test-only functions_t.sh is sourced. At build
-# time, move only the known menu_t test copies back to their tracked baseline,
-# then check out the latest fetched master revision. Unrecognized local edits stop the
-# switch so this pilot cannot discard an operator's redpill-load work.
+# menu.sh and gitclone() already clone redpill-load/master. Apply the test
+# overlays in that checkout without fetching, resetting, or switching branches.
 function prepareDetourBmi2TestLoader() {
     [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
 
-    local repo="/home/tc/redpill-load" dirty file current baseline_blob working_blob
-    local saved_bundled_exts="" preserve_bundled_exts=0
+    local repo="/home/tc/redpill-load" current branch
     if [ ! -d "${repo}/.git" ]; then
         (cd /home/tc && gitclone) || return 1
     fi
     [ -d "${repo}/.git" ] || { echo "[detourbmi2] redpill-load clone is missing" >&2; return 1; }
-    if ! git -C "${repo}" diff --cached --quiet; then
-        echo "[detourbmi2] staged redpill-load changes found; refusing branch switch" >&2
+    branch="$(git -C "${repo}" branch --show-current)" || return 1
+    [ "${branch}" = "master" ] || {
+        echo "[detourbmi2] expected redpill-load/master, found ${branch:-detached}" >&2
         return 1
-    fi
-
-    dirty="$(git -C "${repo}" diff --name-only)"
-    for file in ${dirty}; do
-        # menu_t.sh chmods the test checkout's shell scripts. Ignore and later
-        # restore a mode-only delta when the working-tree blob still matches
-        # HEAD; content changes continue through the strict allowlist below.
-        baseline_blob="$(git -C "${repo}" rev-parse "HEAD:${file}" 2>/dev/null)" || {
-            echo "[detourbmi2] cannot resolve tracked file ${file}; refusing branch switch" >&2; return 1;
+    }
+    [ -s "${repo}/build-loader_t.sh" ] && [ -s "${repo}/ext-manager_t.sh" ] && [ -s "${repo}/config/pats_t.json" ] || {
+        echo "[detourbmi2] test loader files are missing" >&2
+        return 1
+    }
+    if [ -f "${repo}/bundled-exts.json" ] && ! git -C "${repo}" diff --quiet -- bundled-exts.json; then
+        jq -e 'type == "object"' "${repo}/bundled-exts.json" >/dev/null 2>&1 || {
+            echo "[detourbmi2] invalid runtime bundled-exts.json" >&2
+            return 1
         }
-        working_blob="$(git -C "${repo}" hash-object -- "${repo}/${file}" 2>/dev/null)" || {
-            echo "[detourbmi2] cannot hash local file ${file}; refusing branch switch" >&2; return 1;
-        }
-        [ "${baseline_blob}" = "${working_blob}" ] && continue
-        case "${file}" in
-            build-loader.sh)
-                cmp -s "${repo}/build-loader.sh" "${repo}/build-loader_t.sh" || {
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
-                } ;;
-            ext-manager.sh)
-                cmp -s "${repo}/ext-manager.sh" "${repo}/ext-manager_t.sh" || {
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
-                } ;;
-            bundled-exts.json)
-                # This is live menu state: addon toggles and module selection
-                # intentionally rewrite it. Keep the user's exact JSON across
-                # the test-branch switch instead of treating it as source code.
-                jq -e 'type == "object"' "${repo}/${file}" >/dev/null 2>&1 || {
-                    echo "[detourbmi2] invalid runtime JSON in ${file}; refusing branch switch" >&2; return 1;
-                }
-                preserve_bundled_exts=1 ;;
-            config/pats.json)
-                cmp -s "${repo}/config/pats.json" "${repo}/config/pats_t.json" || {
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2; return 1;
-                } ;;
-            include/file.sh)
-                # Accept only the exact diagnostic patch generated below.
-                # A marker-only check could silently bless unrelated edits.
-                local expected_file
-                expected_file="$(mktemp /tmp/detourbmi2-file-sh.XXXXXX)" || return 1
-                git -C "${repo}" show "HEAD:${file}" > "${expected_file}" || {
-                    rm -f "${expected_file}"; return 1;
-                }
-                patchredpillload "${expected_file}"
-                if ! cmp -s "${expected_file}" "${repo}/${file}"; then
-                    rm -f "${expected_file}"
-                    echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2
-                    return 1
-                fi
-                rm -f "${expected_file}" ;;
-            *)
-                echo "[detourbmi2] unexpected local edit in ${file}; refusing branch switch" >&2
-                return 1 ;;
-        esac
-    done
-
-    # Fetch the latest master before resetting any local files. A network error
-    # must leave the user's runtime addon JSON and overlays intact.
-    git -C "${repo}" fetch --depth=1 origin "${DETOURBMI2_REDPILL_BRANCH}" || return 1
-    current="$(git -C "${repo}" rev-parse FETCH_HEAD 2>/dev/null)"
-
-    if [ "${preserve_bundled_exts}" -eq 1 ]; then
-        saved_bundled_exts="$(mktemp /tmp/detourbmi2-bundled-exts.XXXXXX)" || return 1
-        cp -f "${repo}/bundled-exts.json" "${saved_bundled_exts}" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
-    fi
-
-    # Accepted generated test overlays and the diagnostic patch are recreated
-    # after switching. Runtime bundled-exts.json is backed up and restored.
-    for file in ${dirty}; do git -C "${repo}" checkout -- "${file}" || return 1; done
-    git -C "${repo}" checkout -B "${DETOURBMI2_REDPILL_BRANCH}" FETCH_HEAD || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
-
-    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
-    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
-    if [ "${preserve_bundled_exts}" -eq 1 ]; then
-        cp -f "${saved_bundled_exts}" "${repo}/bundled-exts.json" || { [ -z "${saved_bundled_exts}" ] || rm -f "${saved_bundled_exts}"; return 1; }
-        rm -f "${saved_bundled_exts}"
     else
         cp -f "${repo}/bundled-exts_t.json" "${repo}/bundled-exts.json" || return 1
     fi
+    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || return 1
+    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || return 1
     cp -f "${repo}/config/pats_t.json" "${repo}/config/pats.json" || return 1
     chmod +x "${repo}"/*.sh || return 1
-    patchredpillload
+    patchredpillload || return 1
+    current="$(git -C "${repo}" rev-parse --short HEAD)" || return 1
     echo "[detourbmi2] using redpill-load master@${current} for MSHELL test ${rploaderver}"
 }
 
@@ -4872,9 +4801,7 @@ EOF
         fi
     fi
 
-    # Keep the Alpine-specific retry policy after the guarded branch switch.
-    # menu.sh defers its early patch in test mode, so this is the single
-    # deterministic source for both fresh and already-prepared test checkouts.
+    # Keep the Alpine-specific retry policy after preparing the test checkout.
     if is_alpine; then
         sed -i 's/--retry 5 /--retry 8 --retry-delay 3 --retry-all-errors /g' "$f"
     fi
@@ -4885,9 +4812,7 @@ function gitdownload() {
     cd /home/tc
     git config --global http.sslVerify false    
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
-        # Test mode must not pull whichever branch an existing checkout happens
-        # to track. The guarded preparer fetches and switches to master, then
-        # reapplies only the known test overlays and diagnostic patch.
+        # Test mode uses the master checkout already prepared by menu.sh.
         prepareDetourBmi2TestLoader
         return $?
     fi

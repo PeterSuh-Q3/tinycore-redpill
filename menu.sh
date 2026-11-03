@@ -534,8 +534,7 @@ function nic_link_kick() {
 }
 
 function gitclone() {
-    local branch="${RPLOAD_BRANCH:-master}"
-    git clone -b "${branch}" --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
+    git clone -b master --single-branch --depth 1 --filter=blob:none https://github.com/PeterSuh-Q3/redpill-load.git
 }
 
 # redpill-load의 확장(extension) 다운로드 함수 rpt_download_remote()는
@@ -562,17 +561,19 @@ function gitdownload() {
     cd /home/tc
     git config --global http.sslVerify false
     if [ -d /home/tc/redpill-load ]; then
-        echo "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
-        if [ -n "${RPLOAD_BRANCH:-}" ]; then
-            # A previous --single-branch master clone has a refspec that does
-            # not create origin/<test branch>. Fetch that ref explicitly
-            # before checking it out instead of relying on FETCH_HEAD.
-            git fetch origin "${RPLOAD_BRANCH}:refs/remotes/origin/${RPLOAD_BRANCH}" && \
-              git checkout -B "${RPLOAD_BRANCH}" "origin/${RPLOAD_BRANCH}"
-        else
-            git pull
+        if [ "${oldver:-}" = "test" ] && [ -f /tmp/test_mode ]; then
+            [ "$(git branch --show-current)" = "master" ] || {
+                echo "[!] Test mode requires an existing redpill-load/master checkout."
+                cd /home/tc
+                return 1
+            }
+            echo "Using existing redpill-load/master checkout for test mode"
+            cd /home/tc
+            return 0
         fi
+        echo "Loader sources already downloaded, pulling latest"
+        git pull
         if [ $? -ne 0 ]; then
            cd /home/tc
            rploader clean
@@ -583,10 +584,8 @@ function gitdownload() {
         gitclone
     fi
     if [ "${oldver:-}" = "test" ] && [ -f /tmp/test_mode ]; then
-        # Test functions_t.sh switches/validates the checkout again at build
-        # time. Leave include/file.sh pristine here so that this early Alpine
-        # patch cannot be mistaken for an operator edit by that guarded switch.
-        # patchredpillload applies the required -n curl fix after the switch.
+        # Test functions_t.sh prepares this master checkout at build time.
+        # It applies the Alpine curl patch after the test overlays are ready.
         echo "Deferring Alpine file.sh patch until the guarded test checkout is prepared"
     else
         patch_rpt_download_retry
@@ -1059,11 +1058,7 @@ if [ "${offline}" = "NO" ]; then
       refresh_dsm_resolver || { echo "[!] Resolver update failed; keeping installed helpers."; exit 1; }
     fi
     if [ "$oldver" = "test" ]; then
-      # The ramdisk patch-family changes are now promoted to redpill-load
-      # master; keep test mode on that branch even when an older pilot
-      # checkout is already present.
-      export RPLOAD_BRANCH="master"
-      gitdownload
+      gitdownload || exit 1
       cecho g "###############################  This is Test Mode  ############################"
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/functions_t.sh" "/home/tc/functions.sh" "rploaderver="
       safe_fetch "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/menu_m.sh" "/home/tc/menu_m.sh" "kver5explatforms"
