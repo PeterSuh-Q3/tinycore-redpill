@@ -171,7 +171,7 @@ build="alpine-redpill"
 # functions.sh path and production redpill-load branch unchanged.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
 DETOURBMI2_REDPILL_BRANCH="master"
-DETOURBMI2_REDPILL_COMMIT="d80b6d9f823a33e9ff8bf3c22c5200a591d98e96"
+DETOURBMI2_REDPILL_COMMIT="190589cbbba2887ec14ecbf08c49c971f04aea49"
 DETOURBMI2_MANIFEST_SHA256="02ce3f43c3dedb96fbefa0300d5c89402f83a62215060eb46e48a407a90d653c"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
