@@ -5423,6 +5423,35 @@ function processpat() {
     echo "Checking for cached pat file"
     [ -d $local_cache ] && msgnormal "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
 
+    # A minipat cannot supply hda1.tgz. Fetch and verify the original PAT once
+    # per build, before considering either the persistent or redpill cache.
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ] && \
+       [ "${MSHELL_HDA1_FRESH_PAT:-}" != "${SYNOMODEL}" ]; then
+        local original_url original_sum fresh_pat actual_sum
+        original_url=$(jq -er --arg model "$MODEL" --arg build "$BUILD" \
+          '.[$model] | to_entries | map(select(.key | startswith($build))) | .[0].value.url' "$configfile") || return 99
+        original_sum=$(jq -er --arg model "$MODEL" --arg build "$BUILD" \
+          '.[$model] | to_entries | map(select(.key | startswith($build))) | .[0].value.sum' "$configfile") || return 99
+        fresh_pat="/dev/shm/${SYNOMODEL}.original-pat-download"
+        sudo rm -f /dev/shm/hda1.tgz "$fresh_pat"
+        echo "[synology-module-restore] Downloading original PAT from ${original_url}"
+        if ! sudo curl -kLf --retry 3 --progress-bar "$original_url" -o "$fresh_pat"; then
+            sudo rm -f "$fresh_pat"
+            return 99
+        fi
+        actual_sum=$(md5sum "$fresh_pat" | awk '{print $1}')
+        if [ "$actual_sum" != "$original_sum" ]; then
+            echo "[synology-module-restore] Original PAT MD5 mismatch" >&2
+            sudo rm -f "$fresh_pat"
+            return 99
+        fi
+        sudo mkdir -p "$local_cache" /home/tc/redpill-load/cache
+        sudo mv -f "$fresh_pat" "$local_cache/${SYNOMODEL}.pat" || return 99
+        sudo chmod a+r "$local_cache/${SYNOMODEL}.pat"
+        sudo rm -f "/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+        MSHELL_HDA1_FRESH_PAT="${SYNOMODEL}"
+    fi
+
     # [netconsole] 이 기능이 생기기 전에 만들어진 캐시(미니팻)는 netconsole.ko 를
     # 내장하고 있지 않다. 그런 캐시를 그대로 쓰면 buildloader() 가 이번 빌드에서도
     # netconsole.ko 를 못 찾으므로, 캐시된 pat 에 없으면 지워서 아래 로직이
@@ -5431,14 +5460,16 @@ function processpat() {
     # 캐시는 아직 암호화된 상태라 tar -tf 가 실패(빈 리스팅)하는데, 그걸 "netconsole.ko
     # 없음"으로 오판해 방금 받은 파일을 지우면 무한 재다운로드 루프에 빠진다.
     # tar 리스팅이 실제로 비어있지 않을 때(=유효한 tar, 이미 복호화됨)만 검사한다.
-    for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
-        [ -f "${_nc_cached}" ] || continue
-        _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
-        if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
-            echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
-            rm -f "${_nc_cached}"
-        fi
-    done
+    if [ "$(readConfigKey general synology_module_restore)" != "true" ]; then
+        for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
+            [ -f "${_nc_cached}" ] || continue
+            _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
+            if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
+                echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
+                rm -f "${_nc_cached}"
+            fi
+        done
+    fi
 
     if [ -d ${local_cache} ] && [ -f ${local_cache}/*${SYNOMODEL}*.pat ] || [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ]; then
 
@@ -5523,6 +5554,21 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
             exit 99
         fi
 
+        if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+            local hda1_entry hda1_temp
+            hda1_entry=$(tar -tf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)
+            [ -n "$hda1_entry" ] || { echo "[synology-module-restore] hda1.tgz missing from original PAT" >&2; return 99; }
+            hda1_temp="/dev/shm/hda1.tgz.extracting"
+            if ! tar -xOf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" "$hda1_entry" > "$hda1_temp" || \
+               ! tar -tzf "$hda1_temp" >/dev/null 2>&1; then
+                rm -f "$hda1_temp"
+                echo "[synology-module-restore] hda1.tgz extraction or integrity check failed" >&2
+                return 99
+            fi
+            mv -f "$hda1_temp" /dev/shm/hda1.tgz || return 99
+            echo "[synology-module-restore] Preserved /dev/shm/hda1.tgz"
+        fi
+
         msgnormal "Clearing temp folders"
         sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
         sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}        
@@ -5554,8 +5600,18 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
 
         if [ "${isencrypted}" = "yes" ]; then
             echo "File ${patfile}, has been cached but its encrypted, re-running decrypting process"
-            processpat
+            processpat || return 99
         else
+            if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+                # The newly downloaded PAT is already an unencrypted tar.
+                local hda1_entry hda1_temp
+                hda1_entry=$(tar -tf "$patfile" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)
+                [ -n "$hda1_entry" ] || return 99
+                hda1_temp="/dev/shm/hda1.tgz.extracting"
+                tar -xOf "$patfile" "$hda1_entry" > "$hda1_temp" && \
+                  tar -tzf "$hda1_temp" >/dev/null 2>&1 && \
+                  mv -f "$hda1_temp" /dev/shm/hda1.tgz || { rm -f "$hda1_temp"; return 99; }
+            fi
             return
         fi
 
@@ -7319,6 +7375,12 @@ function _set_conf_kv() {
 function buildloader() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
+    # The processpat recursion may reuse the same download within this build,
+    # but every new build must obtain its own original PAT.
+    unset MSHELL_HDA1_FRESH_PAT
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        sudo rm -f /dev/shm/hda1.tgz
+    fi
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
         prepareDetourBmi2TestLoader || return 99
     fi
@@ -7397,10 +7459,11 @@ checkmachine
     cd /home/tc/redpill-load
 
 # download commands...
-    if [ ${TARGET_REVISION} -gt 42218 ]; then
-        echo "Found build request for revision greater than 42218"
+    if [ ${TARGET_REVISION} -gt 42218 ] || \
+       [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        echo "Processing PAT (revision ${TARGET_REVISION}; original module recovery: $(readConfigKey general synology_module_restore))"
         downloadextractor
-        processpat
+        processpat || return 99
     else
         [ -d /home/tc/custom-module ] && sudo cp -adp /home/tc/custom-module/*${TARGET_REVISION}*.pat /home/tc/redpill-load/cache/
     fi
@@ -7955,6 +8018,11 @@ NCEOF
     RAMDISK_PATH="$rdtemp"
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        [ -s /dev/shm/hda1.tgz ] || { echo "[synology-module-restore] missing staged hda1.tgz" >&2; return 99; }
+        sudo cp -f /dev/shm/hda1.tgz "${RAMDISK_PATH}/addons/hda1.tgz" || return 99
+        echo "[synology-module-restore] Embedded /addons/hda1.tgz in initrd-dsm"
+    fi
     echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
     # MSHELL Manager 의 System Info 탭에서 표시할 빌드 시점 스냅샷.
     # user_config.json(라이브 설정)과는 별개로, 이 커스텀 램디스크가
@@ -10386,7 +10454,9 @@ function my() {
         fi    
     fi    
   fi  
-  if [ -f ${patfile} ]; then
+  if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+      echo "[synology-module-restore] Skipping PAT pre-download/cache; buildloader will fetch a fresh Synology PAT."
+  elif [ -f ${patfile} ]; then
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
       cecho b "Downloadng Skipped!!!"
   st "download pat" "Found pat    " "Found ${SYNOMODEL}.pat"

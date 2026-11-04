@@ -232,6 +232,7 @@ NVMES=$(readConfigKey "general" "nvmesystem")
 migrate_vmtools_addon
 VMTOOLS=$(readConfigKey "general" "vmtools-qemuga")
 SANMANAGER_REPAIR=$(readConfigKey "general" "sanmanager-repair")
+SYNO_MODULE_RESTORE=$(readConfigKey "general" "synology_module_restore")
 LDRMODE=$(readConfigKey "general" "loadermode")
 MDLNAME=$(readConfigKey "general" "modulename")
 MLMETHOD=$(readConfigKey "general" "mlmethod")
@@ -307,6 +308,11 @@ fi
 if [ -z "${SANMANAGER_REPAIR}" ]; then
     SANMANAGER_REPAIR="false"
     writeConfigKey "general" "sanmanager-repair" "${SANMANAGER_REPAIR}"
+fi
+
+if [ -z "${SYNO_MODULE_RESTORE}" ]; then
+    SYNO_MODULE_RESTORE="false"
+    writeConfigKey "general" "synology_module_restore" "false"
 fi
 
 # nvidiaMenu(최상위 g) 의 설정을 다른 항목들과 같은 방식으로
@@ -3210,6 +3216,13 @@ function build-pre-option() {
     eval "echo \"f \\\"\${MSG${tz}57} (${nvmeaction})\\\"\""                    >> "${TMP_PATH}/menud"
     eval "echo \"g \\\"\${MSG64} (${vmtoolsaction})\\\"\""                     >> "${TMP_PATH}/menud"
     echo "h \"${MSG65} (${sanmanagerrepairaction})\""                       >> "${TMP_PATH}/menud"
+    SYNO_MODULE_RESTORE=$(readConfigKey "general" "synology_module_restore")
+    if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+      synologyrestoreaction="Enabled"
+    else
+      synologyrestoreaction="Disabled"
+    fi
+    echo "i \"Synology original module recovery (from hda1.tgz) (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3290,6 +3303,15 @@ Do you really want to continue enabling nvmesystem?" 0 0
         SANMANAGER_REPAIR="false"
       fi
       writeConfigKey "general" "sanmanager-repair" "${SANMANAGER_REPAIR}"
+      notify_config_saved rebuild
+      NEXT="z" ;;
+    i)
+      if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+        SYNO_MODULE_RESTORE="false"
+      else
+        SYNO_MODULE_RESTORE="true"
+      fi
+      writeConfigKey "general" "synology_module_restore" "${SYNO_MODULE_RESTORE}"
       notify_config_saved rebuild
       NEXT="z" ;;
     z) return;;
