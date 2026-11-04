@@ -3222,7 +3222,7 @@ function build-pre-option() {
     else
       synologyrestoreaction="Disabled"
     fi
-    echo "i \"Synology U0 original module recovery (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
+    echo "i \"${MSGZZ255} (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3306,6 +3306,7 @@ Do you really want to continue enabling nvmesystem?" 0 0
       notify_config_saved rebuild
       NEXT="z" ;;
     i)
+      dialog --backtitle "$(backtitle)" --title "${MSGZZ255}" --msgbox "${MSGZZ256}" 0 0
       if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
         SYNO_MODULE_RESTORE="false"
       else
