@@ -5400,6 +5400,16 @@ function testarchive() {
 
 }
 
+function verify_synology_hda1_archive() {
+    local archive="$1" magic
+    magic=$(od -An -tx1 -N6 "$archive" 2>/dev/null | tr -d ' \n')
+    case "$magic" in
+        fd377a585a00) tar -tJf "$archive" >/dev/null 2>&1 ;;
+        1f8b*)       tar -tzf "$archive" >/dev/null 2>&1 ;;
+        *)           echo "[synology-module-restore] Unsupported hda1.tgz compression: $magic" >&2; return 1 ;;
+    esac
+}
+
 function processpat() {
 
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
@@ -5560,7 +5570,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
             [ -n "$hda1_entry" ] || { echo "[synology-module-restore] hda1.tgz missing from original PAT" >&2; return 99; }
             hda1_temp="/dev/shm/hda1.tgz.extracting"
             if ! tar -xOf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" "$hda1_entry" > "$hda1_temp" || \
-               ! tar -tzf "$hda1_temp" >/dev/null 2>&1; then
+               ! verify_synology_hda1_archive "$hda1_temp"; then
                 rm -f "$hda1_temp"
                 echo "[synology-module-restore] hda1.tgz extraction or integrity check failed" >&2
                 return 99
@@ -5609,7 +5619,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
                 [ -n "$hda1_entry" ] || return 99
                 hda1_temp="/dev/shm/hda1.tgz.extracting"
                 tar -xOf "$patfile" "$hda1_entry" > "$hda1_temp" && \
-                  tar -tzf "$hda1_temp" >/dev/null 2>&1 && \
+                  verify_synology_hda1_archive "$hda1_temp" && \
                   mv -f "$hda1_temp" /dev/shm/hda1.tgz || { rm -f "$hda1_temp"; return 99; }
             fi
             return
