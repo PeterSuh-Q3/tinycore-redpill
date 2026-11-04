@@ -5291,7 +5291,7 @@ function run_synoxtract() {
 
 function prepare_synology_smallfix_modules() {
     [ "$(readConfigKey general synology_module_restore)" = "true" ] || return 0
-    local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1
+    local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1 synology_platform="${ORIGIN_PLATFORM}"
     local model_token="$(printf '%s' "${MODEL}" | tr '[:upper:]' '[:lower:]' | sed 's/+/%2B/g')" base_info_dir="/dev/shm/hda1-base-info" base_unique base_model base_magic
     local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract base_sha256
     if [ -z "${productversion}" ] || [ -z "${buildnumber}" ]; then
@@ -5307,6 +5307,7 @@ function prepare_synology_smallfix_modules() {
         rm -f "${base_version_file}"
     fi
     [ -n "${productversion}" ] && [ -n "${buildnumber}" ] || { echo "[synology-module-restore] DSM release fields unavailable" >&2; return 99; }
+    [ -n "${synology_platform}" ] || { echo "[synology-module-restore] DSM platform identity unavailable" >&2; return 99; }
     base_release="${productversion}-${buildnumber}"
     rm -rf "${bundle}.new"
     mkdir -p "${bundle}.new" || return 99
@@ -5327,7 +5328,7 @@ function prepare_synology_smallfix_modules() {
     ' | sort -n -u)"
     base_sha256="$(sha256sum /dev/shm/hda1.tgz | awk '{print $1}')"
     [ -n "${base_sha256}" ] || { rm -rf "${bundle}.new"; return 99; }
-    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nbase_sha256=%s\nartifact=full-module-snapshot\n' "${base_release}" "${TARGET_PLATFORM}" "${base_model}" "${base_unique}" "${base_sha256}" > "${bundle}.new/manifest"
+    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nbase_sha256=%s\nartifact=full-module-snapshot\n' "${base_release}" "${synology_platform}" "${base_model}" "${base_unique}" "${base_sha256}" > "${bundle}.new/manifest"
     [ -n "${updates}" ] || { rm -rf "${bundle}"; mv "${bundle}.new" "${bundle}"; echo "[synology-module-restore] no smallfix updates published for ${base_release}"; return 0; }
     snapshot_dir="${bundle}.new/.snapshot"
     base_extract="${bundle}.new/.base-extract"
@@ -5346,7 +5347,7 @@ function prepare_synology_smallfix_modules() {
         [ "${update_no}" = "${expected_update}" ] || { echo "[synology-module-restore] non-consecutive Update sequence: expected ${expected_update}, found ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
         expected_update=$((expected_update + 1))
         archive_page="https://archive.synology.com/download/Os/DSM/${base_release}-${update_no}"
-        pat_url="$(curl -kLf --retry 3 "${archive_page}" | grep -oE 'https://global\.synologydownload\.com/download/DSM/criticalupdate/update_pack/[^" ]+' | sed 's/&amp;/\&/g' | grep "/synology_${TARGET_PLATFORM}_${model_token}\.pat$" | head -1)"
+        pat_url="$(curl -kLf --retry 3 "${archive_page}" | grep -oE 'https://global\.synologydownload\.com/download/DSM/criticalupdate/update_pack/[^" ]+' | sed 's/&amp;/\&/g' | grep "/synology_${synology_platform}_${model_token}\.pat$" | head -1)"
         [ -n "${pat_url}" ] || { echo "[synology-module-restore] PAT URL missing for ${base_release} Update ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
         update_pat="${bundle}.new/update-${update_no}.pat"
         curl -kLf --retry 3 --progress-bar "${pat_url}" -o "${update_pat}" || { rm -rf "${bundle}.new"; return 99; }
@@ -5357,7 +5358,7 @@ function prepare_synology_smallfix_modules() {
         [ -f "${bundle}.new/INFO" ] && mv "${bundle}.new/INFO" "${model_file}"
         [ -s "${model_file}" ] || { echo "[synology-module-restore] Update ${update_no} INFO missing" >&2; rm -rf "${bundle}.new"; return 99; }
         update_info="$(tr -d '\r"' < "${model_file}")"
-        for _field in "archive_type=update_pack" "platform=${TARGET_PLATFORM}" "buildnum=${buildnumber}" "productversion=${productversion}" "smallfixnum=${update_no}"; do
+        for _field in "archive_type=update_pack" "platform=${synology_platform}" "buildnum=${buildnumber}" "productversion=${productversion}" "smallfixnum=${update_no}"; do
             printf '%s\n' "${update_info}" | grep -Fqx "${_field}" || { echo "[synology-module-restore] Update ${update_no} INFO mismatch: ${_field}" >&2; rm -rf "${bundle}.new"; return 99; }
         done
         if printf '%s\n' "${update_info}" | grep -q '^unique='; then
