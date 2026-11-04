@@ -995,3 +995,11 @@ msgstr "SATA önyükleyicisinin denetleyicisi ve ATA bağlantı noktası doğrul
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Bu seçenek DSM çekirdek komut satırına acpi_enforce_resources=lax ekler. ACPI kaynak denetimini sistem genelinde gevşetir ve bazı donanımlarda kararsızlığa veya beklenmedik yeniden başlatmalara yol açabilir. Yalnızca it87 gibi bir sensör sürücüsü ACPI kaynak çakışması nedeniyle yüklenemiyorsa etkinleştirin. Devam edilsin mi?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Synology DSM U0 özgün modüllerini geri yükle (hda1.tgz içinden)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "Etkinleştirildiğinde sonraki loader derlemesi yeni bir Synology PAT indirir ve hda1.tgz dosyasını initrd-dsm içine ekler."

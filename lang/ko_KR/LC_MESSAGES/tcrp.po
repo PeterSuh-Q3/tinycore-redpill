@@ -999,3 +999,11 @@ msgstr "SATA 부트로더 디스크 %s는 컨트롤러 %s / ata%s에 있습니�
 #: MSGZZ254
 msgid "The SATA bootloader's controller and ATA port could not be confirmed. Verify its location before deciding whether to include its physical port in SataPortMap; do not assign the bootloader disk to a DSM disk slot."
 msgstr "SATA 부트로더의 컨트롤러와 ATA 포트를 확인하지 못했습니다. 물리 포트를 SataPortMap에 포함할지 결정하기 전에 위치를 확인하고, 부트로더 디스크를 DSM 디스크 슬롯에 할당하지 마십시오."
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Synology DSM U0 순정 모듈 복원 (hda1.tgz에서)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "활성화하면 다음 로더 빌드에서 Synology PAT를 새로 다운로드하고 그 안의 hda1.tgz를 initrd-dsm에 포함합니다."

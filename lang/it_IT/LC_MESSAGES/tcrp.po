@@ -995,3 +995,11 @@ msgstr "Impossibile confermare il controller e la porta ATA del bootloader SATA.
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Questa opzione aggiunge acpi_enforce_resources=lax alla riga di comando del kernel DSM. Allenta i controlli delle risorse ACPI per l'intero sistema e può causare instabilità o riavvii imprevisti su alcuni hardware. Attivarla solo se un driver dei sensori come it87 non si carica a causa di un conflitto di risorse ACPI. Continuare?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Ripristino dei moduli originali Synology DSM U0 (da hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "Se attiva, la prossima compilazione del loader scarica un nuovo PAT Synology e include il relativo hda1.tgz in initrd-dsm."

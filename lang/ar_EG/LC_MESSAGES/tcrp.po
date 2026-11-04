@@ -995,3 +995,11 @@ msgstr "تعذر تأكيد وحدة التحكم ومنفذ ATA الخاصين 
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "يضيف هذا الخيار acpi_enforce_resources=lax إلى سطر أوامر نواة DSM. وهو يخفف فحص موارد ACPI على مستوى النظام كله، وقد يسبب عدم الاستقرار أو إعادة تشغيل غير متوقعة على بعض الأجهزة. فعّله فقط إذا فشل تحميل برنامج تشغيل مستشعر مثل it87 بسبب تعارض موارد ACPI. هل تريد المتابعة؟"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "استعادة وحدات Synology DSM U0 الأصلية (من hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "عند التفعيل، ينزّل بناء المُحمّل التالي ملف PAT جديدًا من Synology ويضمّن hda1.tgz في initrd-dsm."

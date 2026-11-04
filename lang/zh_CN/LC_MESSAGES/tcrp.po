@@ -995,3 +995,11 @@ msgstr "无法确认 SATA 引导盘的控制器和 ATA 端口。请先核实其�
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "这会将 acpi_enforce_resources=lax 添加到 DSM 内核命令行。它会在整个系统范围内放宽 ACPI 资源检查，在某些硬件上可能导致系统不稳定或意外重启。仅当 it87 等传感器驱动因 ACPI 资源冲突而无法加载时启用。是否继续？"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "恢复 Synology DSM U0 原始模块（来自 hda1.tgz）"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "启用后，下次构建加载器时会重新下载 Synology PAT，并将其中的 hda1.tgz 放入 initrd-dsm。"

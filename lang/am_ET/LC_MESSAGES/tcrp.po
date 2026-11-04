@@ -995,3 +995,11 @@ msgstr "የSATA ቡት ጫኚው መቆጣጠሪያና ATA ፖርት ሊረጋ�
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "ይህ acpi_enforce_resources=lax ወደ DSM ከርነል የትእዛዝ መስመር ይጨምራል። የACPI ሀብት ምርመራን በስርዓቱ ሁሉ ያሳልላል እና በአንዳንድ ሃርድዌር ላይ አለመረጋጋት ወይም ያልተጠበቀ ዳግም መነሳት ሊያስከትል ይችላል። እንደ it87 ያለ ዳሳሽ ነጂ በACPI ሀብት ግጭት ምክንያት ሲጫን ካልተሳካ ብቻ ያንቁት። ይቀጥሉ?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "የSynology DSM U0 ኦሪጅናል ሞዱል መመለስ (ከ hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "ሲነቃ በሚቀጥለው የሎደር ግንባታ አዲስ የSynology PAT ያወርዳል እና hda1.tgz ን በinitrd-dsm ውስጥ ያካትታል።"

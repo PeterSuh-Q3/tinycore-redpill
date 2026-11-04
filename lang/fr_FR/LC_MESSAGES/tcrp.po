@@ -995,3 +995,11 @@ msgstr "Le contrôleur et le port ATA du chargeur SATA n'ont pas pu être confir
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Cette option ajoute acpi_enforce_resources=lax à la ligne de commande du noyau DSM. Elle assouplit la vérification des ressources ACPI sur tout le système et peut provoquer une instabilité ou des redémarrages imprévus sur certains matériels. Ne l'activez que si un pilote de capteur tel que it87 ne se charge pas à cause d'un conflit de ressources ACPI. Continuer ?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Restauration des modules d’origine Synology DSM U0 (depuis hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "Activée, la prochaine compilation du chargeur télécharge un nouveau PAT Synology et intègre son hda1.tgz dans initrd-dsm."

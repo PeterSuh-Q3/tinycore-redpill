@@ -995,3 +995,11 @@ msgstr "ไม่สามารถยืนยันคอนโทรลเล
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "ตัวเลือกนี้เพิ่ม acpi_enforce_resources=lax ลงในบรรทัดคำสั่งเคอร์เนล DSM โดยผ่อนปรนการตรวจสอบทรัพยากร ACPI ทั้งระบบ ซึ่งอาจทำให้ฮาร์ดแวร์บางชนิดทำงานไม่เสถียรหรือรีสตาร์ตโดยไม่คาดคิด เปิดใช้เฉพาะเมื่อไดรเวอร์เซ็นเซอร์ เช่น it87 โหลดไม่ได้เพราะทรัพยากร ACPI ขัดแย้งกัน ดำเนินการต่อหรือไม่?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "กู้คืนโมดูล Synology DSM U0 ต้นฉบับ (จาก hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "เมื่อเปิดใช้ การสร้างตัวโหลดครั้งถัดไปจะดาวน์โหลด Synology PAT ใหม่และรวม hda1.tgz ไว้ใน initrd-dsm"

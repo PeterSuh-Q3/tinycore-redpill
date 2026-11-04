@@ -995,3 +995,11 @@ msgstr "A SATA rendszerbetöltő vezérlője és ATA-portja nem volt ellenőrizh
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Ez hozzáadja az acpi_enforce_resources=lax paramétert a DSM kernel parancssorához. Rendszerszinten enyhíti az ACPI-erőforrások ellenőrzését, ami egyes gépeken instabilitást vagy váratlan újraindulást okozhat. Csak akkor kapcsolja be, ha egy érzékelő-illesztőprogram, például az it87, ACPI-erőforrásütközés miatt nem töltődik be. Folytatja?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Eredeti Synology DSM U0-modulok visszaállítása (hda1.tgz fájlból)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "Bekapcsolva a következő loader-build új Synology PAT-fájlt tölt le, és annak hda1.tgz fájlját beágyazza az initrd-dsm-be."

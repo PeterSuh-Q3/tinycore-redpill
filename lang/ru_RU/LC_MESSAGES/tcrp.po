@@ -995,3 +995,11 @@ msgstr "Не удалось определить контроллер и ATA-п�
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "Этот параметр добавляет acpi_enforce_resources=lax в командную строку ядра DSM. Он ослабляет проверку ресурсов ACPI во всей системе и на некоторых устройствах может вызвать нестабильность или неожиданные перезагрузки. Включайте его только в том случае, если драйвер датчика, например it87, не загружается из-за конфликта ресурсов ACPI. Продолжить?"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Восстановление оригинальных модулей Synology DSM U0 (из hda1.tgz)"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "При включении следующая сборка загрузчика скачает новый PAT Synology и включит его hda1.tgz в initrd-dsm."

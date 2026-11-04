@@ -995,3 +995,11 @@ msgstr "SATAブートローダーのコントローラーとATAポートを確�
 #: MSGZZ203
 msgid "This adds acpi_enforce_resources=lax to the DSM kernel command line. It relaxes ACPI resource checks system-wide and may cause instability or unexpected restarts on some hardware. Enable only if a sensor driver fails because of an ACPI resource conflict. Continue?"
 msgstr "DSMカーネルのコマンドラインに acpi_enforce_resources=lax を追加します。ACPIリソース検査をシステム全体で緩和するため、一部の機器では動作が不安定になったり、予期せず再起動したりする可能性があります。it87などのセンサードライバーがACPIリソースの競合で読み込めない場合にのみ有効にしてください。続行しますか？"
+
+#: menu_m.sh:build-pre-option
+msgid "Synology DSM U0 original module recovery (from hda1.tgz)"
+msgstr "Synology DSM U0 純正モジュールの復元（hda1.tgz から）"
+
+#: menu_m.sh:build-pre-option
+msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+msgstr "有効にすると、次回のローダービルドでSynology PATを新規ダウンロードし、そのhda1.tgzをinitrd-dsmに含めます。"
