@@ -763,6 +763,11 @@ function autoCorrectBmi2ModuleMode() {
     # keeping the all-modules initrd/module pack. This branch never runs in the
     # normal menu or another test version.
     if mshellDetourBmi2TestEnabled; then
+        # The detour exists only to keep an explicitly selected all-modules
+        # pack usable with its replacement kernel. Do not override a user's
+        # custom-modules (or other pack) selection just because all-modules
+        # has a BMI2-only rejection.
+        [ "${MDLNAME:-all-modules}" = "all-modules" ] || return 0
         local method candidate
         for method in "${MLMETHOD:-IML}" IML; do
             candidate=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" "all-modules:${method}") || continue

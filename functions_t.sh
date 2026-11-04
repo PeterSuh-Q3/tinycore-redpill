@@ -7499,6 +7499,7 @@ function buildloader() {
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] && \
+       [ "${MDLNAME}" = "all-modules" ] && \
        [[ "${KVER}" == 5.* ]] && [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
         # The resolver currently attaches BMI2 to all-modules modes. In this
         # test lane only, accept the exact all-modules recipe when that is its
