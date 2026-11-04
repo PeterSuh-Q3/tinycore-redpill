@@ -5236,120 +5236,177 @@ function savesession() {
 }
 
 function copyextractor() {
-#m shell mofified
     local_cache="/mnt/${tcrppart}/auxfiles"
-
-    echo "making directory ${local_cache}"
-    [ ! -d "${local_cache}" ] && sudo mkdir -p "${local_cache}"
-
-    echo "making directory ${local_cache}/extractor"
-    [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" -o /home/tc/extractor.gz
-    sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
-
-    if [ "${BUS}" = "block"  ]; then
-      # clone 실패를 확인하지 않으면 cd 가 그대로 실패한 채 넘어가
-      # docker build 가 엉뚱한(현재) 디렉터리를 대상으로 실행되거나
-      # 조용히 실패해, 뒤늦게 이미지가 없다는 식으로 원인과 동떨어진
-      # 곳에서 문제가 드러난다.
-      if ! git clone https://github.com/technorabilia/syno-extract-system-patch.git || \
-         [ ! -d syno-extract-system-patch/.git ]; then
-        echo "[ERROR] Failed to clone syno-extract-system-patch from GitHub. Check network connectivity and try again."
-        exit 99
-      fi
-      cd syno-extract-system-patch
-      sudo docker build --tag syno-extract-system-patch .
-      sudo mkdir -p ~/data/in
-      sudo mkdir -p ~/data/out
+    sudo mkdir -p "${local_cache}/extractor" || return 1
+    local synoxtract="/home/tc/synoxtract"
+    local synoxtract_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/extractor-new/synoxtract"
+    local expected_sha="66503d9d61e99cd2534e6ab39b880c83d5466322ea294efb700e9ac2e90cbe90"
+    if [ ! -x "${synoxtract}" ] || [ "$(sha256sum "${synoxtract}" 2>/dev/null | awk '{print $1}')" != "${expected_sha}" ]; then
+        local temp_synoxtract="${synoxtract}.download"
+        rm -f "${temp_synoxtract}"
+        curl -kLf --retry 3 "${synoxtract_url}" -o "${temp_synoxtract}" || { rm -f "${temp_synoxtract}"; return 1; }
+        [ "$(sha256sum "${temp_synoxtract}" | awk '{print $1}')" = "${expected_sha}" ] || { rm -f "${temp_synoxtract}"; echo "[SynoXtract] SHA-256 mismatch" >&2; return 1; }
+        chmod 755 "${temp_synoxtract}" && mv -f "${temp_synoxtract}" "${synoxtract}" || return 1
     fi
-
-    echo "Copying required libraries to local lib directory"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
-    echo "Linking lib to lib64"
-    # gcompat 등이 /lib64를 이미 실제 디렉토리로 만들어두는 경우, "-h /lib64"는
-    # 항상 참(=/lib64 자체는 심볼릭 링크가 아님)이 되어 매번 ln이 재시도되고
-    # "/lib64/lib: File exists"로 실패한다(ln이 기존 디렉토리 안에 이름을 만듦).
-    # 실제 결과 경로(/lib64/lib)의 존재 여부로 확인해야 재실행에도 안전함.
-    [ ! -e /lib64/lib ] && [ ! -L /lib64/lib ] && sudo ln -s /lib /lib64
-    echo "Copying executable"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
-    echo "pigz copy for multithreaded compression"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/pigz /usr/bin/pigz
-
+    sudo cp -f "${synoxtract}" "${local_cache}/extractor/synoxtract" || return 1
+    sudo chmod 755 "${local_cache}/extractor/synoxtract"
 }
 
 function downloadextractor() {
+    st "extractor" "SynoXtract" "SynoXtract ready"
+    [ "${BUS}" != "block" ] && log_build_step "SynoXtract" 3 12
+    copyextractor || { echo "[SynoXtract] download or verification failed" >&2; return 99; }
+    echo "[SynoXtract] verified static extractor ready: $(sha256sum /home/tc/synoxtract | awk '{print $1}')"
+}
 
-st "extractor" "Extraction tools" "Extraction Tools downloaded"
-[ "${BUS}" != "block" ] && log_build_step "Extraction tools" 3 12
-#    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
-#    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
-    temp_folder="/tmp/synoesp"
-
-#m shell mofified
-    copyextractor
-
-    if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
-
-        msgnormal "Found extractor locally cached"
-
+function run_synoxtract() {
+    local pat="$1" outdir="$2" args=()
+    shift 2
+    args=("$@")
+    if [ "${BUS}" = "block" ]; then
+        local data_dir="$HOME/data" host_pat host_out
+        mkdir -p "${data_dir}/in" "${data_dir}/out"
+        host_pat="${data_dir}/in/$(basename "${pat}")"
+        cp -f "${pat}" "${host_pat}" || return 1
+        rm -rf "${data_dir}/out"/*
+        local command
+        if [ "${args[0]:-}" = "-l" ]; then
+            command="/tools/synoxtract -i '/data/in/$(basename "${pat}")' -l"
+        else
+            command="/tools/synoxtract -i '/data/in/$(basename "${pat}")' -d /data/out ${args[*]}"
+        fi
+        sudo docker run --rm --platform linux/amd64 --entrypoint /bin/bash \
+          -v "${data_dir}:/data" -v "/home/tc/synoxtract:/tools/synoxtract:ro" \
+          dante90/syno-compiler:7.4 -lc "${command}" || return 1
+        [ "${args[0]:-}" = "-l" ] && return 0
+        sudo rsync -a --remove-source-files "${data_dir}/out/" "${outdir}/" || return 1
+        return 0
+    fi
+    if [ "${args[0]:-}" = "-l" ]; then
+        sudo /home/tc/synoxtract -i "${pat}" -l
     else
+        sudo /home/tc/synoxtract -i "${pat}" -d "${outdir}" "${args[@]}"
+    fi
+}
 
-        echo "Getting required extraction tool"
-        echo "------------------------------------------------------------------"
-        echo "Checking tinycore cache folder"
-
-        [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
-
-        echo "Creating temp folder /tmp/synoesp"
-
-        mkdir ${temp_folder}
-
-        if [ -d /home/tc/custom-module ] && [ -f /home/tc/custom-module/*42218*.pat ]; then
-
-            patfile=$(ls /home/tc/custom-module/*42218*.pat | head -1)
-            echo "Found custom pat file ${patfile}"
-            echo "Processing old pat file to extract required files for extraction"
-            tar -C${temp_folder} -xf /${patfile} rd.gz
-        else
-            curl -kL https://global.download.synology.com/download/DSM/release/7.0.1/42218/DSM_DS3622xs%2B_42218.pat -o /home/tc/oldpat.tar.gz
-            [ -f /home/tc/oldpat.tar.gz ] && tar -C${temp_folder} -xf /home/tc/oldpat.tar.gz rd.gz
-        fi
-
-        echo "Entering synoesp"
-        cd ${temp_folder}
-
-        xz -dc <rd.gz >rd 2>/dev/null || echo "extract rd.gz"
-        echo "finish"
-        cpio -idm <rd 2>&1 || echo "extract rd"
-        mkdir extract
-
-        sudo mkdir -p "/mnt/${tcrppart}/auxfiles" && cd "/mnt/${tcrppart}/auxfiles"
-
-        echo "Copying required files to local cache folder for future use"
-
-        sudo mkdir -p "/mnt/${tcrppart}/auxfiles/extractor"
-
-        for file in usr/lib/libcurl.so.4 usr/lib/libmbedcrypto.so.5 usr/lib/libmbedtls.so.13 usr/lib/libmbedx509.so.1 usr/lib/libmsgpackc.so.2 usr/lib/libsodium.so usr/lib/libsynocodesign-ng-virtual-junior-wins.so.7 usr/syno/bin/scemd; do
-            echo "Copying $file to /mnt/${tcrppart}/auxfiles"
-            sudo cp "$file" "/mnt/${tcrppart}/auxfiles/extractor"
+function prepare_synology_smallfix_modules() {
+    [ "$(readConfigKey general synology_module_restore)" = "true" ] || return 0
+    local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1
+    local model_token="$(printf '%s' "${MODEL}" | tr '[:upper:]' '[:lower:]' | sed 's/+/%2B/g')" base_info_dir="/dev/shm/hda1-base-info" base_unique base_model base_magic
+    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract base_sha256
+    if [ -z "${productversion}" ] || [ -z "${buildnumber}" ]; then
+        local base_version_file="/dev/shm/hda1-base-VERSION" magic
+        magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+        case "${magic}" in
+          fd377a585a00) tar -xJOf /dev/shm/hda1.tgz etc.defaults/VERSION > "${base_version_file}" 2>/dev/null ;;
+          1f8b*) tar -xzOf /dev/shm/hda1.tgz etc.defaults/VERSION > "${base_version_file}" 2>/dev/null ;;
+          *) return 99 ;;
+        esac
+        productversion="$(awk -F= '$1=="productversion" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_version_file}")"
+        buildnumber="$(awk -F= '$1=="buildnumber" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_version_file}")"
+        rm -f "${base_version_file}"
+    fi
+    [ -n "${productversion}" ] && [ -n "${buildnumber}" ] || { echo "[synology-module-restore] DSM release fields unavailable" >&2; return 99; }
+    base_release="${productversion}-${buildnumber}"
+    rm -rf "${bundle}.new"
+    mkdir -p "${bundle}.new" || return 99
+    base_magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+    mkdir -p "${base_info_dir}"
+    case "${base_magic}" in
+      fd377a585a00) tar -xJOf /dev/shm/hda1.tgz etc.defaults/synoinfo.conf > "${base_info_dir}/synoinfo.conf" 2>/dev/null ;;
+      1f8b*) tar -xzOf /dev/shm/hda1.tgz etc.defaults/synoinfo.conf > "${base_info_dir}/synoinfo.conf" 2>/dev/null ;;
+      *) return 99 ;;
+    esac
+    base_unique="$(awk -F= '$1=="unique" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_info_dir}/synoinfo.conf")"
+    base_model="$(awk -F= '$1=="upnpmodelname" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_info_dir}/synoinfo.conf")"
+    rm -rf "${base_info_dir}"
+    [ -n "${base_unique}" ] && [ "${base_model}" = "${MODEL}" ] || { echo "[synology-module-restore] base PAT model identity mismatch" >&2; rm -rf "${bundle}.new"; return 99; }
+    api_json="$(curl -kLf --retry 3 --get --data-urlencode "identify=DSM" --data-urlencode "lang=en-us" --data-urlencode "model=${MODEL}" "https://www.synology.com/api/releaseNote/findChangeLog")" || { echo "[synology-module-restore] release-note lookup failed" >&2; return 99; }
+    updates="$(printf '%s' "${api_json}" | jq -r --arg rel "${base_release}" '
+      .info.versions.DSM[][] | .version | select(startswith($rel + " Update ")) | capture(" Update (?<n>[0-9]+)$").n
+    ' | sort -n -u)"
+    base_sha256="$(sha256sum /dev/shm/hda1.tgz | awk '{print $1}')"
+    [ -n "${base_sha256}" ] || { rm -rf "${bundle}.new"; return 99; }
+    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nbase_sha256=%s\nartifact=full-module-snapshot\n' "${base_release}" "${TARGET_PLATFORM}" "${base_model}" "${base_unique}" "${base_sha256}" > "${bundle}.new/manifest"
+    [ -n "${updates}" ] || { rm -rf "${bundle}"; mv "${bundle}.new" "${bundle}"; echo "[synology-module-restore] no smallfix updates published for ${base_release}"; return 0; }
+    snapshot_dir="${bundle}.new/.snapshot"
+    base_extract="${bundle}.new/.base-extract"
+    base_list="${bundle}.new/.base-list"
+    base_module_list="${bundle}.new/.base-modules.list"
+    mkdir -p "${snapshot_dir}/usr/lib/modules" "${base_extract}"
+    base_magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+    case "${base_magic}" in
+      fd377a585a00) tar -tJf /dev/shm/hda1.tgz > "${base_list}" && awk '$0 ~ /^\.\/usr\/lib\/modules(\/|$)/ || $0 ~ /^usr\/lib\/modules(\/|$)/ {print}' "${base_list}" > "${base_module_list}" && tar -xJf /dev/shm/hda1.tgz -C "${base_extract}" -T "${base_module_list}" ;;
+      1f8b*) tar -tzf /dev/shm/hda1.tgz > "${base_list}" && awk '$0 ~ /^\.\/usr\/lib\/modules(\/|$)/ || $0 ~ /^usr\/lib\/modules(\/|$)/ {print}' "${base_list}" > "${base_module_list}" && tar -xzf /dev/shm/hda1.tgz -C "${base_extract}" -T "${base_module_list}" ;;
+      *) rm -rf "${bundle}.new"; echo "[synology-module-restore] unsupported base hda1 compression" >&2; return 99 ;;
+    esac || { rm -rf "${bundle}.new"; echo "[synology-module-restore] failed to seed U0 module snapshot" >&2; return 99; }
+    [ -d "${base_extract}/usr/lib/modules" ] || { rm -rf "${bundle}.new"; return 99; }
+    cp -a "${base_extract}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+    for update_no in ${updates}; do
+        [ "${update_no}" = "${expected_update}" ] || { echo "[synology-module-restore] non-consecutive Update sequence: expected ${expected_update}, found ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
+        expected_update=$((expected_update + 1))
+        archive_page="https://archive.synology.com/download/Os/DSM/${base_release}-${update_no}"
+        pat_url="$(curl -kLf --retry 3 "${archive_page}" | grep -oE 'https://global\.synologydownload\.com/download/DSM/criticalupdate/update_pack/[^" ]+' | sed 's/&amp;/\&/g' | grep "/synology_${TARGET_PLATFORM}_${model_token}\.pat$" | head -1)"
+        [ -n "${pat_url}" ] || { echo "[synology-module-restore] PAT URL missing for ${base_release} Update ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
+        update_pat="${bundle}.new/update-${update_no}.pat"
+        curl -kLf --retry 3 --progress-bar "${pat_url}" -o "${update_pat}" || { rm -rf "${bundle}.new"; return 99; }
+        list_file="${bundle}.new/update-${update_no}.list"
+        run_synoxtract "${update_pat}" "${bundle}.new" -l > "${list_file}" || { rm -rf "${bundle}.new"; return 99; }
+        model_file="${bundle}.new/update-${update_no}-info"
+        run_synoxtract "${update_pat}" "${bundle}.new" -f INFO || { rm -rf "${bundle}.new"; return 99; }
+        [ -f "${bundle}.new/INFO" ] && mv "${bundle}.new/INFO" "${model_file}"
+        [ -s "${model_file}" ] || { echo "[synology-module-restore] Update ${update_no} INFO missing" >&2; rm -rf "${bundle}.new"; return 99; }
+        update_info="$(tr -d '\r"' < "${model_file}")"
+        for _field in "archive_type=update_pack" "platform=${TARGET_PLATFORM}" "buildnum=${buildnumber}" "productversion=${productversion}" "smallfixnum=${update_no}"; do
+            printf '%s\n' "${update_info}" | grep -Fqx "${_field}" || { echo "[synology-module-restore] Update ${update_no} INFO mismatch: ${_field}" >&2; rm -rf "${bundle}.new"; return 99; }
         done
-
-    fi
-
-    echo "Removing temp folder /tmp/synoesp"
-    rm -rf $temp_folder
-
-    if [ "${BUS}" != "block" ]; then
-        msgnormal "Checking if tool is accessible"
-        if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then    
-            /bin/syno_extract_system_patch 2>&1 >/dev/null
+        if printf '%s\n' "${update_info}" | grep -q '^unique='; then
+            printf '%s\n' "${update_info}" | grep -Fqx "unique=${base_unique}" || { echo "[synology-module-restore] Update ${update_no} model identity mismatch" >&2; rm -rf "${bundle}.new"; return 99; }
         else
-            /bin/syno_extract_system_patch
+            echo "[synology-module-restore] Update ${update_no} INFO has no model identity" >&2
+            rm -rf "${bundle}.new"; return 99
         fi
-        if [ $? -eq 255 ]; then echo "Executed succesfully"; else echo "Cound not execute"; fi    
-    fi
+        # Extract every hda1 platform/model update archive named by SynoXtract.
+        local hda1_entries=()
+        while IFS= read -r entry; do
+            case "${entry}" in hda1-*.tar) hda1_entries+=("${entry}");; esac
+        done < <(awk '$NF ~ /^hda1-.*\.tar$/ {print $NF}' "${list_file}")
+        local extracted="${bundle}.new/extracted-${update_no}"
+        mkdir -p "${extracted}"
+        layer_dir="${bundle}.new/U${update_no}"
+        mkdir -p "${layer_dir}/usr/lib/modules"
+        if [ "${#hda1_entries[@]}" -gt 0 ]; then
+            run_synoxtract "${update_pat}" "${extracted}" -f "${hda1_entries[@]}" || { rm -rf "${bundle}.new"; return 99; }
+        fi
+        for entry in "${hda1_entries[@]}"; do
+            [ -f "${extracted}/${entry}" ] || { echo "[synology-module-restore] missing extracted ${entry}" >&2; rm -rf "${bundle}.new"; return 99; }
+            content_file="${extracted}/${entry}.content.txz"
+            tar -xOf "${extracted}/${entry}" content.txz > "${content_file}" || { rm -rf "${bundle}.new"; return 99; }
+            xz -t "${content_file}" >/dev/null 2>&1 || { echo "[synology-module-restore] invalid content.txz in ${entry}" >&2; rm -rf "${bundle}.new"; return 99; }
+            module_list="${content_file}.modules.list"
+            tar -tJf "${content_file}" > "${content_file}.list" || { rm -rf "${bundle}.new"; return 99; }
+            if ! awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^\// || p ~ /(^|\/)\.\.(\/|$)/) exit 1}' "${content_file}.list"; then
+                echo "[synology-module-restore] unsafe path in Update ${update_no} content" >&2
+                rm -rf "${bundle}.new"; return 99
+            fi
+            awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^usr\/lib\/modules(\/|$)) print $0}' "${content_file}.list" > "${module_list}"
+            if [ -s "${module_list}" ]; then
+                local expanded="${content_file}.expanded"
+                mkdir -p "${expanded}"
+                tar -xJf "${content_file}" -C "${expanded}" -T "${module_list}" || { rm -rf "${bundle}.new"; return 99; }
+                [ -d "${expanded}/usr/lib/modules" ] && cp -a "${expanded}/usr/lib/modules/." "${layer_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+            fi
+        done
+        cp -a "${layer_dir}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+        layer_tar="${bundle}.new/U${update_no}.tar"
+        tar -cf "${layer_tar}" -C "${snapshot_dir}" usr/lib/modules || { rm -rf "${bundle}.new"; return 99; }
+        sha256sum "${layer_tar}" | awk -v n="${update_no}" '{print "update=" n " sha256=" $1}' >> "${bundle}.new/manifest"
+        rm -rf "${extracted}" "${layer_dir}" "${content_file}"* "${update_pat}" "${list_file}" "${model_file}"
+    done
+    rm -rf "${snapshot_dir}" "${base_extract}" "${base_list}" "${base_module_list}"
+    rm -rf "${bundle}"
+    mv "${bundle}.new" "${bundle}" || return 99
+    echo "[synology-module-restore] staged smallfix layers: $(tr '\n' ' ' < "${bundle}/manifest")"
 }
 
 function testarchive() {
@@ -5499,17 +5556,13 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
             if [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && [ ${isencrypted} = "no" ]; then
                 echo "Decrypted file is already cached in :  /home/tc/redpill-load/cache/${SYNOMODEL}.pat"
             else
-                if [ "${BUS}" = "block"  ]; then            
-                  echo "Copying encrypted pat file : ${patfile} to ~/data/in"
-                  sudo mv -f ${patfile} ~/data/in/${SYNOMODEL}.pat
-                  echo "Extracting encrypted pat file : ~/data/in/${SYNOMODEL}.pat to ~/data/out"
-                  sudo docker run --rm -v ~/data:/data syno-extract-system-patch /data/in/${SYNOMODEL}.pat /data/out/. || echo "extract latest pat"
-                  rsync -a --remove-source-files ~/data/out/ ${temp_pat_folder}/
+                echo "Extracting encrypted PAT with SynoXtract: ${patfile}"
+                if [ "${BUS}" = "block" ]; then
+                    cp -f "${patfile}" "${temp_dsmpat_folder}/${SYNOMODEL}.pat" || return 99
+                    run_synoxtract "${temp_dsmpat_folder}/${SYNOMODEL}.pat" "${temp_pat_folder}" || return 99
                 else
-                  echo "Copying encrypted pat file : ${patfile} to ${temp_dsmpat_folder}"
-                  sudo mv -f ${patfile} ${temp_dsmpat_folder}/${SYNOMODEL}.pat
-                  echo "Extracting encrypted pat file : ${temp_dsmpat_folder}/${SYNOMODEL}.pat to ${temp_pat_folder}"
-                  sudo /bin/syno_extract_system_patch ${temp_dsmpat_folder}/${SYNOMODEL}.pat ${temp_pat_folder} || echo "extract latest pat"
+                    mv -f "${patfile}" "${temp_dsmpat_folder}/${SYNOMODEL}.pat" || return 99
+                    run_synoxtract "${temp_dsmpat_folder}/${SYNOMODEL}.pat" "${temp_pat_folder}" || return 99
                 fi
                 echo "Decrypted pat file tar compression in progress ${SYNOMODEL}.pat to /home/tc/redpill-load/cache folder (multithreaded comporession)"
                 mkdir -p /home/tc/redpill-load/cache/
@@ -5565,18 +5618,14 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
         fi
 
         if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
-            local hda1_entry hda1_temp
+            local hda1_entry hda1_temp="/dev/shm/hda1.tgz.extracting"
             hda1_entry=$(tar -tf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)
-            [ -n "$hda1_entry" ] || { echo "[synology-module-restore] hda1.tgz missing from original PAT" >&2; return 99; }
-            hda1_temp="/dev/shm/hda1.tgz.extracting"
-            if ! tar -xOf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" "$hda1_entry" > "$hda1_temp" || \
-               ! verify_synology_hda1_archive "$hda1_temp"; then
-                rm -f "$hda1_temp"
-                echo "[synology-module-restore] hda1.tgz extraction or integrity check failed" >&2
-                return 99
-            fi
+            [ -n "$hda1_entry" ] || { echo "[synology-module-restore] hda1.tgz missing from extracted PAT" >&2; return 99; }
+            rm -f "$hda1_temp"
+            tar -xOf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" "$hda1_entry" > "$hda1_temp" && verify_synology_hda1_archive "$hda1_temp" || { rm -f "$hda1_temp"; return 99; }
             mv -f "$hda1_temp" /dev/shm/hda1.tgz || return 99
             echo "[synology-module-restore] Preserved /dev/shm/hda1.tgz"
+            prepare_synology_smallfix_modules || return 99
         fi
 
         msgnormal "Clearing temp folders"
@@ -5621,6 +5670,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
                 tar -xOf "$patfile" "$hda1_entry" > "$hda1_temp" && \
                   verify_synology_hda1_archive "$hda1_temp" && \
                   mv -f "$hda1_temp" /dev/shm/hda1.tgz || { rm -f "$hda1_temp"; return 99; }
+                prepare_synology_smallfix_modules || return 99
             fi
             return
         fi
@@ -8031,7 +8081,9 @@ NCEOF
     if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
         [ -s /dev/shm/hda1.tgz ] || { echo "[synology-module-restore] missing staged hda1.tgz" >&2; return 99; }
         sudo cp -f /dev/shm/hda1.tgz "${RAMDISK_PATH}/addons/hda1.tgz" || return 99
-        echo "[synology-module-restore] Embedded /addons/hda1.tgz in initrd-dsm"
+        [ -d /dev/shm/hda1-smallfix ] || { echo "[synology-module-restore] missing smallfix bundle" >&2; return 99; }
+        sudo cp -a /dev/shm/hda1-smallfix "${RAMDISK_PATH}/addons/" || return 99
+        echo "[synology-module-restore] Embedded base hda1 and smallfix layers in initrd-dsm"
     fi
     echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
     # MSHELL Manager 의 System Info 탭에서 표시할 빌드 시점 스냅샷.
@@ -10114,15 +10166,6 @@ function my() {
   fi
   
   local_cache="/mnt/${tcrppart}/auxfiles"
-  
-  #if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
-  #    echo "Found extractor locally cached"
-  #else
-  #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
-  #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
-  #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
-  #fi
   
   echo
   cecho y "TARGET_PLATFORM is $TARGET_PLATFORM"
