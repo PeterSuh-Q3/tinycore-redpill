@@ -5293,7 +5293,7 @@ function prepare_synology_smallfix_modules() {
     [ "$(readConfigKey general synology_module_restore)" = "true" ] || return 0
     local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1 synology_platform="${ORIGIN_PLATFORM}"
     local model_token="$(printf '%s' "${MODEL}" | tr '[:upper:]' '[:lower:]' | sed 's/+/%2B/g')" base_info_dir="/dev/shm/hda1-base-info" base_unique base_model base_magic
-    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract base_sha256
+    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract base_sha256 snapshot_file base_file relpath delta_dir changed_list delete_list layer_sha delete_sha
     if [ -z "${productversion}" ] || [ -z "${buildnumber}" ]; then
         local base_version_file="/dev/shm/hda1-base-VERSION" magic
         magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
@@ -5399,10 +5399,53 @@ function prepare_synology_smallfix_modules() {
             fi
         done
         cp -a "${layer_dir}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+
+        # Save only the files needed to transform the U0 baseline into this
+        # exact Update state. Runtime starts from hda1 U0 and applies one U<n>
+        # delta; it never layers U1, U2, ... at boot.
+        delta_dir="${bundle}.new/.delta-U${update_no}"
+        changed_list="${bundle}.new/.U${update_no}.files"
+        delete_list="${bundle}.new/U${update_no}.delete"
+        mkdir -p "${delta_dir}" || { rm -rf "${bundle}.new"; return 99; }
+        : > "${changed_list}"
+        : > "${delete_list}"
+        while IFS= read -r snapshot_file; do
+            relpath="${snapshot_file#${snapshot_dir}/}"
+            case "${relpath}" in usr/lib/modules/*) ;; *) echo "[synology-module-restore] unsafe changed path ${relpath}" >&2; rm -rf "${bundle}.new"; return 99 ;; esac
+            base_file="${base_extract}/${relpath}"
+            if [ -L "${snapshot_file}" ]; then
+                if [ ! -L "${base_file}" ] || [ "$(readlink "${snapshot_file}")" != "$(readlink "${base_file}")" ]; then
+                    mkdir -p "${delta_dir}/$(dirname "${relpath}")" || { rm -rf "${bundle}.new"; return 99; }
+                    cp -a "${snapshot_file}" "${delta_dir}/${relpath}" || { rm -rf "${bundle}.new"; return 99; }
+                    printf '%s\n' "${relpath}" >> "${changed_list}"
+                fi
+            elif [ ! -f "${base_file}" ] || ! cmp -s "${snapshot_file}" "${base_file}"; then
+                mkdir -p "${delta_dir}/$(dirname "${relpath}")" || { rm -rf "${bundle}.new"; return 99; }
+                cp -a "${snapshot_file}" "${delta_dir}/${relpath}" || { rm -rf "${bundle}.new"; return 99; }
+                printf '%s\n' "${relpath}" >> "${changed_list}"
+            fi
+        done < <(find "${snapshot_dir}/usr/lib/modules" \( -type f -o -type l \) -print)
+        while IFS= read -r base_file; do
+            relpath="${base_file#${base_extract}/}"
+            if [ ! -e "${snapshot_dir}/${relpath}" ] && [ ! -L "${snapshot_dir}/${relpath}" ]; then
+                printf '%s\n' "${relpath}" >> "${delete_list}"
+            fi
+        done < <(find "${base_extract}/usr/lib/modules" \( -type f -o -type l \) -print)
+        if ! awk '{if ($0 !~ /^usr\/lib\/modules(\/|$)/ || $0 ~ /(^|\/)\.\.(\/|$)/) exit 1}' "${changed_list}" "${delete_list}"; then
+            echo "[synology-module-restore] unsafe path in U${update_no} sparse delta" >&2
+            rm -rf "${bundle}.new"; return 99
+        fi
         layer_tar="${bundle}.new/U${update_no}.tar"
-        tar -cf "${layer_tar}" -C "${snapshot_dir}" usr/lib/modules || { rm -rf "${bundle}.new"; return 99; }
-        sha256sum "${layer_tar}" | awk -v n="${update_no}" '{print "update=" n " sha256=" $1}' >> "${bundle}.new/manifest"
-        rm -rf "${extracted}" "${layer_dir}" "${content_file}"* "${update_pat}" "${list_file}" "${model_file}"
+        if [ -s "${changed_list}" ]; then
+            tar -cf "${layer_tar}" -C "${delta_dir}" -T "${changed_list}" || { rm -rf "${bundle}.new"; return 99; }
+        else
+            tar -cf "${layer_tar}" -T /dev/null || { rm -rf "${bundle}.new"; return 99; }
+        fi
+        layer_sha="$(sha256sum "${layer_tar}" | awk '{print $1}')"
+        delete_sha="$(sha256sum "${delete_list}" | awk '{print $1}')"
+        [ -n "${layer_sha}" ] && [ -n "${delete_sha}" ] || { rm -rf "${bundle}.new"; return 99; }
+        printf 'update=%s sha256=%s delete_sha256=%s\n' "${update_no}" "${layer_sha}" "${delete_sha}" >> "${bundle}.new/manifest"
+        rm -rf "${extracted}" "${layer_dir}" "${delta_dir}" "${changed_list}" "${content_file}"* "${update_pat}" "${list_file}" "${model_file}"
     done
     rm -rf "${snapshot_dir}" "${base_extract}" "${base_list}" "${base_module_list}"
     rm -rf "${bundle}"
