@@ -3222,7 +3222,7 @@ function build-pre-option() {
     else
       synologyrestoreaction="Disabled"
     fi
-    echo "i \"Synology original module recovery (from hda1.tgz) (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
+    echo "i \"Synology U0 original module recovery (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \

@@ -5293,7 +5293,7 @@ function prepare_synology_smallfix_modules() {
     [ "$(readConfigKey general synology_module_restore)" = "true" ] || return 0
     local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1 synology_platform="${ORIGIN_PLATFORM}"
     local model_token="$(printf '%s' "${MODEL}" | tr '[:upper:]' '[:lower:]' | sed 's/+/%2B/g')" base_info_dir="/dev/shm/hda1-base-info" base_unique base_model base_magic
-    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract base_sha256 snapshot_file base_file relpath delta_dir changed_list delete_list layer_sha delete_sha
+    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract u0_sha256 snapshot_file base_file relpath delta_dir changed_list delete_list layer_sha delete_sha
     if [ -z "${productversion}" ] || [ -z "${buildnumber}" ]; then
         local base_version_file="/dev/shm/hda1-base-VERSION" magic
         magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
@@ -5326,10 +5326,6 @@ function prepare_synology_smallfix_modules() {
     updates="$(printf '%s' "${api_json}" | jq -r --arg rel "${base_release}" '
       .info.versions.DSM[][] | .version | select(startswith($rel + " Update ")) | capture(" Update (?<n>[0-9]+)$").n
     ' | sort -n -u)"
-    base_sha256="$(sha256sum /dev/shm/hda1.tgz | awk '{print $1}')"
-    [ -n "${base_sha256}" ] || { rm -rf "${bundle}.new"; return 99; }
-    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nbase_sha256=%s\nartifact=full-module-snapshot\n' "${base_release}" "${synology_platform}" "${base_model}" "${base_unique}" "${base_sha256}" > "${bundle}.new/manifest"
-    [ -n "${updates}" ] || { rm -rf "${bundle}"; mv "${bundle}.new" "${bundle}"; echo "[synology-module-restore] no smallfix updates published for ${base_release}"; return 0; }
     snapshot_dir="${bundle}.new/.snapshot"
     base_extract="${bundle}.new/.base-extract"
     base_list="${bundle}.new/.base-list"
@@ -5343,6 +5339,17 @@ function prepare_synology_smallfix_modules() {
     esac || { rm -rf "${bundle}.new"; echo "[synology-module-restore] failed to seed U0 module snapshot" >&2; return 99; }
     [ -d "${base_extract}/usr/lib/modules" ] || { rm -rf "${bundle}.new"; return 99; }
     cp -a "${base_extract}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+    tar -cf "${bundle}.new/U0.tar" -C "${base_extract}" usr/lib/modules || { rm -rf "${bundle}.new"; return 99; }
+    u0_sha256="$(sha256sum "${bundle}.new/U0.tar" | awk '{print $1}')"
+    [ -n "${u0_sha256}" ] || { rm -rf "${bundle}.new"; return 99; }
+    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nu0_sha256=%s\nartifact=U0-modules-only\n' "${base_release}" "${synology_platform}" "${base_model}" "${base_unique}" "${u0_sha256}" > "${bundle}.new/manifest"
+    if [ -z "${updates}" ]; then
+        rm -rf "${snapshot_dir}" "${base_extract}" "${base_list}" "${base_module_list}"
+        rm -rf "${bundle}"
+        mv "${bundle}.new" "${bundle}" || return 99
+        echo "[synology-module-restore] staged U0 modules; no smallfix updates published for ${base_release}"
+        return 0
+    fi
     for update_no in ${updates}; do
         [ "${update_no}" = "${expected_update}" ] || { echo "[synology-module-restore] non-consecutive Update sequence: expected ${expected_update}, found ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
         expected_update=$((expected_update + 1))
@@ -5602,8 +5609,7 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
             else
                 echo "Extracting encrypted PAT with SynoXtract: ${patfile}"
                 if [ "${BUS}" = "block" ]; then
-                    cp -f "${patfile}" "${temp_dsmpat_folder}/${SYNOMODEL}.pat" || return 99
-                    run_synoxtract "${temp_dsmpat_folder}/${SYNOMODEL}.pat" "${temp_pat_folder}" || return 99
+                    run_synoxtract "${patfile}" "${temp_pat_folder}" || return 99
                 else
                     mv -f "${patfile}" "${temp_dsmpat_folder}/${SYNOMODEL}.pat" || return 99
                     run_synoxtract "${temp_dsmpat_folder}/${SYNOMODEL}.pat" "${temp_pat_folder}" || return 99
@@ -8123,11 +8129,10 @@ NCEOF
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
     if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
-        [ -s /dev/shm/hda1.tgz ] || { echo "[synology-module-restore] missing staged hda1.tgz" >&2; return 99; }
-        sudo cp -f /dev/shm/hda1.tgz "${RAMDISK_PATH}/addons/hda1.tgz" || return 99
         [ -d /dev/shm/hda1-smallfix ] || { echo "[synology-module-restore] missing smallfix bundle" >&2; return 99; }
+        [ -s /dev/shm/hda1-smallfix/U0.tar ] || { echo "[synology-module-restore] missing staged U0.tar" >&2; return 99; }
         sudo cp -a /dev/shm/hda1-smallfix "${RAMDISK_PATH}/addons/" || return 99
-        echo "[synology-module-restore] Embedded base hda1 and smallfix layers in initrd-dsm"
+        echo "[synology-module-restore] Embedded U0 module archive and smallfix layers in initrd-dsm"
     fi
     echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
     # MSHELL Manager 의 System Info 탭에서 표시할 빌드 시점 스냅샷.
