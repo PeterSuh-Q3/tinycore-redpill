@@ -5244,7 +5244,7 @@ function copyextractor() {
     if [ ! -x "${synoxtract}" ] || [ "$(sha256sum "${synoxtract}" 2>/dev/null | awk '{print $1}')" != "${expected_sha}" ]; then
         local temp_synoxtract="${synoxtract}.download"
         rm -f "${temp_synoxtract}"
-        curl -kLf --retry 3 "${synoxtract_url}" -o "${temp_synoxtract}" || { rm -f "${temp_synoxtract}"; return 1; }
+        curl -kLf --retry 3 --progress-bar "${synoxtract_url}" -o "${temp_synoxtract}" || { rm -f "${temp_synoxtract}"; return 1; }
         [ "$(sha256sum "${temp_synoxtract}" | awk '{print $1}')" = "${expected_sha}" ] || { rm -f "${temp_synoxtract}"; echo "[SynoXtract] SHA-256 mismatch" >&2; return 1; }
         chmod 755 "${temp_synoxtract}" && mv -f "${temp_synoxtract}" "${synoxtract}" || return 1
     fi
