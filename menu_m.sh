@@ -220,6 +220,7 @@ BFBAY=$(readConfigKey "general" "bay")
 SSDBAY=$(readConfigKey "general" "ssdbay")
 DMPM=$(readConfigKey "general" "devmod")
 NVMES=$(readConfigKey "general" "nvmesystem")
+SYNO_MODULE_RESTORE=$(readConfigKey "general" "synology_module_restore")
 VMTOOLS=$(readConfigKey "general" "vmtools")
 LDRMODE=$(readConfigKey "general" "loadermode")
 MDLNAME=$(readConfigKey "general" "modulename")
@@ -276,6 +277,11 @@ fi
 if [ -z "${NVMES}" ]; then
     NVMES="false"
     writeConfigKey "general" "nvmesystem" "${NVMES}"
+fi
+
+if [ -z "${SYNO_MODULE_RESTORE}" ]; then
+    SYNO_MODULE_RESTORE="false"
+    writeConfigKey "general" "synology_module_restore" "false"
 fi
 
 if [ -z "${VMTOOLS}" ]; then
@@ -1961,6 +1967,13 @@ function build-pre-option() {
     eval "echo \"d \\\"\${MSG${tz}132} (${SSDBAY})\\\"\""                >> "${TMP_PATH}/menud"
     eval "echo \"e \\\"${nvmeaction} \${MSG${tz}57}\\\"\""              >> "${TMP_PATH}/menud"
     eval "echo \"f \\\"${vmtoolsaction} \${MSG64}\\\"\""                >> "${TMP_PATH}/menud"
+    SYNO_MODULE_RESTORE=$(readConfigKey "general" "synology_module_restore")
+    if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+      synologyrestoreaction="Enabled"
+    else
+      synologyrestoreaction="Disabled"
+    fi
+    echo "g \"Synology U0 original module recovery (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
     echo "z exit"                                                       >> "${TMP_PATH}/menud"
     
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -2003,6 +2016,14 @@ Do you really want to continue enabling nvmesystem?" 0 0
         del-addon "vmtools" && VMTOOLS="false"
       fi  
       writeConfigKey "general" "vmtools" "${VMTOOLS}"
+      NEXT="z" ;;
+    g)
+      if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+        SYNO_MODULE_RESTORE="false"
+      else
+        SYNO_MODULE_RESTORE="true"
+      fi
+      writeConfigKey "general" "synology_module_restore" "${SYNO_MODULE_RESTORE}"
       NEXT="z" ;;
     z) return;;  
     *) return;;
