@@ -3218,9 +3218,9 @@ function build-pre-option() {
     echo "h \"${MSG65} (${sanmanagerrepairaction})\""                       >> "${TMP_PATH}/menud"
     SYNO_MODULE_RESTORE=$(readConfigKey "general" "synology_module_restore")
     if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
-      synologyrestoreaction="Enabled"
+      synologyrestoreaction="$(gettext "tcrp" "Enabled")"
     else
-      synologyrestoreaction="Disabled"
+      synologyrestoreaction="$(gettext "tcrp" "Disabled")"
     fi
     echo "i \"${MSGZZ255} (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
