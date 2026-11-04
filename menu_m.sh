@@ -579,9 +579,10 @@ function mshellDetourBmi2TestEnabled() {
 function mshellDetourBmi2ModeCandidate() {
     local model="$1" release="$2" mode="$3" options
     mshellDetourBmi2TestEnabled || return 1
-    # Detour BMI2 builds are IML-only: PML leaves vulnerable early DSM modules
-    # in the initrd and must never be offered as a detour choice.
-    [ "${mode}" = "all-modules:IML" ] || return 1
+    # The test lane can build both loading methods from the same verified
+    # detour kernel and matching all-modules archive. Keep this exception
+    # limited to all-modules modes rejected solely for missing BMI2.
+    case "${mode}" in all-modules:IML|all-modules:PML) ;; *) return 1 ;; esac
     options=$(mshellDsmResolve options "${model}" "${release}") || return 1
     printf '%s' "${options}" | jq -ce --arg id "${mode}" '
         select(.target.kernel|startswith("5."))
@@ -592,26 +593,25 @@ function mshellDetourBmi2ModeCandidate() {
 }
 
 function mshellDsmAvailableModes() {
-    local model="$1" release="$2" result method candidate candidate_iml mode
+    local model="$1" release="$2" result candidate_iml candidate_pml mode
     local -a regular_modes=() custom_modes=()
     result=$(mshellDsmResolve options "${model}" "${release}") || return $?
 
     # Preserve the catalog's existing order unless this is the test-only
-    # no-BMI2 case where all-modules:IML is exposed as a detour choice.
+    # no-BMI2 case where all-modules IML/PML choices are exposed as detours.
     candidate_iml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:IML) || candidate_iml=""
-    if [ -z "${candidate_iml}" ]; then
+    candidate_pml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:PML) || candidate_pml=""
+    if [ -z "${candidate_iml}" ] && [ -z "${candidate_pml}" ]; then
         printf '%s' "${result}" | jq -r '.allowed_modes[].id'
-        mshellDetourBmi2TestEnabled || return 0
-        candidate=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:IML) || return 0
-        printf '%s' "${candidate}" | jq -r '.id'
         return 0
     fi
 
-    # The no-BMI2 popup should lead with the detour that preserves the
-    # all-modules pack (IML). Keep every custom-modules choice at the bottom.
-    printf '%s' "${candidate_iml}" | jq -r '.id'
+    # Show both detour loading methods first, then regular modes, with custom
+    # modes at the bottom. The BMI2 exception does not make custom modes invalid.
+    [ -n "${candidate_iml}" ] && printf '%s' "${candidate_iml}" | jq -r '.id'
+    [ -n "${candidate_pml}" ] && printf '%s' "${candidate_pml}" | jq -r '.id'
     while IFS= read -r mode; do
-        [ "${mode}" = all-modules:IML ] && continue
+        case "${mode}" in all-modules:IML|all-modules:PML) continue ;; esac
         case "${mode}" in
             custom-modules:*) custom_modes+=("${mode}") ;;
             *) regular_modes+=("${mode}") ;;
@@ -727,7 +727,7 @@ function selectversion () {
         "$(dlgmenuheight $((${#menu_items[@]}/2)))" "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
     selected=$(<"${TMP_PATH}/resp")
     mode="$(readConfigKey general modulename):$(readConfigKey general mlmethod)"
-    if mshellDetourBmi2TestEnabled; then
+    if mshellDetourBmi2TestEnabled && [ "${mode%:*}" = "all-modules" ]; then
         for method in "${MLMETHOD:-IML}" IML; do
             candidate=$(mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "all-modules:${method}") || continue
             mode="all-modules:${method}"
