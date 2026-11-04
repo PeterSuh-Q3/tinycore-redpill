@@ -5390,7 +5390,7 @@ function prepare_synology_smallfix_modules() {
                 echo "[synology-module-restore] unsafe path in Update ${update_no} content" >&2
                 rm -rf "${bundle}.new"; return 99
             fi
-            awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^usr\/lib\/modules(\/|$)) print $0}' "${content_file}.list" > "${module_list}"
+            awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^usr\/lib\/modules(\/|$)/) print $0}' "${content_file}.list" > "${module_list}"
             if [ -s "${module_list}" ]; then
                 local expanded="${content_file}.expanded"
                 mkdir -p "${expanded}"
