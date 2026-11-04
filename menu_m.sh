@@ -579,39 +579,40 @@ function mshellDetourBmi2TestEnabled() {
 function mshellDetourBmi2ModeCandidate() {
     local model="$1" release="$2" mode="$3" options
     mshellDetourBmi2TestEnabled || return 1
-    # The test lane can build both loading methods from the same verified
-    # detour kernel and matching all-modules archive. Keep this exception
-    # limited to all-modules modes rejected solely for missing BMI2.
-    case "${mode}" in all-modules:IML|all-modules:PML) ;; *) return 1 ;; esac
+    # The detour candidate is all-modules:PML. custom-modules:PML may be shown
+    # as a normal, resolver-approved option, but it does not use the detour.
+    case "${mode}" in all-modules:PML|custom-modules:PML) ;; *) return 1 ;; esac
     options=$(mshellDsmResolve options "${model}" "${release}") || return 1
     printf '%s' "${options}" | jq -ce --arg id "${mode}" '
         select(.target.kernel|startswith("5."))
         | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
-        | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
-            and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+        | ([.allowed_modes[] | select(.id==$id)] +
+           [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+             and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")])
         | if length==1 then .[0] else empty end' 2>/dev/null
 }
 
 function mshellDsmAvailableModes() {
-    local model="$1" release="$2" result candidate_iml candidate_pml mode
+    local model="$1" release="$2" result candidate_all_pml candidate_custom_pml
+    local mode
     local -a regular_modes=() custom_modes=()
     result=$(mshellDsmResolve options "${model}" "${release}") || return $?
 
-    # Preserve the catalog's existing order unless this is the test-only
-    # no-BMI2 case where all-modules IML/PML choices are exposed as detours.
-    candidate_iml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:IML) || candidate_iml=""
-    candidate_pml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:PML) || candidate_pml=""
-    if [ -z "${candidate_iml}" ] && [ -z "${candidate_pml}" ]; then
+    # Prefer all-modules:PML, then custom-modules:PML. This exception is shown
+    # only when all-modules is rejected solely for missing BMI2. IML is hidden.
+    candidate_all_pml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" all-modules:PML) || candidate_all_pml=""
+    if [ -z "${candidate_all_pml}" ]; then
         printf '%s' "${result}" | jq -r '.allowed_modes[].id'
         return 0
     fi
+    candidate_custom_pml=$(mshellDetourBmi2ModeCandidate "${model}" "${release}" custom-modules:PML) || candidate_custom_pml=""
 
-    # Show both detour loading methods first, then regular modes, with custom
-    # modes at the bottom. The BMI2 exception does not make custom modes invalid.
-    [ -n "${candidate_iml}" ] && printf '%s' "${candidate_iml}" | jq -r '.id'
-    [ -n "${candidate_pml}" ] && printf '%s' "${candidate_pml}" | jq -r '.id'
+    # Prefer all-modules:PML, then custom-modules:PML. The custom choice keeps
+    # its regular kernel route; other resolver-approved modes remain available.
+    [ -n "${candidate_all_pml}" ] && printf '%s' "${candidate_all_pml}" | jq -r '.id'
+    [ -n "${candidate_custom_pml}" ] && printf '%s' "${candidate_custom_pml}" | jq -r '.id'
     while IFS= read -r mode; do
-        case "${mode}" in all-modules:IML|all-modules:PML) continue ;; esac
+        case "${mode}" in all-modules:IML|all-modules:PML|custom-modules:PML) continue ;; esac
         case "${mode}" in
             custom-modules:*) custom_modes+=("${mode}") ;;
             *) regular_modes+=("${mode}") ;;
@@ -727,12 +728,9 @@ function selectversion () {
         "$(dlgmenuheight $((${#menu_items[@]}/2)))" "${menu_items[@]}" 2>"${TMP_PATH}/resp" || return 1
     selected=$(<"${TMP_PATH}/resp")
     mode="$(readConfigKey general modulename):$(readConfigKey general mlmethod)"
-    if mshellDetourBmi2TestEnabled && [ "${mode%:*}" = "all-modules" ]; then
-        for method in "${MLMETHOD:-IML}" IML; do
-            candidate=$(mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "all-modules:${method}") || continue
-            mode="all-modules:${method}"
-            break
-        done
+    if mshellDetourBmi2TestEnabled && { [ "${mode%:*}" = "all-modules" ] || [ "${mode%:*}" = "custom-modules" ]; }; then
+        candidate=$(mshellDetourBmi2ModeCandidate "$MODEL" "$selected" "${mode%:*}:PML") || candidate=""
+        [ -n "${candidate}" ] && mode="${mode%:*}:PML"
     fi
     # Choosing a new release may require an explicit new mode selection.
     result=$(mshellDsmResolve options "$MODEL" "$selected") || return $?
@@ -763,26 +761,35 @@ function autoCorrectBmi2ModuleMode() {
     # keeping the all-modules initrd/module pack. This branch never runs in the
     # normal menu or another test version.
     if mshellDetourBmi2TestEnabled; then
-        # The detour exists only to keep an explicitly selected all-modules
-        # pack usable with its replacement kernel. Do not override a user's
-        # custom-modules (or other pack) selection just because all-modules
-        # has a BMI2-only rejection.
-        [ "${MDLNAME:-all-modules}" = "all-modules" ] || return 0
-        local method candidate
-        for method in "${MLMETHOD:-IML}" IML; do
-            candidate=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" "all-modules:${method}") || continue
-            old_module="${MDLNAME:-all-modules}"
-            old_method="${MLMETHOD:-IML}"
-            if [ "${old_module}" != all-modules ] || [ "${old_method}" != "${method}" ]; then
-                if mshellSaveDsmSelection "${MODEL}" "${BUILD}" all-modules "${method}"; then
-                    MDLNAME=all-modules
-                    MLMETHOD="${method}"
-                    printf '[BMI2 test] CPU lacks BMI2; selected all-modules:%s with the detour kernel profile.\n' "${method}"
-                fi
+        local detour_pml
+        detour_pml=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" all-modules:PML) || detour_pml=""
+        # All-modules:PML is the automatic default. Preserve custom-modules
+        # only when explicitly selected, and normalize it to PML.
+        if [ "${MDLNAME:-all-modules}" = "custom-modules" ]; then
+            local custom_pml
+            custom_pml=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" custom-modules:PML) || custom_pml=""
+            if [ -n "${custom_pml}" ] && [ "${MLMETHOD:-IML}" != "PML" ] && \
+               mshellSaveDsmSelection "${MODEL}" "${BUILD}" custom-modules PML; then
+                MLMETHOD="PML"
+                printf '[BMI2 test] Keeping custom-modules:PML on its normal custom-kernel route.\n'
             fi
             return 0
-        done
-        return 0
+        fi
+        if [ -n "${detour_pml}" ]; then
+            if [ "${SYNO_MODULE_RESTORE:-false}" = "true" ]; then
+                SYNO_MODULE_RESTORE="false"
+                writeConfigKey "general" "synology_module_restore" "false"
+                echo "[detourbmi2] Disabled Synology U0 module recovery for this test build."
+            fi
+            old_module="${MDLNAME:-all-modules}"
+            old_method="${MLMETHOD:-IML}"
+            if [ "${old_method}" != "PML" ] && mshellSaveDsmSelection "${MODEL}" "${BUILD}" all-modules PML; then
+                MDLNAME="all-modules"
+                MLMETHOD="PML"
+                printf '[BMI2 test] CPU lacks BMI2; selected all-modules:PML with the detour kernel profile.\n'
+            fi
+            return 0
+        fi
     fi
 
     current_mode="${MDLNAME:-all-modules}:${MLMETHOD:-IML}"
@@ -3227,7 +3234,12 @@ function build-pre-option() {
     else
       synologyrestoreaction="$(gettext "tcrp" "Disabled")"
     fi
-    echo "i \"${MSGZZ255} (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
+    if [ "$(readConfigKey general modulename)" != "all-modules" ] || \
+       [ "$(readConfigKey general mlmethod)" != "PML" ] || \
+       ! mshellDetourBmi2ModeCandidate "$(readConfigKey general model)" \
+        "$(readConfigKey general version)" all-modules:PML >/dev/null 2>&1; then
+      echo "i \"${MSGZZ255} (${synologyrestoreaction})\"" >> "${TMP_PATH}/menud"
+    fi
     echo "z exit"                                                               >> "${TMP_PATH}/menud"
 
     dialog --clear --default-item ${default_resp} --backtitle "`backtitle`" --colors \
@@ -3311,14 +3323,22 @@ Do you really want to continue enabling nvmesystem?" 0 0
       notify_config_saved rebuild
       NEXT="z" ;;
     i)
-      dialog --backtitle "$(backtitle)" --title "${MSGZZ255}" --msgbox "${MSGZZ256}" 0 0
-      if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+      if [ "$(readConfigKey general modulename)" = "all-modules" ] && \
+          [ "$(readConfigKey general mlmethod)" = "PML" ] && \
+          mshellDetourBmi2ModeCandidate "$(readConfigKey general model)" \
+          "$(readConfigKey general version)" all-modules:PML >/dev/null 2>&1; then
         SYNO_MODULE_RESTORE="false"
+        writeConfigKey "general" "synology_module_restore" "false"
       else
-        SYNO_MODULE_RESTORE="true"
+        dialog --backtitle "$(backtitle)" --title "${MSGZZ255}" --msgbox "${MSGZZ256}" 0 0
+        if [ "${SYNO_MODULE_RESTORE}" = "true" ]; then
+          SYNO_MODULE_RESTORE="false"
+        else
+          SYNO_MODULE_RESTORE="true"
+        fi
+        writeConfigKey "general" "synology_module_restore" "${SYNO_MODULE_RESTORE}"
+        notify_config_saved rebuild
       fi
-      writeConfigKey "general" "synology_module_restore" "${SYNO_MODULE_RESTORE}"
-      notify_config_saved rebuild
       NEXT="z" ;;
     z) return;;
     *) return;;

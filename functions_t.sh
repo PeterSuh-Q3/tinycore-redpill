@@ -7500,22 +7500,19 @@ function buildloader() {
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] && \
        [ "${MDLNAME}" = "all-modules" ] && \
+       [ "${MLMETHOD}" = "PML" ] && \
        [[ "${KVER}" == 5.* ]] && [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
-        # The resolver currently attaches BMI2 to all-modules modes. In this
-        # test lane only, accept the exact all-modules recipe when that is its
-        # sole rejection reason, then pair it with the pinned replacement
-        # kernel. Every other resolver rejection remains fatal.
+        # The replacement kernel detour is only for all-modules:PML. A
+        # custom-modules:PML selection remains on its normal custom-kernel path.
         detour_options="$(mshellDsmResolve options "${MODEL}" "${detour_release}")" || return 99
-        detour_method="${MLMETHOD}"
-        case "${detour_method}" in IML|PML) ;; *) detour_method="IML" ;; esac
-        detour_candidate="$(printf '%s' "${detour_options}" | jq -ce --arg id "all-modules:${detour_method}" '
+        detour_method="PML"
+        detour_candidate="$(printf '%s' "${detour_options}" | jq -ce --arg id "all-modules:PML" '
             [.rejected_modes[] | select(.id==$id and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")] |
             if length==1 then .[0] else empty end' 2>/dev/null)" || detour_candidate=""
         if [ -n "${detour_candidate}" ]; then
             DETOURBMI2_ASSET_DIR="$(fetchDetourBmi2TestAsset "${MODEL}" "${ORIGIN_PLATFORM}" "${detour_release}" "${KVER}")" || return 99
             [ -n "${DETOURBMI2_ASSET_DIR}" ] || { echo "[detourbmi2] asset download returned no directory" >&2; return 99; }
             resolver_selection="$(printf '%s' "${detour_options}" | jq --argjson selected "${detour_candidate}" '.selected_mode=$selected')" || return 99
-            MDLNAME="all-modules"
             MLMETHOD="${detour_method}"
             if [ "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" != "all-modules" ]; then
                 writeConfigKey "general" "modulename" "all-modules" || return 99
@@ -7524,7 +7521,12 @@ function buildloader() {
                 writeConfigKey "general" "mlmethod" "${MLMETHOD}" || return 99
             fi
             DETOURBMI2_PROFILE="detourbmi2"
-            echo "[detourbmi2] BMI2 is missing: keeping all-modules:${MLMETHOD}; only zImage-dsm will use the verified gzip kernel asset."
+            if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+                writeConfigKey "general" "synology_module_restore" "false" || return 99
+                echo "[detourbmi2] Disabled Synology U0 module recovery for this test build."
+            fi
+            MDLNAME="all-modules"
+            echo "[detourbmi2] Using all-modules:PML with the verified replacement kernel."
         else
             resolver_selection="$(mshellDsmValidate "$MODEL" "${detour_release}" "$MDLNAME" "$MLMETHOD")" || return $?
         fi
@@ -8086,28 +8088,43 @@ NCEOF
         if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && \
            { { [ "${DSMVER}" = "7.3" ] && strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; } || \
              [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; }; then
-            _USB_TGZ="${rdtemp}/exts/all-modules/${ORIGIN_PLATFORM}-${DSMVER}-${KVER}.tgz"
+            _USB_TGZ="${rdtemp}/exts/${MDLNAME}/${ORIGIN_PLATFORM}-${DSMVER}-${KVER}.tgz"
             if [ -s "${_USB_TGZ}" ]; then
-                echo "[BMI2-fix] Replacing early DSM modules from ${_USB_TGZ} before initrd compression"
                 _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
-                _TMPUSB=$(mktemp -d) || return 99
-                sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
-                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
-                    for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
-                        if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
-                            echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
-                            rm -rf "${_TMPUSB}"
-                            return 99
+                if [ "${MLMETHOD}" = "PML" ]; then
+                    # PML already unpacked the selected exact archive into the
+                    # DSM initrd above. Verify critical detour boot modules,
+                    # but do not extract/copy them a second time.
+                    if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                            if [ ! -s "$rdtemp/usr/lib/modules/${_MOD}" ]; then
+                                echo "[BMI2-fix] PML archive did not stage required early module ${_MOD}" >&2
+                                return 99
+                            fi
+                        done
+                    fi
+                    echo "[BMI2-fix] ${MDLNAME}:PML already staged early modules; skipped duplicate copy"
+                else
+                    echo "[BMI2-fix] Replacing early DSM modules from ${_USB_TGZ} before initrd compression"
+                    _TMPUSB=$(mktemp -d) || return 99
+                    sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+                    if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                            if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
+                                echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
+                                rm -rf "${_TMPUSB}"
+                                return 99
+                            fi
+                        done
+                    fi
+                    for _MOD in ${_USB_MODS}; do
+                        if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                            sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
+                            echo "[BMI2-fix] Replaced: ${_MOD}"
                         fi
                     done
+                    rm -rf "${_TMPUSB}"
                 fi
-                for _MOD in ${_USB_MODS}; do
-                    if [ -f "${_TMPUSB}/${_MOD}" ]; then
-                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
-                        echo "[BMI2-fix] Replaced: ${_MOD}"
-                    fi
-                done
-                rm -rf "${_TMPUSB}"
             elif [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
                 echo "[BMI2-fix] all-modules archive is missing; cannot safely boot detour kernel" >&2
                 return 99
@@ -9885,7 +9902,7 @@ function mshellDsmValidateBuildSelection() {
     local model="$1" release="$2" module="$3" method="$4" options candidate
     if [ "${rploaderver:-}" = "${DETOURBMI2_TEST_VERSION:-}" ] && [ -f /tmp/test_mode ]; then
         case "${module}:${method}" in
-            all-modules:IML|all-modules:PML) ;;
+            all-modules:PML) ;;
             *) mshellDsmValidate "${model}" "${release}" "${module}" "${method}"; return $? ;;
         esac
         options=$(mshellDsmResolve options "${model}" "${release}") || return $?
