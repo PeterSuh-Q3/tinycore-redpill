@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.6.4"
-builddate="2026.11.03"
+rploaderver="1.4.7.0"
+builddate="2026.11.05"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -166,6 +166,11 @@ GDISK="$(command -v gdisk 2>/dev/null || echo /usr/sbin/gdisk)"
 # 계속 stale main에서 받아와 "menu.sh test 실행 시 v1.3.1.1로 회귀"하는
 # 사고가 실측 확인됨(152 실기, menu.sh의 UPDATE_BRANCH와 동일한 버그 패턴).
 build="alpine-redpill"
+
+# 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
+# functions.sh path and production redpill-load branch unchanged.
+DETOURBMI2_TEST_VERSION="1.4.7.0"
+DETOURBMI2_MANIFEST_SHA256="99616c0a9e3121a710255338481e614eeebdb45bf45af07e97edb5c20879a74b"
 
 modalias4="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.4.json.gz"
 modalias3="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/$build/modules.alias.3.json.gz"
@@ -1086,6 +1091,7 @@ function history() {
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
     1.4.6.4 Normalize incomplete saved IP settings and restore DHCP gateway routing
+    1.4.7.0 Test-only detourbmi2 pilot: use the latest redpill-load master for test builds, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified release gzip assets
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -4659,6 +4665,100 @@ function gitclone() {
     patchredpillload
 }
 
+# menu.sh and gitclone() already clone redpill-load/master. Apply the test
+# overlays in that checkout without fetching, resetting, or switching branches.
+function prepareDetourBmi2TestLoader() {
+    [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
+
+    local repo="/home/tc/redpill-load" current branch
+    if [ ! -d "${repo}/.git" ]; then
+        (cd /home/tc && gitclone) || return 1
+    fi
+    [ -d "${repo}/.git" ] || { echo "[detourbmi2] redpill-load clone is missing" >&2; return 1; }
+    branch="$(git -C "${repo}" branch --show-current)" || return 1
+    [ "${branch}" = "master" ] || {
+        echo "[detourbmi2] expected redpill-load/master, found ${branch:-detached}" >&2
+        return 1
+    }
+    [ -s "${repo}/build-loader_t.sh" ] && [ -s "${repo}/ext-manager_t.sh" ] && [ -s "${repo}/config/pats_t.json" ] || {
+        echo "[detourbmi2] test loader files are missing" >&2
+        return 1
+    }
+    if [ -f "${repo}/bundled-exts.json" ] && ! git -C "${repo}" diff --quiet -- bundled-exts.json; then
+        jq -e 'type == "object"' "${repo}/bundled-exts.json" >/dev/null 2>&1 || {
+            echo "[detourbmi2] invalid runtime bundled-exts.json" >&2
+            return 1
+        }
+    else
+        cp -f "${repo}/bundled-exts_t.json" "${repo}/bundled-exts.json" || return 1
+    fi
+    cp -f "${repo}/build-loader_t.sh" "${repo}/build-loader.sh" || return 1
+    cp -f "${repo}/ext-manager_t.sh" "${repo}/ext-manager.sh" || return 1
+    cp -f "${repo}/config/pats_t.json" "${repo}/config/pats.json" || return 1
+    chmod +x "${repo}"/*.sh || return 1
+    patchredpillload || return 1
+    current="$(git -C "${repo}" rev-parse --short HEAD)" || return 1
+    echo "[detourbmi2] using redpill-load master@${current} for MSHELL test ${rploaderver}"
+}
+
+# Follow the public repository's latest non-prerelease release. No end-user
+# credential is required; the pinned manifest and per-file SHA-256 checks
+# remain mandatory, so changed asset sets fail closed until this pin is updated.
+function detourBmi2FetchPublicAsset() {
+    local filename="$1" destination="$2"
+    local url="https://github.com/PeterSuh-Q3/redpill-load/releases/latest/download/${filename}"
+    case "${filename}" in manifest.json|bzImage-*.gz) ;; *)
+        echo "[detourbmi2] refusing unexpected public asset name: ${filename}" >&2
+        return 1 ;;
+    esac
+    curl --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
+        --retry 3 --retry-delay 2 --output "${destination}" "${url}"
+}
+
+function fetchDetourBmi2TestAsset() (
+    local model="$1" platform="$2" release="$3" kernel="$4"
+    local asset_root="/dev/shm/mshell-detourbmi2-${BASHPID}" manifest entry filename compressed_sha image_sha actual image_tmp
+    mkdir -m 700 "${asset_root}" || return 1
+    manifest="${asset_root}/manifest.json"
+    image_tmp="${asset_root}/image.raw.tmp"
+    trap 'rm -f "${image_tmp:-}"' EXIT HUP INT TERM
+
+    if ! detourBmi2FetchPublicAsset manifest.json "${manifest}"; then
+        echo "[detourbmi2] failed to download the public release manifest" >&2
+        return 1
+    fi
+    actual="$(sha256sum "${manifest}" | awk '{print $1}')" || return 1
+    [ "${actual}" = "${DETOURBMI2_MANIFEST_SHA256}" ] || {
+        echo "[detourbmi2] manifest SHA-256 mismatch" >&2
+        return 1
+    }
+
+    entry="$(jq -er --arg model "${model}" --arg platform "${platform}" --arg release "${release}" \
+        --arg kernel "${kernel%+}+" \
+        '[.assets[] | select(.model==$model and .platform==$platform and .dsm_release==$release and .kernel_release==$kernel)] | if length==1 then .[0] else error("no unique compatible asset") end | [.filename,.sha256,.image_sha256] | @tsv' "${manifest}")" || {
+        echo "[detourbmi2] no unique asset for ${model}/${platform}/${release}/${kernel}" >&2
+        return 1
+    }
+    IFS=$'\t' read -r filename compressed_sha image_sha <<< "${entry}"
+    [[ "${filename}" =~ ^bzImage-${platform}-7\.[34]-5\.10\.55\.gz$ ]] && \
+        [[ "${compressed_sha}" =~ ^[[:xdigit:]]{64}$ ]] && [[ "${image_sha}" =~ ^[[:xdigit:]]{64}$ ]] || {
+            echo "[detourbmi2] asset manifest entry is malformed" >&2
+            return 1
+        }
+    if ! detourBmi2FetchPublicAsset "${filename}" "${asset_root}/${filename}"; then
+        echo "[detourbmi2] failed to download public release asset ${filename}" >&2
+        return 1
+    fi
+    actual="$(sha256sum "${asset_root}/${filename}" | awk '{print $1}')" || return 1
+    [ "${actual}" = "${compressed_sha}" ] || { echo "[detourbmi2] compressed asset SHA-256 mismatch" >&2; return 1; }
+    gzip -t "${asset_root}/${filename}" || { echo "[detourbmi2] downloaded asset is not valid gzip" >&2; return 1; }
+    gzip -dc "${asset_root}/${filename}" > "${image_tmp}" || return 1
+    actual="$(sha256sum "${image_tmp}" | awk '{print $1}')" || return 1
+    [ "${actual}" = "${image_sha}" ] || { echo "[detourbmi2] decompressed image SHA-256 mismatch" >&2; return 1; }
+    rm -f "${image_tmp}"
+    printf '%s\n' "${asset_root}"
+)
+
 # redpill-load의 brp_pack_cpiord()는 기본적으로 find/cpio stderr를 /dev/null로 버려서
 # "Failed to repack flat ramdisk" 실패시 원인(디스크 공간부족/OOM 등)을 알 수 없다.
 # 또한 rpt_download_remote()도 curl의 stderr를 캡처하지 않아, raw.githubusercontent.com
@@ -4667,7 +4767,7 @@ function gitclone() {
 # /home/tc/redpill-load는 tmpfs 위에 매 빌드마다 새로 clone되므로, clone 직후 이
 # 함수를 통해 로그가 남도록 패치한다 (원본 저장소를 직접 수정할 수 없어 로컬 패치).
 function patchredpillload() {
-    local f="/home/tc/redpill-load/include/file.sh"
+    local f="${1:-/home/tc/redpill-load/include/file.sh}"
     [ -f "$f" ] || return 0
 
     # (1) cpio 리패킹 실패 원인 로그 캡처
@@ -4700,12 +4800,22 @@ EOF
             awk -v n="$dl_line" -v repl="$newline" 'NR==n{print repl; next} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
         fi
     fi
+
+    # Keep the Alpine-specific retry policy after preparing the test checkout.
+    if is_alpine; then
+        sed -i 's/--retry 5 /--retry 8 --retry-delay 3 --retry-all-errors /g' "$f"
+    fi
 }
 
 function gitdownload() {
 
     cd /home/tc
     git config --global http.sslVerify false    
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
+        # Test mode uses the master checkout already prepared by menu.sh.
+        prepareDetourBmi2TestLoader
+        return $?
+    fi
     if [ -d "/home/tc/redpill-load" ]; then
         cecho y "Loader sources already downloaded, pulling latest"
         cd /home/tc/redpill-load
@@ -5126,120 +5236,228 @@ function savesession() {
 }
 
 function copyextractor() {
-#m shell mofified
     local_cache="/mnt/${tcrppart}/auxfiles"
-
-    echo "making directory ${local_cache}"
-    [ ! -d "${local_cache}" ] && sudo mkdir -p "${local_cache}"
-
-    echo "making directory ${local_cache}/extractor"
-    [ ! -d ${local_cache}/extractor ] && sudo mkdir ${local_cache}/extractor
-    [ ! -f /home/tc/extractor.gz ] && sudo curl -kL -# "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" -o /home/tc/extractor.gz
-    sudo tar -zxvf /home/tc/extractor.gz -C ${local_cache}/extractor
-
-    if [ "${BUS}" = "block"  ]; then
-      # clone 실패를 확인하지 않으면 cd 가 그대로 실패한 채 넘어가
-      # docker build 가 엉뚱한(현재) 디렉터리를 대상으로 실행되거나
-      # 조용히 실패해, 뒤늦게 이미지가 없다는 식으로 원인과 동떨어진
-      # 곳에서 문제가 드러난다.
-      if ! git clone https://github.com/technorabilia/syno-extract-system-patch.git || \
-         [ ! -d syno-extract-system-patch/.git ]; then
-        echo "[ERROR] Failed to clone syno-extract-system-patch from GitHub. Check network connectivity and try again."
-        exit 99
-      fi
-      cd syno-extract-system-patch
-      sudo docker build --tag syno-extract-system-patch .
-      sudo mkdir -p ~/data/in
-      sudo mkdir -p ~/data/out
+    sudo mkdir -p "${local_cache}/extractor" || return 1
+    local synoxtract="/home/tc/synoxtract"
+    local synoxtract_url="https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${build}/extractor-new/synoxtract"
+    local expected_sha="66503d9d61e99cd2534e6ab39b880c83d5466322ea294efb700e9ac2e90cbe90"
+    if [ ! -x "${synoxtract}" ] || [ "$(sha256sum "${synoxtract}" 2>/dev/null | awk '{print $1}')" != "${expected_sha}" ]; then
+        local temp_synoxtract="${synoxtract}.download"
+        rm -f "${temp_synoxtract}"
+        curl -kLf --retry 3 --progress-bar "${synoxtract_url}" -o "${temp_synoxtract}" || { rm -f "${temp_synoxtract}"; return 1; }
+        [ "$(sha256sum "${temp_synoxtract}" | awk '{print $1}')" = "${expected_sha}" ] || { rm -f "${temp_synoxtract}"; echo "[SynoXtract] SHA-256 mismatch" >&2; return 1; }
+        chmod 755 "${temp_synoxtract}" && mv -f "${temp_synoxtract}" "${synoxtract}" || return 1
     fi
-
-    echo "Copying required libraries to local lib directory"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
-    echo "Linking lib to lib64"
-    # gcompat 등이 /lib64를 이미 실제 디렉토리로 만들어두는 경우, "-h /lib64"는
-    # 항상 참(=/lib64 자체는 심볼릭 링크가 아님)이 되어 매번 ln이 재시도되고
-    # "/lib64/lib: File exists"로 실패한다(ln이 기존 디렉토리 안에 이름을 만듦).
-    # 실제 결과 경로(/lib64/lib)의 존재 여부로 확인해야 재실행에도 안전함.
-    [ ! -e /lib64/lib ] && [ ! -L /lib64/lib ] && sudo ln -s /lib /lib64
-    echo "Copying executable"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
-    echo "pigz copy for multithreaded compression"
-    sudo cp /mnt/${tcrppart}/auxfiles/extractor/pigz /usr/bin/pigz
-
+    sudo cp -f "${synoxtract}" "${local_cache}/extractor/synoxtract" || return 1
+    sudo chmod 755 "${local_cache}/extractor/synoxtract"
 }
 
 function downloadextractor() {
+    st "extractor" "SynoXtract" "SynoXtract ready"
+    [ "${BUS}" != "block" ] && log_build_step "SynoXtract" 3 12
+    copyextractor || { echo "[SynoXtract] download or verification failed" >&2; return 99; }
+    echo "[SynoXtract] verified static extractor ready: $(sha256sum /home/tc/synoxtract | awk '{print $1}')"
+}
 
-st "extractor" "Extraction tools" "Extraction Tools downloaded"
-[ "${BUS}" != "block" ] && log_build_step "Extraction tools" 3 12
-#    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
-#    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
-    temp_folder="/tmp/synoesp"
-
-#m shell mofified
-    copyextractor
-
-    if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
-
-        msgnormal "Found extractor locally cached"
-
+function run_synoxtract() {
+    local pat="$1" outdir="$2" args=()
+    shift 2
+    args=("$@")
+    if [ "${BUS}" = "block" ]; then
+        local data_dir="$HOME/data" host_pat host_out
+        mkdir -p "${data_dir}/in" "${data_dir}/out"
+        host_pat="${data_dir}/in/$(basename "${pat}")"
+        cp -f "${pat}" "${host_pat}" || return 1
+        rm -rf "${data_dir}/out"/*
+        local command
+        if [ "${args[0]:-}" = "-l" ]; then
+            command="/tools/synoxtract -i '/data/in/$(basename "${pat}")' -l"
+        else
+            command="/tools/synoxtract -i '/data/in/$(basename "${pat}")' -d /data/out ${args[*]}"
+        fi
+        sudo docker run --rm --platform linux/amd64 --entrypoint /bin/bash \
+          -v "${data_dir}:/data" -v "/home/tc/synoxtract:/tools/synoxtract:ro" \
+          dante90/syno-compiler:7.4 -lc "${command}" || return 1
+        [ "${args[0]:-}" = "-l" ] && return 0
+        sudo rsync -a --remove-source-files "${data_dir}/out/" "${outdir}/" || return 1
+        return 0
+    fi
+    if [ "${args[0]:-}" = "-l" ]; then
+        sudo /home/tc/synoxtract -i "${pat}" -l
     else
+        sudo /home/tc/synoxtract -i "${pat}" -d "${outdir}" "${args[@]}"
+    fi
+}
 
-        echo "Getting required extraction tool"
-        echo "------------------------------------------------------------------"
-        echo "Checking tinycore cache folder"
-
-        [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
-
-        echo "Creating temp folder /tmp/synoesp"
-
-        mkdir ${temp_folder}
-
-        if [ -d /home/tc/custom-module ] && [ -f /home/tc/custom-module/*42218*.pat ]; then
-
-            patfile=$(ls /home/tc/custom-module/*42218*.pat | head -1)
-            echo "Found custom pat file ${patfile}"
-            echo "Processing old pat file to extract required files for extraction"
-            tar -C${temp_folder} -xf /${patfile} rd.gz
-        else
-            curl -kL https://global.download.synology.com/download/DSM/release/7.0.1/42218/DSM_DS3622xs%2B_42218.pat -o /home/tc/oldpat.tar.gz
-            [ -f /home/tc/oldpat.tar.gz ] && tar -C${temp_folder} -xf /home/tc/oldpat.tar.gz rd.gz
-        fi
-
-        echo "Entering synoesp"
-        cd ${temp_folder}
-
-        xz -dc <rd.gz >rd 2>/dev/null || echo "extract rd.gz"
-        echo "finish"
-        cpio -idm <rd 2>&1 || echo "extract rd"
-        mkdir extract
-
-        sudo mkdir -p "/mnt/${tcrppart}/auxfiles" && cd "/mnt/${tcrppart}/auxfiles"
-
-        echo "Copying required files to local cache folder for future use"
-
-        sudo mkdir -p "/mnt/${tcrppart}/auxfiles/extractor"
-
-        for file in usr/lib/libcurl.so.4 usr/lib/libmbedcrypto.so.5 usr/lib/libmbedtls.so.13 usr/lib/libmbedx509.so.1 usr/lib/libmsgpackc.so.2 usr/lib/libsodium.so usr/lib/libsynocodesign-ng-virtual-junior-wins.so.7 usr/syno/bin/scemd; do
-            echo "Copying $file to /mnt/${tcrppart}/auxfiles"
-            sudo cp "$file" "/mnt/${tcrppart}/auxfiles/extractor"
+function prepare_synology_smallfix_modules() {
+    [ "$(readConfigKey general synology_module_restore)" = "true" ] || return 0
+    local base_release="${productversion}-${buildnumber}" api_json updates update_no archive_page pat_url update_pat list_file entry layer_dir content_file module_list layer_tar model_file update_info expected_update=1 synology_platform="${ORIGIN_PLATFORM}"
+    local model_token="$(printf '%s' "${MODEL}" | tr '[:upper:]' '[:lower:]' | sed 's/+/%2B/g')" base_info_dir="/dev/shm/hda1-base-info" base_unique base_model base_magic
+    local bundle="/dev/shm/hda1-smallfix" snapshot_dir base_list base_module_list base_extract u0_sha256 snapshot_file base_file relpath delta_dir changed_list delete_list layer_sha delete_sha
+    if [ -z "${productversion}" ] || [ -z "${buildnumber}" ]; then
+        local base_version_file="/dev/shm/hda1-base-VERSION" magic
+        magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+        case "${magic}" in
+          fd377a585a00) tar -xJOf /dev/shm/hda1.tgz etc.defaults/VERSION > "${base_version_file}" 2>/dev/null ;;
+          1f8b*) tar -xzOf /dev/shm/hda1.tgz etc.defaults/VERSION > "${base_version_file}" 2>/dev/null ;;
+          *) return 99 ;;
+        esac
+        productversion="$(awk -F= '$1=="productversion" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_version_file}")"
+        buildnumber="$(awk -F= '$1=="buildnumber" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_version_file}")"
+        rm -f "${base_version_file}"
+    fi
+    [ -n "${productversion}" ] && [ -n "${buildnumber}" ] || { echo "[synology-module-restore] DSM release fields unavailable" >&2; return 99; }
+    [ -n "${synology_platform}" ] || { echo "[synology-module-restore] DSM platform identity unavailable" >&2; return 99; }
+    base_release="${productversion}-${buildnumber}"
+    rm -rf "${bundle}.new"
+    mkdir -p "${bundle}.new" || return 99
+    base_magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+    mkdir -p "${base_info_dir}"
+    case "${base_magic}" in
+      fd377a585a00) tar -xJOf /dev/shm/hda1.tgz etc.defaults/synoinfo.conf > "${base_info_dir}/synoinfo.conf" 2>/dev/null ;;
+      1f8b*) tar -xzOf /dev/shm/hda1.tgz etc.defaults/synoinfo.conf > "${base_info_dir}/synoinfo.conf" 2>/dev/null ;;
+      *) return 99 ;;
+    esac
+    base_unique="$(awk -F= '$1=="unique" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_info_dir}/synoinfo.conf")"
+    base_model="$(awk -F= '$1=="upnpmodelname" {gsub(/["\r]/,"",$2);print $2;exit}' "${base_info_dir}/synoinfo.conf")"
+    rm -rf "${base_info_dir}"
+    [ -n "${base_unique}" ] && [ "${base_model}" = "${MODEL}" ] || { echo "[synology-module-restore] base PAT model identity mismatch" >&2; rm -rf "${bundle}.new"; return 99; }
+    api_json="$(curl -kLf --retry 3 --get --data-urlencode "identify=DSM" --data-urlencode "lang=en-us" --data-urlencode "model=${MODEL}" "https://www.synology.com/api/releaseNote/findChangeLog")" || { echo "[synology-module-restore] release-note lookup failed" >&2; return 99; }
+    updates="$(printf '%s' "${api_json}" | jq -r --arg rel "${base_release}" '
+      .info.versions.DSM[][] | .version | select(startswith($rel + " Update ")) | capture(" Update (?<n>[0-9]+)$").n
+    ' | sort -n -u)"
+    snapshot_dir="${bundle}.new/.snapshot"
+    base_extract="${bundle}.new/.base-extract"
+    base_list="${bundle}.new/.base-list"
+    base_module_list="${bundle}.new/.base-modules.list"
+    mkdir -p "${snapshot_dir}/usr/lib/modules" "${base_extract}"
+    base_magic="$(od -An -tx1 -N6 /dev/shm/hda1.tgz 2>/dev/null | tr -d ' \n')"
+    case "${base_magic}" in
+      fd377a585a00) tar -tJf /dev/shm/hda1.tgz > "${base_list}" && awk '$0 ~ /^\.\/usr\/lib\/modules(\/|$)/ || $0 ~ /^usr\/lib\/modules(\/|$)/ {print}' "${base_list}" > "${base_module_list}" && tar -xJf /dev/shm/hda1.tgz -C "${base_extract}" -T "${base_module_list}" ;;
+      1f8b*) tar -tzf /dev/shm/hda1.tgz > "${base_list}" && awk '$0 ~ /^\.\/usr\/lib\/modules(\/|$)/ || $0 ~ /^usr\/lib\/modules(\/|$)/ {print}' "${base_list}" > "${base_module_list}" && tar -xzf /dev/shm/hda1.tgz -C "${base_extract}" -T "${base_module_list}" ;;
+      *) rm -rf "${bundle}.new"; echo "[synology-module-restore] unsupported base hda1 compression" >&2; return 99 ;;
+    esac || { rm -rf "${bundle}.new"; echo "[synology-module-restore] failed to seed U0 module snapshot" >&2; return 99; }
+    [ -d "${base_extract}/usr/lib/modules" ] || { rm -rf "${bundle}.new"; return 99; }
+    cp -a "${base_extract}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+    tar -cf "${bundle}.new/U0.tar" -C "${base_extract}" usr/lib/modules || { rm -rf "${bundle}.new"; return 99; }
+    u0_sha256="$(sha256sum "${bundle}.new/U0.tar" | awk '{print $1}')"
+    [ -n "${u0_sha256}" ] || { rm -rf "${bundle}.new"; return 99; }
+    printf 'base=%s\nplatform=%s\nmodel=%s\nunique=%s\nu0_sha256=%s\nartifact=U0-modules-only\n' "${base_release}" "${synology_platform}" "${base_model}" "${base_unique}" "${u0_sha256}" > "${bundle}.new/manifest"
+    if [ -z "${updates}" ]; then
+        rm -rf "${snapshot_dir}" "${base_extract}" "${base_list}" "${base_module_list}"
+        rm -rf "${bundle}"
+        mv "${bundle}.new" "${bundle}" || return 99
+        echo "[synology-module-restore] staged U0 modules; no smallfix updates published for ${base_release}"
+        return 0
+    fi
+    for update_no in ${updates}; do
+        [ "${update_no}" = "${expected_update}" ] || { echo "[synology-module-restore] non-consecutive Update sequence: expected ${expected_update}, found ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
+        expected_update=$((expected_update + 1))
+        archive_page="https://archive.synology.com/download/Os/DSM/${base_release}-${update_no}"
+        pat_url="$(curl -kLf --retry 3 "${archive_page}" | grep -oE 'https://global\.synologydownload\.com/download/DSM/criticalupdate/update_pack/[^" ]+' | sed 's/&amp;/\&/g' | grep "/synology_${synology_platform}_${model_token}\.pat$" | head -1)"
+        [ -n "${pat_url}" ] || { echo "[synology-module-restore] PAT URL missing for ${base_release} Update ${update_no}" >&2; rm -rf "${bundle}.new"; return 99; }
+        update_pat="${bundle}.new/update-${update_no}.pat"
+        curl -kLf --retry 3 --progress-bar "${pat_url}" -o "${update_pat}" || { rm -rf "${bundle}.new"; return 99; }
+        list_file="${bundle}.new/update-${update_no}.list"
+        run_synoxtract "${update_pat}" "${bundle}.new" -l > "${list_file}" || { rm -rf "${bundle}.new"; return 99; }
+        model_file="${bundle}.new/update-${update_no}-info"
+        run_synoxtract "${update_pat}" "${bundle}.new" -f INFO || { rm -rf "${bundle}.new"; return 99; }
+        [ -f "${bundle}.new/INFO" ] && mv "${bundle}.new/INFO" "${model_file}"
+        [ -s "${model_file}" ] || { echo "[synology-module-restore] Update ${update_no} INFO missing" >&2; rm -rf "${bundle}.new"; return 99; }
+        update_info="$(tr -d '\r"' < "${model_file}")"
+        for _field in "archive_type=update_pack" "platform=${synology_platform}" "buildnum=${buildnumber}" "productversion=${productversion}" "smallfixnum=${update_no}"; do
+            printf '%s\n' "${update_info}" | grep -Fqx "${_field}" || { echo "[synology-module-restore] Update ${update_no} INFO mismatch: ${_field}" >&2; rm -rf "${bundle}.new"; return 99; }
         done
-
-    fi
-
-    echo "Removing temp folder /tmp/synoesp"
-    rm -rf $temp_folder
-
-    if [ "${BUS}" != "block" ]; then
-        msgnormal "Checking if tool is accessible"
-        if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then    
-            /bin/syno_extract_system_patch 2>&1 >/dev/null
+        if printf '%s\n' "${update_info}" | grep -q '^unique='; then
+            printf '%s\n' "${update_info}" | grep -Fqx "unique=${base_unique}" || { echo "[synology-module-restore] Update ${update_no} model identity mismatch" >&2; rm -rf "${bundle}.new"; return 99; }
         else
-            /bin/syno_extract_system_patch
+            echo "[synology-module-restore] Update ${update_no} INFO has no model identity" >&2
+            rm -rf "${bundle}.new"; return 99
         fi
-        if [ $? -eq 255 ]; then echo "Executed succesfully"; else echo "Cound not execute"; fi    
-    fi
+        # Extract every hda1 platform/model update archive named by SynoXtract.
+        local hda1_entries=()
+        while IFS= read -r entry; do
+            case "${entry}" in hda1-*.tar) hda1_entries+=("${entry}");; esac
+        done < <(awk '$NF ~ /^hda1-.*\.tar$/ {print $NF}' "${list_file}")
+        local extracted="${bundle}.new/extracted-${update_no}"
+        mkdir -p "${extracted}"
+        layer_dir="${bundle}.new/U${update_no}"
+        mkdir -p "${layer_dir}/usr/lib/modules"
+        if [ "${#hda1_entries[@]}" -gt 0 ]; then
+            run_synoxtract "${update_pat}" "${extracted}" -f "${hda1_entries[@]}" || { rm -rf "${bundle}.new"; return 99; }
+        fi
+        for entry in "${hda1_entries[@]}"; do
+            [ -f "${extracted}/${entry}" ] || { echo "[synology-module-restore] missing extracted ${entry}" >&2; rm -rf "${bundle}.new"; return 99; }
+            content_file="${extracted}/${entry}.content.txz"
+            tar -xOf "${extracted}/${entry}" content.txz > "${content_file}" || { rm -rf "${bundle}.new"; return 99; }
+            xz -t "${content_file}" >/dev/null 2>&1 || { echo "[synology-module-restore] invalid content.txz in ${entry}" >&2; rm -rf "${bundle}.new"; return 99; }
+            module_list="${content_file}.modules.list"
+            tar -tJf "${content_file}" > "${content_file}.list" || { rm -rf "${bundle}.new"; return 99; }
+            if ! awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^\// || p ~ /(^|\/)\.\.(\/|$)/) exit 1}' "${content_file}.list"; then
+                echo "[synology-module-restore] unsafe path in Update ${update_no} content" >&2
+                rm -rf "${bundle}.new"; return 99
+            fi
+            awk '{p=$0; sub(/^\.\//,"",p); if (p ~ /^usr\/lib\/modules(\/|$)/) print $0}' "${content_file}.list" > "${module_list}"
+            if [ -s "${module_list}" ]; then
+                local expanded="${content_file}.expanded"
+                mkdir -p "${expanded}"
+                tar -xJf "${content_file}" -C "${expanded}" -T "${module_list}" || { rm -rf "${bundle}.new"; return 99; }
+                [ -d "${expanded}/usr/lib/modules" ] && cp -a "${expanded}/usr/lib/modules/." "${layer_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+            fi
+        done
+        cp -a "${layer_dir}/usr/lib/modules/." "${snapshot_dir}/usr/lib/modules/" || { rm -rf "${bundle}.new"; return 99; }
+
+        # Save only the files needed to transform the U0 baseline into this
+        # exact Update state. Runtime starts from hda1 U0 and applies one U<n>
+        # delta; it never layers U1, U2, ... at boot.
+        delta_dir="${bundle}.new/.delta-U${update_no}"
+        changed_list="${bundle}.new/.U${update_no}.files"
+        delete_list="${bundle}.new/U${update_no}.delete"
+        mkdir -p "${delta_dir}" || { rm -rf "${bundle}.new"; return 99; }
+        : > "${changed_list}"
+        : > "${delete_list}"
+        while IFS= read -r snapshot_file; do
+            relpath="${snapshot_file#${snapshot_dir}/}"
+            case "${relpath}" in usr/lib/modules/*) ;; *) echo "[synology-module-restore] unsafe changed path ${relpath}" >&2; rm -rf "${bundle}.new"; return 99 ;; esac
+            base_file="${base_extract}/${relpath}"
+            if [ -L "${snapshot_file}" ]; then
+                if [ ! -L "${base_file}" ] || [ "$(readlink "${snapshot_file}")" != "$(readlink "${base_file}")" ]; then
+                    mkdir -p "${delta_dir}/$(dirname "${relpath}")" || { rm -rf "${bundle}.new"; return 99; }
+                    cp -a "${snapshot_file}" "${delta_dir}/${relpath}" || { rm -rf "${bundle}.new"; return 99; }
+                    printf '%s\n' "${relpath}" >> "${changed_list}"
+                fi
+            elif [ ! -f "${base_file}" ] || ! cmp -s "${snapshot_file}" "${base_file}"; then
+                mkdir -p "${delta_dir}/$(dirname "${relpath}")" || { rm -rf "${bundle}.new"; return 99; }
+                cp -a "${snapshot_file}" "${delta_dir}/${relpath}" || { rm -rf "${bundle}.new"; return 99; }
+                printf '%s\n' "${relpath}" >> "${changed_list}"
+            fi
+        done < <(find "${snapshot_dir}/usr/lib/modules" \( -type f -o -type l \) -print)
+        while IFS= read -r base_file; do
+            relpath="${base_file#${base_extract}/}"
+            if [ ! -e "${snapshot_dir}/${relpath}" ] && [ ! -L "${snapshot_dir}/${relpath}" ]; then
+                printf '%s\n' "${relpath}" >> "${delete_list}"
+            fi
+        done < <(find "${base_extract}/usr/lib/modules" \( -type f -o -type l \) -print)
+        if ! awk '{if ($0 !~ /^usr\/lib\/modules(\/|$)/ || $0 ~ /(^|\/)\.\.(\/|$)/) exit 1}' "${changed_list}" "${delete_list}"; then
+            echo "[synology-module-restore] unsafe path in U${update_no} sparse delta" >&2
+            rm -rf "${bundle}.new"; return 99
+        fi
+        layer_tar="${bundle}.new/U${update_no}.tar"
+        if [ -s "${changed_list}" ]; then
+            tar -cf "${layer_tar}" -C "${delta_dir}" -T "${changed_list}" || { rm -rf "${bundle}.new"; return 99; }
+        else
+            tar -cf "${layer_tar}" -T /dev/null || { rm -rf "${bundle}.new"; return 99; }
+        fi
+        layer_sha="$(sha256sum "${layer_tar}" | awk '{print $1}')"
+        delete_sha="$(sha256sum "${delete_list}" | awk '{print $1}')"
+        [ -n "${layer_sha}" ] && [ -n "${delete_sha}" ] || { rm -rf "${bundle}.new"; return 99; }
+        printf 'update=%s sha256=%s delete_sha256=%s\n' "${update_no}" "${layer_sha}" "${delete_sha}" >> "${bundle}.new/manifest"
+        rm -rf "${extracted}" "${layer_dir}" "${delta_dir}" "${changed_list}" "${content_file}"* "${update_pat}" "${list_file}" "${model_file}"
+    done
+    rm -rf "${snapshot_dir}" "${base_extract}" "${base_list}" "${base_module_list}"
+    rm -rf "${bundle}"
+    mv "${bundle}.new" "${bundle}" || return 99
+    echo "[synology-module-restore] staged smallfix layers: $(tr '\n' ' ' < "${bundle}/manifest")"
 }
 
 function testarchive() {
@@ -5290,6 +5508,16 @@ function testarchive() {
 
 }
 
+function verify_synology_hda1_archive() {
+    local archive="$1" magic
+    magic=$(od -An -tx1 -N6 "$archive" 2>/dev/null | tr -d ' \n')
+    case "$magic" in
+        fd377a585a00) tar -tJf "$archive" >/dev/null 2>&1 ;;
+        1f8b*)       tar -tzf "$archive" >/dev/null 2>&1 ;;
+        *)           echo "[synology-module-restore] Unsupported hda1.tgz compression: $magic" >&2; return 1 ;;
+    esac
+}
+
 function processpat() {
 
 #    loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
@@ -5313,6 +5541,35 @@ function processpat() {
     echo "Checking for cached pat file"
     [ -d $local_cache ] && msgnormal "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
 
+    # A minipat cannot supply hda1.tgz. Fetch and verify the original PAT once
+    # per build, before considering either the persistent or redpill cache.
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ] && \
+       [ "${MSHELL_HDA1_FRESH_PAT:-}" != "${SYNOMODEL}" ]; then
+        local original_url original_sum fresh_pat actual_sum
+        original_url=$(jq -er --arg model "$MODEL" --arg build "$BUILD" \
+          '.[$model] | to_entries | map(select(.key | startswith($build))) | .[0].value.url' "$configfile") || return 99
+        original_sum=$(jq -er --arg model "$MODEL" --arg build "$BUILD" \
+          '.[$model] | to_entries | map(select(.key | startswith($build))) | .[0].value.sum' "$configfile") || return 99
+        fresh_pat="/dev/shm/${SYNOMODEL}.original-pat-download"
+        sudo rm -f /dev/shm/hda1.tgz "$fresh_pat"
+        echo "[synology-module-restore] Downloading original PAT from ${original_url}"
+        if ! sudo curl -kLf --retry 3 --progress-bar "$original_url" -o "$fresh_pat"; then
+            sudo rm -f "$fresh_pat"
+            return 99
+        fi
+        actual_sum=$(md5sum "$fresh_pat" | awk '{print $1}')
+        if [ "$actual_sum" != "$original_sum" ]; then
+            echo "[synology-module-restore] Original PAT MD5 mismatch" >&2
+            sudo rm -f "$fresh_pat"
+            return 99
+        fi
+        sudo mkdir -p "$local_cache" /home/tc/redpill-load/cache
+        sudo mv -f "$fresh_pat" "$local_cache/${SYNOMODEL}.pat" || return 99
+        sudo chmod a+r "$local_cache/${SYNOMODEL}.pat"
+        sudo rm -f "/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+        MSHELL_HDA1_FRESH_PAT="${SYNOMODEL}"
+    fi
+
     # [netconsole] 이 기능이 생기기 전에 만들어진 캐시(미니팻)는 netconsole.ko 를
     # 내장하고 있지 않다. 그런 캐시를 그대로 쓰면 buildloader() 가 이번 빌드에서도
     # netconsole.ko 를 못 찾으므로, 캐시된 pat 에 없으면 지워서 아래 로직이
@@ -5321,14 +5578,16 @@ function processpat() {
     # 캐시는 아직 암호화된 상태라 tar -tf 가 실패(빈 리스팅)하는데, 그걸 "netconsole.ko
     # 없음"으로 오판해 방금 받은 파일을 지우면 무한 재다운로드 루프에 빠진다.
     # tar 리스팅이 실제로 비어있지 않을 때(=유효한 tar, 이미 복호화됨)만 검사한다.
-    for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
-        [ -f "${_nc_cached}" ] || continue
-        _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
-        if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
-            echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
-            rm -f "${_nc_cached}"
-        fi
-    done
+    if [ "$(readConfigKey general synology_module_restore)" != "true" ]; then
+        for _nc_cached in ${local_cache}/*${SYNOMODEL}*.pat ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat; do
+            [ -f "${_nc_cached}" ] || continue
+            _nc_listing="$(tar -tf "${_nc_cached}" 2>/dev/null)"
+            if [ -n "${_nc_listing}" ] && ! echo "${_nc_listing}" | grep -q "usr/lib/modules/netconsole\.ko\$"; then
+                echo "[netconsole] cached pat ${_nc_cached} predates netconsole.ko bundling - removing to force full re-download"
+                rm -f "${_nc_cached}"
+            fi
+        done
+    fi
 
     if [ -d ${local_cache} ] && [ -f ${local_cache}/*${SYNOMODEL}*.pat ] || [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ]; then
 
@@ -5348,17 +5607,12 @@ st "iscached" "Caching pat file" "Patfile ${SYNOMODEL}.pat is cached"
             if [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && [ ${isencrypted} = "no" ]; then
                 echo "Decrypted file is already cached in :  /home/tc/redpill-load/cache/${SYNOMODEL}.pat"
             else
-                if [ "${BUS}" = "block"  ]; then            
-                  echo "Copying encrypted pat file : ${patfile} to ~/data/in"
-                  sudo mv -f ${patfile} ~/data/in/${SYNOMODEL}.pat
-                  echo "Extracting encrypted pat file : ~/data/in/${SYNOMODEL}.pat to ~/data/out"
-                  sudo docker run --rm -v ~/data:/data syno-extract-system-patch /data/in/${SYNOMODEL}.pat /data/out/. || echo "extract latest pat"
-                  rsync -a --remove-source-files ~/data/out/ ${temp_pat_folder}/
+                echo "Extracting encrypted PAT with SynoXtract: ${patfile}"
+                if [ "${BUS}" = "block" ]; then
+                    run_synoxtract "${patfile}" "${temp_pat_folder}" || return 99
                 else
-                  echo "Copying encrypted pat file : ${patfile} to ${temp_dsmpat_folder}"
-                  sudo mv -f ${patfile} ${temp_dsmpat_folder}/${SYNOMODEL}.pat
-                  echo "Extracting encrypted pat file : ${temp_dsmpat_folder}/${SYNOMODEL}.pat to ${temp_pat_folder}"
-                  sudo /bin/syno_extract_system_patch ${temp_dsmpat_folder}/${SYNOMODEL}.pat ${temp_pat_folder} || echo "extract latest pat"
+                    mv -f "${patfile}" "${temp_dsmpat_folder}/${SYNOMODEL}.pat" || return 99
+                    run_synoxtract "${temp_dsmpat_folder}/${SYNOMODEL}.pat" "${temp_pat_folder}" || return 99
                 fi
                 echo "Decrypted pat file tar compression in progress ${SYNOMODEL}.pat to /home/tc/redpill-load/cache folder (multithreaded comporession)"
                 mkdir -p /home/tc/redpill-load/cache/
@@ -5413,6 +5667,17 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
             exit 99
         fi
 
+        if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+            local hda1_entry hda1_temp="/dev/shm/hda1.tgz.extracting"
+            hda1_entry=$(tar -tf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)
+            [ -n "$hda1_entry" ] || { echo "[synology-module-restore] hda1.tgz missing from extracted PAT" >&2; return 99; }
+            rm -f "$hda1_temp"
+            tar -xOf "/home/tc/redpill-load/cache/${SYNOMODEL}.pat" "$hda1_entry" > "$hda1_temp" && verify_synology_hda1_archive "$hda1_temp" || { rm -f "$hda1_temp"; return 99; }
+            mv -f "$hda1_temp" /dev/shm/hda1.tgz || return 99
+            echo "[synology-module-restore] Preserved /dev/shm/hda1.tgz"
+            prepare_synology_smallfix_modules || return 99
+        fi
+
         msgnormal "Clearing temp folders"
         sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
         sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}        
@@ -5444,8 +5709,19 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
 
         if [ "${isencrypted}" = "yes" ]; then
             echo "File ${patfile}, has been cached but its encrypted, re-running decrypting process"
-            processpat
+            processpat || return 99
         else
+            if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+                # The newly downloaded PAT is already an unencrypted tar.
+                local hda1_entry hda1_temp
+                hda1_entry=$(tar -tf "$patfile" 2>/dev/null | grep -E '(^|/)hda1\.tgz$' | head -1)
+                [ -n "$hda1_entry" ] || return 99
+                hda1_temp="/dev/shm/hda1.tgz.extracting"
+                tar -xOf "$patfile" "$hda1_entry" > "$hda1_temp" && \
+                  verify_synology_hda1_archive "$hda1_temp" && \
+                  mv -f "$hda1_temp" /dev/shm/hda1.tgz || { rm -f "$hda1_temp"; return 99; }
+                prepare_synology_smallfix_modules || return 99
+            fi
             return
         fi
 
@@ -7206,12 +7482,98 @@ function _set_conf_kv() {
   return $?
 }
 
+function stageDetourBmi2PmlPack() {
+    local name="${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
+    local base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/releases"
+    local tmp manifest archive expected actual count listing
+    [[ "${name}" =~ ^[a-z0-9]+-7\.[34]-5\.10\.55-detour\.tgz$ ]] || return 99
+    tmp=$(mktemp -d /dev/shm/mshell-detour-pack.XXXXXXXX) || return 99
+    manifest="${tmp}/detour-sha256.txt"
+    archive="${tmp}/${name}"
+    listing="${tmp}/members"
+    if [ -f "/dev/shm/tcrp-modules/all-modules/releases/${name}" ] &&
+       [ -f /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt ]; then
+        cp /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt "$manifest" &&
+        cp "/dev/shm/tcrp-modules/all-modules/releases/${name}" "$archive" || return 99
+    else
+        curl -fsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
+        curl -fsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
+    fi
+    count=$(awk -v n="$name" '$2==n {c++} END {print c+0}' "$manifest")
+    [ "$count" -eq 1 ] || { echo "[detourbmi2] missing/ambiguous pack manifest entry: $name" >&2; return 99; }
+    expected=$(awk -v n="$name" '$2==n {print $1}' "$manifest")
+    actual=$(sha256sum "$archive" | awk '{print $1}')
+    [ "$actual" = "$expected" ] || { echo "[detourbmi2] pack SHA-256 mismatch: $name" >&2; return 99; }
+    tar -tzf "$archive" > "$listing" || return 99
+    [ -s "$listing" ] && ! grep -Ev '^[A-Za-z0-9_.+-]+\.ko$' "$listing" &&
+        [ "$(wc -l < "$listing")" -eq "$(sort -u "$listing" | wc -l)" ] || {
+        echo "[detourbmi2] unsafe/duplicate archive member: $name" >&2; return 99;
+    }
+    tar -tvzf "$archive" | awk 'substr($1,1,1)!="-" {bad=1} END {exit bad}' || return 99
+    # Later build steps write addon metadata as tc. Do not create this
+    # directory as root, or those writes fail even though staging succeeds.
+    mkdir -p "${rdtemp}/addons" || return 99
+    [ -w "${rdtemp}/addons" ] || { echo "[detourbmi2] addons directory is not writable by the build user" >&2; return 99; }
+    sudo mkdir -p "${rdtemp}/usr/lib/modules" || return 99
+    sudo cp "$archive" "${rdtemp}/addons/${name}" || return 99
+    printf 'filename=%s\nsha256=%s\n' "$name" "$expected" |
+        sudo tee "${rdtemp}/addons/detourbmi2.pack" >/dev/null || return 99
+    sudo tar -xzf "$archive" -C "${rdtemp}/usr/lib/modules" || return 99
+    echo "[detourbmi2] staged $name in /addons and overlaid DSM initrd modules"
+    rm -rf "$tmp"
+}
+
 function buildloader() {
-    local resolver_selection
+    local resolver_selection detour_options detour_candidate detour_method detour_release
+    local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
+    # The processpat recursion may reuse the same download within this build,
+    # but every new build must obtain its own original PAT.
+    unset MSHELL_HDA1_FRESH_PAT
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        sudo rm -f /dev/shm/hda1.tgz
+    fi
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
+        prepareDetourBmi2TestLoader || return 99
+    fi
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
-    resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" "$MDLNAME" "$MLMETHOD") || return $?
+    detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
+    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] && \
+       [ "${MDLNAME}" = "all-modules" ] && \
+       [ "${MLMETHOD}" = "PML" ] && \
+       [[ "${KVER}" == 5.* ]] && [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
+        # The replacement kernel detour is only for all-modules:PML. A
+        # custom-modules:PML selection remains on its normal custom-kernel path.
+        detour_options="$(mshellDsmResolve options "${MODEL}" "${detour_release}")" || return 99
+        detour_method="PML"
+        detour_candidate="$(printf '%s' "${detour_options}" | jq -ce --arg id "all-modules:PML" '
+            [.rejected_modes[] | select(.id==$id and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")] |
+            if length==1 then .[0] else empty end' 2>/dev/null)" || detour_candidate=""
+        if [ -n "${detour_candidate}" ]; then
+            DETOURBMI2_ASSET_DIR="$(fetchDetourBmi2TestAsset "${MODEL}" "${ORIGIN_PLATFORM}" "${detour_release}" "${KVER}")" || return 99
+            [ -n "${DETOURBMI2_ASSET_DIR}" ] || { echo "[detourbmi2] asset download returned no directory" >&2; return 99; }
+            resolver_selection="$(printf '%s' "${detour_options}" | jq --argjson selected "${detour_candidate}" '.selected_mode=$selected')" || return 99
+            MLMETHOD="${detour_method}"
+            if [ "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" != "all-modules" ]; then
+                writeConfigKey "general" "modulename" "all-modules" || return 99
+            fi
+            if [ "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")" != "${MLMETHOD}" ]; then
+                writeConfigKey "general" "mlmethod" "${MLMETHOD}" || return 99
+            fi
+            DETOURBMI2_PROFILE="detourbmi2"
+            if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+                writeConfigKey "general" "synology_module_restore" "false" || return 99
+                echo "[detourbmi2] Disabled Synology U0 module recovery for this test build."
+            fi
+            MDLNAME="all-modules"
+            echo "[detourbmi2] Using all-modules:PML with the verified replacement kernel."
+        else
+            resolver_selection="$(mshellDsmValidate "$MODEL" "${detour_release}" "$MDLNAME" "$MLMETHOD")" || return $?
+        fi
+    else
+        resolver_selection="$(mshellDsmValidate "$MODEL" "${detour_release}" "$MDLNAME" "$MLMETHOD")" || return $?
+    fi
 
 
 #    tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
@@ -7251,10 +7613,11 @@ checkmachine
     cd /home/tc/redpill-load
 
 # download commands...
-    if [ ${TARGET_REVISION} -gt 42218 ]; then
-        echo "Found build request for revision greater than 42218"
+    if [ ${TARGET_REVISION} -gt 42218 ] || \
+       [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        echo "Processing PAT (revision ${TARGET_REVISION}; original module recovery: $(readConfigKey general synology_module_restore))"
         downloadextractor
-        processpat
+        processpat || return 99
     else
         [ -d /home/tc/custom-module ] && sudo cp -adp /home/tc/custom-module/*${TARGET_REVISION}*.pat /home/tc/redpill-load/cache/
     fi
@@ -7290,9 +7653,37 @@ st "copyfiles" "Copying files to P1,P2" "Copied boot files to the loader"
         echo "jun build option has been specified, so JUN MOD loader will be created"
         # jun's mod must patch using custom.gz from the first partition, so you need to fix the partition.
         sed -i "s/BRP_OUT_P2}\/\${BRP_CUSTOM_RD_NAME/BRP_OUT_P1}\/\${BRP_CUSTOM_RD_NAME/g" /home/tc/redpill-load/build-loader.sh
-        $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        if [ -n "${DETOURBMI2_PROFILE}" ]; then
+            if [ "$FRKRNL" = "NO" ]; then
+                sudo env BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            else
+                env BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            fi
+        else
+            $( [ "$FRKRNL" = "NO" ] && echo sudo ) BRP_JUN_MOD=1 BRP_DEBUG=0 BRP_USER_CFG=user_config.json ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        fi
     else
-        $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        if [ -n "${DETOURBMI2_PROFILE}" ]; then
+            if [ "$FRKRNL" = "NO" ]; then
+                sudo env BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            else
+                env BRP_DEBUG=0 BRP_USER_CFG=user_config.json \
+                    BRP_KERNEL_PROFILE=detourbmi2 BRP_DETOURBMI2_DIR="${DETOURBMI2_ASSET_DIR}" \
+                    BRP_DETOURBMI2_MANIFEST_SHA256="${DETOURBMI2_MANIFEST_SHA256}" \
+                    ./build-loader.sh "$MODEL" "${detour_release}" loader.img "${UPPER_ORIGIN_PLATFORM}" "${KVER}" "${SYNOMODEL}"
+            fi
+        else
+            $( [ "$FRKRNL" = "NO" ] && echo sudo ) ./build-loader.sh $MODEL $TARGET_VERSION-$TARGET_REVISION loader.img ${UPPER_ORIGIN_PLATFORM} ${KVER} ${SYNOMODEL}
+        fi
     fi
 
     [ $? -ne 0 ] && echo "FAILED : Loader creation failed check the output for any errors" && exit 99
@@ -7699,6 +8090,10 @@ NCEOF
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
+        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ]; then
+            # A cached/custom ramdisk must not carry a previous test's marker.
+            sudo rm -f "${rdtemp}/addons/detourbmi2.pack" "${rdtemp}/addons/"*-detour.tgz
+        fi
         if [ "${MLMETHOD}" = "PML" ]; then
             echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
@@ -7709,6 +8104,9 @@ NCEOF
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                    stageDetourBmi2PmlPack || return 99
+                fi
             fi
 
         fi
@@ -7731,24 +8129,53 @@ NCEOF
             echo "[NTB-trace] instrumented linuxrc.syno.impl (xtrace -> ttyS0 after btrfs load)"
         fi
 
-        # [BMI2-fix] kernel 5.x + DSM 7.3: USB 8개 모듈을 all-modules tgz에서
-        # 추출해 ramdisk /usr/lib/modules/ 의 바닐라 DSM 모듈을 강제 교체한다.
-        # (PML/IML 공통 — BUS != block 조건 하에서 항상 실행)
-        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && [ "${DSMVER}" = "7.3" ] && \
-           strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; then
-            _USB_TGZ=$(ls $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz 2>/dev/null | head -1)
-            if [ -n "${_USB_TGZ}" ]; then
-                echo "[BMI2-fix] Replacing vanilla USB modules with BMI2-free versions from ${_USB_TGZ}"
+        # Replace modules in the extracted DSM ramdisk before compression: USB
+        # drivers load before the all-modules install hook can overwrite them.
+        # Keep the legacy DSM 7.3 custom-kernel path and also cover the DSM
+        # 7.3/7.4 detour kernel, whose signature is in P3 zImage-dsm, not P1.
+        if echo "${kver5platforms}" | grep -qw "${ORIGIN_PLATFORM}" && \
+           { { [ "${DSMVER}" = "7.3" ] && strings /mnt/${loaderdisk}1/zImage 2>/dev/null | grep -q "PeterSuh-Q3"; } || \
+             [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; }; then
+            _USB_TGZ="${rdtemp}/exts/${MDLNAME}/${ORIGIN_PLATFORM}-${DSMVER}-${KVER}.tgz"
+            if [ -s "${_USB_TGZ}" ]; then
                 _USB_MODS="usbcore.ko usb-common.ko usb-storage.ko ehci-hcd.ko ehci-pci.ko uhci-hcd.ko xhci-hcd.ko xhci-pci.ko hid.ko hid-generic.ko usbhid.ko uas.ko fat.ko vfat.ko adt7475.ko cdc-acm.ko e1000e.ko i40e.ko igb.ko ip_tables.ko ixgbe.ko mpt3sas.ko nf_conntrack.ko nf_defrag_ipv4.ko r8168.ko sg.ko sunrpc.ko vxlan.ko loop.ko sha256_generic.ko leds-atmega1608.ko leds-atmega1608-seg7.ko leds-lp3943.ko nfs.ko nfsv2.ko nfsv3.ko nfsv4.ko"
-                _TMPUSB=$(mktemp -d)
-                sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
-                for _MOD in ${_USB_MODS}; do
-                    if [ -f "${_TMPUSB}/${_MOD}" ]; then
-                        sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}"
-                        echo "[BMI2-fix] Replaced: ${_MOD}"
+                if [ "${MLMETHOD}" = "PML" ]; then
+                    # PML already unpacked the selected exact archive into the
+                    # DSM initrd above. Verify critical detour boot modules,
+                    # but do not extract/copy them a second time.
+                    if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                            if [ ! -s "$rdtemp/usr/lib/modules/${_MOD}" ]; then
+                                echo "[BMI2-fix] PML archive did not stage required early module ${_MOD}" >&2
+                                return 99
+                            fi
+                        done
                     fi
-                done
-                rm -rf "${_TMPUSB}"
+                    echo "[BMI2-fix] ${MDLNAME}:PML already staged early modules; skipped duplicate copy"
+                else
+                    echo "[BMI2-fix] Replacing early DSM modules from ${_USB_TGZ} before initrd compression"
+                    _TMPUSB=$(mktemp -d) || return 99
+                    sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
+                    if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                            if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
+                                echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
+                                rm -rf "${_TMPUSB}"
+                                return 99
+                            fi
+                        done
+                    fi
+                    for _MOD in ${_USB_MODS}; do
+                        if [ -f "${_TMPUSB}/${_MOD}" ]; then
+                            sudo cp -f "${_TMPUSB}/${_MOD}" "$rdtemp/usr/lib/modules/${_MOD}" || { rm -rf "${_TMPUSB}"; return 99; }
+                            echo "[BMI2-fix] Replaced: ${_MOD}"
+                        fi
+                    done
+                    rm -rf "${_TMPUSB}"
+                fi
+            elif [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                echo "[BMI2-fix] all-modules archive is missing; cannot safely boot detour kernel" >&2
+                return 99
             fi
         fi
     fi
@@ -7767,6 +8194,12 @@ NCEOF
     RAMDISK_PATH="$rdtemp"
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
+    if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+        [ -d /dev/shm/hda1-smallfix ] || { echo "[synology-module-restore] missing smallfix bundle" >&2; return 99; }
+        [ -s /dev/shm/hda1-smallfix/U0.tar ] || { echo "[synology-module-restore] missing staged U0.tar" >&2; return 99; }
+        sudo cp -a /dev/shm/hda1-smallfix "${RAMDISK_PATH}/addons/" || return 99
+        echo "[synology-module-restore] Embedded U0 module archive and smallfix layers in initrd-dsm"
+    fi
     echo "v${rploaderver}" >"${RAMDISK_PATH}/addons/VERSION"
     # MSHELL Manager 의 System Info 탭에서 표시할 빌드 시점 스냅샷.
     # user_config.json(라이브 설정)과는 별개로, 이 커스텀 램디스크가
@@ -9513,6 +9946,29 @@ function remove_loader() {
 
 }
 
+function mshellDsmValidateBuildSelection() {
+    local model="$1" release="$2" module="$3" method="$4" options candidate
+    if [ "${rploaderver:-}" = "${DETOURBMI2_TEST_VERSION:-}" ] && [ -f /tmp/test_mode ]; then
+        case "${module}:${method}" in
+            all-modules:PML) ;;
+            *) mshellDsmValidate "${model}" "${release}" "${module}" "${method}"; return $? ;;
+        esac
+        options=$(mshellDsmResolve options "${model}" "${release}") || return $?
+        candidate=$(printf '%s' "${options}" | jq -ce --arg id "${module}:${method}" '
+            select(.target.kernel|startswith("5."))
+            | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
+            | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+                and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+            | if length==1 then .[0] else empty end' 2>/dev/null) || candidate=""
+        if [ -n "${candidate}" ]; then
+            printf '%s' "${options}" | jq --argjson selected "${candidate}" \
+                '. + {selected_mode:$selected} | del(.allowed_modes,.rejected_modes)'
+            return $?
+        fi
+    fi
+    mshellDsmValidate "${model}" "${release}" "${module}" "${method}"
+}
+
 function rploader() {
 
     getip
@@ -9533,7 +9989,7 @@ function rploader() {
 
     build)
         getvarsmshell "$(jq -r '.general.model' "$userconfigfile")-$(jq -r '.general.version' "$userconfigfile")" || return $?
-        mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+        mshellDsmValidateBuildSelection "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
             "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
             "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")" >/dev/null || return $?
         getvars $ORIGIN_PLATFORM
@@ -9558,7 +10014,7 @@ function rploader() {
         checkUserConfig
         mshellLoadDsmResolver || return $?
         local resolver_selection
-        resolver_selection=$(mshellDsmValidate "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
+        resolver_selection=$(mshellDsmValidateBuildSelection "$MODEL" "$TARGET_VERSION-$TARGET_REVISION" \
             "$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")" \
             "$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")") || return $?
         getredpillko
@@ -9694,7 +10150,7 @@ function my() {
   local dsm_selection dsm_module dsm_method
   dsm_module=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
   dsm_method=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
-  dsm_selection=$(mshellDsmValidate "$MODEL" "${1#*-}" "$dsm_module" "$dsm_method") || return $?
+  dsm_selection=$(mshellDsmValidateBuildSelection "$MODEL" "${1#*-}" "$dsm_module" "$dsm_method") || return $?
 
 
   fi
@@ -9825,15 +10281,6 @@ function my() {
   fi
   
   local_cache="/mnt/${tcrppart}/auxfiles"
-  
-  #if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
-  #    echo "Found extractor locally cached"
-  #else
-  #    cecho g "making directory  /mnt/${tcrppart}/auxfiles/extractor"  
-  #    mkdir /mnt/${tcrppart}/auxfiles/extractor
-  #    sudo curl --insecure -L --progress-bar "https://$gitdomain/PeterSuh-Q3/tinycore-redpill/${build}/extractor.gz" --output /mnt/${tcrppart}/auxfiles/extractor/extractor.gz
-  #    sudo tar -zxvf /mnt/${tcrppart}/auxfiles/extractor/extractor.gz -C /mnt/${tcrppart}/auxfiles/extractor
-  #fi
   
   echo
   cecho y "TARGET_PLATFORM is $TARGET_PLATFORM"
@@ -10175,7 +10622,9 @@ function my() {
         fi    
     fi    
   fi  
-  if [ -f ${patfile} ]; then
+  if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
+      echo "[synology-module-restore] Skipping PAT pre-download/cache; buildloader will fetch a fresh Synology PAT."
+  elif [ -f ${patfile} ]; then
       cecho r "Found locally cached pat file ${SYNOMODEL}.pat in /mnt/${tcrppart}/auxfiles"
       cecho b "Downloadng Skipped!!!"
   st "download pat" "Found pat    " "Found ${SYNOMODEL}.pat"
