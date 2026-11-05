@@ -7510,7 +7510,11 @@ function stageDetourBmi2PmlPack() {
         echo "[detourbmi2] unsafe/duplicate archive member: $name" >&2; return 99;
     }
     tar -tvzf "$archive" | awk 'substr($1,1,1)!="-" {bad=1} END {exit bad}' || return 99
-    sudo mkdir -p "${rdtemp}/addons" "${rdtemp}/usr/lib/modules" || return 99
+    # Later build steps write addon metadata as tc. Do not create this
+    # directory as root, or those writes fail even though staging succeeds.
+    mkdir -p "${rdtemp}/addons" || return 99
+    [ -w "${rdtemp}/addons" ] || { echo "[detourbmi2] addons directory is not writable by the build user" >&2; return 99; }
+    sudo mkdir -p "${rdtemp}/usr/lib/modules" || return 99
     sudo cp "$archive" "${rdtemp}/addons/${name}" || return 99
     printf 'filename=%s\nsha256=%s\n' "$name" "$expected" |
         sudo tee "${rdtemp}/addons/detourbmi2.pack" >/dev/null || return 99
