@@ -3,7 +3,7 @@
 set -u # Unbound variable errors are not allowed
 
 rploaderver="1.4.7.0"
-builddate="2026.11.03"
+builddate="2026.11.05"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
