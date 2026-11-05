@@ -62,6 +62,29 @@ getvarsmshell SA6400-7.4.1-90080 || exit 42
    self.assertEqual(p.returncode,0,p.stderr)
    x=json.loads(p.stdout)
    self.assertEqual([m['id'] for m in x['allowed_modes']],['all-modules:IML','all-modules:PML','custom-modules:PML','anodrm-modules:IML'])
+ def test_production_menu_exposes_and_validates_detour_pml(self):
+  with tempfile.TemporaryDirectory() as d:
+   cpu=Path(d)/'cpu.json'
+   cpu.write_text(json.dumps({'flags_known':True,'flags':['sse4_2'],'source':'test-target'}))
+   code=(function('mshellDsmDetourBmi2Candidate')+
+         function('mshellDsmValidateBuildSelection')+
+         function_from(ROOT/'menu_m.sh','mshellDetourBmi2ModeCandidate')+
+         function_from(ROOT/'menu_m.sh','mshellDsmAvailableModes')+
+         function_from(ROOT/'menu_m.sh','autoCorrectBmi2ModuleMode')+'''
+. "$MSHELL_SCRIPT_ROOT/tools/dsm-resolver-bridge.sh"
+modes=$(mshellDsmAvailableModes SA6400 7.4.1-90080) || exit 20
+printf '%s\\n' "$modes" | grep -qx 'all-modules:PML' || exit 21
+selection=$(mshellDsmValidateBuildSelection SA6400 7.4.1-90080 all-modules PML) || exit 22
+printf '%s' "$selection" | jq -e '.selected_mode.id == "all-modules:PML"' >/dev/null
+mshellLoadDsmResolver() { :; }
+mshellSaveDsmSelection() { [ "$3:$4" = "all-modules:PML" ]; }
+MODEL=SA6400 BUILD=7.4.1-90080 MDLNAME=custom-modules MLMETHOD=PML SYNO_MODULE_RESTORE=false
+autoCorrectBmi2ModuleMode
+[ "$MDLNAME:$MLMETHOD" = "all-modules:PML" ]
+''')
+   env={**os.environ,'MSHELL_SCRIPT_ROOT':str(ROOT),'MSHELL_TARGET_CPU_JSON':str(cpu)}
+   p=subprocess.run([BASH,'-c',code],env=env,capture_output=True,text=True)
+   self.assertEqual(p.returncode,0,p.stderr+p.stdout)
  def test_friend_uses_resolver_kver_only_for_matching_model_platform_build(self):
   friend=Path(os.environ.get('TCRPFRIEND_SOURCE',ROOT.parent/'tcrpfriend'))/'buildroot/board/tcrpfriend/rootfs-overlay/root/boot.sh'
   if not friend.is_file() or 'resolver_kver_for_boot' not in friend.read_text(): self.skipTest('updated adjacent tcrpfriend checkout required')

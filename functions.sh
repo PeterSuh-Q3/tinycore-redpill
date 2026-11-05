@@ -167,8 +167,9 @@ GDISK="$(command -v gdisk 2>/dev/null || echo /usr/sbin/gdisk)"
 # 사고가 실측 확인됨(152 실기, menu.sh의 UPDATE_BRANCH와 동일한 버그 패턴).
 build="alpine-redpill"
 
-# 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
-# functions.sh path and production redpill-load branch unchanged.
+# Keep the test-track loader version check separate from the production
+# detour path. The detour itself is enabled only for catalog-confirmed targets
+# and uses the pinned public kernel manifest below.
 DETOURBMI2_TEST_VERSION="1.4.7.0"
 DETOURBMI2_MANIFEST_SHA256="99616c0a9e3121a710255338481e614eeebdb45bf45af07e97edb5c20879a74b"
 
@@ -4672,11 +4673,10 @@ function gitclone() {
     patchredpillload
 }
 
-# menu.sh and gitclone() already clone redpill-load/master. Apply the test
-# overlays in that checkout without fetching, resetting, or switching branches.
-function prepareDetourBmi2TestLoader() {
-    [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] || return 0
-
+# menu.sh and gitclone() already clone redpill-load/master. Apply the
+# detour-capable overlays in that checkout without fetching, resetting, or
+# switching branches.
+function prepareDetourBmi2Loader() {
     local repo="/home/tc/redpill-load" current branch
     if [ ! -d "${repo}/.git" ]; then
         (cd /home/tc && gitclone) || return 1
@@ -4688,7 +4688,7 @@ function prepareDetourBmi2TestLoader() {
         return 1
     }
     [ -s "${repo}/build-loader_t.sh" ] && [ -s "${repo}/ext-manager_t.sh" ] && [ -s "${repo}/config/pats_t.json" ] || {
-        echo "[detourbmi2] test loader files are missing" >&2
+        echo "[detourbmi2] detour-enabled loader files are missing" >&2
         return 1
     }
     if [ -f "${repo}/bundled-exts.json" ] && ! git -C "${repo}" diff --quiet -- bundled-exts.json; then
@@ -4705,7 +4705,7 @@ function prepareDetourBmi2TestLoader() {
     chmod +x "${repo}"/*.sh || return 1
     patchredpillload || return 1
     current="$(git -C "${repo}" rev-parse --short HEAD)" || return 1
-    echo "[detourbmi2] using redpill-load master@${current} for MSHELL test ${rploaderver}"
+    echo "[detourbmi2] using detour-enabled redpill-load master@${current}"
 }
 
 # Follow the public repository's latest non-prerelease release. No end-user
@@ -4722,7 +4722,7 @@ function detourBmi2FetchPublicAsset() {
         --retry 3 --retry-delay 2 --output "${destination}" "${url}"
 }
 
-function fetchDetourBmi2TestAsset() (
+function fetchDetourBmi2Asset() (
     local model="$1" platform="$2" release="$3" kernel="$4"
     local asset_root="/dev/shm/mshell-detourbmi2-${BASHPID}" manifest entry filename compressed_sha image_sha actual image_tmp
     mkdir -m 700 "${asset_root}" || return 1
@@ -4820,7 +4820,7 @@ function gitdownload() {
     git config --global http.sslVerify false    
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
         # Test mode uses the master checkout already prepared by menu.sh.
-        prepareDetourBmi2TestLoader
+        prepareDetourBmi2Loader
         return $?
     fi
     if [ -d "/home/tc/redpill-load" ]; then
@@ -7533,6 +7533,7 @@ function stageDetourBmi2PmlPack() {
 function buildloader() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
+    local DETOURBMI2_LOADER_PREPARED=0
     # The processpat recursion may reuse the same download within this build,
     # but every new build must obtain its own original PAT.
     unset MSHELL_HDA1_FRESH_PAT
@@ -7540,25 +7541,28 @@ function buildloader() {
         sudo rm -f /dev/shm/hda1.tgz
     fi
     if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ]; then
-        prepareDetourBmi2TestLoader || return 99
+        prepareDetourBmi2Loader || return 99
+        DETOURBMI2_LOADER_PREPARED=1
     fi
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
-    if [ "${rploaderver}" = "${DETOURBMI2_TEST_VERSION}" ] && [ -f /tmp/test_mode ] && \
-       [ "${MDLNAME}" = "all-modules" ] && \
+    if [ "${MDLNAME}" = "all-modules" ] && \
        [ "${MLMETHOD}" = "PML" ] && \
        [[ "${KVER}" == 5.* ]] && [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
-        # The replacement kernel detour is only for all-modules:PML. A
-        # custom-modules:PML selection remains on its normal custom-kernel path.
+        # Use the replacement kernel only when the resolver rejected this
+        # exact all-modules:PML selection solely because BMI2 is unavailable.
         detour_options="$(mshellDsmResolve options "${MODEL}" "${detour_release}")" || return 99
         detour_method="PML"
-        detour_candidate="$(printf '%s' "${detour_options}" | jq -ce --arg id "all-modules:PML" '
-            [.rejected_modes[] | select(.id==$id and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")] |
-            if length==1 then .[0] else empty end' 2>/dev/null)" || detour_candidate=""
+        detour_candidate="$(mshellDsmDetourBmi2Candidate "${MODEL}" "${detour_release}" \
+            all-modules:PML "${detour_options}")" || detour_candidate=""
         if [ -n "${detour_candidate}" ]; then
-            DETOURBMI2_ASSET_DIR="$(fetchDetourBmi2TestAsset "${MODEL}" "${ORIGIN_PLATFORM}" "${detour_release}" "${KVER}")" || return 99
+            if [ "${DETOURBMI2_LOADER_PREPARED}" -eq 0 ]; then
+                prepareDetourBmi2Loader || return 99
+                DETOURBMI2_LOADER_PREPARED=1
+            fi
+            DETOURBMI2_ASSET_DIR="$(fetchDetourBmi2Asset "${MODEL}" "${ORIGIN_PLATFORM}" "${detour_release}" "${KVER}")" || return 99
             [ -n "${DETOURBMI2_ASSET_DIR}" ] || { echo "[detourbmi2] asset download returned no directory" >&2; return 99; }
             resolver_selection="$(printf '%s' "${detour_options}" | jq --argjson selected "${detour_candidate}" '.selected_mode=$selected')" || return 99
             MLMETHOD="${detour_method}"
@@ -7571,7 +7575,7 @@ function buildloader() {
             DETOURBMI2_PROFILE="detourbmi2"
             if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
                 writeConfigKey "general" "synology_module_restore" "false" || return 99
-                echo "[detourbmi2] Disabled Synology U0 module recovery for this test build."
+                echo "[detourbmi2] Disabled Synology U0 module recovery for this build."
             fi
             MDLNAME="all-modules"
             echo "[detourbmi2] Using all-modules:PML with the verified replacement kernel."
@@ -9953,25 +9957,30 @@ function remove_loader() {
 
 }
 
+function mshellDsmDetourBmi2Candidate() {
+    local model="$1" release="$2" mode="$3" options="${4:-}"
+    [ "${mode}" = "all-modules:PML" ] || return 1
+    [ -n "${options}" ] || options=$(mshellDsmResolve options "${model}" "${release}") || return $?
+    printf '%s' "${options}" | jq -ce --arg id "${mode}" '
+        select(.target.kernel|startswith("5."))
+        | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
+        | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+            and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+        | if length==1 then .[0] else empty end' 2>/dev/null
+}
+
 function mshellDsmValidateBuildSelection() {
     local model="$1" release="$2" module="$3" method="$4" options candidate
-    if [ "${rploaderver:-}" = "${DETOURBMI2_TEST_VERSION:-}" ] && [ -f /tmp/test_mode ]; then
-        case "${module}:${method}" in
-            all-modules:PML) ;;
-            *) mshellDsmValidate "${model}" "${release}" "${module}" "${method}"; return $? ;;
-        esac
-        options=$(mshellDsmResolve options "${model}" "${release}") || return $?
-        candidate=$(printf '%s' "${options}" | jq -ce --arg id "${module}:${method}" '
-            select(.target.kernel|startswith("5."))
-            | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
-            | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
-                and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
-            | if length==1 then .[0] else empty end' 2>/dev/null) || candidate=""
-        if [ -n "${candidate}" ]; then
-            printf '%s' "${options}" | jq --argjson selected "${candidate}" \
-                '. + {selected_mode:$selected} | del(.allowed_modes,.rejected_modes)'
-            return $?
-        fi
+    if [ "${module}:${method}" != "all-modules:PML" ]; then
+        mshellDsmValidate "${model}" "${release}" "${module}" "${method}"
+        return $?
+    fi
+    options=$(mshellDsmResolve options "${model}" "${release}") || return $?
+    candidate=$(mshellDsmDetourBmi2Candidate "${model}" "${release}" "${module}:${method}" "${options}") || candidate=""
+    if [ -n "${candidate}" ]; then
+        printf '%s' "${options}" | jq --argjson selected "${candidate}" \
+            '. + {selected_mode:$selected} | del(.allowed_modes,.rejected_modes)'
+        return $?
     fi
     mshellDsmValidate "${model}" "${release}" "${module}" "${method}"
 }

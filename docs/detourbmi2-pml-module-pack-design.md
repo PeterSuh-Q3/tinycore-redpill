@@ -2,10 +2,17 @@
 
 ## Scope and gate
 
-This is a test-track change for `functions_t.sh`, not `functions.sh`. Apply the
-detour archive only when the existing resolver has selected the verified
-`detourbmi2` kernel profile, `all-modules:PML`, and the matching DSM platform,
-release and kernel. Ordinary PML and custom-modules must remain unchanged.
+The regular MSHELL menu and build path support this detour for DSM 7.3/7.4 on
+kernel 5.10 only when the resolver rejects `all-modules:PML` solely because the
+target CPU lacks BMI2. The replacement kernel and detour module overlay are
+selected from exact model/platform/release/kernel metadata and pinned
+SHA-256 manifests. Ordinary selections, custom-modules, and targets with BMI2
+remain on their existing build paths.
+
+For a detour build, MSHELL prepares the detour-capable loader files in the
+existing `redpill-load/master` checkout. It must not fetch, reset, or switch
+that checkout to another branch. Missing or incompatible loader files fail the
+build rather than falling back to an unverified kernel.
 
 ## Artifact contract
 
