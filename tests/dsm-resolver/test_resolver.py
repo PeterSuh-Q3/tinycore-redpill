@@ -57,5 +57,15 @@ class Resolver(unittest.TestCase):
   for name in ['functions.sh','functions_t.sh']:
    text=(ROOT/name).read_text(); block=text.split('function getvarsmshell()',1)[1].split('case ${MODEL}',1)[0]
    self.assertNotIn('90080',block);self.assertIn('mshellDsmResolve identity',block)
-  self.assertEqual((ROOT/'functions.sh').read_text(),(ROOT/'functions_t.sh').read_text())
+  production=(ROOT/'functions.sh').read_text()
+  test_track=(ROOT/'functions_t.sh').read_text()
+  def candidate(text):
+   start=text.index('function mshellDsmDetourBmi2Candidate()')
+   end=text.find('\nfunction ',start+1)
+   return text[start:end]
+  production_candidate=candidate(production)
+  test_candidate=candidate(test_track)
+  self.assertIn('select(.target.platform=="epyc7002")',production_candidate)
+  self.assertIn('select(.target.platform|IN("epyc7002","geminilakenk"))',test_candidate)
+  self.assertEqual(production.replace(production_candidate,test_candidate,1),test_track)
 if __name__=='__main__': unittest.main()
