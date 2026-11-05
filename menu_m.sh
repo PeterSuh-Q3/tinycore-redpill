@@ -763,18 +763,10 @@ function autoCorrectBmi2ModuleMode() {
     if mshellDetourBmi2TestEnabled; then
         local detour_pml
         detour_pml=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" all-modules:PML) || detour_pml=""
-        # All-modules:PML is the automatic default. Preserve custom-modules
-        # only when explicitly selected, and normalize it to PML.
-        if [ "${MDLNAME:-all-modules}" = "custom-modules" ]; then
-            local custom_pml
-            custom_pml=$(mshellDetourBmi2ModeCandidate "${MODEL}" "${BUILD}" custom-modules:PML) || custom_pml=""
-            if [ -n "${custom_pml}" ] && [ "${MLMETHOD:-IML}" != "PML" ] && \
-               mshellSaveDsmSelection "${MODEL}" "${BUILD}" custom-modules PML; then
-                MLMETHOD="PML"
-                printf '[BMI2 test] Keeping custom-modules:PML on its normal custom-kernel route.\n'
-            fi
-            return 0
-        fi
+        # The detour test must start from all-modules:PML even if a previous
+        # run saved custom-modules:PML. Keep custom-modules:PML visible as an
+        # available manual choice, but do not let stale saved state select it
+        # before the first menu/build setup.
         if [ -n "${detour_pml}" ]; then
             if [ "${SYNO_MODULE_RESTORE:-false}" = "true" ]; then
                 SYNO_MODULE_RESTORE="false"
@@ -783,10 +775,11 @@ function autoCorrectBmi2ModuleMode() {
             fi
             old_module="${MDLNAME:-all-modules}"
             old_method="${MLMETHOD:-IML}"
-            if [ "${old_method}" != "PML" ] && mshellSaveDsmSelection "${MODEL}" "${BUILD}" all-modules PML; then
+            if { [ "${old_module}" != "all-modules" ] || [ "${old_method}" != "PML" ]; } && \
+               mshellSaveDsmSelection "${MODEL}" "${BUILD}" all-modules PML; then
                 MDLNAME="all-modules"
                 MLMETHOD="PML"
-                printf '[BMI2 test] CPU lacks BMI2; selected all-modules:PML with the detour kernel profile.\n'
+                printf '[BMI2 test] CPU lacks BMI2; forced all-modules:PML from the saved selection, using the detour kernel profile.\n'
             fi
             return 0
         fi
