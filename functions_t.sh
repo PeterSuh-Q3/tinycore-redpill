@@ -7530,7 +7530,35 @@ function stageDetourBmi2PmlPack() {
     rm -rf "$tmp"
 }
 
+function mshellCleanupRdTemp() {
+    local d="/home/tc/rd.temp"
+    # Leave the directory first so a removed cwd cannot break later commands.
+    case "$PWD" in "$d"|"$d"/*) cd /home/tc ;; esac
+    [ -e "$d" ] || return 0
+    sudo rm -rf "$d" 2>/dev/null
+    if [ -e "$d" ]; then
+        # Retry after releasing anything still mounted below the directory.
+        grep -F " $d/" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r | while read -r m; do sudo umount -l "$m" 2>/dev/null; done
+        sudo rm -rf "$d"
+    fi
+    [ ! -e "$d" ] || echo "WARNING: could not remove $d" >&2
+}
+
 function buildloader() {
+    local _rc _old_exit_trap
+    # Remove leftovers from an earlier failed build; the build reuses an existing rd.temp.
+    mshellCleanupRdTemp
+    _old_exit_trap="$(trap -p EXIT)"
+    trap 'mshellCleanupRdTemp' EXIT
+    mshellBuildloaderBody "$@"
+    _rc=$?
+    trap - EXIT
+    [ -n "$_old_exit_trap" ] && eval "$_old_exit_trap"
+    [ "$_rc" -ne 0 ] && mshellCleanupRdTemp
+    return "$_rc"
+}
+
+function mshellBuildloaderBody() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
     local DETOURBMI2_LOADER_PREPARED=0
