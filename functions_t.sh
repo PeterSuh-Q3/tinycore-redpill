@@ -7482,6 +7482,43 @@ function _set_conf_kv() {
   return $?
 }
 
+function stageDetourBmi2PmlPack() {
+    local name="${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
+    local base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/releases"
+    local tmp manifest archive expected actual count listing
+    [[ "${name}" =~ ^[a-z0-9]+-7\.[34]-5\.10\.55-detour\.tgz$ ]] || return 99
+    tmp=$(mktemp -d /dev/shm/mshell-detour-pack.XXXXXXXX) || return 99
+    manifest="${tmp}/detour-sha256.txt"
+    archive="${tmp}/${name}"
+    listing="${tmp}/members"
+    if [ -f "/dev/shm/tcrp-modules/all-modules/releases/${name}" ] &&
+       [ -f /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt ]; then
+        cp /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt "$manifest" &&
+        cp "/dev/shm/tcrp-modules/all-modules/releases/${name}" "$archive" || return 99
+    else
+        curl -fsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
+        curl -fsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
+    fi
+    count=$(awk -v n="$name" '$2==n {c++} END {print c+0}' "$manifest")
+    [ "$count" -eq 1 ] || { echo "[detourbmi2] missing/ambiguous pack manifest entry: $name" >&2; return 99; }
+    expected=$(awk -v n="$name" '$2==n {print $1}' "$manifest")
+    actual=$(sha256sum "$archive" | awk '{print $1}')
+    [ "$actual" = "$expected" ] || { echo "[detourbmi2] pack SHA-256 mismatch: $name" >&2; return 99; }
+    tar -tzf "$archive" > "$listing" || return 99
+    [ -s "$listing" ] && ! grep -Ev '^[A-Za-z0-9_.+-]+\.ko$' "$listing" &&
+        [ "$(wc -l < "$listing")" -eq "$(sort -u "$listing" | wc -l)" ] || {
+        echo "[detourbmi2] unsafe/duplicate archive member: $name" >&2; return 99;
+    }
+    tar -tvzf "$archive" | awk 'substr($1,1,1)!="-" {bad=1} END {exit bad}' || return 99
+    sudo mkdir -p "${rdtemp}/addons" "${rdtemp}/usr/lib/modules" || return 99
+    sudo cp "$archive" "${rdtemp}/addons/${name}" || return 99
+    printf 'filename=%s\nsha256=%s\n' "$name" "$expected" |
+        sudo tee "${rdtemp}/addons/detourbmi2.pack" >/dev/null || return 99
+    sudo tar -xzf "$archive" -C "${rdtemp}/usr/lib/modules" || return 99
+    echo "[detourbmi2] staged $name in /addons and overlaid DSM initrd modules"
+    rm -rf "$tmp"
+}
+
 function buildloader() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
@@ -8049,6 +8086,10 @@ NCEOF
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
+        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ]; then
+            # A cached/custom ramdisk must not carry a previous test's marker.
+            sudo rm -f "${rdtemp}/addons/detourbmi2.pack" "${rdtemp}/addons/"*-detour.tgz
+        fi
         if [ "${MLMETHOD}" = "PML" ]; then
             echo "Use Persistent Module Loading (PML) methods on firmware and module ..."
             [ ! -d $rdtemp/usr/lib/firmware ] && sudo mkdir $rdtemp/usr/lib/firmware
@@ -8059,6 +8100,9 @@ NCEOF
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
+                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                    stageDetourBmi2PmlPack || return 99
+                fi
             fi
 
         fi
