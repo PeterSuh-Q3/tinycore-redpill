@@ -1,5 +1,5 @@
-04963c7af80f097404434b674eb2e41a2a722ded
-d4aa900885dd2cb771b63780e2e24bd09f500ba4
+f98698622181fcbd9705fde83b2e3a55d0761191
+06f1c9ed88e97f96680853659bd623ef554dc631
 190589cbbba2887ec14ecbf08c49c971f04aea49
 
-    1.4.6.4 Normalize incomplete saved IP settings and restore DHCP gateway routing
+    # 1.4.7.0 is a test-only detourbmi2 integration pilot. Keep the normal
