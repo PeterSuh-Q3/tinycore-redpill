@@ -1091,7 +1091,11 @@ function history() {
     1.4.6.2 Restore older CPU boot compatibility and improve system partition and disk mapping guidance
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
     1.4.6.4 Normalize incomplete saved IP settings and restore DHCP gateway routing
+<<<<<<< Updated upstream
     1.4.7.0 Test-only detourbmi2 pilot: use the latest redpill-load master for test builds, retain all-modules on confirmed no-BMI2 CPUs, and replace only zImage-dsm from verified release gzip assets
+=======
+    1.4.7.0 Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
+>>>>>>> Stashed changes
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1851,6 +1855,9 @@ EOF
 # 2026.11.03 v1.4.6.4
 # Normalize incomplete saved IP settings and restore DHCP gateway routing
 
+# 2026.11.05 v1.4.7.0
+# Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2287,6 +2294,9 @@ function showlastupdate() {
 
 # 2026.11.03 v1.4.6.4
 # Normalize incomplete saved IP settings and restore DHCP gateway routing
+
+# 2026.11.05 v1.4.7.0
+# Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
 EOF
 }
 
