@@ -76,6 +76,7 @@ modes=$(mshellDsmAvailableModes SA6400 7.4.1-90080) || exit 20
 printf '%s\\n' "$modes" | grep -qx 'all-modules:PML' || exit 21
 selection=$(mshellDsmValidateBuildSelection SA6400 7.4.1-90080 all-modules PML) || exit 22
 printf '%s' "$selection" | jq -e '.selected_mode.id == "all-modules:PML"' >/dev/null
+if mshellDsmDetourBmi2Candidate FS3420 7.4.0-90075-0 all-modules:PML >/dev/null; then exit 23; fi
 mshellLoadDsmResolver() { :; }
 mshellSaveDsmSelection() { [ "$3:$4" = "all-modules:PML" ]; }
 MODEL=SA6400 BUILD=7.4.1-90080 MDLNAME=custom-modules MLMETHOD=PML SYNO_MODULE_RESTORE=false
