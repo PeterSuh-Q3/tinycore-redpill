@@ -43,7 +43,8 @@ mshellDsmValidate() {
 # Pin the chosen recipe through a local index understood by ext-manager/curl.
 # Every payload still passes the existing ext-manager SHA-256 verifier.
 mshellDsmPinRecipe() {
-    local selection="$1" root="${MSHELL_SCRIPT_ROOT:-/home/tc}" dir id key tmp index
+    local selection="$1" root="${MSHELL_SCRIPT_ROOT:-/home/tc}" dir id key tmp index detour_addon=0 addon_id=mshell-volume-recovery
+    local addon_index="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/rpext-index.json"
     id=$(printf '%s' "$selection" | jq -r '.selected_mode.module') || return 6
     # Buildroot's jq may be compiled without Oniguruma. Keep this filter
     # independent of jq's regex functions (test/match/sub/gsub).
@@ -64,14 +65,37 @@ mshellDsmPinRecipe() {
     if [ -d /dev/shm/tcrp-modules ]; then
         printf '%s' "$selection" | jq '.selected_mode.recipe' > "$dir/recipe.json" || return 6
     fi
+    # The DSM runtime helper is bundled only for the selected BMI2 detour.
+    # Require the resolver's exact CPU_FEATURE_MISSING rejection plus the
+    # supported platform/release/kernel set; ordinary PML and IML builds do
+    # not inherit this addon from a previous build.
+    if printf '%s' "$selection" | jq -e '
+      .selected_mode.id == "all-modules:PML" and
+      (.selected_mode.reasons | type == "array" and length == 1 and .[0].code == "CPU_FEATURE_MISSING") and
+      (.selected_mode.cpu_flags | type == "array" and index("bmi2") != null) and
+      (.target.platform | IN("epyc7002","geminilakenk","r1000nk","v1000nk")) and
+      .target.tuple[0] == 7 and (.target.tuple[1] == 3 or .target.tuple[1] == 4) and
+      .target.kernel == "5.10.55"
+    ' >/dev/null 2>&1; then
+        detour_addon=1
+    fi
     index="file://$dir/index.json"
     jq -n --arg id "$id" --arg key "$key" --arg recipe "file://$dir/recipe.json" --arg index "$index" \
        '{id:$id,url:$index,info:{name:$id,help_url:"https://github.com/PeterSuh-Q3/tinycore-redpill"},releases:{($key):$recipe}}' > "$dir/index.json" || return 6
     tmp=$(mktemp "$root/redpill-load/bundled-exts.json.XXXXXX") || return 6
-    if ! jq --arg id "$id" --arg index "$index" \
-       'del(.["all-modules"],.["custom-modules"],.["anodrm-modules"])|.[$id]=$index' \
+    if ! jq --arg id "$id" --arg index "$index" --arg addon_id "$addon_id" \
+       --arg addon_index "$addon_index" --argjson detour_addon "$detour_addon" \
+       'del(.["all-modules"],.["custom-modules"],.["anodrm-modules"],.[$addon_id])
+        | .[$id]=$index
+        | if $detour_addon == 1 then .[$addon_id]=$addon_index else . end' \
        "$root/redpill-load/bundled-exts.json" > "$tmp" || ! mv -f "$tmp" "$root/redpill-load/bundled-exts.json"; then
         rm -f "$tmp"; return 6
+    fi
+    if [ "$detour_addon" -eq 1 ]; then
+        echo "[detourbmi2] bundled ${addon_id} for ${key}"
+    else
+        rm -rf "$root/redpill-load/custom/extensions/$addon_id" || return 6
+        echo "[detourbmi2] omitted ${addon_id}; selection is not an eligible BMI2 detour"
     fi
     # Remove only competing module extensions; never leave an old pack active.
     local pack
