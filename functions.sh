@@ -9987,12 +9987,12 @@ function remove_loader() {
 
 function mshellDsmDetourBmi2Candidate() {
     local model="$1" release="$2" mode="$3" options="${4:-}"
-    # Keep detour PML limited to the currently validated epyc7002 platform.
+    # Enable detour PML on platforms with confirmed stability evidence.
     [ "${mode}" = "all-modules:PML" ] || return 1
     [ -n "${options}" ] || options=$(mshellDsmResolve options "${model}" "${release}") || return $?
     printf '%s' "${options}" | jq -ce --arg id "${mode}" '
         select(.target.kernel|startswith("5."))
-        | select(.target.platform=="epyc7002")
+        | select(.target.platform|IN("epyc7002","geminilakenk"))
         | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
         | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
             and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
