@@ -233,7 +233,7 @@ function refresh_dsm_resolver() {
     stage=$(mktemp -d /dev/shm/mshell-resolver.XXXXXX) || return 1
     mkdir -p "$stage/tools" "$stage/config"
     for file in tools/dsm-target-resolver.sh tools/dsm-target-resolver.jq tools/dsm-resolver-bridge.sh tools/capture-target-cpu.sh config/dsm-targets.v1.json; do
-        if ! curl -fsSL --retry 2 --connect-timeout 10 --max-time 120 \
+        if ! curl -kfsSL --retry 2 --connect-timeout 10 --max-time 120 \
             "https://raw.githubusercontent.com/PeterSuh-Q3/tinycore-redpill/${UPDATE_BRANCH}/${file}" -o "$stage/$file"; then
             rm -rf "$stage"; return 1
         fi
