@@ -51,3 +51,90 @@ and IML in isolated fixtures. On a BMI2-absent Alpine test host, verify the
 chosen zImage, `/addons` marker and pack, early and late module trees,
 `modules.dep`, successful loader build and backup. DSM boot/load testing is a
 separate final gate; do not infer it from a successful build.
+
+## DSM volume recovery reboot helper (design only)
+
+### Purpose and observed evidence
+
+On a DSM 7.4.1 migration from `epyc7002` to `geminilakenk`, vanilla modules
+installed during migration may run before the loader's detour modules take
+effect. A first DSM boot may consequently leave a data volume offline. The
+helper may request one controlled reboot only for a persistent, recoverable
+volume assembly/mount failure. It must not repair storage metadata or loop on
+reboots.
+
+The helper is gated to CPUs that do **not** advertise BMI2, and to DSM module
+configurations `all-modules (PML)` or `custom-modules (PML)` as recorded in
+`/usr/mshell/MODULE_TYPE`. `/usr/mshell/VERSION` must parse as DSM 7.3.0 or
+later. IML, other module types, BMI2-capable CPUs, absent markers, and
+unparseable versions are no-ops. Version comparison uses numeric components.
+The helper runs from the `rc.temp` boot path.
+
+`migrated=false` is not a sufficient trigger: it was observed on both a system
+with `/volume1` mounted and writable and one where it remained unmounted.
+`can_reboot_assemble=true`, `missing=false`, no faulty disks, and pool
+compatibility `yes` also appeared in both states. One healthy boot logged
+transient early “volume not mounted” errors before recovering. These fields
+must not independently trigger a reboot.
+
+### Detection and decision
+
+After a bounded startup grace period, enumerate expected data volumes from
+`/var/lib/space/space_table`; do not hard-code `/volume1` or mistake an
+existing mountpoint directory for a mounted filesystem. The primary failure
+condition is a registered, non-missing volume that remains unmounted, or is
+mounted but reported unwritable by DSM's supported read-only volume check.
+Verify the actual mount with `/proc/mounts`. If a volume becomes mounted and
+writable during the grace period, treat the boot as healthy despite transient
+early errors.
+
+Corroborating evidence is collected, not treated as a separate reboot trigger:
+
+- Compare the expected RAID/LVM devices and UUIDs in `space_table` with live
+  `/proc/mdstat` and PV/VG/LV inventory. Missing or contradictory devices
+  indicate a storage integrity/configuration issue; do not auto-reboot on
+  that evidence alone.
+- Review current-boot `space_operation.log`, `synobootup.log`, `messages`,
+  and related DSM logs for failed/unfinished assembly or mount and ensure no
+  later successful writable/mount event exists.
+- Record `migrated`, `can_reboot_assemble`, `missing`, `faulty_disks`, and
+  pool compatibility for diagnosis. `migrated=false` is context only.
+
+Request reboot only when the primary failure persists and evidence shows the
+expected volume metadata and devices are present and consistent, with no
+missing/faulty members or later recovery event. If evidence is incomplete,
+inconsistent, or indicates disk/RAID damage, log the diagnosis and leave the
+system running for manual recovery.
+
+### One-shot protection and audit
+
+Before rebooting, atomically create a persistent marker on the DSM system
+volume (not `/tmp`) scoped to the helper version and recovery cycle. It must
+block another automatic reboot even if the first attempt does not recover the
+volume; do not automatically clear it while failure persists. Clearing the
+marker for a later recovery cycle requires an explicit operator action.
+
+Write a timestamped `/var/log` record with the gate results, DSM version,
+module type, CPU BMI2 result, volume IDs/mount paths, state flags, mount and
+writability checks, RAID/LVM consistency summary, relevant storage events,
+decision, and existing/new marker state. Do not log credentials or mutate
+storage metadata. Persist the marker and log the decision before invoking
+reboot.
+
+### Validation before implementation
+
+- Compare same-device post-migration and post-reboot snapshots of
+  `space_table`, pool compatibility, mount state, RAID/LVM inventory, and
+  storage event logs.
+- Confirm a reliable read-only volume-writability command on DSM 7.3/7.4,
+  including exit codes when the mount is absent.
+- Verify `rc.temp` privilege and execution timing, system-volume writeability,
+  and marker persistence across the intended reboot path.
+- Exercise healthy delayed mount, persistent recoverable failure, BMI2-capable
+  CPU, each eligible PML type, ineligible module types/version, already-used
+  marker, missing/faulty RAID member, and malformed state in a disposable
+  environment. Do not invoke real-device reboot until these checks pass.
+
+This section is design only. It does not implement or authorize automatic
+rebooting. Implementation follows the post-reboot device comparison and
+validation gates above.
