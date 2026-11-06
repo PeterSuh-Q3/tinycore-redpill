@@ -68,7 +68,30 @@ configurations `all-modules (PML)` or `custom-modules (PML)` as recorded in
 `/usr/mshell/MODULE_TYPE`. `/usr/mshell/VERSION` must parse as DSM 7.3.0 or
 later. IML, other module types, BMI2-capable CPUs, absent markers, and
 unparseable versions are no-ops. Version comparison uses numeric components.
-The helper runs from the `rc.temp` boot path.
+This is a dedicated addon, not a loader `on_os_load` callback or a hand-edited
+`/etc/rc` script.
+
+### Independent addon and DSM startup hook
+
+Create a standalone addon in `tcrp-addons` with its own recipe, installer,
+runtime helper, tests, and checksums. Follow the established
+`junior-realtime-helper` pattern:
+
+1. The addon's loader-time `on_os_load` installer only stages files into the
+   DSM image under `/tmpRoot`; it does not perform runtime volume detection.
+2. Stage the runtime helper under a dedicated path such as
+   `/usr/local/libexec/mshell-volume-recovery/` and install a small
+   `/usr/local/etc/rc.d/S99mshell-volume-recovery.sh` entry point.
+3. DSM executes that entry point during its own boot sequence. It starts the
+   runtime helper asynchronously or through a bounded wait so normal boot
+   services are not blocked. The helper waits for the storage stack to settle
+   and performs repeated read-only checks.
+
+`rc.temp` is not the runtime hook name established by this design. The DSM
+hook is the installed `/usr/local/etc/rc.d/S99...` script. Its ordering
+relative to DSM volume assembly/mount must be confirmed on DSM 7.3 and 7.4;
+`S99` naming alone does not prove that volumes are ready. Do not edit
+`/etc/rc` directly.
 
 `migrated=false` is not a sufficient trigger: it was observed on both a system
 with `/volume1` mounted and writable and one where it remained unmounted.
@@ -128,8 +151,9 @@ reboot.
   storage event logs.
 - Confirm a reliable read-only volume-writability command on DSM 7.3/7.4,
   including exit codes when the mount is absent.
-- Verify `rc.temp` privilege and execution timing, system-volume writeability,
-  and marker persistence across the intended reboot path.
+- Verify the rc.d hook's execution identity and timing relative to
+  `syno-volume.target` and package-volume readiness, system-volume
+  writeability, and marker persistence across the intended reboot path.
 - Exercise healthy delayed mount, persistent recoverable failure, BMI2-capable
   CPU, each eligible PML type, ineligible module types/version, already-used
   marker, missing/faulty RAID member, and malformed state in a disposable
