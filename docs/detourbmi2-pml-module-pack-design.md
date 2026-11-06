@@ -131,18 +131,24 @@ system running for manual recovery.
 
 ### One-shot protection and audit
 
-Before rebooting, atomically create a persistent marker on the DSM system
-volume (not `/tmp`) scoped to the helper version and recovery cycle. It must
-block another automatic reboot even if the first attempt does not recover the
-volume; do not automatically clear it while failure persists. Clearing the
-marker for a later recovery cycle requires an explicit operator action.
+When the helper first confirms a qualifying persistent volume failure, it must
+atomically create a persistent marker on the DSM system volume (not `/tmp`)
+before invoking reboot. Marker creation is the one-shot commit point: once the
+marker exists, the helper must never request another automatic reboot for
+that recovery incident, even if the reboot command fails, the machine returns
+with the volume still unavailable, or the helper runs again on later boots.
+This is deliberately fail-closed and may leave the system requiring manual
+recovery after a failed reboot attempt. Do not automatically clear or age out
+the marker. Clearing it to permit a new recovery incident requires an explicit
+operator action after review.
 
 Write a timestamped `/var/log` record with the gate results, DSM version,
 module type, CPU BMI2 result, volume IDs/mount paths, state flags, mount and
 writability checks, RAID/LVM consistency summary, relevant storage events,
 decision, and existing/new marker state. Do not log credentials or mutate
-storage metadata. Persist the marker and log the decision before invoking
-reboot.
+storage metadata. Log the qualifying decision, atomically persist and verify
+the marker, then invoke reboot. If the marker cannot be written and verified,
+do not reboot.
 
 ### Validation before implementation
 
