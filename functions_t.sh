@@ -7534,8 +7534,7 @@ function _mshellExtractBuiltinModuleList() {
 
 function stageDetourBmi2PmlPack() {
     local name="${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
-    local manifest_base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/releases"
-    local pack_base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/detour-modules"
+    local base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/detour-modules"
     local tmp manifest archive expected actual count listing
     [[ "${name}" =~ ^[a-z0-9]+-7\.[34]-5\.10\.55-detour\.tgz$ ]] || return 99
     tmp=$(mktemp -d /dev/shm/mshell-detour-pack.XXXXXXXX) || return 99
@@ -7543,12 +7542,12 @@ function stageDetourBmi2PmlPack() {
     archive="${tmp}/${name}"
     listing="${tmp}/members"
     if [ -f "/dev/shm/tcrp-modules/detour-modules/${name}" ] &&
-       [ -f /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt ]; then
-        cp /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt "$manifest" &&
+       [ -f /dev/shm/tcrp-modules/detour-modules/detour-sha256.txt ]; then
+        cp /dev/shm/tcrp-modules/detour-modules/detour-sha256.txt "$manifest" &&
         cp "/dev/shm/tcrp-modules/detour-modules/${name}" "$archive" || return 99
     else
-        curl -fsSL --retry 3 "${manifest_base}/detour-sha256.txt" -o "$manifest" &&
-        curl -fsSL --retry 3 "${pack_base}/${name}" -o "$archive" || return 99
+        curl -fsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
+        curl -fsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
     fi
     count=$(awk -v n="$name" '$2==n {c++} END {print c+0}' "$manifest")
     [ "$count" -eq 1 ] || { echo "[detourbmi2] missing/ambiguous pack manifest entry: $name" >&2; return 99; }
