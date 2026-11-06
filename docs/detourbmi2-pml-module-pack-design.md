@@ -129,28 +129,32 @@ missing/faulty members or later recovery event. If evidence is incomplete,
 inconsistent, or indicates disk/RAID damage, log the diagnosis and leave the
 system running for manual recovery.
 
-### One-shot protection and audit
+### Bounded retry state and audit
 
-When the helper first confirms a qualifying persistent volume failure, it must
-atomically create a persistent marker on the DSM system volume (not `/tmp`)
-before invoking reboot. Marker creation is the one-shot commit point: once the
-marker exists, the helper must never request another automatic reboot for
-that recovery incident, even if the reboot command fails, the machine returns
-with the volume still unavailable, or the helper runs again on later boots.
-This is deliberately fail-closed and may leave the system requiring manual
-recovery after a failed reboot attempt. Do not automatically clear or age out
-the marker. Clearing it to permit a new recovery incident requires an explicit
-operator action after review.
+Do not use a permanent `reboot-attempted` marker. A stale marker on the test
+system blocked a later migration because every subsequent run exited before
+making a new decision. The helper now ignores that legacy file and uses a persistent
+retry ledger scoped to DSM release/build, model, module type, and registered
+pool/RAID/volume identities.
+
+The retry ledger permits at most two automatic reboot requests for one
+unresolved identity and only one request per kernel boot ID. A healthy,
+mounted-and-writable volume set clears it. A changed identity or a new
+`IS_FIRST_LOGIN_AFTER_UPGRADE=1` event in `synobootup.log` begins a fresh retry
+series. The test-system log contained such an event at 15:38, after its stale
+marker was created at 13:10. After the two-attempt budget is exhausted, leave the
+system running until health returns or a new migration/identity event is
+observed. The addon implementation and detailed limitations are documented in
+`tcrp-addons/mshell-volume-recovery/DESIGN.md`.
 
 Write a timestamped `/var/log` record with the gate results, DSM version,
 module type, CPU BMI2 result, volume IDs/mount paths, state flags, mount and
 writability checks, RAID/LVM consistency summary, relevant storage events,
-decision, and existing/new marker state. Do not log credentials or mutate
-storage metadata. Log the qualifying decision, atomically persist and verify
-the marker, then invoke reboot. If the marker cannot be written and verified,
-do not reboot.
+retry count, identity/event reset reason, and reboot decision. Do not log
+credentials or mutate storage metadata. Persist retry state atomically before
+requesting reboot; if it cannot be written and verified, do not reboot.
 
-### Validation before implementation
+### Validation still required
 
 - Compare same-device post-migration and post-reboot snapshots of
   `space_table`, pool compatibility, mount state, RAID/LVM inventory, and
@@ -159,12 +163,16 @@ do not reboot.
   including exit codes when the mount is absent.
 - Verify the rc.d hook's execution identity and timing relative to
   `syno-volume.target` and package-volume readiness, system-volume
-  writeability, and marker persistence across the intended reboot path.
+  writeability, retry-state persistence, and event detection across migration
+  boots.
 - Exercise healthy delayed mount, persistent recoverable failure, BMI2-capable
-  CPU, each eligible PML type, ineligible module types/version, already-used
-  marker, missing/faulty RAID member, and malformed state in a disposable
-  environment. Do not invoke real-device reboot until these checks pass.
+  CPU, each eligible PML type, ineligible module types/version, exhausted retry
+  budget, new upgrade event, changed identity, missing/faulty RAID member, and
+  malformed state in a disposable environment. Do not invoke real-device
+  reboot until these checks pass.
 
-This section is design only. It does not implement or authorize automatic
-rebooting. Implementation follows the post-reboot device comparison and
-validation gates above.
+This document is design guidance; the runtime implementation is in the
+`tcrp-addons/mshell-volume-recovery` addon. The bounded retry changes described
+here are source-side only and have not been deployed to a DSM device. Validate
+the retry-state and migration-event behavior before relying on automatic
+reboots outside the disposable test environment.

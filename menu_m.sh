@@ -586,6 +586,23 @@ function mshellDetourBmi2ModeCandidate() {
         | if length==1 then .[0] else empty end' 2>/dev/null
 }
 
+# The production helper keeps the detour allowlist narrow for non-menu callers.
+# In the interactive menu, allow every platform present in the published
+# detour-kernel set; fetchDetourBmi2Asset() still verifies the exact model,
+# platform, DSM release, kernel, and SHA-256 before the build can proceed.
+function mshellDsmDetourBmi2Candidate() {
+    local model="$1" release="$2" mode="$3" options="${4:-}"
+    [ "${mode}" = "all-modules:PML" ] || return 1
+    [ -n "${options}" ] || options=$(mshellDsmResolve options "${model}" "${release}") || return $?
+    printf '%s' "${options}" | jq -ce --arg id "${mode}" '
+        select(.target.kernel|startswith("5."))
+        | select(.target.platform|IN("epyc7002","epyc7003","icelaked","v1000nk","r1000nk","geminilakenk"))
+        | select(.target.legacy_version|startswith("7.3") or startswith("7.4"))
+        | [.rejected_modes[] | select(.id==$id and (.cpu_flags|index("bmi2")!=null)
+            and (.reasons|length)==1 and .reasons[0].code=="CPU_FEATURE_MISSING")]
+        | if length==1 then .[0] else empty end' 2>/dev/null
+}
+
 function mshellDsmAvailableModes() {
     local model="$1" release="$2" result candidate_all_pml candidate_custom_pml
     local mode

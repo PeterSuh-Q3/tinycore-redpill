@@ -7507,22 +7507,48 @@ function _set_conf_kv() {
   return $?
 }
 
+function _mshellDetourBuiltinModulePath() {
+    case "$1" in
+        usb-common.ko) printf '%s\n' 'kernel/drivers/usb/common/usb-common.ko' ;;
+        usbcore.ko)    printf '%s\n' 'kernel/drivers/usb/core/usbcore.ko' ;;
+        xhci-hcd.ko)   printf '%s\n' 'kernel/drivers/usb/host/xhci-hcd.ko' ;;
+        xhci-pci.ko)   printf '%s\n' 'kernel/drivers/usb/host/xhci-pci.ko' ;;
+        *) return 1 ;;
+    esac
+}
+
+function _mshellDetourModuleIsBuiltin() {
+    local _module="$1" _builtin_file="$2" _builtin_path
+    [ -s "${_builtin_file}" ] || return 1
+    _builtin_path=$(_mshellDetourBuiltinModulePath "${_module}") || return 1
+    grep -Fqx "${_builtin_path}" "${_builtin_file}"
+}
+
+function _mshellExtractBuiltinModuleList() {
+    local _archive="$1" _output="$2" _member
+    _member=$(tar tfz "${_archive}" 2>/dev/null | grep -E '(^|/)modules\.builtin$' | head -n 1)
+    [ -n "${_member}" ] || return 1
+    tar xOzf "${_archive}" "${_member}" > "${_output}" 2>/dev/null || return 1
+    [ -s "${_output}" ]
+}
+
 function stageDetourBmi2PmlPack() {
     local name="${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
-    local base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/releases"
+    local manifest_base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/all-modules/releases"
+    local pack_base="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/main/detour-modules"
     local tmp manifest archive expected actual count listing
     [[ "${name}" =~ ^[a-z0-9]+-7\.[34]-5\.10\.55-detour\.tgz$ ]] || return 99
     tmp=$(mktemp -d /dev/shm/mshell-detour-pack.XXXXXXXX) || return 99
     manifest="${tmp}/detour-sha256.txt"
     archive="${tmp}/${name}"
     listing="${tmp}/members"
-    if [ -f "/dev/shm/tcrp-modules/all-modules/releases/${name}" ] &&
+    if [ -f "/dev/shm/tcrp-modules/detour-modules/${name}" ] &&
        [ -f /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt ]; then
         cp /dev/shm/tcrp-modules/all-modules/releases/detour-sha256.txt "$manifest" &&
-        cp "/dev/shm/tcrp-modules/all-modules/releases/${name}" "$archive" || return 99
+        cp "/dev/shm/tcrp-modules/detour-modules/${name}" "$archive" || return 99
     else
-        curl -fsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
-        curl -fsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
+        curl -fsSL --retry 3 "${manifest_base}/detour-sha256.txt" -o "$manifest" &&
+        curl -fsSL --retry 3 "${pack_base}/${name}" -o "$archive" || return 99
     fi
     count=$(awk -v n="$name" '$2==n {c++} END {print c+0}' "$manifest")
     [ "$count" -eq 1 ] || { echo "[detourbmi2] missing/ambiguous pack manifest entry: $name" >&2; return 99; }
@@ -8201,12 +8227,30 @@ NCEOF
                     # DSM initrd above. Verify critical detour boot modules,
                     # but do not extract/copy them a second time.
                     if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
-                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
-                            if [ ! -s "$rdtemp/usr/lib/modules/${_MOD}" ]; then
-                                echo "[BMI2-fix] PML archive did not stage required early module ${_MOD}" >&2
-                                return 99
+                        _USB_BUILTIN_LIST="${rdtemp}/usr/lib/modules/modules.builtin"
+                        _USB_BUILTIN_TMP=""
+                        if [ ! -s "${_USB_BUILTIN_LIST}" ]; then
+                            _USB_BUILTIN_TMP=$(mktemp) || return 99
+                            if _mshellExtractBuiltinModuleList "${_USB_TGZ}" "${_USB_BUILTIN_TMP}"; then
+                                _USB_BUILTIN_LIST="${_USB_BUILTIN_TMP}"
+                            else
+                                rm -f "${_USB_BUILTIN_TMP}"
+                                _USB_BUILTIN_TMP=""
                             fi
+                        fi
+                        for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
+                            if [ -s "$rdtemp/usr/lib/modules/${_MOD}" ]; then
+                                continue
+                            fi
+                            if _mshellDetourModuleIsBuiltin "${_MOD}" "${_USB_BUILTIN_LIST}"; then
+                                echo "[BMI2-fix] ${_MOD} is built into the target kernel; .ko check skipped"
+                                continue
+                            fi
+                            echo "[BMI2-fix] PML archive did not stage required early module ${_MOD}" >&2
+                            [ -n "${_USB_BUILTIN_TMP}" ] && rm -f "${_USB_BUILTIN_TMP}"
+                            return 99
                         done
+                        [ -n "${_USB_BUILTIN_TMP}" ] && rm -f "${_USB_BUILTIN_TMP}"
                     fi
                     echo "[BMI2-fix] ${MDLNAME}:PML already staged early modules; skipped duplicate copy"
                 else
@@ -8214,12 +8258,22 @@ NCEOF
                     _TMPUSB=$(mktemp -d) || return 99
                     sudo tar xfz "${_USB_TGZ}" -C "${_TMPUSB}" ${_USB_MODS} >/dev/null 2>&1
                     if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                        _USB_BUILTIN_LIST="${rdtemp}/usr/lib/modules/modules.builtin"
+                        if [ ! -s "${_USB_BUILTIN_LIST}" ]; then
+                            _USB_BUILTIN_LIST="${_TMPUSB}/modules.builtin"
+                            _mshellExtractBuiltinModuleList "${_USB_TGZ}" "${_USB_BUILTIN_LIST}" || _USB_BUILTIN_LIST=""
+                        fi
                         for _MOD in usb-common.ko usbcore.ko xhci-hcd.ko xhci-pci.ko usb-storage.ko uas.ko; do
-                            if [ ! -s "${_TMPUSB}/${_MOD}" ]; then
-                                echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
-                                rm -rf "${_TMPUSB}"
-                                return 99
+                            if [ -s "${_TMPUSB}/${_MOD}" ]; then
+                                continue
                             fi
+                            if _mshellDetourModuleIsBuiltin "${_MOD}" "${_USB_BUILTIN_LIST}"; then
+                                echo "[BMI2-fix] ${_MOD} is built into the target kernel; .ko check skipped"
+                                continue
+                            fi
+                            echo "[BMI2-fix] missing required early module ${_MOD} in ${_USB_TGZ}" >&2
+                            rm -rf "${_TMPUSB}"
+                            return 99
                         done
                     fi
                     for _MOD in ${_USB_MODS}; do
