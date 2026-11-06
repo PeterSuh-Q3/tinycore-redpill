@@ -4718,7 +4718,7 @@ function detourBmi2FetchPublicAsset() {
         echo "[detourbmi2] refusing unexpected public asset name: ${filename}" >&2
         return 1 ;;
     esac
-    curl --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
+    curl --insecure --silent --show-error --fail --location --connect-timeout 15 --max-time 300 \
         --retry 3 --retry-delay 2 --output "${destination}" "${url}"
 }
 
