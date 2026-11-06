@@ -73,8 +73,12 @@ mshellDsmPinRecipe() {
       .selected_mode.id == "all-modules:PML" and
       (.selected_mode.reasons | type == "array" and length == 1 and .[0].code == "CPU_FEATURE_MISSING") and
       (.selected_mode.cpu_flags | type == "array" and index("bmi2") != null) and
-      (.target.platform | IN("epyc7002","geminilakenk","r1000nk","v1000nk")) and
-      .target.tuple[0] == 7 and (.target.tuple[1] == 3 or .target.tuple[1] == 4) and
+      (.target as $target |
+        [["epyc7002",3],["epyc7002",4],["epyc7003",4],["icelaked",4],
+         ["v1000nk",3],["v1000nk",4],["r1000nk",3],["r1000nk",4],
+         ["geminilakenk",3],["geminilakenk",4]]
+        | any(.[]; .[0] == $target.platform and .[1] == $target.tuple[1])) and
+      .target.tuple[0] == 7 and
       .target.kernel == "5.10.55"
     ' >/dev/null 2>&1; then
         detour_addon=1
