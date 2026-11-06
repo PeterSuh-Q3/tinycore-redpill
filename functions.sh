@@ -5534,12 +5534,22 @@ function processpat() {
     else
         local_cache="/mnt/${tcrppart}/auxfiles"
     fi    
-    temp_pat_folder="/tmp/pat"
-    temp_dsmpat_folder="/tmp/dsmpat"
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+        # The isolated Docker builder has no CAP_SYS_ADMIN, so sudo cannot
+        # mount tmpfs. Docker already provides /dev/shm as a bounded tmpfs.
+        temp_pat_folder="/dev/shm/mshell-pat"
+        temp_dsmpat_folder="/dev/shm/mshell-dsmpat"
+        rm -rf "${temp_pat_folder}" "${temp_dsmpat_folder}"
+        mkdir -p "${temp_pat_folder}" "${temp_dsmpat_folder}" || return 99
+        echo "[Docker builder] Using /dev/shm PAT scratch directories (no mount)."
+    else
+        temp_pat_folder="/tmp/pat"
+        temp_dsmpat_folder="/tmp/dsmpat"
+    fi
 
     setplatform
 
-    if [ ! -d "${temp_pat_folder}" ]; then
+    if [ "${MSHELL_DOCKER_BUILDER:-0}" != "1" ] && [ ! -d "${temp_pat_folder}" ]; then
         msgnormal "Creating temp folder ${temp_pat_folder} "
         mkdir ${temp_pat_folder} && sudo mount -t tmpfs -o size=512M tmpfs ${temp_pat_folder} && cd ${temp_pat_folder}
         mkdir ${temp_dsmpat_folder} && sudo mount -t tmpfs -o size=512M tmpfs ${temp_dsmpat_folder}
@@ -5686,8 +5696,12 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
         fi
 
         msgnormal "Clearing temp folders"
-        sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
-        sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}        
+        if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+            rm -rf "${temp_pat_folder}" "${temp_dsmpat_folder}"
+        else
+            sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
+            sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}
+        fi
 
         return
 
@@ -5909,7 +5923,11 @@ function getgrubbkg() {
     curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.cfg"
     if [ ! -f /home/tc/grubbkg.png ]; then
         curl -kLO# "https://github.com/PeterSuh-Q3/tinycore-redpill/raw/${build}/grub/grubbkg.png"
-        sudo cp -vf /home/tc/grubbkg.png /mnt/alpine/grubbkg.png
+        if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+            echo "[Docker builder] Skipping P4 grubbkg.png write (P4 is read-only)."
+        else
+            sudo cp -vf /home/tc/grubbkg.png /mnt/alpine/grubbkg.png
+        fi
     fi
 }
 
