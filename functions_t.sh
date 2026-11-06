@@ -5539,7 +5539,7 @@ function processpat() {
         # mount tmpfs. Docker already provides /dev/shm as a bounded tmpfs.
         temp_pat_folder="/dev/shm/mshell-pat"
         temp_dsmpat_folder="/dev/shm/mshell-dsmpat"
-        rm -rf "${temp_pat_folder}" "${temp_dsmpat_folder}"
+        sudo rm -rf -- "${temp_pat_folder}" "${temp_dsmpat_folder}"
         mkdir -p "${temp_pat_folder}" "${temp_dsmpat_folder}" || return 99
         echo "[Docker builder] Using /dev/shm PAT scratch directories (no mount)."
     else
@@ -5697,7 +5697,7 @@ st "patextraction" "Pat file extracted" "VERSION:${BUILD}"
 
         msgnormal "Clearing temp folders"
         if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
-            rm -rf "${temp_pat_folder}" "${temp_dsmpat_folder}"
+            sudo rm -rf -- "${temp_pat_folder}" "${temp_dsmpat_folder}"
         else
             sudo umount ${temp_pat_folder} && sudo rm -rf ${temp_pat_folder}
             sudo umount ${temp_dsmpat_folder} && sudo rm -rf ${temp_dsmpat_folder}
