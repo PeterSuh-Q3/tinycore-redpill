@@ -7521,8 +7521,8 @@ function stageDetourBmi2PmlPack() {
         cp /dev/shm/tcrp-modules/detour-modules/detour-sha256.txt "$manifest" &&
         cp "/dev/shm/tcrp-modules/detour-modules/${name}" "$archive" || return 99
     else
-        curl -fsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
-        curl -fsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
+        curl -kfsSL --retry 3 "${base}/detour-sha256.txt" -o "$manifest" &&
+        curl -kfsSL --retry 3 "${base}/${name}" -o "$archive" || return 99
     fi
     count=$(awk -v n="$name" '$2==n {c++} END {print c+0}' "$manifest")
     [ "$count" -eq 1 ] || { echo "[detourbmi2] missing/ambiguous pack manifest entry: $name" >&2; return 99; }
