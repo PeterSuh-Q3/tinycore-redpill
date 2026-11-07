@@ -7608,7 +7608,7 @@ function mshellBuildloaderBody() {
     # dependent; this flag controls only the module-pack inclusion.
     if [ "${MDLNAME}" = "all-modules" ] && [ "${MLMETHOD}" = "PML" ] && \
        [ "${KVER}" = "5.10.55" ] && \
-       { [ "${TARGET_VERSION}" = "7.3" ] || [ "${TARGET_VERSION}" = "7.4" ]; }; then
+       [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
         ALLMOD_PML_DETOUR_PACK=1
     fi
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
