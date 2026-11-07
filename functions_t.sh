@@ -7587,6 +7587,7 @@ function mshellBuildloaderBody() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
     local DETOURBMI2_LOADER_PREPARED=0
+    local ALLMOD_PML_DETOUR_PACK=0
     # The processpat recursion may reuse the same download within this build,
     # but every new build must obtain its own original PAT.
     unset MSHELL_HDA1_FRESH_PAT
@@ -7600,6 +7601,16 @@ function mshellBuildloaderBody() {
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
+    # The published detour module packs currently cover DSM 7.3/7.4 on
+    # kernel 5.10.55. Include the matching pack for every all-modules:PML
+    # build in that supported matrix, not only when the BMI2 fallback kernel
+    # is selected. The fallback kernel decision below remains CPU/resolver
+    # dependent; this flag controls only the module-pack inclusion.
+    if [ "${MDLNAME}" = "all-modules" ] && [ "${MLMETHOD}" = "PML" ] && \
+       [ "${KVER}" = "5.10.55" ] && \
+       { [ "${TARGET_VERSION}" = "7.3" ] || [ "${TARGET_VERSION}" = "7.4" ]; }; then
+        ALLMOD_PML_DETOUR_PACK=1
+    fi
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
     if [ "${MDLNAME}" = "all-modules" ] && \
        [ "${MLMETHOD}" = "PML" ] && \
@@ -8154,7 +8165,8 @@ NCEOF
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
-        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ]; then
+        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ] && \
+           [ "${ALLMOD_PML_DETOUR_PACK}" -ne 1 ]; then
             # A cached/custom ramdisk must not carry a previous test's marker.
             sudo rm -f "${rdtemp}/addons/detourbmi2.pack" "${rdtemp}/addons/"*-detour.tgz
         fi
@@ -8168,7 +8180,7 @@ NCEOF
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                if [ "${ALLMOD_PML_DETOUR_PACK}" -eq 1 ]; then
                     stageDetourBmi2PmlPack || return 99
                 fi
             fi
