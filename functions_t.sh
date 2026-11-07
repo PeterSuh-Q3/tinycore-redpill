@@ -8182,6 +8182,7 @@ NCEOF
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 if [ "${ALLMOD_PML_DETOUR_PACK}" -eq 1 ]; then
                     stageDetourBmi2PmlPack || return 99
+                    st "Detour pack" "Included in initrd-dsm" "${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
                 fi
             fi
 
