@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.7.0"
-builddate="2026.11.05"
+rploaderver="1.4.7.1"
+builddate="2026.11.07"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1093,6 +1093,7 @@ function history() {
     1.4.6.3 Add advisory Nehalem checks for completed loader initrds and show the per-build result at the end of the build log
     1.4.6.4 Normalize incomplete saved IP settings and restore DHCP gateway routing
     1.4.7.0 Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
+    1.4.7.1 Raise the minimum Alpine OpenSSH package version
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1855,6 +1856,9 @@ EOF
 # 2026.11.05 v1.4.7.0
 # Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
 
+# 2026.11.07 v1.4.7.1
+# Raise the minimum Alpine OpenSSH package version
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2295,6 +2299,9 @@ function showlastupdate() {
 # 2026.11.05 v1.4.7.0
 # Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
 
+
+# 2026.11.07 v1.4.7.1
+# Raise the minimum Alpine OpenSSH package version
 EOF
 }
 
