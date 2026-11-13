@@ -8184,6 +8184,27 @@ NCEOF
                     stageDetourBmi2PmlPack || return 99
                     st "Detour pack" "Included in initrd-dsm" "${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
                 fi
+                # Local-only Broadcom pilot, built against this exact DSM target.
+                # Stage after the PML pack so its copies cannot replace the pilot.
+                if [ "${MDLNAME}" = "all-modules" ] && [ -d /home/tc/wl ]; then
+                    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ] && \
+                       [ "${TARGET_VERSION}" = "7.4.1" ] && \
+                       [ "${TARGET_REVISION}" = "90080" ] && [ "${KVER}" = "5.10.55" ]; then
+                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
+                            if [ ! -s "/home/tc/wl/${_WL_MOD}" ]; then
+                                echo "[wl-pilot] Missing or empty /home/tc/wl/${_WL_MOD}; refusing incomplete module set" >&2
+                                return 99
+                            fi
+                        done
+                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
+                            sudo cp -f "/home/tc/wl/${_WL_MOD}" "${rdtemp}/usr/lib/modules/${_WL_MOD}" || return 99
+                        done
+                        echo "[wl-pilot] Staged five local modules in initrd-dsm (epyc7002 7.4.1-90080)"
+                    else
+                        echo "[wl-pilot] Skipped: local pilot is only for epyc7002 DSM 7.4.1-90080 / 5.10.55"
+                    fi
+                fi
+                # End local-only Broadcom pilot.
             fi
 
         fi
