@@ -4024,7 +4024,7 @@ echo
     sync_part_config
 
     echo "After changing user_config.json"      
-    cat user_config.json
+    jq 'del(.wifi.password)' user_config.json
 
 }
 
@@ -7587,6 +7587,7 @@ function mshellBuildloaderBody() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
     local DETOURBMI2_LOADER_PREPARED=0
+    local ALLMOD_PML_DETOUR_PACK=0
     # The processpat recursion may reuse the same download within this build,
     # but every new build must obtain its own original PAT.
     unset MSHELL_HDA1_FRESH_PAT
@@ -7600,6 +7601,16 @@ function mshellBuildloaderBody() {
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
+    # The published detour module packs currently cover DSM 7.3/7.4 on
+    # kernel 5.10.55. Include the matching pack for every all-modules:PML
+    # build in that supported matrix, not only when the BMI2 fallback kernel
+    # is selected. The fallback kernel decision below remains CPU/resolver
+    # dependent; this flag controls only the module-pack inclusion.
+    if [ "${MDLNAME}" = "all-modules" ] && [ "${MLMETHOD}" = "PML" ] && \
+       [ "${KVER}" = "5.10.55" ] && \
+       [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
+        ALLMOD_PML_DETOUR_PACK=1
+    fi
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
     if [ "${MDLNAME}" = "all-modules" ] && \
        [ "${MLMETHOD}" = "PML" ] && \
@@ -8154,7 +8165,8 @@ NCEOF
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
-        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ]; then
+        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ] && \
+           [ "${ALLMOD_PML_DETOUR_PACK}" -ne 1 ]; then
             # A cached/custom ramdisk must not carry a previous test's marker.
             sudo rm -f "${rdtemp}/addons/detourbmi2.pack" "${rdtemp}/addons/"*-detour.tgz
         fi
@@ -8168,9 +8180,31 @@ NCEOF
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
+                if [ "${ALLMOD_PML_DETOUR_PACK}" -eq 1 ]; then
                     stageDetourBmi2PmlPack || return 99
+                    st "Detour pack" "Included in initrd-dsm" "${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
                 fi
+                # Local-only Broadcom pilot, built against this exact DSM target.
+                # Stage after the PML pack so its copies cannot replace the pilot.
+                if [ "${MDLNAME}" = "all-modules" ] && [ -d /home/tc/wl ]; then
+                    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ] && \
+                       [ "${TARGET_VERSION}" = "7.4.1" ] && \
+                       [ "${TARGET_REVISION}" = "90080" ] && [ "${KVER}" = "5.10.55" ]; then
+                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
+                            if [ ! -s "/home/tc/wl/${_WL_MOD}" ]; then
+                                echo "[wl-pilot] Missing or empty /home/tc/wl/${_WL_MOD}; refusing incomplete module set" >&2
+                                return 99
+                            fi
+                        done
+                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
+                            sudo cp -f "/home/tc/wl/${_WL_MOD}" "${rdtemp}/usr/lib/modules/${_WL_MOD}" || return 99
+                        done
+                        echo "[wl-pilot] Staged five local modules in initrd-dsm (epyc7002 7.4.1-90080)"
+                    else
+                        echo "[wl-pilot] Skipped: local pilot is only for epyc7002 DSM 7.4.1-90080 / 5.10.55"
+                    fi
+                fi
+                # End local-only Broadcom pilot.
             fi
 
         fi
@@ -8263,6 +8297,26 @@ NCEOF
     #sudo chmod +x $rdtemp/usr/sbin/losetup
 
     RAMDISK_PATH="$rdtemp"
+    # Encode SSID/password as hex so configuration cannot inject directives.
+    sudo rm -f "$rdtemp/addons/mshell-wifi.conf"
+    if jq -e '.wifi != null' "$userconfigfile" >/dev/null; then
+        (
+            set +x
+            umask 077
+            jq -e '(.wifi.ssid|type)=="string" and (.wifi.ssid|utf8bytelength)>0 and (.wifi.ssid|utf8bytelength)<=32 and (.wifi.password|type)=="string" and (.wifi.password|length)>=8 and (.wifi.password|length)<=63 and (.wifi.password|test("^[ -~]+$"))' "$userconfigfile" >/dev/null || exit 1
+            ssid_hex=$(jq -j '.wifi.ssid' "$userconfigfile" | od -An -tx1 | tr -d ' \n')
+            sudo mkdir -p "$rdtemp/addons"
+            set -o pipefail
+            tools=$(mktemp -d) || exit 1
+            trap 'rm -rf "$tools"' EXIT
+            [ -s "$rdtemp/exts/wifi-tools/wifi-tools.tgz" ] || { echo '[wifi] wifi-tools addon is required when Wi-Fi is configured' >&2; exit 1; }
+            tar -xzf "$rdtemp/exts/wifi-tools/wifi-tools.tgz" -C "$tools" || exit 1
+            ssid=$(jq -jr '.wifi.ssid' "$userconfigfile")
+            psk=$(jq -r '.wifi.password' "$userconfigfile" | "$tools/lib/ld-musl-x86_64.so.1" --library-path "$tools/lib" "$tools/bin/wpa_passphrase" "$ssid" | awk '/^[[:space:]]*psk=[0-9a-f]+$/ {sub(/^[[:space:]]*psk=/,""); print}') || exit 1
+            [ "${#psk}" -eq 64 ] || exit 1
+            printf 'update_config=0\nnetwork={\n ssid=%s\n scan_ssid=1\n key_mgmt=WPA-PSK\n psk=%s\n}\n' "$ssid_hex" "$psk" | sudo sh -c 'umask 077; cat > "$1"' sh "$rdtemp/addons/mshell-wifi.conf"
+        ) || { echo "[wifi] Invalid configuration or staging failure" >&2; return 99; }
+    fi
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
     if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
@@ -10019,7 +10073,7 @@ function remove_loader() {
 
 function mshellDsmDetourBmi2Candidate() {
     local model="$1" release="$2" mode="$3" options="${4:-}"
-    # Enable detour PML on platforms with confirmed stability evidence.
+    # Only platforms whose standard pack carries the early USB modules are enabled.
     [ "${mode}" = "all-modules:PML" ] || return 1
     [ -n "${options}" ] || options=$(mshellDsmResolve options "${model}" "${release}") || return $?
     printf '%s' "${options}" | jq -ce --arg id "${mode}" '
@@ -10588,7 +10642,7 @@ function my() {
       [ "${DT_MODEL}" = "N" ] && prefillDefaultSataPortMap
   else
       cecho c "Before changing user_config.json"
-      cat user_config.json
+      jq 'del(.wifi.password)' user_config.json
       echo "y"|rploader identifyusb
 
       if [ "${DT_MODEL}" = "Y" ]; then
@@ -10599,7 +10653,7 @@ function my() {
       fi
       cecho y "After changing user_config.json"
   fi
-  cat user_config.json  
+  jq 'del(.wifi.password)' user_config.json
   
   echo
   echo

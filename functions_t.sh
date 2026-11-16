@@ -4024,7 +4024,7 @@ echo
     sync_part_config
 
     echo "After changing user_config.json"      
-    cat user_config.json
+    jq 'del(.wifi.password)' user_config.json
 
 }
 
@@ -8297,6 +8297,26 @@ NCEOF
     #sudo chmod +x $rdtemp/usr/sbin/losetup
 
     RAMDISK_PATH="$rdtemp"
+    # Encode SSID/password as hex so configuration cannot inject directives.
+    sudo rm -f "$rdtemp/addons/mshell-wifi.conf"
+    if jq -e '.wifi != null' "$userconfigfile" >/dev/null; then
+        (
+            set +x
+            umask 077
+            jq -e '(.wifi.ssid|type)=="string" and (.wifi.ssid|utf8bytelength)>0 and (.wifi.ssid|utf8bytelength)<=32 and (.wifi.password|type)=="string" and (.wifi.password|length)>=8 and (.wifi.password|length)<=63 and (.wifi.password|test("^[ -~]+$"))' "$userconfigfile" >/dev/null || exit 1
+            ssid_hex=$(jq -j '.wifi.ssid' "$userconfigfile" | od -An -tx1 | tr -d ' \n')
+            sudo mkdir -p "$rdtemp/addons"
+            set -o pipefail
+            tools=$(mktemp -d) || exit 1
+            trap 'rm -rf "$tools"' EXIT
+            [ -s "$rdtemp/exts/wifi-tools/wifi-tools.tgz" ] || { echo '[wifi] wifi-tools addon is required when Wi-Fi is configured' >&2; exit 1; }
+            tar -xzf "$rdtemp/exts/wifi-tools/wifi-tools.tgz" -C "$tools" || exit 1
+            ssid=$(jq -jr '.wifi.ssid' "$userconfigfile")
+            psk=$(jq -r '.wifi.password' "$userconfigfile" | "$tools/lib/ld-musl-x86_64.so.1" --library-path "$tools/lib" "$tools/bin/wpa_passphrase" "$ssid" | awk '/^[[:space:]]*psk=[0-9a-f]+$/ {sub(/^[[:space:]]*psk=/,""); print}') || exit 1
+            [ "${#psk}" -eq 64 ] || exit 1
+            printf 'update_config=0\nnetwork={\n ssid=%s\n scan_ssid=1\n key_mgmt=WPA-PSK\n psk=%s\n}\n' "$ssid_hex" "$psk" | sudo sh -c 'umask 077; cat > "$1"' sh "$rdtemp/addons/mshell-wifi.conf"
+        ) || { echo "[wifi] Invalid configuration or staging failure" >&2; return 99; }
+    fi
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
     if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
@@ -10622,7 +10642,7 @@ function my() {
       [ "${DT_MODEL}" = "N" ] && prefillDefaultSataPortMap
   else
       cecho c "Before changing user_config.json"
-      cat user_config.json
+      jq 'del(.wifi.password)' user_config.json
       echo "y"|rploader identifyusb
 
       if [ "${DT_MODEL}" = "Y" ]; then
@@ -10633,7 +10653,7 @@ function my() {
       fi
       cecho y "After changing user_config.json"
   fi
-  cat user_config.json  
+  jq 'del(.wifi.password)' user_config.json
   
   echo
   echo
