@@ -345,7 +345,8 @@
         "add_extensions": [
             {
                 "powersched": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/powersched/rpext-index.json",
-                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/storagepanel/rpext-index.json"
+                "storagepanel": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/storagepanel/rpext-index.json",
+                "wifi-tools": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wifi-tools/rpext-index.json"
             }
         ]
     },
