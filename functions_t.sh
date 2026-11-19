@@ -8158,6 +8158,21 @@ NCEOF
     # 짧게 폴링 재시도한다.
     sudo sed -i '/^Main() {/a \\n/netconsole-early.sh \&' $rdtemp/linuxrc.syno
     rm -f /tmp/netconsole-early.sh
+    # The DSM junior kernel may not expose DMI. Restrict installation to a
+    # loader built on the tested Apple model; the helper checks PCI identity
+    # and the exact routing masks again at boot before writing anything.
+    if [ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" = "Apple Inc." ] && \
+       [ "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" = "MacBookPro11,1" ]; then
+        _apple_xhci_helper="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tools/apple-a1502-xhci-route-early.sh"
+        [ -f "$_apple_xhci_helper" ] || { echo '[apple-xhci-route] helper missing' >&2; return 99; }
+        [ "$(grep -c '^Main() {' "$rdtemp/linuxrc.syno")" -eq 1 ] || { echo '[apple-xhci-route] Main() hook missing or ambiguous' >&2; return 99; }
+        sudo cp "$_apple_xhci_helper" "$rdtemp/apple-a1502-xhci-route-early.sh" || return 99
+        sudo chmod 755 "$rdtemp/apple-a1502-xhci-route-early.sh" || return 99
+        if ! grep -Fq '/apple-a1502-xhci-route-early.sh' "$rdtemp/linuxrc.syno"; then
+            sudo sed -i '/^Main() {/a \\n/apple-a1502-xhci-route-early.sh' "$rdtemp/linuxrc.syno" || return 99
+        fi
+        echo '[apple-xhci-route] staged synchronous early routing fix for MacBookPro11,1'
+    fi
     # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
     # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
     sudo cat $rdtemp/linuxrc.syno
