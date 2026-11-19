@@ -8496,6 +8496,21 @@ NCEOF
         sudo rm -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz"
     fi
 
+    # Request BCM4360 loading only when the selected module pack contains it.
+    _bcm4360_present=0
+    _bcm4360_dsm=$(printf '%s' "$TARGET_VERSION" | cut -d. -f1,2)
+    _bcm4360_pack="$rdtemp/exts/${MDLNAME}/${ORIGIN_PLATFORM}-${_bcm4360_dsm}-${KVER}.tgz"
+    if [ -f "$rdtemp/usr/lib/modules/bcm4360_open.ko" ]; then
+        _bcm4360_present=1
+    elif [ -f "$_bcm4360_pack" ] && sudo tar -tzf "$_bcm4360_pack" 2>/dev/null | grep -E '(^|/)bcm4360_open\.ko$' >/dev/null; then
+        _bcm4360_present=1
+    fi
+    if [ "$_bcm4360_present" -eq 1 ]; then
+        sudo mkdir -p "$rdtemp/usr/lib/modules-load.d" || return 99
+        printf '%s\n' bcm4360_open | sudo tee "$rdtemp/usr/lib/modules-load.d/90-bcm4360-open.conf" >/dev/null || return 99
+        echo '[wifi] Added bcm4360_open modules-load configuration'
+    fi
+
     # Build and validate the archive in /tmp before replacing P3's initrd-dsm.
     # P3 is usually vfat mounted with root-owned emulated permissions: a `sudo
     # cpio ... > /mnt/...` redirect is still opened by tc and silently leaves
