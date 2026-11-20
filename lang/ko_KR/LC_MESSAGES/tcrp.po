@@ -19,75 +19,99 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
 
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) 자동 연결"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Wi-Fi 검색에는 iw와 ip가 필요합니다. SSID를 직접 입력할 수 있습니다."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "무선 인터페이스를 찾지 못했습니다. SSID를 직접 입력하세요."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "무선 인터페이스 선택"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "무선 인터페이스를 활성화하지 못했습니다."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "검색에 실패했거나 무선 장치가 사용 중 또는 차단되었습니다. SSID를 직접 입력하세요."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "사용 가능한 SSID를 찾지 못했습니다. SSID를 직접 입력하세요."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "무선 공유기 선택 (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "DSM 주니어 WLAN 자동 연결 (WPA2-Personal). 설정 변경 후 로더를 다시 빌드하세요."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "설정된 SSID:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "없음"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "주변 AP 검색 및 선택"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "SSID 직접 입력"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Wi-Fi 설정 삭제"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "저장된 Wi-Fi 설정을 삭제하시겠습니까?"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Wi-Fi SSID를 입력하세요"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID는 비워둘 수 없습니다."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "WPA2 비밀번호를 입력하세요 (출력 가능한 ASCII 문자 8~63자)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID 또는 WPA2 비밀번호가 올바르지 않습니다."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "Wi-Fi 설정을 저장하시겠습니까? 적용하려면 로더를 다시 빌드하세요. 설정과 initrd에는 인증 정보가 포함됩니다."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "설정 파일을 만들지 못했습니다."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "로컬에 저장했지만 설정 동기화에 실패했습니다."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi 설정을 저장했습니다. 적용하려면 로더를 다시 빌드하세요."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Wi-Fi 설정을 저장하지 못했습니다."
 #: MSGKR00 

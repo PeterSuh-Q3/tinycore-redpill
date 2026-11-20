@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "الاتصال التلقائي بشبكة WLAN (Wi-Fi)"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "يتطلب فحص Wi-Fi الأداتين iw وip. يمكنك إدخال SSID يدويًا."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "لم يتم العثور على واجهة لاسلكية. أدخل SSID يدويًا."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "اختر واجهة لاسلكية"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "تعذر تمكين الواجهة اللاسلكية."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "فشل الفحص أو أن الاتصال اللاسلكي مشغول أو محظور. أدخل SSID يدويًا."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "لم يتم العثور على SSID صالح للاستخدام. أدخل SSID يدويًا."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "اختر نقطة وصول (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "اتصال WLAN تلقائي لـ DSM junior (WPA2-Personal). أعد بناء محمّل الإقلاع بعد التغييرات."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "SSID المُعدّ:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "لا شيء"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "افحص الشبكات واختر نقطة وصول"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "أدخل SSID يدويًا"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "إزالة إعداد Wi-Fi"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "هل تريد إزالة إعداد Wi-Fi المحفوظ؟"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "أدخل SSID لشبكة Wi-Fi"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "لا يمكن أن يكون SSID فارغًا."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "أدخل كلمة مرور WPA2 (من 8 إلى 63 محرف ASCII قابل للطباعة)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID أو كلمة مرور WPA2 غير صالحة."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "هل تريد حفظ إعداد Wi-Fi هذا؟ أعد بناء محمّل الإقلاع لتطبيقه. يحتوي الإعداد وinitrd على بيانات اعتماد."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "تعذر إنشاء ملف الإعداد."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "تم الحفظ محليًا، لكن تعذرت مزامنة الإعداد."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "تم حفظ إعداد Wi-Fi. أعد بناء محمّل الإقلاع لتطبيقه."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "تعذر حفظ إعداد Wi-Fi."
 

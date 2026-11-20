@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) 自动连接"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Wi-Fi扫描需要iw和ip。您可以手动输入SSID。"
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "未找到无线接口。请输入SSID。"
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "选择无线接口"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "无法启用无线接口。"
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "扫描失败或无线电繁忙或被阻止。请输入SSID。"
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "未找到可用的SSID。请输入SSID。"
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "选择接入点 (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "WLAN自动连接用于DSM junior (WPA2-Personal)。更改后重建加载器。"
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "配置的SSID:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "无"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "扫描并选择接入点"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "手动输入SSID"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "删除Wi-Fi配置"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "删除已保存的Wi-Fi配置？"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "输入Wi-Fi SSID"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID不能为空。"
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "输入WPA2密码（8–63个可打印ASCII字符）。"
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "无效的SSID或WPA2密码。"
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "保存此Wi-Fi配置？重建加载器以应用它。配置和initrd包含凭证。"
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "无法创建配置文件。"
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "已本地保存，但配置同步失败。"
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi配置已保存。重建加载器以应用它。"
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "无法保存Wi-Fi配置。"
 

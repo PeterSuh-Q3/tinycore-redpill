@@ -1008,74 +1008,98 @@ msgstr "Synology DSM U0 original module recovery (from hda1.tgz)"
 msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
 msgstr "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
 
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) Auto Connect"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "No wireless interface found. Enter the SSID manually."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "Select a wireless interface"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "Could not enable the wireless interface."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "No usable SSIDs found. Enter the SSID manually."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "Select an access point (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "Configured SSID:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "None"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "Scan and select an access point"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "Enter SSID manually"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Remove Wi-Fi configuration"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "Remove the saved Wi-Fi configuration?"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Enter the Wi-Fi SSID"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID cannot be empty."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "Enter the WPA2 password (8–63 printable ASCII characters)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "Invalid SSID or WPA2 password."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "Could not create the configuration file."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "Saved locally, but configuration synchronization failed."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi configuration saved. Rebuild the loader to apply it."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Could not save the Wi-Fi configuration."

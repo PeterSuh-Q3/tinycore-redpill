@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) Connexion automatique"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Le balayage Wi-Fi nécessite iw et ip. Vous pouvez entrer manuellement l'SSID."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "Aucune interface sans fil trouvée. Entrez manuellement l'SSID."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "Sélectionnez une interface sans fil"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "Impossible d'activer l'interface sans fil."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "Le balayage a échoué ou la radio est occupée ou bloquée. Entrez manuellement l'SSID."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "Aucun SSID utilisable trouvé. Entrez manuellement l'SSID."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "Sélectionnez un point d'accès (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "Connexion automatique WLAN pour DSM junior (WPA2-Personal). Reconstituez le loader après les modifications."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "SSID configuré :"
 
+#: MSGZZ267
 msgid "None"
 msgstr "Aucun"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "Balayer et sélectionner un point d'accès"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "Entrer manuellement l'SSID"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Supprimer la configuration Wi-Fi"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "Supprimer la configuration Wi-Fi enregistrée ?"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Entrez l'SSID Wi-Fi"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "L'SSID ne peut pas être vide."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "Entrez le mot de passe WPA2 (8 à 63 caractères imprimables ASCII)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID ou mot de passe WPA2 invalide."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "Enregistrer cette configuration Wi-Fi ? Reconstituez le loader pour l'appliquer. La configuration et l'initrd contiennent des identifiants."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "Impossible de créer le fichier de configuration."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "Enregistré localement, mais la synchronisation de la configuration a échoué."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Configuration Wi-Fi enregistrée. Reconstituez le loader pour l'appliquer."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Impossible d'enregistrer la configuration Wi-Fi."
 

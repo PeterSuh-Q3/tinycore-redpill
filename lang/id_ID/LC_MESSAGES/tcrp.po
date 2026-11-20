@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) Auto Connect"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Pemindaian Wi-Fi memerlukan iw dan ip. Anda dapat memasukkan SSID secara manual."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "Tidak ditemukan antarmuka nirkabel. Masukkan SSID secara manual."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "Pilih antarmuka nirkabel"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "Tidak dapat mengaktifkan antarmuka nirkabel."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "Pemindaian gagal atau radio sedang sibuk atau terblokir. Masukkan SSID secara manual."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "Tidak ditemukan SSID yang dapat digunakan. Masukkan SSID secara manual."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "Pilih titik akses (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "WLAN auto-connect untuk DSM junior (WPA2-Personal). Rebuild loader setelah perubahan."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "SSID yang dikonfigurasikan:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "Tidak ada"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "Pindaian dan pilih titik akses"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "Masukkan SSID secara manual"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Hapus konfigurasi Wi-Fi"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "Hapus konfigurasi Wi-Fi yang disimpan?"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Masukkan SSID Wi-Fi"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID tidak boleh kosong."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "Masukkan kata sandi WPA2 (8–63 karakter ASCII yang dapat dicetak)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID atau kata sandi WPA2 tidak valid."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "Simpan konfigurasi Wi-Fi ini? Rebuild loader untuk menerapkannya. Konfigurasi dan initrd mengandung kredensial."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "Tidak dapat membuat file konfigurasi."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "Disimpan secara lokal, tetapi sinkronisasi konfigurasi gagal."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Konfigurasi Wi-Fi disimpan. Rebuild loader untuk menerapkannya."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Tidak dapat menyimpan konfigurasi Wi-Fi."
 

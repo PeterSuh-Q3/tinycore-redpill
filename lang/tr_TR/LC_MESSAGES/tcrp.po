@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) Otomatik Bağlantı"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Wi-Fi taraması için iw ve ip gerekir. SSID'yi elle girebilirsiniz."
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "Kablosuz arayüz bulunamadı. SSID'yi elle girin."
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "Bir kablosuz arayüz seçin"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "Kablosuz arayüz etkinleştirilemedi."
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "Tarama başarısız oldu veya radyo meşgul ya da engellenmiş. SSID'yi elle girin."
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "Kullanılabilir SSID bulunamadı. SSID'yi elle girin."
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "Bir erişim noktası seçin (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "DSM junior için WLAN otomatik bağlantısı (WPA2-Personal). Değişikliklerden sonra loader'ı yeniden oluşturun."
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "Yapılandırılmış SSID:"
 
+#: MSGZZ267
 msgid "None"
 msgstr "Yok"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "Erişim noktalarını tara ve birini seç"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "SSID'yi elle gir"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Wi-Fi yapılandırmasını kaldır"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "Kaydedilmiş Wi-Fi yapılandırması kaldırılsın mı?"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Wi-Fi SSID'sini girin"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID boş olamaz."
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "WPA2 parolasını girin (8–63 yazdırılabilir ASCII karakteri)."
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID veya WPA2 parolası geçersiz."
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "Bu Wi-Fi yapılandırması kaydedilsin mi? Uygulamak için loader'ı yeniden oluşturun. Yapılandırma ve initrd kimlik bilgileri içerir."
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "Yapılandırma dosyası oluşturulamadı."
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "Yerel olarak kaydedildi ancak yapılandırma eşitlemesi başarısız oldu."
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi yapılandırması kaydedildi. Uygulamak için loader'ı yeniden oluşturun."
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Wi-Fi yapılandırması kaydedilemedi."
 

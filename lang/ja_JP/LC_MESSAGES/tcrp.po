@@ -19,74 +19,98 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
 
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) 自動接続"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "Wi-Fi の検索には iw と ip が必要です。SSID を手動で入力することもできます。"
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "無線インターフェースが見つかりません。SSID を手動で入力してください。"
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "無線インターフェースを選択"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "無線インターフェースを有効にできませんでした。"
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "検索に失敗したか、無線デバイスが使用中またはブロックされています。SSID を手動で入力してください。"
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "利用可能な SSID が見つかりません。SSID を手動で入力してください。"
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "アクセスポイントを選択 (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "DSM junior 用 WLAN 自動接続 (WPA2-Personal)。変更後はローダーを再ビルドしてください。"
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "設定済みの SSID:"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "アクセスポイントを検索して選択"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "SSID を手動で入力"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "Wi-Fi 設定を削除"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "保存済みの Wi-Fi 設定を削除しますか？"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "Wi-Fi の SSID を入力"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID は空にできません。"
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "WPA2 パスワードを入力してください（印字可能な ASCII 文字 8～63 文字）。"
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID または WPA2 パスワードが無効です。"
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "この Wi-Fi 設定を保存しますか？適用するにはローダーを再ビルドしてください。設定と initrd には認証情報が含まれます。"
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "設定ファイルを作成できませんでした。"
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "ローカルに保存しましたが、設定の同期に失敗しました。"
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi 設定を保存しました。適用するにはローダーを再ビルドしてください。"
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Wi-Fi 設定を保存できませんでした。"
+#: MSGZZ267
 msgid "None"
 msgstr "なし"
 

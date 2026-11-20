@@ -18,75 +18,99 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+#: MSGZZ257
 msgid "WLAN (Wi-Fi) Auto Connect"
 msgstr "WLAN (Wi-Fi) 自動連線"
 
+#: MSGZZ258
 msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
 msgstr "掃描 Wi-Fi 需要 iw 和 ip。您也可以手動輸入 SSID。"
 
+#: MSGZZ259
 msgid "No wireless interface found. Enter the SSID manually."
 msgstr "找不到無線網路介面卡。請手動輸入 SSID。"
 
+#: MSGZZ260
 msgid "Select a wireless interface"
 msgstr "選擇無線網路介面卡"
 
+#: MSGZZ261
 msgid "Could not enable the wireless interface."
 msgstr "無法啟用無線網路介面卡。"
 
+#: MSGZZ262
 msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
 msgstr "掃描失敗，或無線裝置忙碌／已封鎖。請手動輸入 SSID。"
 
+#: MSGZZ263
 msgid "No usable SSIDs found. Enter the SSID manually."
 msgstr "找不到可用的 SSID。請手動輸入 SSID。"
 
+#: MSGZZ264
 msgid "Select an access point (WPA2-Personal)"
 msgstr "選擇存取點 (WPA2-Personal)"
 
+#: MSGZZ265
 msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
 msgstr "DSM junior 的 WLAN 自動連線 (WPA2-Personal)。變更後請重新建置載入器。"
 
+#: MSGZZ266
 msgid "Configured SSID:"
 msgstr "已設定的 SSID："
 
+#: MSGZZ267
 msgid "None"
 msgstr "無"
 
+#: MSGZZ268
 msgid "Scan and select an access point"
 msgstr "掃描並選取存取點"
 
+#: MSGZZ269
 msgid "Enter SSID manually"
 msgstr "手動輸入 SSID"
 
+#: MSGZZ270
 msgid "Remove Wi-Fi configuration"
 msgstr "移除 Wi-Fi 設定"
 
+#: MSGZZ271
 msgid "Remove the saved Wi-Fi configuration?"
 msgstr "要移除已儲存的 Wi-Fi 設定嗎？"
 
+#: MSGZZ272
 msgid "Enter the Wi-Fi SSID"
 msgstr "輸入 Wi-Fi SSID"
 
+#: MSGZZ273
 msgid "SSID cannot be empty."
 msgstr "SSID 不可空白。"
 
+#: MSGZZ274
 msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
 msgstr "輸入 WPA2 密碼（8–63 個可列印 ASCII 字元）。"
 
+#: MSGZZ275
 msgid "Invalid SSID or WPA2 password."
 msgstr "SSID 或 WPA2 密碼無效。"
 
+#: MSGZZ276
 msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
 msgstr "要儲存此 Wi-Fi 設定嗎？重新建置載入器後才會套用。設定檔和 initrd 含有認證資料。"
 
+#: MSGZZ277
 msgid "Could not create the configuration file."
 msgstr "無法建立設定檔。"
 
+#: MSGZZ278
 msgid "Saved locally, but configuration synchronization failed."
 msgstr "已儲存至本機，但設定同步失敗。"
 
+#: MSGZZ279
 msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
 msgstr "Wi-Fi 設定已儲存。重新建置載入器後才會套用。"
 
+#: MSGZZ280
 msgid "Could not save the Wi-Fi configuration."
 msgstr "無法儲存 Wi-Fi 設定。"
 
