@@ -176,6 +176,12 @@ jobs:
           sudo mkdir -p /mnt/tarp4
           sudo mount ${LOOPZ}p4 /mnt/tarp4
           sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          sudo tar xzf ${GITHUB_WORKSPACE}/alpine/iw-repository.tar.gz -C /mnt/tarp4
+          for spec in 'iw 6.17-r0' 'libnl3 3.11.0-r0'; do
+            set -- $spec
+            test -f "/mnt/tarp4/repo-main/x86_64/$1-$2.apk"
+            sudo tar -xOzf /mnt/tarp4/repo-main/x86_64/APKINDEX.tar.gz APKINDEX | awk -v p="$1" -v v="$2" 'BEGIN { RS="" } $0 ~ ("(^|\\n)P:" p "\\n") && $0 ~ ("(^|\\n)V:" v "\\n") { found=1 } END { exit !found }'
+          done
           sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp4/localhost.apkovl.tar.gz
           ls -ltr /mnt/tarp4
           sudo blkid "${LOOPZ}p4"
@@ -254,6 +260,12 @@ jobs:
           sudo mkdir -p /mnt/tarp4
           sudo mount ${LOOPZ}p4 /mnt/tarp4
           sudo tar xzf ${GITHUB_WORKSPACE}/alpine-partition.tar.gz -C /mnt/tarp4
+          sudo tar xzf ${GITHUB_WORKSPACE}/alpine/iw-repository.tar.gz -C /mnt/tarp4
+          for spec in 'iw 6.17-r0' 'libnl3 3.11.0-r0'; do
+            set -- $spec
+            test -f "/mnt/tarp4/repo-main/x86_64/$1-$2.apk"
+            sudo tar -xOzf /mnt/tarp4/repo-main/x86_64/APKINDEX.tar.gz APKINDEX | awk -v p="$1" -v v="$2" 'BEGIN { RS="" } $0 ~ ("(^|\\n)P:" p "\\n") && $0 ~ ("(^|\\n)V:" v "\\n") { found=1 } END { exit !found }'
+          done
           sudo cp -vf ${GITHUB_WORKSPACE}/localhost.apkovl.tar.gz /mnt/tarp4/localhost.apkovl.tar.gz
           ls -ltr /mnt/tarp4
           sudo blkid "${LOOPZ}p4"

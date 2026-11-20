@@ -55,7 +55,7 @@ https://dl-3.alpinelinux.org/alpine/${ALPINE_VERSION}/community
 EOF
 
 chroot "${ROOTFS_DIR}" /sbin/apk update
-chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base alpine-conf mkinitfs btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow sudo dialog bash iw
+chroot "${ROOTFS_DIR}" /sbin/apk add --no-cache alpine-base alpine-conf mkinitfs btrfs-progs mdadm lvm2 device-mapper util-linux e2fsprogs dosfstools kmod openssh shadow sudo dialog bash
 
 chroot "${ROOTFS_DIR}" /usr/sbin/adduser -D -s /bin/sh tc
 mkdir -p "${ROOTFS_DIR}/home/tc"

@@ -86,6 +86,22 @@ if [ -n "${ALP_DEV}" ]; then
 fi
 
 [ -f /etc/apk/world ] || exit 0
+# Restore iw into an isolated runtime root before any network or clock check.
+# Solving the full world here can fail on unrelated packages absent from the
+# image, and installing an incomplete world could disrupt the running system.
+# The local wrapper uses this isolated iw only if system iw is unavailable.
+if [ -n "${SRC_MNT:-}" ] && [ -f "${SRC_MNT}/repo-main/x86_64/APKINDEX.tar.gz" ]; then
+  mkdir -p /run/mshell-iw
+  if apk --root /run/mshell-iw --initdb --keys-dir /etc/apk/keys \
+      --repositories-file /dev/null --repository "${SRC_MNT}/repo-main" \
+      --repository "${SRC_MNT}/repo-community" --no-network --no-scripts \
+      add iw >/tmp/mshell-iw-restore.log 2>&1 && \
+      [ -x /run/mshell-iw/usr/sbin/iw ]; then
+    echo "MSHELL: iw restored from the local Alpine repository."
+  else
+    echo "MSHELL: local iw restore failed; see /tmp/mshell-iw-restore.log." >&2
+  fi
+fi
 if ! sync_clock_before_https; then
   echo "MSHELL: system clock synchronization failed; skipping HTTPS package restore." >&2
   exit 0

@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.7.1"
-builddate="2026.11.07"
+rploaderver="1.4.7.2"
+builddate="2026.11.17"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1094,6 +1094,7 @@ function history() {
     1.4.6.4 Normalize incomplete saved IP settings and restore DHCP gateway routing
     1.4.7.0 Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
     1.4.7.1 Raise the minimum Alpine OpenSSH package version
+    1.4.7.2 Improve Alpine OpenSSH security and include offline WiFi scanning tools
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1859,6 +1860,9 @@ EOF
 # 2026.11.07 v1.4.7.1
 # Raise the minimum Alpine OpenSSH package version
 
+# 2026.11.17 v1.4.7.2
+# Improve Alpine OpenSSH security and include offline WiFi scanning tools
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2302,6 +2306,9 @@ function showlastupdate() {
 
 # 2026.11.07 v1.4.7.1
 # Raise the minimum Alpine OpenSSH package version
+
+# 2026.11.17 v1.4.7.2
+# Improve Alpine OpenSSH security and include offline WiFi scanning tools
 EOF
 }
 
@@ -4024,7 +4031,7 @@ echo
     sync_part_config
 
     echo "After changing user_config.json"      
-    jq 'del(.wifi.password)' user_config.json
+    cat user_config.json
 
 }
 
@@ -7587,7 +7594,6 @@ function mshellBuildloaderBody() {
     local resolver_selection detour_options detour_candidate detour_method detour_release
     local DETOURBMI2_ASSET_DIR="" DETOURBMI2_PROFILE=""
     local DETOURBMI2_LOADER_PREPARED=0
-    local ALLMOD_PML_DETOUR_PACK=0
     # The processpat recursion may reuse the same download within this build,
     # but every new build must obtain its own original PAT.
     unset MSHELL_HDA1_FRESH_PAT
@@ -7601,16 +7607,6 @@ function mshellBuildloaderBody() {
     mshellLoadDsmResolver || return $?
     MDLNAME=$(jq -r '.general.modulename // "all-modules"' "$userconfigfile")
     MLMETHOD=$(jq -r '.general.mlmethod // "IML"' "$userconfigfile")
-    # The published detour module packs currently cover DSM 7.3/7.4 on
-    # kernel 5.10.55. Include the matching pack for every all-modules:PML
-    # build in that supported matrix, not only when the BMI2 fallback kernel
-    # is selected. The fallback kernel decision below remains CPU/resolver
-    # dependent; this flag controls only the module-pack inclusion.
-    if [ "${MDLNAME}" = "all-modules" ] && [ "${MLMETHOD}" = "PML" ] && \
-       [ "${KVER}" = "5.10.55" ] && \
-       [[ "${TARGET_VERSION}" == 7.3* || "${TARGET_VERSION}" == 7.4* ]]; then
-        ALLMOD_PML_DETOUR_PACK=1
-    fi
     detour_release="${TARGET_VERSION}-${TARGET_REVISION}"
     if [ "${MDLNAME}" = "all-modules" ] && \
        [ "${MLMETHOD}" = "PML" ] && \
@@ -8158,21 +8154,6 @@ NCEOF
     # 짧게 폴링 재시도한다.
     sudo sed -i '/^Main() {/a \\n/netconsole-early.sh \&' $rdtemp/linuxrc.syno
     rm -f /tmp/netconsole-early.sh
-    # The DSM junior kernel may not expose DMI. Restrict installation to a
-    # loader built on the tested Apple model; the helper checks PCI identity
-    # and the exact routing masks again at boot before writing anything.
-    if [ "$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)" = "Apple Inc." ] && \
-       [ "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" = "MacBookPro11,1" ]; then
-        _apple_xhci_helper="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tools/apple-a1502-xhci-route-early.sh"
-        [ -f "$_apple_xhci_helper" ] || { echo '[apple-xhci-route] helper missing' >&2; return 99; }
-        [ "$(grep -c '^Main() {' "$rdtemp/linuxrc.syno")" -eq 1 ] || { echo '[apple-xhci-route] Main() hook missing or ambiguous' >&2; return 99; }
-        sudo cp "$_apple_xhci_helper" "$rdtemp/apple-a1502-xhci-route-early.sh" || return 99
-        sudo chmod 755 "$rdtemp/apple-a1502-xhci-route-early.sh" || return 99
-        if ! grep -Fq '/apple-a1502-xhci-route-early.sh' "$rdtemp/linuxrc.syno"; then
-            sudo sed -i '/^Main() {/a \\n/apple-a1502-xhci-route-early.sh' "$rdtemp/linuxrc.syno" || return 99
-        fi
-        echo '[apple-xhci-route] staged synchronous early routing fix for MacBookPro11,1'
-    fi
     # linuxrc.syno 최종 확인용 - SA6400 mknod 패치와 이 netconsole-early 패치가
     # 모두 적용된 뒤의 완성본을 빌드 로그에서 그대로 확인할 수 있도록 여기로 옮김.
     sudo cat $rdtemp/linuxrc.syno
@@ -8180,8 +8161,7 @@ NCEOF
         sudo sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "$rdtemp/usr/syno/share/environments.sh"
     fi
     if [ "${BUS}" != "block" ]; then
-        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ] && \
-           [ "${ALLMOD_PML_DETOUR_PACK}" -ne 1 ]; then
+        if [ "${DETOURBMI2_PROFILE:-}" != "detourbmi2" ]; then
             # A cached/custom ramdisk must not carry a previous test's marker.
             sudo rm -f "${rdtemp}/addons/detourbmi2.pack" "${rdtemp}/addons/"*-detour.tgz
         fi
@@ -8195,31 +8175,9 @@ NCEOF
                 sudo tar xvfz $rdtemp/exts/all-modules/${ORIGIN_PLATFORM}*${KVER}.tgz -C $rdtemp/usr/lib/modules/  >/dev/null 2>&1
                 sudo tar xvfz $rdtemp/exts/all-modules/firmware.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
                 [ -f $rdtemp/exts/all-modules/firmwarei915.tgz ] && sudo tar xvfz $rdtemp/exts/all-modules/firmwarei915.tgz -C $rdtemp/usr/lib/firmware/ >/dev/null 2>&1
-                if [ "${ALLMOD_PML_DETOUR_PACK}" -eq 1 ]; then
+                if [ "${DETOURBMI2_PROFILE:-}" = "detourbmi2" ]; then
                     stageDetourBmi2PmlPack || return 99
-                    st "Detour pack" "Included in initrd-dsm" "${ORIGIN_PLATFORM}-${DSMVER}-${KVER}-detour.tgz"
                 fi
-                # Local-only Broadcom pilot, built against this exact DSM target.
-                # Stage after the PML pack so its copies cannot replace the pilot.
-                if [ "${MDLNAME}" = "all-modules" ] && [ -d /home/tc/wl ]; then
-                    if [ "${ORIGIN_PLATFORM}" = "epyc7002" ] && \
-                       [ "${TARGET_VERSION}" = "7.4.1" ] && \
-                       [ "${TARGET_REVISION}" = "90080" ] && [ "${KVER}" = "5.10.55" ]; then
-                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
-                            if [ ! -s "/home/tc/wl/${_WL_MOD}" ]; then
-                                echo "[wl-pilot] Missing or empty /home/tc/wl/${_WL_MOD}; refusing incomplete module set" >&2
-                                return 99
-                            fi
-                        done
-                        for _WL_MOD in wl.ko cfg80211.ko ccm.ko gcm.ko cmac.ko; do
-                            sudo cp -f "/home/tc/wl/${_WL_MOD}" "${rdtemp}/usr/lib/modules/${_WL_MOD}" || return 99
-                        done
-                        echo "[wl-pilot] Staged five local modules in initrd-dsm (epyc7002 7.4.1-90080)"
-                    else
-                        echo "[wl-pilot] Skipped: local pilot is only for epyc7002 DSM 7.4.1-90080 / 5.10.55"
-                    fi
-                fi
-                # End local-only Broadcom pilot.
             fi
 
         fi
@@ -8312,26 +8270,6 @@ NCEOF
     #sudo chmod +x $rdtemp/usr/sbin/losetup
 
     RAMDISK_PATH="$rdtemp"
-    # Encode SSID/password as hex so configuration cannot inject directives.
-    sudo rm -f "$rdtemp/addons/mshell-wifi.conf"
-    if jq -e '.wifi != null' "$userconfigfile" >/dev/null; then
-        (
-            set +x
-            umask 077
-            jq -e '(.wifi.ssid|type)=="string" and (.wifi.ssid|utf8bytelength)>0 and (.wifi.ssid|utf8bytelength)<=32 and (.wifi.password|type)=="string" and (.wifi.password|length)>=8 and (.wifi.password|length)<=63 and (.wifi.password|test("^[ -~]+$"))' "$userconfigfile" >/dev/null || exit 1
-            ssid_hex=$(jq -j '.wifi.ssid' "$userconfigfile" | od -An -tx1 | tr -d ' \n')
-            sudo mkdir -p "$rdtemp/addons"
-            set -o pipefail
-            tools=$(mktemp -d) || exit 1
-            trap 'rm -rf "$tools"' EXIT
-            [ -s "$rdtemp/exts/wifi-tools/wifi-tools.tgz" ] || { echo '[wifi] wifi-tools addon is required when Wi-Fi is configured' >&2; exit 1; }
-            tar -xzf "$rdtemp/exts/wifi-tools/wifi-tools.tgz" -C "$tools" || exit 1
-            ssid=$(jq -jr '.wifi.ssid' "$userconfigfile")
-            psk=$(jq -r '.wifi.password' "$userconfigfile" | "$tools/lib/ld-musl-x86_64.so.1" --library-path "$tools/lib" "$tools/bin/wpa_passphrase" "$ssid" | awk '/^[[:space:]]*psk=[0-9a-f]+$/ {sub(/^[[:space:]]*psk=/,""); print}') || exit 1
-            [ "${#psk}" -eq 64 ] || exit 1
-            printf 'update_config=0\nnetwork={\n ssid=%s\n scan_ssid=1\n key_mgmt=WPA-PSK\n psk=%s\n}\n' "$ssid_hex" "$psk" | sudo sh -c 'umask 077; cat > "$1"' sh "$rdtemp/addons/mshell-wifi.conf"
-        ) || { echo "[wifi] Invalid configuration or staging failure" >&2; return 99; }
-    fi
     # Patch synoinfo.conf
     mkdir -p "${RAMDISK_PATH}/addons"
     if [ "$(readConfigKey general synology_module_restore)" = "true" ]; then
@@ -8509,21 +8447,6 @@ NCEOF
         _AMDGPU_FW_SIZE=$(du -h "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz" 2>/dev/null | awk '{print $1}')
         echo "No AMD GPU detected - dropping exts/all-modules/firmwareamdgpu.tgz (${_AMDGPU_FW_SIZE}) from initrd-dsm"
         sudo rm -f "${rdtemp}/exts/all-modules/firmwareamdgpu.tgz"
-    fi
-
-    # Request BCM4360 loading only when the selected module pack contains it.
-    _bcm4360_present=0
-    _bcm4360_dsm=$(printf '%s' "$TARGET_VERSION" | cut -d. -f1,2)
-    _bcm4360_pack="$rdtemp/exts/${MDLNAME}/${ORIGIN_PLATFORM}-${_bcm4360_dsm}-${KVER}.tgz"
-    if [ -f "$rdtemp/usr/lib/modules/bcm4360_open.ko" ]; then
-        _bcm4360_present=1
-    elif [ -f "$_bcm4360_pack" ] && sudo tar -tzf "$_bcm4360_pack" 2>/dev/null | grep -E '(^|/)bcm4360_open\.ko$' >/dev/null; then
-        _bcm4360_present=1
-    fi
-    if [ "$_bcm4360_present" -eq 1 ]; then
-        sudo mkdir -p "$rdtemp/usr/lib/modules-load.d" || return 99
-        printf '%s\n' bcm4360_open | sudo tee "$rdtemp/usr/lib/modules-load.d/90-bcm4360-open.conf" >/dev/null || return 99
-        echo '[wifi] Added bcm4360_open modules-load configuration'
     fi
 
     # Build and validate the archive in /tmp before replacing P3's initrd-dsm.
@@ -10672,7 +10595,7 @@ function my() {
       [ "${DT_MODEL}" = "N" ] && prefillDefaultSataPortMap
   else
       cecho c "Before changing user_config.json"
-      jq 'del(.wifi.password)' user_config.json
+      cat user_config.json
       echo "y"|rploader identifyusb
 
       if [ "${DT_MODEL}" = "Y" ]; then
@@ -10683,7 +10606,7 @@ function my() {
       fi
       cecho y "After changing user_config.json"
   fi
-  jq 'del(.wifi.password)' user_config.json
+  cat user_config.json
   
   echo
   echo

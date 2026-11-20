@@ -1,0 +1,12 @@
+#!/bin/sh
+# Prefer the normally installed Alpine package; use the verified offline copy
+# when the network package restore was unavailable.
+if [ -x /usr/sbin/iw ]; then
+  exec /usr/sbin/iw "$@"
+fi
+root=/run/mshell-iw
+if [ -x "$root/lib/ld-musl-x86_64.so.1" ] && [ -x "$root/usr/sbin/iw" ]; then
+  exec "$root/lib/ld-musl-x86_64.so.1" --library-path "$root/usr/lib" "$root/usr/sbin/iw" "$@"
+fi
+echo 'iw is unavailable; see /tmp/mshell-iw-restore.log' >&2
+exit 127
