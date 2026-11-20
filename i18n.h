@@ -4,7 +4,7 @@
 
 ## ZZ gettext "tcrp"
 function load_zz() {
-MSGZZ00=$(gettext "tcrp" "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs")
+MSGZZ00=$(gettext "tcrp" "Gen8 compatibility: Installation is not recommended on Gen8 systems with Intel 3rd-generation or older CPUs (except Atom). Denverton (DVA3221), Apollo Lake (DS918+), and Gemini Lake (DS920+) models may kernel-panic or freeze on Gen8, so they are hidden from the model selection menu.")
 MSGZZ01=$(gettext "tcrp" "Choose a Dev Mod handling method, DDSML/EUDEV")
 MSGZZ02=$(gettext "tcrp" "Choose a Synology Model")
 MSGZZ03=$(gettext "tcrp" "Choose a Synology Serial Number")

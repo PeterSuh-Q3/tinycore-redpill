@@ -115,8 +115,8 @@ msgstr "Wi-Fi 설정을 저장했습니다. 적용하려면 로더를 다시 빌
 msgid "Could not save the Wi-Fi configuration."
 msgstr "Wi-Fi 설정을 저장하지 못했습니다."
 #: MSGKR00 
-msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
-msgstr "Device-Tree[DT]모델과 HBA는 SataPortMap,DiskIdxMap 설정이 필요없습니다. DT모델은 HBA를 지원하지 않습니다."
+msgid "Gen8 compatibility: Installation is not recommended on Gen8 systems with Intel 3rd-generation or older CPUs (except Atom). Denverton (DVA3221), Apollo Lake (DS918+), and Gemini Lake (DS920+) models may kernel-panic or freeze on Gen8, so they are hidden from the model selection menu."
+msgstr "Gen8 호환성 안내: Atom 계열을 제외한 Intel 3세대 이하 CPU에서는 설치를 권장하지 않습니다. Denverton(DVA3221), Apollo Lake(DS918+), Gemini Lake(DS920+) 모델은 Gen8에서 커널 패닉이나 멈춤이 발생할 수 있어 모델 선택 메뉴에 표시되지 않습니다."
 
 #: MSGKR01 
 msgid "Choose a Dev Mod handling method, DDSML/EUDEV"

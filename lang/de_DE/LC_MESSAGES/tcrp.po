@@ -115,8 +115,8 @@ msgid "Could not save the Wi-Fi configuration."
 msgstr "Wi-Fi-Konfiguration konnte nicht gespeichert werden."
 
 #: MSGDE00 
-msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
-msgstr "Gerätebaum[DT] Basismodelle und HBAs benötigen kein SataPortMap,DiskIdxMap. DT-Modelle unterstützen keine HBAs"
+msgid "Gen8 compatibility: Installation is not recommended on Gen8 systems with Intel 3rd-generation or older CPUs (except Atom). Denverton (DVA3221), Apollo Lake (DS918+), and Gemini Lake (DS920+) models may kernel-panic or freeze on Gen8, so they are hidden from the model selection menu."
+msgstr "Gen8-Kompatibilität: Die Installation auf Gen8-Systemen mit Intel-Prozessoren der 3. Generation oder älter wird nicht empfohlen (Atom ausgenommen). Modelle der Plattformen Denverton (DVA3221), Apollo Lake (DS918+) und Gemini Lake (DS920+) können auf Gen8 einen Kernel-Panic oder einen Stillstand verursachen und werden daher im Modellauswahlmenü ausgeblendet."
 
 #: MSGDE01 
 msgid "Choose a Dev Mod handling method, DDSML/EUDEV"

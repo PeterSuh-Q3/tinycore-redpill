@@ -115,8 +115,8 @@ msgid "Could not save the Wi-Fi configuration."
 msgstr "無法儲存 Wi-Fi 設定。"
 
 #: MSGTW00 
-msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
-msgstr "設備樹[DT]基本型號和HBA不需要SataPortMap、DiskIdxMap. DT模型不支援HBA"
+msgid "Gen8 compatibility: Installation is not recommended on Gen8 systems with Intel 3rd-generation or older CPUs (except Atom). Denverton (DVA3221), Apollo Lake (DS918+), and Gemini Lake (DS920+) models may kernel-panic or freeze on Gen8, so they are hidden from the model selection menu."
+msgstr "Gen8 相容性說明：不建議在搭載 Intel 第三代或更早 CPU 的 Gen8 系統上安裝（Atom 系列除外）。Denverton (DVA3221)、Apollo Lake (DS918+) 與 Gemini Lake (DS920+) 平台的機型在 Gen8 上可能造成核心錯誤或系統凍結，因此不會顯示於機型選單。"
 
 #: MSGTW01 
 msgid "Choose a Dev Mod handling method, DDSML/EUDEV"
