@@ -1264,6 +1264,114 @@ function netconsoleMenu() {
 # 최상위 .netproxy.ipproxy로 분리했다. 이 함수는 "사용자가 설정값을 입력해
 # user_config.json에 저장"하는 캡처 단계까지만 담당하고, 실제 부팅 적용은
 # tcrpfriend의 boot.sh(buildStaticNetworkCmdline/setnetwork)가 맡는다.
+function wifiScanSelect() {
+  local path iface selected was_up=0 scanfile row ssid freq signal security bssid n=0 choice link_state
+  local sys_root=${MSHELL_WIFI_SYS_ROOT:-/sys}
+  local -a radios=() options=() ssids=()
+  command -v iw >/dev/null 2>&1 && command -v ip >/dev/null 2>&1 || {
+    dialog --msgbox "$(gettext tcrp 'Wi-Fi scanning requires iw and ip. You can enter the SSID manually.')" 0 0; return 1; }
+  for path in "$sys_root"/class/net/*/phy80211; do
+    [ -e "$path" ] || continue
+    iface=${path%/phy80211}; iface=${iface##*/}
+    case "$iface" in p2p*) continue ;; esac
+    radios+=("$iface" "$(cat "$sys_root/class/net/$iface/address" 2>/dev/null)")
+  done
+  [ ${#radios[@]} -gt 0 ] || { dialog --msgbox "$(gettext tcrp 'No wireless interface found. Enter the SSID manually.')" 0 0; return 1; }
+  if [ ${#radios[@]} -gt 2 ]; then
+    dialog --menu "$(gettext tcrp 'Select a wireless interface')" 0 0 8 "${radios[@]}" 2>"$wifi_tmp/choice" || return 1
+    iface=$(<"$wifi_tmp/choice")
+  else iface=${radios[0]}; fi
+  case "$(cat "$sys_root/class/net/$iface/flags" 2>/dev/null)" in 0x*)
+    if (( $(cat "$sys_root/class/net/$iface/flags") & 1 )); then was_up=1; fi ;;
+    *) return 1 ;;
+  esac
+  if [ "$was_up" -eq 0 ]; then
+    sudo ip link set dev "$iface" up || { dialog --msgbox "$(gettext tcrp 'Could not enable the wireless interface.')" 0 0; return 1; }
+  fi
+  scanfile="$wifi_tmp/scan"
+  if ! sudo iw dev "$iface" scan >"$scanfile" 2>"$wifi_tmp/scan-error"; then
+    dialog --msgbox "$(gettext tcrp 'Scan failed or the radio is busy or blocked. Enter the SSID manually.')" 0 0
+  else
+    # iw escapes non-printable SSIDs; do not silently save their display form.
+    while IFS=$'\t' read -r bssid freq signal security ssid; do
+      [ -n "$ssid" ] || continue
+      case "$ssid" in *\\*|*$'\033'*|*$'\r'*|*$'\n'*|*$'\t'*) continue ;; esac
+      n=$((n + 1)); ssids+=("$ssid")
+      options+=("$n" "$ssid | ${freq} MHz | ${signal} dBm | $security | $bssid")
+    done < <(awk '
+      function emit() { if (bssid && ssid != "") printf "%s\t%s\t%s\t%s\t%s\n", bssid, freq, signal, security, ssid }
+      /^BSS / { emit(); bssid=$2; sub(/\(.*/, "", bssid); freq="?"; signal="?"; security="Open/unknown"; ssid=""; next }
+      /^[[:space:]]*freq:/ { freq=$2 }
+      /^[[:space:]]*signal:/ { signal=$2 }
+      /^[[:space:]]*SSID:/ { sub(/^[[:space:]]*SSID: /, ""); ssid=$0 }
+      /^[[:space:]]*RSN:/ { security="RSN (check WPA2)" }
+      END { emit() }
+    ' "$scanfile")
+  fi
+  link_state=$(sudo iw dev "$iface" link 2>/dev/null) || link_state=unknown
+  if [ "$was_up" -eq 0 ] && [ "$(cat "$sys_root/class/net/$iface/carrier" 2>/dev/null)" = 0 ] && [[ "$link_state" == 'Not connected.'* ]] && ! ps 2>/dev/null | grep -E "[w]pa_supplicant.*(-i[ =]*${iface}|-i${iface})" >/dev/null; then
+    sudo ip link set dev "$iface" down || true
+  fi
+  [ "$n" -gt 0 ] || { dialog --msgbox "$(gettext tcrp 'No usable SSIDs found. Enter the SSID manually.')" 0 0; return 1; }
+  dialog --menu "$(gettext tcrp 'Select an access point (WPA2-Personal)')" 0 0 "$(dlgmenuheight "$n")" "${options[@]}" 2>"$wifi_tmp/choice" || return 1
+  choice=$(<"$wifi_tmp/choice"); case "$choice" in ''|*[!0-9]*) return 1 ;; esac
+  [ "$choice" -ge 1 ] && [ "$choice" -le "$n" ] || return 1
+  WIFI_SELECTED_SSID=${ssids[$((choice-1))]}
+}
+
+function wifiAutoConnectMenu() {
+  local wifi_tmp cfg_target temp_target ssid selected current action
+  local -a wifi_menu
+  wifi_tmp=$(mktemp -d /tmp/mshell-wifi-menu.XXXXXX) || return 1
+  chmod 700 "$wifi_tmp"
+  while true; do
+    current=$(jq -r '.wifi.ssid // empty | gsub("[[:cntrl:]]"; "?")' "$userconfigfile" 2>/dev/null)
+    dialog --menu "$(gettext tcrp 'WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes.')\n$(gettext tcrp 'Configured SSID:') ${current:-$(gettext tcrp 'None')}" 0 0 5 \
+      s "$(gettext tcrp 'Scan and select an access point')" \
+      m "$(gettext tcrp 'Enter SSID manually')" \
+      d "$(gettext tcrp 'Remove Wi-Fi configuration')" \
+      q "$(gettext tcrp 'Back')" 2>"$wifi_tmp/choice" || break
+    action=$(<"$wifi_tmp/choice"); ssid=
+    case "$action" in
+      q) break ;;
+      d)
+        dialog --yesno "$(gettext tcrp 'Remove the saved Wi-Fi configuration?')" 0 0 || continue
+        jq 'del(.wifi)' "$userconfigfile" >"$wifi_tmp/config" || continue ;;
+      s)
+        WIFI_SELECTED_SSID=
+        wifiScanSelect || continue
+        ssid=$WIFI_SELECTED_SSID ;;
+      m)
+        dialog --inputbox "$(gettext tcrp 'Enter the Wi-Fi SSID')" 0 0 2>"$wifi_tmp/ssid" || continue
+        ssid=$(<"$wifi_tmp/ssid") ;;
+      *) continue ;;
+    esac
+    if [ "$action" != d ]; then
+      [ -n "$ssid" ] || { dialog --msgbox "$(gettext tcrp 'SSID cannot be empty.')" 0 0; continue; }
+      dialog --insecure --passwordbox "$(gettext tcrp 'Enter the WPA2 password (8–63 printable ASCII characters).')" 0 0 2>"$wifi_tmp/password" || continue
+      if ! jq --arg ssid "$ssid" --rawfile password "$wifi_tmp/password" '
+        if ($ssid | utf8bytelength) < 1 or ($ssid | utf8bytelength) > 32 or ($ssid | test("[\u0000-\u001f\u007f]")) or
+           ($password | length) < 8 or ($password | length) > 63 or ($password | test("[^ -~]"))
+        then error("invalid Wi-Fi credentials") else .wifi={ssid:$ssid,password:$password} end
+      ' "$userconfigfile" >"$wifi_tmp/config" 2>/dev/null; then
+        dialog --msgbox "$(gettext tcrp 'Invalid SSID or WPA2 password.')" 0 0; continue
+      fi
+      dialog --yesno "$(gettext tcrp 'Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials.')" 0 0 || continue
+    fi
+    cfg_target=$userconfigfile
+    if [ -L "$cfg_target" ]; then cfg_target=$(readlink -f "$cfg_target") || continue; fi
+    temp_target=$(sudo mktemp "${cfg_target}.wifi.XXXXXX") || { dialog --msgbox "$(gettext tcrp 'Could not create the configuration file.')" 0 0; continue; }
+    if sudo cp -p "$cfg_target" "$temp_target" && sudo chmod 600 "$temp_target" && sudo cp "$wifi_tmp/config" "$temp_target" && sudo mv "$temp_target" "$cfg_target"; then
+      sync_part_config || dialog --msgbox "$(gettext tcrp 'Saved locally, but configuration synchronization failed.')" 0 0
+      dialog --msgbox "$(gettext tcrp 'Wi-Fi configuration saved. Rebuild the loader to apply it.')" 0 0
+    else
+      sudo rm -f "$temp_target"
+      dialog --msgbox "$(gettext tcrp 'Could not save the Wi-Fi configuration.')" 0 0
+    fi
+  done
+  rm -rf "$wifi_tmp"
+}
+
 function staticIpMenu() {
   local cfg="${userconfigfile}"
   migrate_ipsettings_schema "${cfg}"
@@ -4916,6 +5024,7 @@ while true; do
   fi
   eval "MSG161=\"\${MSG${tz}161}\""
   eval "echo \"i \\\"${MSG161}: ${STATICIP_STATUS}\\\"\""  >> "${TMP_PATH}/menu"
+  printf 'w "%s"\n' "$(gettext tcrp 'WLAN (Wi-Fi) Auto Connect')" >> "${TMP_PATH}/menu"
   github_dns_mode=$(jq -r '.github_access.mode // "standard"' /home/tc/user_config.json 2>/dev/null)
   [ "${github_dns_mode}" = "doh" ] && github_dns_status="DoH" || github_dns_status="Standard DNS"
   eval "echo \"d \\\"${MSGZZ187} [${github_dns_status}]\\\"\"" >> "${TMP_PATH}/menu"
@@ -4985,6 +5094,7 @@ while true; do
         ;;           
     y) sudo /root/boot.sh normal ;;
     i) staticIpMenu;    NEXT="n" ;;
+    w) wifiAutoConnectMenu; NEXT="w" ;;
     d) githubDnsModeMenu; NEXT="d" ;;
     n) additional;      NEXT="p" ;;
     x) synopart;        NEXT="r" ;;
