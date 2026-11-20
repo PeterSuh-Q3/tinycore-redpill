@@ -2,4 +2,4 @@
 456712135d762e1ed432491d149891f05c5e1322
 190589cbbba2887ec14ecbf08c49c971f04aea49
 
-    1.4.7.2 Improve Alpine OpenSSH security and include offline WiFi scanning tools
+    1.4.7.3 Add junior WiFi setup Intel Mac USB support and Gen8 compatibility guidance
