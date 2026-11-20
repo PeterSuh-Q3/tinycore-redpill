@@ -1095,7 +1095,7 @@ function history() {
     1.4.7.0 Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
     1.4.7.1 Raise the minimum Alpine OpenSSH package version
     1.4.7.2 Improve Alpine OpenSSH security and include offline WiFi scanning tools
-    1.4.7.3 Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
+    1.4.7.3 Add junior WiFi setup Intel Mac USB support and Gen8 compatibility guidance
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1865,7 +1865,7 @@ EOF
 # Improve Alpine OpenSSH security and include offline WiFi scanning tools
 
 # 2026.11.21 v1.4.7.3
-# Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
+# Add junior WiFi setup Intel Mac USB support and Gen8 compatibility guidance
 
 function showlastupdate() {
     cat <<'EOF'
@@ -2315,7 +2315,7 @@ function showlastupdate() {
 # Improve Alpine OpenSSH security and include offline WiFi scanning tools
 
 # 2026.11.21 v1.4.7.3
-# Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
+# Add junior WiFi setup Intel Mac USB support and Gen8 compatibility guidance
 EOF
 }
 
