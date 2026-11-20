@@ -2,8 +2,8 @@
 
 set -u # Unbound variable errors are not allowed
 
-rploaderver="1.4.7.2"
-builddate="2026.11.17"
+rploaderver="1.4.7.3"
+builddate="2026.11.21"
 redpillmake="prod"
 
 # raw.githubusercontent.com 은 경로 기준으로 최대 5분(max-age=300) CDN 캐싱한다.
@@ -1095,6 +1095,7 @@ function history() {
     1.4.7.0 Test all modules PML detour for BMI2 limited CPUs with verified kernel and module assets
     1.4.7.1 Raise the minimum Alpine OpenSSH package version
     1.4.7.2 Improve Alpine OpenSSH security and include offline WiFi scanning tools
+    1.4.7.3 Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
     --------------------------------------------------------------------------------------
 EOF
 }
@@ -1863,6 +1864,9 @@ EOF
 # 2026.11.17 v1.4.7.2
 # Improve Alpine OpenSSH security and include offline WiFi scanning tools
 
+# 2026.11.21 v1.4.7.3
+# Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
+
 function showlastupdate() {
     cat <<'EOF'
 
@@ -2309,6 +2313,9 @@ function showlastupdate() {
 
 # 2026.11.17 v1.4.7.2
 # Improve Alpine OpenSSH security and include offline WiFi scanning tools
+
+# 2026.11.21 v1.4.7.3
+# Add junior WiFi setup Apple A1502 USB routing and Gen8 compatibility guidance
 EOF
 }
 
