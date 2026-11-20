@@ -1007,3 +1007,75 @@ msgstr "Synology DSM U0 original module recovery (from hda1.tgz)"
 #: menu_m.sh:build-pre-option
 msgid "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
 msgstr "When enabled, the next loader build downloads a fresh Synology PAT and embeds its hda1.tgz in initrd-dsm."
+
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) Auto Connect"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "No wireless interface found. Enter the SSID manually."
+
+msgid "Select a wireless interface"
+msgstr "Select a wireless interface"
+
+msgid "Could not enable the wireless interface."
+msgstr "Could not enable the wireless interface."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "No usable SSIDs found. Enter the SSID manually."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Select an access point (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+
+msgid "Configured SSID:"
+msgstr "Configured SSID:"
+
+msgid "None"
+msgstr "None"
+
+msgid "Scan and select an access point"
+msgstr "Scan and select an access point"
+
+msgid "Enter SSID manually"
+msgstr "Enter SSID manually"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Remove Wi-Fi configuration"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Remove the saved Wi-Fi configuration?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Enter the Wi-Fi SSID"
+
+msgid "SSID cannot be empty."
+msgstr "SSID cannot be empty."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "Enter the WPA2 password (8–63 printable ASCII characters)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "Invalid SSID or WPA2 password."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+
+msgid "Could not create the configuration file."
+msgstr "Could not create the configuration file."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Saved locally, but configuration synchronization failed."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Wi-Fi configuration saved. Rebuild the loader to apply it."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Could not save the Wi-Fi configuration."

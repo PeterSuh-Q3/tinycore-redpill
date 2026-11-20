@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) 自動接続"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Wi-Fi の検索には iw と ip が必要です。SSID を手動で入力することもできます。"
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "無線インターフェースが見つかりません。SSID を手動で入力してください。"
+
+msgid "Select a wireless interface"
+msgstr "無線インターフェースを選択"
+
+msgid "Could not enable the wireless interface."
+msgstr "無線インターフェースを有効にできませんでした。"
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "検索に失敗したか、無線デバイスが使用中またはブロックされています。SSID を手動で入力してください。"
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "利用可能な SSID が見つかりません。SSID を手動で入力してください。"
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "アクセスポイントを選択 (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "DSM junior 用 WLAN 自動接続 (WPA2-Personal)。変更後はローダーを再ビルドしてください。"
+
+msgid "Configured SSID:"
+msgstr "設定済みの SSID:"
+
+msgid "Scan and select an access point"
+msgstr "アクセスポイントを検索して選択"
+
+msgid "Enter SSID manually"
+msgstr "SSID を手動で入力"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Wi-Fi 設定を削除"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "保存済みの Wi-Fi 設定を削除しますか？"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Wi-Fi の SSID を入力"
+
+msgid "SSID cannot be empty."
+msgstr "SSID は空にできません。"
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "WPA2 パスワードを入力してください（印字可能な ASCII 文字 8～63 文字）。"
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID または WPA2 パスワードが無効です。"
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "この Wi-Fi 設定を保存しますか？適用するにはローダーを再ビルドしてください。設定と initrd には認証情報が含まれます。"
+
+msgid "Could not create the configuration file."
+msgstr "設定ファイルを作成できませんでした。"
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "ローカルに保存しましたが、設定の同期に失敗しました。"
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Wi-Fi 設定を保存しました。適用するにはローダーを再ビルドしてください。"
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Wi-Fi 設定を保存できませんでした。"
+msgid "None"
+msgstr "なし"
+
 #: MSGJP00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Device-Tree[DT]ベースモデルとHBAsは、SataPortMap、DiskIdxMapが必要ありません. DTモデルはHBAsをサポートしていません"

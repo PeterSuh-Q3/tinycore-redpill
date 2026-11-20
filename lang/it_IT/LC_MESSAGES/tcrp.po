@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) Connessione automatica"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Scansione Wi-Fi richiede iw e ip. È possibile inserire manualmente l'SSID."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "Nessuna interfaccia wireless trovata. Inserisci l'SSID manualmente."
+
+msgid "Select a wireless interface"
+msgstr "Seleziona un'interfaccia wireless"
+
+msgid "Could not enable the wireless interface."
+msgstr "Impossibile abilitare l'interfaccia wireless."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "Scansione fallita o la radio è occupata o bloccata. Inserisci l'SSID manualmente."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "Nessun SSID utilizzabile trovato. Inserisci l'SSID manualmente."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Seleziona un access point (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "Connessione automatica WLAN per DSM junior (WPA2-Personal). Rebuild il loader dopo le modifiche."
+
+msgid "Configured SSID:"
+msgstr "SSID configurato:"
+
+msgid "None"
+msgstr "Nessuno"
+
+msgid "Scan and select an access point"
+msgstr "Scansiona e seleziona un access point"
+
+msgid "Enter SSID manually"
+msgstr "Inserisci SSID manualmente"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Rimuovi configurazione Wi-Fi"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Rimuovere la configurazione Wi-Fi salvata?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Inserisci l'SSID Wi-Fi"
+
+msgid "SSID cannot be empty."
+msgstr "SSID non può essere vuoto."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "Inserisci la password WPA2 (8–63 caratteri stampabili ASCII)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID o password WPA2 non validi."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Salvare questa configurazione Wi-Fi? Rebuild il loader per applicarla. La configurazione e l'initrd contengono credenziali."
+
+msgid "Could not create the configuration file."
+msgstr "Impossibile creare il file di configurazione."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Salvato localmente, ma la sincronizzazione della configurazione è fallita."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Configurazione Wi-Fi salvata. Rebuild il loader per applicarla."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Impossibile salvare la configurazione Wi-Fi."
+
 #: MSGIT00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "I modelli di base e gli HBA di Device-Tree [DT] non richiedono SataPortMap, DiskIdxMap. I modelli DT non supportano gli HBA"

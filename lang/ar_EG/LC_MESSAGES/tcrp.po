@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "الاتصال التلقائي بشبكة WLAN (Wi-Fi)"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "يتطلب فحص Wi-Fi الأداتين iw وip. يمكنك إدخال SSID يدويًا."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "لم يتم العثور على واجهة لاسلكية. أدخل SSID يدويًا."
+
+msgid "Select a wireless interface"
+msgstr "اختر واجهة لاسلكية"
+
+msgid "Could not enable the wireless interface."
+msgstr "تعذر تمكين الواجهة اللاسلكية."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "فشل الفحص أو أن الاتصال اللاسلكي مشغول أو محظور. أدخل SSID يدويًا."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "لم يتم العثور على SSID صالح للاستخدام. أدخل SSID يدويًا."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "اختر نقطة وصول (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "اتصال WLAN تلقائي لـ DSM junior (WPA2-Personal). أعد بناء محمّل الإقلاع بعد التغييرات."
+
+msgid "Configured SSID:"
+msgstr "SSID المُعدّ:"
+
+msgid "None"
+msgstr "لا شيء"
+
+msgid "Scan and select an access point"
+msgstr "افحص الشبكات واختر نقطة وصول"
+
+msgid "Enter SSID manually"
+msgstr "أدخل SSID يدويًا"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "إزالة إعداد Wi-Fi"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "هل تريد إزالة إعداد Wi-Fi المحفوظ؟"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "أدخل SSID لشبكة Wi-Fi"
+
+msgid "SSID cannot be empty."
+msgstr "لا يمكن أن يكون SSID فارغًا."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "أدخل كلمة مرور WPA2 (من 8 إلى 63 محرف ASCII قابل للطباعة)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID أو كلمة مرور WPA2 غير صالحة."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "هل تريد حفظ إعداد Wi-Fi هذا؟ أعد بناء محمّل الإقلاع لتطبيقه. يحتوي الإعداد وinitrd على بيانات اعتماد."
+
+msgid "Could not create the configuration file."
+msgstr "تعذر إنشاء ملف الإعداد."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "تم الحفظ محليًا، لكن تعذرت مزامنة الإعداد."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "تم حفظ إعداد Wi-Fi. أعد بناء محمّل الإقلاع لتطبيقه."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "تعذر حفظ إعداد Wi-Fi."
+
 #: MSGEG00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "النماذج الأساسية لشجرة الأجهزة [DT] وHBAs لا تتطلب SataPortMap، وDiskIdxMap. ونماذج DT لا تدعم HBAs"

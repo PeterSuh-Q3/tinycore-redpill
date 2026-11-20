@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) Авто-подключение"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Сканирование Wi-Fi требует iw и ip. Вы можете ввести SSID вручную."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "Нет беспроводного интерфейса. Введите SSID вручную."
+
+msgid "Select a wireless interface"
+msgstr "Выберите беспроводной интерфейс"
+
+msgid "Could not enable the wireless interface."
+msgstr "Не удалось включить беспроводной интерфейс."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "Сканирование не удалось или радио занято или заблокировано. Введите SSID вручную."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "Нет подходящих SSID. Введите SSID вручную."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Выберите точку доступа (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "WLAN авто-подключение для DSM junior (WPA2-Personal). Пересоберите загрузчик после изменений."
+
+msgid "Configured SSID:"
+msgstr "Настроенный SSID:"
+
+msgid "None"
+msgstr "Нет"
+
+msgid "Scan and select an access point"
+msgstr "Сканировать и выбрать точку доступа"
+
+msgid "Enter SSID manually"
+msgstr "Введите SSID вручную"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Удалить настройку Wi-Fi"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Удалить сохраненную настройку Wi-Fi?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Введите Wi-Fi SSID"
+
+msgid "SSID cannot be empty."
+msgstr "SSID не может быть пустым."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "Введите пароль WPA2 (8–63 печатаемых ASCII-символов)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "Неверный SSID или пароль WPA2."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Сохранить эту настройку Wi-Fi? Пересоберите загрузчик для применения. Настройка и initrd содержат учетные данные."
+
+msgid "Could not create the configuration file."
+msgstr "Не удалось создать файл настроек."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Сохранено локально, но синхронизация настроек не удалась."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Настройка Wi-Fi сохранена. Пересоберите загрузчик для применения."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Не удалось сохранить настройку Wi-Fi."
+
 #: MSGRU00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Базовые модели и HBAs Device-Tree [DT] не требуют SataPortMap, DiskIdxMap. DT модели не поддерживают HBAs"

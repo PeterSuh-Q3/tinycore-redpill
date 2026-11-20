@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) ራስ-ሰር ግንኙነት"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "የWi-Fi ፍተሻ iw እና ip ይፈልጋል። SSID ን በእጅ ማስገባት ይችላሉ።"
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "ሽቦ አልባ በይነገጽ አልተገኘም። SSID ን በእጅ ያስገቡ።"
+
+msgid "Select a wireless interface"
+msgstr "ሽቦ አልባ በይነገጽ ይምረጡ"
+
+msgid "Could not enable the wireless interface."
+msgstr "ሽቦ አልባውን በይነገጽ ማንቃት አልተቻለም።"
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "ፍተሻው አልተሳካም ወይም ሬዲዮው ተጠምዷል ወይም ታግዷል። SSID ን በእጅ ያስገቡ።"
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "ሊጠቀሙባቸው የሚችሉ SSID አልተገኙም። SSID ን በእጅ ያስገቡ።"
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "የመዳረሻ ነጥብ ይምረጡ (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "ለDSM junior WLAN ራስ-ሰር ግንኙነት (WPA2-Personal)። ለውጦችን ካደረጉ በኋላ loader ን እንደገና ይገንቡ።"
+
+msgid "Configured SSID:"
+msgstr "የተዋቀረ SSID:"
+
+msgid "None"
+msgstr "የለም"
+
+msgid "Scan and select an access point"
+msgstr "የመዳረሻ ነጥብ ፈልገው ይምረጡ"
+
+msgid "Enter SSID manually"
+msgstr "SSID ን በእጅ ያስገቡ"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "የWi-Fi ውቅርን ያስወግዱ"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "የተቀመጠውን የWi-Fi ውቅር ያስወግዱ?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "የWi-Fi SSID ያስገቡ"
+
+msgid "SSID cannot be empty."
+msgstr "SSID ባዶ መሆን አይችልም።"
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "የWPA2 የይለፍ ቃል ያስገቡ (8–63 ሊታተሙ የሚችሉ ASCII ቁምፊዎች)።"
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID ወይም የWPA2 የይለፍ ቃል ልክ አይደለም።"
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "ይህን የWi-Fi ውቅር ይቀመጥ? ለመተግበር loader ን እንደገና ይገንቡ። ውቅሩ እና initrd የመግቢያ መረጃዎችን ይይዛሉ።"
+
+msgid "Could not create the configuration file."
+msgstr "የውቅር ፋይሉን መፍጠር አልተቻለም።"
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "በአካባቢው ተቀምጧል፣ ግን ውቅሩን ማመሳሰል አልተሳካም።"
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "የWi-Fi ውቅር ተቀምጧል። ለመተግበር loader ን እንደገና ይገንቡ።"
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "የWi-Fi ውቅሩን ማስቀመጥ አልተቻለም።"
+
 #: MSGET00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Device-Tree[DT] Base Models እና HBAs SataPortMap፣DiskIdxMap አያስፈልጋቸውም።የዲቲ ሞዴሎች HBAsን አይደግፉም።"

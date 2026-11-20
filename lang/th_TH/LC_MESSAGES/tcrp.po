@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "เชื่อมต่อ WLAN (Wi-Fi) อัตโนมัติ"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "การสแกน Wi-Fi ต้องใช้ iw และ ip คุณสามารถป้อน SSID ด้วยตนเองได้"
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "ไม่พบอินเทอร์เฟซไร้สาย ป้อน SSID ด้วยตนเอง"
+
+msgid "Select a wireless interface"
+msgstr "เลือกอินเทอร์เฟซไร้สาย"
+
+msgid "Could not enable the wireless interface."
+msgstr "ไม่สามารถเปิดใช้งานอินเทอร์เฟซไร้สายได้"
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "สแกนไม่สำเร็จ หรือวิทยุไม่ว่างหรือถูกปิดกั้น ป้อน SSID ด้วยตนเอง"
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "ไม่พบ SSID ที่ใช้งานได้ ป้อน SSID ด้วยตนเอง"
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "เลือกจุดเชื่อมต่อ (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "การเชื่อมต่อ WLAN อัตโนมัติสำหรับ DSM junior (WPA2-Personal) สร้าง loader ใหม่หลังเปลี่ยนแปลง"
+
+msgid "Configured SSID:"
+msgstr "SSID ที่กำหนดค่าไว้:"
+
+msgid "None"
+msgstr "ไม่มี"
+
+msgid "Scan and select an access point"
+msgstr "สแกนและเลือกจุดเชื่อมต่อ"
+
+msgid "Enter SSID manually"
+msgstr "ป้อน SSID ด้วยตนเอง"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "ลบการกำหนดค่า Wi-Fi"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "ลบการกำหนดค่า Wi-Fi ที่บันทึกไว้หรือไม่?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "ป้อน SSID ของ Wi-Fi"
+
+msgid "SSID cannot be empty."
+msgstr "SSID ต้องไม่เว้นว่าง"
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "ป้อนรหัสผ่าน WPA2 (อักขระ ASCII ที่พิมพ์ได้ 8–63 ตัว)"
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID หรือรหัสผ่าน WPA2 ไม่ถูกต้อง"
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "บันทึกการกำหนดค่า Wi-Fi นี้หรือไม่? สร้าง loader ใหม่เพื่อใช้การตั้งค่า การกำหนดค่าและ initrd มีข้อมูลรับรองอยู่"
+
+msgid "Could not create the configuration file."
+msgstr "ไม่สามารถสร้างไฟล์กำหนดค่าได้"
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "บันทึกในเครื่องแล้ว แต่ซิงโครไนซ์การกำหนดค่าไม่สำเร็จ"
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "บันทึกการกำหนดค่า Wi-Fi แล้ว สร้าง loader ใหม่เพื่อให้มีผล"
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "ไม่สามารถบันทึกการกำหนดค่า Wi-Fi ได้"
+
 #: MSGTH00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Device-Tree[DT] Base Models & HBAs ไม่จำเป็นต้องใช้ SataPortMap,DiskIdxMap โมเดล DT ไม่รองรับ HBAs"

@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) Otomatik Bağlantı"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Wi-Fi taraması için iw ve ip gerekir. SSID'yi elle girebilirsiniz."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "Kablosuz arayüz bulunamadı. SSID'yi elle girin."
+
+msgid "Select a wireless interface"
+msgstr "Bir kablosuz arayüz seçin"
+
+msgid "Could not enable the wireless interface."
+msgstr "Kablosuz arayüz etkinleştirilemedi."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "Tarama başarısız oldu veya radyo meşgul ya da engellenmiş. SSID'yi elle girin."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "Kullanılabilir SSID bulunamadı. SSID'yi elle girin."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Bir erişim noktası seçin (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "DSM junior için WLAN otomatik bağlantısı (WPA2-Personal). Değişikliklerden sonra loader'ı yeniden oluşturun."
+
+msgid "Configured SSID:"
+msgstr "Yapılandırılmış SSID:"
+
+msgid "None"
+msgstr "Yok"
+
+msgid "Scan and select an access point"
+msgstr "Erişim noktalarını tara ve birini seç"
+
+msgid "Enter SSID manually"
+msgstr "SSID'yi elle gir"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Wi-Fi yapılandırmasını kaldır"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Kaydedilmiş Wi-Fi yapılandırması kaldırılsın mı?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Wi-Fi SSID'sini girin"
+
+msgid "SSID cannot be empty."
+msgstr "SSID boş olamaz."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "WPA2 parolasını girin (8–63 yazdırılabilir ASCII karakteri)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID veya WPA2 parolası geçersiz."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Bu Wi-Fi yapılandırması kaydedilsin mi? Uygulamak için loader'ı yeniden oluşturun. Yapılandırma ve initrd kimlik bilgileri içerir."
+
+msgid "Could not create the configuration file."
+msgstr "Yapılandırma dosyası oluşturulamadı."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Yerel olarak kaydedildi ancak yapılandırma eşitlemesi başarısız oldu."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Wi-Fi yapılandırması kaydedildi. Uygulamak için loader'ı yeniden oluşturun."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Wi-Fi yapılandırması kaydedilemedi."
+
 #: MSGTR00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Device-Tree[DT] Temel Modeller ve HBA'lar SataPortMap,DiskIdxMap gerektirmez. DT modelleri HBA'ları desteklemez"

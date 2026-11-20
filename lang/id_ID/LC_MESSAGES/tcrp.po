@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) Auto Connect"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "Pemindaian Wi-Fi memerlukan iw dan ip. Anda dapat memasukkan SSID secara manual."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "Tidak ditemukan antarmuka nirkabel. Masukkan SSID secara manual."
+
+msgid "Select a wireless interface"
+msgstr "Pilih antarmuka nirkabel"
+
+msgid "Could not enable the wireless interface."
+msgstr "Tidak dapat mengaktifkan antarmuka nirkabel."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "Pemindaian gagal atau radio sedang sibuk atau terblokir. Masukkan SSID secara manual."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "Tidak ditemukan SSID yang dapat digunakan. Masukkan SSID secara manual."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Pilih titik akses (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "WLAN auto-connect untuk DSM junior (WPA2-Personal). Rebuild loader setelah perubahan."
+
+msgid "Configured SSID:"
+msgstr "SSID yang dikonfigurasikan:"
+
+msgid "None"
+msgstr "Tidak ada"
+
+msgid "Scan and select an access point"
+msgstr "Pindaian dan pilih titik akses"
+
+msgid "Enter SSID manually"
+msgstr "Masukkan SSID secara manual"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Hapus konfigurasi Wi-Fi"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Hapus konfigurasi Wi-Fi yang disimpan?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Masukkan SSID Wi-Fi"
+
+msgid "SSID cannot be empty."
+msgstr "SSID tidak boleh kosong."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "Masukkan kata sandi WPA2 (8–63 karakter ASCII yang dapat dicetak)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "SSID atau kata sandi WPA2 tidak valid."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Simpan konfigurasi Wi-Fi ini? Rebuild loader untuk menerapkannya. Konfigurasi dan initrd mengandung kredensial."
+
+msgid "Could not create the configuration file."
+msgstr "Tidak dapat membuat file konfigurasi."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Disimpan secara lokal, tetapi sinkronisasi konfigurasi gagal."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "Konfigurasi Wi-Fi disimpan. Rebuild loader untuk menerapkannya."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Tidak dapat menyimpan konfigurasi Wi-Fi."
+
 #: MSGID00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "Device-Tree[DT] Model Dasar & HBA tidak memerlukan SataPortMap,DiskIdxMap. Model DT tidak mendukung HBA"

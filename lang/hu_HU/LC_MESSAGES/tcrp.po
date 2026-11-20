@@ -18,6 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5-dev\n"
+msgid "WLAN (Wi-Fi) Auto Connect"
+msgstr "WLAN (Wi-Fi) automatikus csatlakozás"
+
+msgid "Wi-Fi scanning requires iw and ip. You can enter the SSID manually."
+msgstr "A Wi-Fi-hálózatok kereséséhez az iw és az ip szükséges. Az SSID kézzel is megadható."
+
+msgid "No wireless interface found. Enter the SSID manually."
+msgstr "Nem található vezeték nélküli hálózati interfész. Adja meg kézzel az SSID-t."
+
+msgid "Select a wireless interface"
+msgstr "Válasszon vezeték nélküli interfészt"
+
+msgid "Could not enable the wireless interface."
+msgstr "Nem sikerült engedélyezni a vezeték nélküli interfészt."
+
+msgid "Scan failed or the radio is busy or blocked. Enter the SSID manually."
+msgstr "A keresés sikertelen, vagy a rádió foglalt vagy le van tiltva. Adja meg kézzel az SSID-t."
+
+msgid "No usable SSIDs found. Enter the SSID manually."
+msgstr "Nem található használható SSID. Adja meg kézzel az SSID-t."
+
+msgid "Select an access point (WPA2-Personal)"
+msgstr "Válasszon hozzáférési pontot (WPA2-Personal)"
+
+msgid "WLAN auto-connect for DSM junior (WPA2-Personal). Rebuild the loader after changes."
+msgstr "WLAN automatikus csatlakozás DSM juniorhoz (WPA2-Personal). Módosítás után építse újra a loadert."
+
+msgid "Configured SSID:"
+msgstr "Beállított SSID:"
+
+msgid "None"
+msgstr "Nincs"
+
+msgid "Scan and select an access point"
+msgstr "Hozzáférési pontok keresése és kiválasztása"
+
+msgid "Enter SSID manually"
+msgstr "SSID megadása kézzel"
+
+msgid "Remove Wi-Fi configuration"
+msgstr "Wi-Fi-beállítás eltávolítása"
+
+msgid "Remove the saved Wi-Fi configuration?"
+msgstr "Eltávolítja a mentett Wi-Fi-beállítást?"
+
+msgid "Enter the Wi-Fi SSID"
+msgstr "Adja meg a Wi-Fi SSID-t"
+
+msgid "SSID cannot be empty."
+msgstr "Az SSID nem lehet üres."
+
+msgid "Enter the WPA2 password (8–63 printable ASCII characters)."
+msgstr "Adja meg a WPA2-jelszót (8–63 nyomtatható ASCII-karakter)."
+
+msgid "Invalid SSID or WPA2 password."
+msgstr "Érvénytelen SSID vagy WPA2-jelszó."
+
+msgid "Save this Wi-Fi configuration? Rebuild the loader to apply it. The configuration and initrd contain credentials."
+msgstr "Menti ezt a Wi-Fi-beállítást? Az alkalmazáshoz építse újra a loadert. A beállítás és az initrd hitelesítési adatokat tartalmaz."
+
+msgid "Could not create the configuration file."
+msgstr "Nem sikerült létrehozni a konfigurációs fájlt."
+
+msgid "Saved locally, but configuration synchronization failed."
+msgstr "Helyben mentve, de a konfiguráció szinkronizálása nem sikerült."
+
+msgid "Wi-Fi configuration saved. Rebuild the loader to apply it."
+msgstr "A Wi-Fi-beállítás mentve. Az alkalmazáshoz építse újra a loadert."
+
+msgid "Could not save the Wi-Fi configuration."
+msgstr "Nem sikerült menteni a Wi-Fi-beállítást."
+
 #: MSGHU00 
 msgid "Device-Tree[DT] Base Models & HBAs do not require SataPortMap,DiskIdxMap. DT models do not support HBAs"
 msgstr "A Device-Tree[DT] alapmodellek és HBA-k nem igényelnek SataPortMap-et, DiskIdxMap-et. A DT-modellek nem támogatják a HBA-kat"
