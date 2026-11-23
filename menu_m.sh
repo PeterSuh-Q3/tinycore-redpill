@@ -725,13 +725,13 @@ function syncBundledExtsModule() {
 ###############################################################################
 # Shows available dsm verwsion 
 function selectversion () {
-    local result release selected mode method candidate
+    local result release selected mode method candidate label
     local -a menu_items=()
     mshellLoadDsmResolver || return $?
     result=$(mshellDsmResolve list "$MODEL") || return $?
-    while IFS= read -r release; do
-        menu_items+=("$release" "$release")
-    done < <(printf '%s' "$result" | jq -r '.targets[:12][].target.version')
+    while IFS=$'\t' read -r release label; do
+        menu_items+=("$release" "$label")
+    done < <(printf '%s' "$result" | jq -r '.targets[:12][] | [.target.version, (if .target.test_build == true then .target.version + " [PHYSICAL TEST]" else .target.version end)] | @tsv')
     if [ "${#menu_items[@]}" -eq 0 ]; then
         dialog --msgbox "No selectable DSM release for this model and target CPU." 8 70
         return 5

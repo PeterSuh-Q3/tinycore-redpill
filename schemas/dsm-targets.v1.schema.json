@@ -19,6 +19,7 @@
         "tuple": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0}},
         "channel": {"enum": ["stable", "test"]},
         "status": {"enum": ["inherited-supported", "candidate", "verified", "blocked"]},
+        "test_build": {"type": "boolean"},
         "kernel": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
         "modes": {"type": "array", "items": {"type": "object", "required": ["id", "module", "method", "cpu_flags", "recipe_sha256", "recipe_url"], "properties": {
           "id": {"type": "string"}, "module": {"enum": ["all-modules", "custom-modules", "anodrm-modules"]},

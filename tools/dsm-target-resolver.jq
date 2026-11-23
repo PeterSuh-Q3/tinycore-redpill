@@ -23,8 +23,12 @@ def result:
  . as $t | modes as $m |
  {schema_version:1,operation:$q.operation,catalog_id:$c.catalog_id,ok:true,exit_code:0,reasons:[],
  source_revisions:$c.sources,target:($t|del(.modes)),allowed_modes:[$m[]|select(.reasons==[])],rejected_modes:[$m[]|select(.reasons!=[])]};
+def buildable:
+ .status=="inherited-supported" or .status=="verified" or
+ (.status=="candidate" and .test_build==true);
 def valid_target:
  (.model|type)=="string" and (.platform|type)=="string" and
+ ((has("test_build")|not) or ((.test_build|type)=="boolean" and (.status=="candidate"))) and
  (.kernel|type)=="string" and ((.kernel|split(".")) as $k | ($k|length)==3 and all($k[];decimal)) and
  (.tuple|type)=="array" and (.tuple|length)==5 and
  all(.tuple[]; type=="number" and .>=0 and floor==.) and
@@ -42,14 +46,14 @@ else
  [$c.targets[]|select(.model==$q.model and .channel==($q.channel // "stable"))] as $ts |
  if $q.operation=="list" then
  {schema_version:1,operation:"list",catalog_id:$c.catalog_id,ok:true,exit_code:0,reasons:[],
- targets:[$ts[]|select(.status=="inherited-supported" or .status=="verified")|result|select(.allowed_modes|length>0)]|sort_by(.target.tuple)|reverse}
+ targets:[$ts[]|select(buildable)|result|select(.allowed_modes|length>0)]|sort_by(.target.tuple)|reverse}
  else ((try ($q.release|norm) catch null) // null) as $r |
  if $r==null then fail(2;"INVALID_RELEASE")
  else [$ts[]|select(.release==$r)] as $found |
  if ($found|length)!=1 then fail(4;"MODEL_RELEASE_UNSUPPORTED")
  else $found[0] |
  if $q.operation=="identity" then {schema_version:1,operation:"identity",catalog_id:$c.catalog_id,ok:true,exit_code:0,reasons:[],target:(del(.modes))}
- elif (.status!="inherited-supported" and .status!="verified") then fail(5;"TARGET_NOT_APPROVED")
+ elif (buildable|not) then fail(5;"TARGET_NOT_APPROVED")
  else result |
  if $q.operation=="validate" then
  . as $out | [.allowed_modes[]|select(.module==$q.mode.module and .method==$q.mode.method)] as $selected |

@@ -108,8 +108,11 @@ feature flag를 교집합 처리하므로 가장 제한적인 CPU를 기준으�
 적는다. 대상 CPU feature 정보가 없으면 BMI2 같은 필수 조건을 통과한 것으로 보지 않는다.
 
 초기 추가 상태는 `candidate`다. PAT/config consistency, module closure/hash, CPU/mode,
-patch, 실제 부팅 증거를 확인하기 전에는 `verified`로 바꾸지 않는다. 현재 compiler가
-schema/참조/해시 형식 오류를 거부한다.
+patch, 실제 부팅 증거를 확인하기 전에는 `verified`로 바꾸지 않는다. 의도된 실기 빌드
+시험만 허용할 후보에는 `test_build: true`를 별도로 지정할 수 있다. 이 표식은 지원 또는
+검증 상태로 승격하지 않으며, 해당 후보만 버전 메뉴에 `[PHYSICAL TEST]`로 표시하고 빌드
+검증을 허용한다. 표식이 없는 후보는 계속 메뉴에서 숨기고 거부한다. 현재 compiler가
+schema/참조/해시 형식 오류와 `candidate` 이외 상태의 시험 표식을 거부한다.
 
 ### 5. 검증 및 빌드 테스트를 실행한다
 

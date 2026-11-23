@@ -37,6 +37,9 @@ def validate(data):
                 assert target['platform'] in supported, target['platform']
     seen = set()
     for t in data['targets']:
+        if 'test_build' in t:
+            assert type(t['test_build']) is bool
+            assert t['status'] == 'candidate'
         key = (t['model'], t['release'], t['channel'])
         assert key not in seen, key
         seen.add(key)

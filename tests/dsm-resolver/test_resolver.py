@@ -35,6 +35,18 @@ class Resolver(unittest.TestCase):
   self.assertTrue(self.run_query(release='7.4.2-99999',catalog=c)['ok'])
   t['status']='candidate';self.assertFalse(self.run_query(release='7.4.2-99999',catalog=c)['ok'])
   t['status']='verified';t['modes']=[];self.assertFalse(self.run_query(release='7.4.2-99999',catalog=c)['ok'])
+ def test_candidate_requires_explicit_test_build(self):
+  c=copy.deepcopy(CAT)
+  t=next(t for t in c['targets'] if t['platform']=='avoton' and t['status']=='candidate' and t['channel']=='stable')
+  model,release=t['model'],t['release']
+  t.pop('test_build',None)
+  self.assertFalse(any(x['target']['release']==release for x in self.run_query('list',model=model,catalog=c)['targets']))
+  self.assertFalse(self.run_query(model=model,release=release,catalog=c)['ok'])
+  t['test_build']=True
+  self.assertTrue(any(x['target']['release']==release and x['target']['test_build'] for x in self.run_query('list',model=model,catalog=c)['targets']))
+  self.assertTrue(self.run_query(model=model,release=release,module='all-modules',method='PML',catalog=c)['ok'])
+  t['test_build']='yes'
+  self.assertEqual(self.run_query(model=model,release=release,catalog=c)['exit_code'],3)
  def test_numeric_sort(self):
   c=copy.deepcopy(CAT);base=next(t for t in c['targets'] if t['model']=='SA6400' and t['channel']=='stable')
   c['targets']=[]
