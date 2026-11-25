@@ -353,7 +353,10 @@ jobs:
 
           echo "Build loader for ${{ env.model }}-${{ env.version }}"
           ls -ltr ./functions.sh
-          sudo ./functions.sh my ${{ env.model }}-${{ env.version }} noconfig fri
+          # This GitHub-hosted Linux worker can run the bundled static x86-64
+          # SynoXtract directly. Do not infer an inner Docker extractor from
+          # BUS=block: the loop-backed loader image is not the Manager rebuilder.
+          sudo env MSHELL_SYNOXTRACT_BACKEND=native ./functions.sh my ${{ env.model }}-${{ env.version }} noconfig fri
           sudo cat /home/tc/user_config.json
 
           ls -ltr /mnt/${loaderdisk}p1

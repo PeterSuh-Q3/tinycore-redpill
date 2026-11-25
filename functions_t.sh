@@ -5288,10 +5288,27 @@ function downloadextractor() {
 }
 
 function run_synoxtract() {
-    local pat="$1" outdir="$2" args=()
+    local pat="$1" outdir="$2" backend="${MSHELL_SYNOXTRACT_BACKEND:-auto}" args=()
     shift 2
     args=("$@")
-    if [ "${BUS}" = "block" ]; then
+    # The disk BUS describes the loader medium, not the environment in which
+    # SynoXtract should run. Prefer the bundled static binary inside MSHELL's
+    # Docker rebuilder, even when its mapped loader image reports BUS=block.
+    # Callers may explicitly select a backend when running in another container.
+    case "${backend}" in
+      auto)
+        if [ "${MSHELL_DOCKER_BUILDER:-0}" = "1" ]; then
+            backend="native"
+        elif [ "${BUS}" = "block" ]; then
+            backend="docker"
+        else
+            backend="native"
+        fi
+        ;;
+      native|docker) ;;
+      *) echo "[SynoXtract] Invalid backend: ${backend}" >&2; return 1 ;;
+    esac
+    if [ "${backend}" = "docker" ]; then
         local data_dir="$HOME/data" host_pat host_out
         mkdir -p "${data_dir}/in" "${data_dir}/out"
         host_pat="${data_dir}/in/$(basename "${pat}")"
