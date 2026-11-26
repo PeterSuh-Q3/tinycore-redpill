@@ -243,6 +243,7 @@ jobs:
         if: env.iscustom == 'true'
         env:
           TARGET_CPU_BMI2: ${{ env.target_cpu_bmi2 }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           path=`pwd`
           userconfigfile="/home/tc/user_config.json"
@@ -256,7 +257,23 @@ jobs:
           sudo chmod +x /home/tc/writekey.sh
           ls -ltr /home/tc
 
-          RELEASE_JSON="$(curl --fail --silent --show-error --connect-timeout 5 --location "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases/latest")"
+          release_headers="$(mktemp)"
+          release_body="$(mktemp)"
+          release_http="$(curl --silent --show-error --location --connect-timeout 5 --retry 3 \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'Accept: application/vnd.github+json' \
+            --dump-header "$release_headers" --output "$release_body" --write-out '%{http_code}' \
+            "https://api.github.com/repos/PeterSuh-Q3/tinycore-redpill/releases/latest")" || {
+              echo 'GitHub Releases API request failed (network or TLS error).' >&2
+              exit 1
+            }
+          if [ "$release_http" != 200 ]; then
+            echo "GitHub Releases API returned HTTP ${release_http}." >&2
+            grep -iE '^(x-ratelimit-(limit|remaining|reset|resource)|retry-after|x-github-request-id):' "$release_headers" >&2 || true
+            jq -r 'if type == "object" then (.message // "No error message") else "Unexpected response" end' "$release_body" >&2 || true
+            exit 1
+          fi
+          RELEASE_JSON="$(<"$release_body")"
           TAG="$(printf '%s' "$RELEASE_JSON" | jq -r '.tag_name')"
           if [ -z "${TAG}" ] || [ "${TAG}" = "null" ]; then
             echo "Failed to resolve latest release tag."
