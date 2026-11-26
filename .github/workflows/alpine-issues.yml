@@ -366,7 +366,7 @@ jobs:
           # download; do not leave the base image's model in user_config.json.
           sudo ./writekey.sh "general" "model" "$REQUESTED_MODEL" "$userconfigfile"
           sudo ./writekey.sh "general" "version" "$REQUESTED_VERSION" "$userconfigfile"
-          if ! jq -e --arg model "$REQUESTED_MODEL" --arg version "$REQUESTED_VERSION" \
+          if ! sudo jq -e --arg model "$REQUESTED_MODEL" --arg version "$REQUESTED_VERSION" \
             '.general.model == $model and .general.version == $version' "$userconfigfile" >/dev/null; then
             echo 'Requested model/version did not persist in user_config.json; aborting build.' >&2
             exit 1
