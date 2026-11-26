@@ -244,6 +244,8 @@ jobs:
         env:
           TARGET_CPU_BMI2: ${{ env.target_cpu_bmi2 }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_MODEL: ${{ env.model }}
+          REQUESTED_VERSION: ${{ env.version }}
         run: |
           path=`pwd`
           userconfigfile="/home/tc/user_config.json"
@@ -360,20 +362,25 @@ jobs:
             echo "set language: ${{ env.language }}"
             sudo ./writekey.sh "general" "ucode" "${{ env.language }}" $userconfigfile
           fi
-          if [ -n "${{ env.version }}" ]; then
-            echo "set version: ${{ env.version }}"
-            sudo ./writekey.sh "general" "version" "${{ env.version }}" $userconfigfile
+          # The build validates this saved pair again after the initial PAT
+          # download; do not leave the base image's model in user_config.json.
+          sudo ./writekey.sh "general" "model" "$REQUESTED_MODEL" "$userconfigfile"
+          sudo ./writekey.sh "general" "version" "$REQUESTED_VERSION" "$userconfigfile"
+          if ! jq -e --arg model "$REQUESTED_MODEL" --arg version "$REQUESTED_VERSION" \
+            '.general.model == $model and .general.version == $version' "$userconfigfile" >/dev/null; then
+            echo 'Requested model/version did not persist in user_config.json; aborting build.' >&2
+            exit 1
           fi
 
           echo "Set target CPU BMI2 capability: ${TARGET_CPU_BMI2:-unknown}"
           sudo ./tools/set-target-cpu-snapshot.sh "$userconfigfile" "${TARGET_CPU_BMI2:-unknown}"
 
-          echo "Build loader for ${{ env.model }}-${{ env.version }}"
+          echo "Build loader for ${REQUESTED_MODEL}-${REQUESTED_VERSION}"
           ls -ltr ./functions.sh
           # This GitHub-hosted Linux worker can run the bundled static x86-64
           # SynoXtract directly. Do not infer an inner Docker extractor from
           # BUS=block: the loop-backed loader image is not the Manager rebuilder.
-          sudo env MSHELL_SYNOXTRACT_BACKEND=native ./functions.sh my ${{ env.model }}-${{ env.version }} noconfig fri
+          sudo env MSHELL_SYNOXTRACT_BACKEND=native ./functions.sh my "${REQUESTED_MODEL}-${REQUESTED_VERSION}" noconfig fri
           sudo cat /home/tc/user_config.json
 
           ls -ltr /mnt/${loaderdisk}p1
